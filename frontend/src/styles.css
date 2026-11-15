@@ -518,3 +518,22 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
   .mini-room { width: 100%; height: 160px; }
 }
 .suggest-panel select.input { min-width: 96px; }
+
+/* Photo tags and suggestion glow */
+.photo-glow { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.photo-glow.dim { mix-blend-mode: multiply; }
+.photo-glow.light { mix-blend-mode: screen; }
+.field-label { font-size: 12.5px; color: var(--text-2); }
+.photo-marker.quiet { opacity: 0.75; }
+.photo-pin { position: absolute; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: 0; color: var(--text); cursor: grab; padding: 0; }
+.photo-pin svg { filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8)); }
+.photo-pin.opening { color: #7dd3fc; }
+.photo-pin.furniture { color: #fcd34d; }
+.photo-pin.active svg { color: var(--accent); }
+.role-badge { margin-left: 4px; padding: 0 5px; border-radius: 6px; font-style: normal; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; background: rgba(0, 0, 0, 0.6); }
+.role-badge.view, .role-badge.behind { color: var(--warn); }
+.role-badge.bias { color: #93c5fd; }
+.role-badge.task { color: #fde68a; }
+.suggest-card.shown { border-color: var(--accent); }
+.height-presets { display: grid; gap: 6px; }
+.tray-group + .tray-group { margin-top: 8px; }

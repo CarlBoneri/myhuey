@@ -116,7 +116,9 @@ export interface RoomPhoto {
   file: string;
   width: number;
   height: number;
-  placements: Record<string, PhotoSpot>;
+  /** "light:<id>", "furniture:<id>", or "opening:<id>" → where it appears in the photo. */
+  tags: Record<string, PhotoSpot>;
+  floor_transform?: unknown;
 }
 
 export interface Room {

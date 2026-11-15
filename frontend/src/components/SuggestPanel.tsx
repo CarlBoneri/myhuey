@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Lightbulb, Palette as PaletteIcon, Save, Shuffle, Sparkles, X } from 'lucide-react';
+import { Eye, Lightbulb, Palette as PaletteIcon, Save, Shuffle, Sparkles, X } from 'lucide-react';
 import { api } from '../api';
 import { useStore } from '../store';
 import { bounds } from '../lib/geometry';
@@ -11,7 +11,11 @@ const MODES = Object.keys(MODE_LABELS);
 const TAGS = ['', 'warm', 'cool', 'muted', 'vivid', 'analogous', 'accent'];
 
 /** Suggested scenes for a room: pick a mode and a time, preview cards, then save or try one. */
-export function SuggestPanel({ room, onClose }: { room: Room; onClose: () => void }) {
+export function SuggestPanel({ room, onClose, onShow, shownId }: {
+  room: Room; onClose: () => void;
+  /** On the photo: show a card's colors there. */
+  onShow?: (item: Suggestion) => void; shownId?: string;
+}) {
   const { refreshScenes, toast } = useStore();
   const [mode, setMode] = useState('code');
   const [at, setAt] = useState(''); // '' = now
@@ -67,6 +71,7 @@ export function SuggestPanel({ room, onClose }: { room: Room; onClose: () => voi
       <div className="suggest-cards" aria-busy={loading}>
         {items.map((item) => (
           <SuggestionCard key={`${item.palette.id}-${seed}`} room={room} item={item} mode={mode}
+            onShow={onShow && (() => onShow(item))} shown={!!shownId && shownId === item.scene.id}
             onSaved={async (name) => {
               try {
                 const saved = await api.createScene({ ...item.scene, name });
@@ -92,15 +97,16 @@ export function SuggestPanel({ room, onClose }: { room: Room; onClose: () => voi
   );
 }
 
-function SuggestionCard({ room, item, mode, onSaved, onTry }: {
+function SuggestionCard({ room, item, mode, onSaved, onTry, onShow, shown }: {
   room: Room; item: Suggestion; mode: string; onSaved: (name: string) => void; onTry: () => void;
+  onShow?: () => void; shown?: boolean;
 }) {
   const [naming, setNaming] = useState(false);
   const [name, setName] = useState(cardTitle(mode, item.palette));
   useEffect(() => setName(cardTitle(mode, item.palette)), [mode, item.palette]);
   const credit = creditText(item.palette);
   return (
-    <article className="suggest-card">
+    <article className={`suggest-card${shown ? ' shown' : ''}`}>
       <MiniRoom room={room} item={item} />
       <div className="suggest-body">
         <h3>{cardTitle(mode, item.palette)}</h3>
@@ -116,6 +122,9 @@ function SuggestionCard({ room, item, mode, onSaved, onTry }: {
           </form>
         ) : (
           <div className="button-row">
+            {onShow && (
+              <button type="button" className={`button small${shown ? ' active' : ''}`} onClick={onShow}><Eye size={14} /> {shown ? 'On the photo' : 'Show on photo'}</button>
+            )}
             <button type="button" className="button small" onClick={onTry}><Lightbulb size={14} /> Preview on lights</button>
             <button type="button" className="button small subtle" onClick={() => setNaming(true)}><Save size={14} /> Save as scene</button>
           </div>
