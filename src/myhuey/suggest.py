@@ -27,7 +27,7 @@ BIAS_RANGE = (10.0, 20.0)
 BIAS_SHARE = 0.2
 VIEW_COLOR, VIEW_LEVEL = 0.25, 0.5
 BEHIND_COLOR, BEHIND_LEVEL = 0.1, 0.4
-LOST_BIAS_COLOR, LOST_BIAS_LEVEL = 0.25, 0.3
+LOST_BIAS_COLOR, LOST_BIAS_LEVEL = 0.25, 0.3  # a pinned role with nothing to serve: dim, low-color ambient
 FAR_CM = 300.0
 
 
@@ -124,20 +124,21 @@ def _overrides(
     colored = 0  # the next palette color to hand out, going around the room
     for light in _around(room.lights, center):
         role = roles[light.light_id]
-        if role == "task":
+        # A pinned task or view light when the mode finds no seat, or a pinned bias light with no
+        # screen, has nothing to serve: it falls back to dim, low-color ambient (and keeps its pin).
+        if (role in ("task", "view") and focus is None) or (role == "bias" and not has_screen):
+            share, brightness = LOST_BIAS_COLOR * strength, level * LOST_BIAS_LEVEL
+        elif role == "task":
             overrides[light.light_id] = {
                 "white": task_kelvin, "brightness": round(_clamp(level * mode.task_brightness, 1, 100), 1),
             }
             continue
-        if role == "bias":
-            if not has_screen:
-                share, brightness = LOST_BIAS_COLOR * strength, level * LOST_BIAS_LEVEL
-            elif mode.bias:
+        elif role == "bias":
+            if mode.bias:
                 overrides[light.light_id] = {"white": kelvin, "brightness": round(_clamp(level * BIAS_SHARE, *BIAS_RANGE), 1)}
-                continue
             else:
                 overrides[light.light_id] = {"on": False}
-                continue
+            continue
         elif role == "view":
             share, brightness = (0.0 if mode.ambient_only else VIEW_COLOR * strength), level * VIEW_LEVEL
         elif role == "behind":

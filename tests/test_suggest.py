@@ -210,3 +210,16 @@ def test_gradient_lights_in_view_or_behind_get_one_color():
     for light_id in ("gview", "gbehind"):
         override = item["scene"].overrides[light_id]
         assert len(override["colors"]) == 1 and "mode" not in override
+
+
+@pytest.mark.parametrize("pinned", ["task", "view"])
+def test_pinned_task_or_view_without_a_focus_is_dim_and_low_color(pinned):
+    room = _office(furniture=False)  # no desk, so code mode has no focus
+    room.lights.append(_light("pinned", 50, 50, FLOOR, role=pinned))
+    item = _one(room, "code", dt(12))
+    level = 100 * MODES["code"].brightness
+    override = item["scene"].overrides["pinned"]
+    assert item["roles"]["pinned"] == pinned
+    assert "white" not in override and len(override["colors"]) == 1
+    assert override["brightness"] <= level * 0.3 + 0.1
+    assert room.lights[-1].role == pinned  # the pin stays
