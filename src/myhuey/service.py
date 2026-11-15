@@ -767,11 +767,20 @@ class HueRoomService:
 
     @_one_bridge_write
     def apply_scene(self, key: str, *, pause: float | None = None) -> list[dict[str, Any]]:
+        """Send a saved scene to the lights."""
+        return self._apply(self.get_scene(key), pause)
+
+    @_one_bridge_write
+    def apply_scene_object(self, scene: Scene, *, pause: float | None = None) -> list[dict[str, Any]]:
+        """Send a scene that may not be saved (a suggestion being previewed) to the lights."""
+        self.get_room(scene.room)
+        return self._apply(scene, pause)
+
+    def _apply(self, scene: Scene, pause: float | None) -> list[dict[str, Any]]:
         """Send a scene to the lights. Gradient lights get their colors along their length
         through the v2 API; everything else uses v1. Returns what each light was sent,
         with an `error` for lights that refused."""
         pause = self._command_gap() if pause is None else pause
-        scene = self.get_scene(key)
         client = self.client()
         raw = client.get_lights()
         index = self.v2_index()
@@ -806,7 +815,9 @@ class HueRoomService:
                     changes: dict[str, Any] = {"brightness": max(1, round(result["brightness"] * 2.54))}
                     if not state.get("on"):
                         changes["on"] = True
-                    if "xy" in state:
+                    if result.get("color_temp") and "ct" in state:
+                        changes["color_temp"] = _mirek_for(result["color_temp"], raw.get(light_id) or {})
+                    elif "xy" in state:
                         changes["xy"] = result["xy"]
                     client.set_light_color(light_id, **changes)
                 # On the bridge an effect clears the gradient and a gradient cancels the effect,
@@ -822,6 +833,13 @@ class HueRoomService:
                 self.sleep(pause)  # the bridge handles about ten light commands a second
         self._v2_loaded = 0.0  # gradients and effects just changed
         return results
+
+
+def _mirek_for(kelvin: int, raw_light: dict[str, Any]) -> int:
+    """Mirek for a white temperature, clamped to what this light reports it can do."""
+    ct = ((raw_light.get("capabilities") or {}).get("control") or {}).get("ct") or {}
+    low, high = int(ct.get("min") or 153), int(ct.get("max") or 500)
+    return max(low, min(high, round(1_000_000 / kelvin)))
 
 
 def gradient_body(rgbs: list[tuple[int, int, int]], mode: str | None = None, brightness: float | None = None) -> dict[str, Any]:
