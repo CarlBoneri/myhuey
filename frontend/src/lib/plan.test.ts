@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { calibrate, imageToPlan, lightsOutside, openingAt, openingSegment, planToImage, snapPoint } from './plan';
+import { calibrate, imageToPlan, lightsOutside, openingAt, openingSegment, planToImage, reanchorOpenings, snapPoint } from './plan';
 import type { HomePlan, Opening, Placement, Pt } from '../types';
 
 const plan: HomePlan = { file: 'x.png', cm_per_px: 2, offset: [100, 50], rotation: 90, opacity: 0.5, width: 800, height: 600 };
@@ -40,6 +40,17 @@ describe('openings', () => {
   const door: Opening = { id: 'd', kind: 'door', edge: 1, offset: 50, width: 80, sill: null, top: 203 };
   it('finds the wall segment an opening covers', () => {
     expect(openingSegment(SQUARE, door)).toEqual([[400, 50], [400, 130]]);
+  });
+  it('has no segment for an edge the outline no longer has', () => {
+    expect(openingSegment(SQUARE.slice(0, 3), { ...door, edge: 3 })).toBeNull();
+  });
+  it('keeps openings on their wall when corners are removed, added, or renumbered', () => {
+    const onBottom: Opening = { ...door, edge: 2, offset: 100, width: 81 };
+    // A corner inserted on the top edge shifts the bottom wall from edge 2 to edge 3.
+    const inserted: Pt[] = [[0, 0], [200, 0], [400, 0], [400, 300], [0, 300]];
+    expect(reanchorOpenings(SQUARE, inserted, [onBottom])).toEqual([{ ...onBottom, edge: 3 }]);
+    // Removing the bottom-right corner removes the bottom wall: the door goes.
+    expect(reanchorOpenings(SQUARE, [[0, 0], [400, 0], [0, 300]], [onBottom])).toEqual([]);
   });
   it('places an opening centered on a click near a wall, inside the wall', () => {
     expect(openingAt(SQUARE, [200, 6], 90, 20)).toEqual({ edge: 0, offset: 155, width: 90 });

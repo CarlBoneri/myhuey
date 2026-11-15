@@ -15,7 +15,7 @@ from .errors import BridgeNotConfigured, HueError, RoomNotFound, SceneNotFound
 from .geometry import rectangle
 from .hue import HueBridgeClient
 from .images import ImageSampler, extract_palette, image_path, prune_unreferenced, store_image
-from .models import Furniture, HomePlan, LayoutLight, Opening, Room, RoomPhoto, opening_fits, validate_outline
+from .models import Furniture, HomePlan, LayoutLight, Opening, Room, RoomPhoto, opening_fits, reanchor_openings, validate_outline
 from .scenes import Scene, evaluate
 from .shapes import profile_for
 from .storage import DEFAULT_STORAGE_PATH, load_config, save_config, uploads_dir
@@ -304,6 +304,7 @@ class HueRoomService:
         config = self._load()
         room_data = self._room_data(config, name)
         room = Room.from_dict(room_data)
+        old_outline = room.outline
         if x is not None:
             room.x = round(float(x), 2)
         if y is not None:
@@ -317,6 +318,9 @@ class HueRoomService:
             for opening in room.openings:
                 if not opening_fits(room.outline, opening):
                     raise ValueError(f"The {opening.kind} on edge {opening.edge} does not fit on that wall")
+        elif outline is not None:
+            # A new shape may start at another corner or wind the other way: follow the walls.
+            room.openings = reanchor_openings(old_outline, room.outline, room.openings)
         else:
             room.openings = [opening for opening in room.openings if opening_fits(room.outline, opening)]
         if ceiling is not None:
@@ -541,7 +545,10 @@ class HueRoomService:
         stored = store_image(data, self.uploads)
         config = self._load()
         home = config.setdefault("home", {})
-        previous = home.get("plan") or {}
+        previous = dict(home.get("plan") or {})
+        if previous.get("width") and stored.get("width"):
+            # A rescan of the same plan at another resolution keeps its real-world size.
+            previous["cm_per_px"] = float(previous.get("cm_per_px", 1.0)) * previous["width"] / float(stored["width"])
         plan = HomePlan.from_dict({**previous, **stored})
         home["plan"] = plan.to_dict()
         self._save(config)

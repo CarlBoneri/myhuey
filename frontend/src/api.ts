@@ -31,6 +31,9 @@ async function call<T>(path: string, init: RequestInit & { json?: unknown } = {}
   return body as T;
 }
 
+/** The document version this page was built for. A server reporting less was started before an update. */
+export const API_VERSION = 3;
+
 const room = (name: string) => `/api/rooms/${encodeURIComponent(name)}`;
 
 async function upload<T>(path: string, file: File): Promise<T> {
@@ -40,6 +43,7 @@ async function upload<T>(path: string, file: File): Promise<T> {
 }
 
 export const api = {
+  health: () => call<{ status: string; api?: number }>('/api/health'),
   setup: () => call<SetupStatus>('/api/setup/status'),
   discover: () => call<{ id: string; ip: string }[]>('/api/bridges/discover'),
   pair: (bridge_ip: string) => call<{ bridge_ip: string }>('/api/bridge/register', { method: 'POST', json: { bridge_ip } }),

@@ -44,7 +44,8 @@ export function snapPoint(p: Pt, { units, radius, corners, edges }: { units: Uni
   return best ?? [snap(p[0], units), snap(p[1], units)];
 }
 
-function edgeOf(outline: Pt[], index: number): { a: Pt; length: number; unit: Pt } {
+function edgeOf(outline: Pt[], index: number): { a: Pt; length: number; unit: Pt } | null {
+  if (index < 0 || index >= outline.length) return null;
   const a = outline[index];
   const b = outline[(index + 1) % outline.length];
   const length = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
@@ -52,8 +53,10 @@ function edgeOf(outline: Pt[], index: number): { a: Pt; length: number; unit: Pt
 }
 
 /** The stretch of wall a door or window covers, start to end, in room cm. */
-export function openingSegment(outline: Pt[], opening: Pick<Opening, 'edge' | 'offset' | 'width'>): [Pt, Pt] {
-  const { a, unit } = edgeOf(outline, opening.edge);
+export function openingSegment(outline: Pt[], opening: Pick<Opening, 'edge' | 'offset' | 'width'>): [Pt, Pt] | null {
+  const edge = edgeOf(outline, opening.edge);
+  if (!edge) return null;
+  const { a, unit } = edge;
   const at = (d: number): Pt => [a[0] + unit[0] * d, a[1] + unit[1] * d];
   return [at(opening.offset), at(opening.offset + opening.width)];
 }
@@ -67,11 +70,26 @@ export function openingAt(outline: Pt[], p: Pt, width: number, maxDistance: numb
   });
   if (!found) return null;
   const { edge, t } = found;
-  const { length } = edgeOf(outline, edge);
+  const { length } = edgeOf(outline, edge)!;
   const fitted = Math.min(width, length);
   const offset = Math.min(Math.max(t * length - fitted / 2, 0), length - fitted);
   const round = (v: number) => Math.round(v * 10) / 10;
   return { edge, offset: round(offset), width: round(fitted) };
+}
+
+/** How far a wall may move and keep its doors and windows. Mirrors OPENING_FOLLOW_CM in models.py. */
+export const OPENING_FOLLOW_CM = 30;
+
+/** Move each opening onto the wall of `next` nearest to where it sat on `previous`; drop those whose wall is gone. */
+export function reanchorOpenings(previous: Pt[], next: Pt[], openings: Opening[]): Opening[] {
+  return openings.flatMap((opening) => {
+    const segment = openingSegment(previous, opening);
+    if (!segment) return [];
+    const mid: Pt = [(segment[0][0] + segment[1][0]) / 2, (segment[0][1] + segment[1][1]) / 2];
+    const spot = openingAt(next, mid, opening.width, OPENING_FOLLOW_CM);
+    if (!spot || spot.width < opening.width - 0.5) return [];
+    return [{ ...opening, edge: spot.edge, offset: spot.offset }];
+  });
 }
 
 /** Placed lights whose center falls outside a room outline (room cm). */

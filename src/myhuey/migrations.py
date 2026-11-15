@@ -72,7 +72,10 @@ def _as_opening(item: dict[str, Any], outline: list[list[float]]) -> dict[str, A
     """The opening a door or window furniture item stands for, if it sits on an edge."""
     from .geometry import distance_to_segment  # local: migrations stay free of model imports
 
-    center = (_scaled(item.get("x"), 1), _scaled(item.get("y"), 1))
+    try:
+        center = (float(item["x"]), float(item["y"]))
+    except (KeyError, TypeError, ValueError):
+        return None  # no usable position: leave it as furniture
     width = _scaled(item.get("width", 80), 1)
     best = None
     for index, a in enumerate(outline):
@@ -89,7 +92,9 @@ def _as_opening(item: dict[str, Any], outline: list[list[float]]) -> dict[str, A
     width = min(width, length)
     along = ((center[0] - a[0]) * (b[0] - a[0]) + (center[1] - a[1]) * (b[1] - a[1])) / length
     offset = min(max(along - width / 2, 0.0), length - width)
-    return {"id": str(item.get("id") or ""), "kind": item["kind"], "edge": index,
+    from .models import new_id
+
+    return {"id": str(item.get("id") or new_id()), "kind": item["kind"], "edge": index,
             "offset": round(offset, 2), "width": round(width, 2), **_OPENING_DEFAULTS[item["kind"]]}
 
 

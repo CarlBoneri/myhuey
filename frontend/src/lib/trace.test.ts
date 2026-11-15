@@ -54,6 +54,18 @@ describe('trace', () => {
     expect(traceRoom(framed, [10, 10])).toEqual({ ok: false, reason: 'leak' });
   });
 
+  it('reports a leak when a gap lets the fill wrap around the building inside a frame line', () => {
+    // A frame line at the image edge, a building inside it split into two rooms, and a 12 px gap in its left wall.
+    const image = plan(200, 200, [
+      [0, 0, 200, 1], [0, 199, 200, 200], [0, 0, 1, 200], [199, 0, 200, 200],
+      [15, 15, 185, 19], [15, 181, 185, 185], [181, 15, 185, 185], [98, 15, 102, 185],
+      [15, 15, 19, 90], [15, 102, 19, 185],
+    ]);
+    expect(traceRoom(image, [50, 100])).toEqual({ ok: false, reason: 'leak' });
+    expect(traceRoom(image, [8, 8])).toEqual({ ok: false, reason: 'leak' });
+    expect(traceRoom(image, [140, 100]).ok).toBe(true); // the closed room still traces
+  });
+
   it('traces an L-shaped room to six corners', () => {
     const L = plan(100, 100, [
       [10, 10, 90, 14], [10, 10, 14, 90], [10, 86, 50, 90], [46, 50, 50, 90], [46, 50, 90, 54], [86, 10, 90, 54],

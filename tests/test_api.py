@@ -16,7 +16,7 @@ def web(db_path):
 
 
 def test_health_and_index(web):
-    assert web.get("/api/health").json() == {"status": "ok"}
+    assert web.get("/api/health").json()["status"] == "ok"
 
     page = web.get("/")
     assert page.status_code == 200

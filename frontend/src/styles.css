@@ -445,3 +445,4 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .draw-line { stroke: var(--accent-2); }
 .draw-point { fill: var(--accent-2); }
 .opening line, .opening path { vector-effect: none; }
+.stale-banner { margin: 12px 16px 0; padding: 10px 14px; border-radius: 12px; background: rgba(251, 191, 36, 0.12); border: 1px solid rgba(251, 191, 36, 0.4); color: #fde68a; font-size: 13px; }

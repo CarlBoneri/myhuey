@@ -2,6 +2,7 @@
 // on a copy of the plan no larger than 1600 px. Dark pixels are walls; door openings are
 // closed by growing the walls by `gap` px before the room is flood-filled.
 import type { Pt } from '../types';
+import { area } from './geometry';
 
 export interface Gray { width: number; height: number; data: Uint8Array }
 export type TraceResult = { ok: true; outline: Pt[] } | { ok: false; reason: 'wall' | 'leak' | 'tiny' };
@@ -10,6 +11,8 @@ export const MAX_TRACE_SIDE = 1600;
 /** A fill covering more than this share of the image escaped the room (through a gap or a frame line). */
 export const LEAK_FRACTION = 0.6;
 const MIN_REGION_PX = 50;
+/** An outline enclosing this many times the pixels actually filled wrapped around other rooms. */
+export const WRAP_RATIO = 1.5;
 
 /** The factor (at most 1) that fits an image inside MAX_TRACE_SIDE. */
 export function scaleToFit(width: number, height: number, max = MAX_TRACE_SIDE): number {
@@ -180,8 +183,14 @@ export function traceRoom(gray: Gray, seed: Pt, { gap = 3, epsilon = 1.5 }: { ga
   // Grow the room back over the band the walls were grown by, but never into a real wall.
   const grown = dilate(region, width, height, Math.round(gap));
   for (let i = 0; i < grown.length; i++) if (walls[i]) grown[i] = 0;
-  const room = fill(Uint8Array.from(grown, (v) => 1 - v), width, height, start).region;
+  const refilled = fill(Uint8Array.from(grown, (v) => 1 - v), width, height, start);
 
-  const outline = simplifyPolygon(boundary(room, width, height), epsilon);
+  // A fill that escapes through a gap in an outer wall can flow around the whole building
+  // inside a frame line without touching the image edge. Its outer boundary then encloses
+  // far more than it filled: the other rooms sit inside it as holes.
+  const corners = boundary(refilled.region, width, height);
+  if (area(corners) > WRAP_RATIO * refilled.count) return { ok: false, reason: 'leak' };
+
+  const outline = simplifyPolygon(corners, epsilon);
   return outline.length >= 3 ? { ok: true, outline } : { ok: false, reason: 'tiny' };
 }

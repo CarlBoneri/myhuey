@@ -163,7 +163,9 @@ export const FURNITURE_CATALOG: { kind: string; label: string; width: number; de
 
 /** A door or window drawn on its wall: a door as a gap with its swing, a window as a double line. Room cm. */
 export function OpeningShape({ outline, opening, cmPerPx, selected }: { outline: Pt[]; opening: Opening; cmPerPx: number; selected?: boolean }) {
-  const [a, b] = openingSegment(outline, opening);
+  const segment = openingSegment(outline, opening);
+  if (!segment) return null; // its wall is gone; the next save drops it
+  const [a, b] = segment;
   const stroke = selected ? 'var(--accent)' : opening.kind === 'window' ? 'var(--accent-2)' : 'var(--text-2)';
   const ux = (b[0] - a[0]) / (opening.width || 1);
   const uy = (b[1] - a[1]) / (opening.width || 1);

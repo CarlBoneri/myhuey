@@ -11,11 +11,12 @@ from typing import Any
 from fastapi import FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from .errors import BridgeNotConfigured, HueError, LinkButtonNotPressed, RoomNotFound, SceneNotFound
 from .hue import COLLECTIONS, PAIRING_WINDOW, HueBridgeClient
 from .images import MAX_UPLOAD_BYTES, media_type
+from .migrations import CURRENT_VERSION
 from .palette import MOODS
 from .service import HueRoomService
 from .setup import pair_bridge
@@ -32,21 +33,27 @@ _NOT_BUILT = """<!doctype html><meta charset="utf-8"><title>MyHuey</title>
 npm --prefix frontend run build</pre><p>then reload this page.</p></body>"""
 
 
-class PairRequest(BaseModel):
+class Body(BaseModel):
+    """Request bodies refuse NaN and infinity: JSON from Python can carry them, and one would poison the saved document."""
+
+    model_config = ConfigDict(allow_inf_nan=False)
+
+
+class PairRequest(Body):
     bridge_ip: str
     app_name: str = "myhuey"
 
 
-class RoomCreate(BaseModel):
+class RoomCreate(Body):
     name: str
-    width: float = Field(450, ge=30, le=10000, description="cm")
-    height: float = Field(300, ge=30, le=10000, description="cm")
+    width: float = Field(450, ge=1, le=10000, description="cm")
+    height: float = Field(300, ge=1, le=10000, description="cm")
     outline: list[list[float]] | None = None
     x: float | None = CM
     y: float | None = CM
 
 
-class OpeningItem(BaseModel):
+class OpeningItem(Body):
     id: str | None = None
     kind: str
     edge: int = Field(..., ge=0)
@@ -56,14 +63,14 @@ class OpeningItem(BaseModel):
     top: float | None = Field(None, ge=0, le=1000)
 
 
-class PlanUpdate(BaseModel):
+class PlanUpdate(Body):
     cm_per_px: float | None = Field(None, gt=0, le=100)
     offset: list[float] | None = Field(None, min_length=2, max_length=2)
     rotation: float | None = None
     opacity: float | None = Field(None, ge=0, le=1)
 
 
-class FurnitureItem(BaseModel):
+class FurnitureItem(Body):
     id: str | None = None
     kind: str = "custom"
     label: str | None = None
@@ -77,7 +84,7 @@ class FurnitureItem(BaseModel):
     height: float | None = Field(None, gt=0, le=1000)
 
 
-class RoomUpdate(BaseModel):
+class RoomUpdate(Body):
     x: float | None = CM
     y: float | None = CM
     width: float | None = Field(None, ge=30, le=10000)
@@ -90,7 +97,7 @@ class RoomUpdate(BaseModel):
     ceiling: float | None = Field(None, ge=150, le=1000)
 
 
-class LightPlacement(BaseModel):
+class LightPlacement(Body):
     light_id: str
     x: float = 0
     y: float = 0
@@ -163,8 +170,9 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
         return HTMLResponse(page.read_text(encoding="utf-8") if page.is_file() else _NOT_BUILT)
 
     @app.get("/api/health")
-    def health() -> dict[str, str]:
-        return {"status": "ok"}
+    def health() -> dict[str, Any]:
+        # `api` lets the web page notice a server started before an update.
+        return {"status": "ok", "api": CURRENT_VERSION}
 
     # Bridge setup
 

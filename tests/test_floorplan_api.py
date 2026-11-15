@@ -73,14 +73,14 @@ def test_replacing_outline_drops_openings_that_no_longer_fit(db_path):
     service = HueRoomService(db_path)
     service.add_room("Office", outline=SQUARE)
     service.update_room("Office", openings=[
-        {"kind": "door", "edge": 0, "offset": 300, "width": 81},
-        {"kind": "window", "edge": 3, "offset": 10, "width": 90},
-        {"kind": "window", "edge": 1, "offset": 0, "width": 90},
+        {"kind": "door", "edge": 0, "offset": 300, "width": 81},  # its stretch of wall is cut off
+        {"kind": "window", "edge": 3, "offset": 10, "width": 90},  # the left wall stays
+        {"kind": "window", "edge": 1, "offset": 0, "width": 90},  # the right wall moves 2 m
     ])
     room = service.update_room("Office", outline=[[0, 0], [200, 0], [200, 300], [0, 300]])
-    assert [(o.kind, o.edge) for o in room.openings] == [("window", 3), ("window", 1)]
-    triangle = service.update_room("Office", outline=[[0, 0], [400, 0], [0, 300]])
-    assert [o.edge for o in triangle.openings] == [1]
+    assert [(o.kind, o.edge) for o in room.openings] == [("window", 3)]
+    triangle = service.update_room("Office", outline=[[0, 0], [200, 0], [0, 300]])
+    assert [o.edge for o in triangle.openings] == [2]  # the left wall is now the triangle's last edge
 
 
 def test_furniture_heights_over_api(db_path):

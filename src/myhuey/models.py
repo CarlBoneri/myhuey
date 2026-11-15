@@ -53,9 +53,10 @@ def new_id() -> str:
 
 def _num(value: Any, default: float = 0.0) -> float:
     try:
-        return round(float(value), 2)
+        number = float(value)
     except (TypeError, ValueError):
         return default
+    return round(number, 2) if math.isfinite(number) else default
 
 
 def _clamp_extent(value: float, what: str) -> float:
@@ -264,6 +265,41 @@ class Opening:
 
     def to_dict(self) -> dict[str, Any]:
         return dict(self.__dict__)
+
+
+OPENING_FOLLOW_CM = 30.0  # how far a wall may move and still keep its doors and windows
+
+
+def reanchor_openings(old: list[list[float]], new: list[list[float]], openings: list[Opening]) -> list[Opening]:
+    """Move each opening onto the wall of `new` nearest to where it sat on `old`, so a
+    reshaped or re-traced room keeps its doors and windows on the same walls. Openings
+    whose wall moved away or became too short are dropped."""
+    from .geometry import distance_to_segment
+
+    kept = []
+    for opening in openings:
+        if opening.edge >= len(old):
+            continue
+        a, b = old[opening.edge], old[(opening.edge + 1) % len(old)]
+        length = edge_length(old, opening.edge) or 1.0
+        along = opening.offset + opening.width / 2
+        mid = (a[0] + (b[0] - a[0]) * along / length, a[1] + (b[1] - a[1]) * along / length)
+        best = None
+        for index, p in enumerate(new):
+            q = new[(index + 1) % len(new)]
+            distance = distance_to_segment(mid, (p[0], p[1]), (q[0], q[1]))
+            if distance <= OPENING_FOLLOW_CM and (best is None or distance < best[0]):
+                best = (distance, index, p, q)
+        if best is None:
+            continue
+        _, index, p, q = best
+        wall = edge_length(new, index)
+        if opening.width > wall + EDGE_TOLERANCE_CM:
+            continue
+        position = ((mid[0] - p[0]) * (q[0] - p[0]) + (mid[1] - p[1]) * (q[1] - p[1])) / (wall or 1.0)
+        offset = min(max(position - opening.width / 2, 0.0), max(wall - opening.width, 0.0))
+        kept.append(Opening(opening.id, opening.kind, index, round(offset, 2), opening.width, opening.sill, opening.top))
+    return kept
 
 
 def opening_fits(outline: list[list[float]], opening: Opening) -> bool:

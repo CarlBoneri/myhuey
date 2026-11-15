@@ -20,7 +20,7 @@ const NAV: { route: Route; label: string; icon: typeof House; match: Route['view
 
 export function App() {
   const route = useRoute();
-  const { ready, setup, load, refreshLights, toasts, dismiss, lightsError } = useStore();
+  const { ready, setup, load, refreshLights, toasts, dismiss, lightsError, serverStale } = useStore();
 
   useEffect(() => {
     void load();
@@ -73,7 +73,14 @@ export function App() {
         })}
         <div className={`bridge-dot${setup?.configured && !lightsError ? ' ok' : ''}`} title={setup?.configured ? (lightsError || `Bridge ${setup.bridge.ip}`) : 'No bridge paired'} />
       </nav>
-      <main className="main">{view}</main>
+      <main className="main">
+        {serverStale && (
+          <p className="stale-banner" role="alert">
+            The MyHuey server is older than this page, so newer features will fail. Stop it and run <code>myhuey serve</code> again.
+          </p>
+        )}
+        {view}
+      </main>
       <div className="toasts" role="status" aria-live="polite">
         {toasts.map((toast) => (
           <div key={toast.id} className={`toast${toast.error ? ' error' : ''}`}>

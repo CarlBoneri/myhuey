@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { api } from './api';
+import { API_VERSION, api } from './api';
 import type { BridgeLight, HomePlan, ProfileTable, Room, Scene, SetupStatus } from './types';
 
 export interface Toast { id: number; message: string; error: boolean }
@@ -9,6 +9,8 @@ interface State {
   setup: SetupStatus | null;
   lights: Record<string, BridgeLight>;
   lightsError: string;
+  /** The running server is older than this page (it was started before an update). */
+  serverStale: boolean;
   rooms: Room[];
   scenes: Scene[];
   plan: HomePlan | null;
@@ -32,6 +34,7 @@ export const useStore = create<State>((set, get) => ({
   setup: null,
   lights: {},
   lightsError: '',
+  serverStale: false,
   rooms: [],
   scenes: [],
   plan: null,
@@ -39,6 +42,12 @@ export const useStore = create<State>((set, get) => ({
   toasts: [],
 
   async load() {
+    try {
+      const health = await api.health();
+      set({ serverStale: (health.api ?? 0) < API_VERSION });
+    } catch {
+      // reported by the calls below
+    }
     try {
       const [setup, rooms, scenes, profiles, plan] = await Promise.all([api.setup(), api.rooms(), api.scenes(), api.profiles(), api.plan()]);
       set({ setup, rooms, scenes, profiles, plan });

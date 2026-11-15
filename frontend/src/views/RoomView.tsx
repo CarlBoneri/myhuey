@@ -8,7 +8,7 @@ import { area, bounds, pathOf, round1 } from '../lib/geometry';
 import { formatArea, formatLength, snap } from '../lib/units';
 import { effectiveLength, liveColors, placedProfile } from '../lib/lights';
 import type { Furniture, Opening, Placement, Pt, Room, Units } from '../types';
-import { openingAt } from '../lib/plan';
+import { openingAt, reanchorOpenings } from '../lib/plan';
 import { PlanCanvas, useDrag, usePlan } from '../components/PlanCanvas';
 import { FURNITURE_CATALOG, FurnitureShape, LightSilhouette, OpeningShape } from '../components/Shapes';
 import { LightControls } from '../components/LightControls';
@@ -486,16 +486,20 @@ export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' })
                 <OutlineHandles
                   outline={draft.outline}
                   units={draft.units}
-                  onChange={(outline) => setDraft({ ...draftRef.current!, outline })}
+                  onChange={(outline) => {
+                    const current = draftRef.current!;
+                    setDraft({ ...current, outline, openings: reanchorOpenings(current.outline, outline, current.openings) });
+                  }}
                   onCommit={(outline) => {
-                    setDraft({ ...draftRef.current!, outline });
+                    const current = draftRef.current!;
+                    setDraft({ ...current, outline, openings: reanchorOpenings(current.outline, outline, current.openings) });
                     void saveRoom({ outline });
                   }}
                 />
               )}
             </PlanCanvas>
             {tool === 'outline' && <p className="stage-hint">Drag corners to reshape. Drag a + to add a corner. Double-click a corner to remove it.</p>}
-            {tool === 'openings' && <p className="stage-hint">Click a wall to add a {openingKind} there. Doors and windows on walls that change shape are removed.</p>}
+            {tool === 'openings' && <p className="stage-hint">Click a wall to add a {openingKind} there. Doors and windows follow their wall when you reshape the room, and go if their wall does.</p>}
           </div>
 
           <aside className="inspector">
