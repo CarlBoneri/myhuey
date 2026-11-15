@@ -43,6 +43,25 @@ export function quarterHours(): string[] {
   return times;
 }
 
+const SHORT_DAY_MINUTES = 6 * 60;
+const toMinutes = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
+
+function spell(minutes: number): string {
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (!rest) return `${hours} ${hours === 1 ? 'hour' : 'hours'}`;
+  return hours ? `${hours} h ${rest} min` : `${rest} min`;
+}
+
+/** A warning for a schedule suggestions can't do much with (the same times, or a short day), else ''. */
+export function scheduleWarning(wake: string, bed: string): string {
+  const day = (((toMinutes(bed) - toMinutes(wake)) % 1440) + 1440) % 1440;
+  // The curve reads equal times as a 24-hour day (see curve.py), not as no day at all.
+  if (day === 0) return 'Wake time and bedtime are the same, so suggestions treat it as a 24-hour day with no night.';
+  if (day < SHORT_DAY_MINUTES) return `Only ${spell(day)} between waking and bedtime; suggestions will be dim most of the day.`;
+  return '';
+}
+
 export function lightFill(result: { on: boolean; color: string | null; brightness: number }): { fill: string; opacity: number } {
   if (!result.on || !result.color) return { fill: '#2a2a2a', opacity: 1 };
   return { fill: result.color, opacity: Math.round((0.2 + (0.8 * result.brightness) / 100) * 100) / 100 };

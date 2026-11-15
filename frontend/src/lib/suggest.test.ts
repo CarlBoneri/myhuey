@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { autoRoleLabel, cardTitle, creditText, lightFill, nowHHMM, quarterHours } from './suggest';
+import { autoRoleLabel, cardTitle, creditText, lightFill, nowHHMM, quarterHours, scheduleWarning } from './suggest';
 
 describe('suggest helpers', () => {
   it('titles a card by mode and palette', () => {
@@ -64,5 +64,25 @@ describe('autoRoleLabel', () => {
   it('is plain Auto before the server has worked roles out', () => {
     expect(autoRoleLabel(undefined)).toBe('Auto');
     expect(autoRoleLabel({})).toBe('Auto');
+  });
+});
+
+describe('scheduleWarning', () => {
+  it('says nothing for an ordinary day, even across midnight', () => {
+    expect(scheduleWarning('07:00', '23:00')).toBe('');
+    expect(scheduleWarning('10:00', '02:00')).toBe('');
+    expect(scheduleWarning('07:00', '13:00')).toBe('');
+  });
+
+  it('warns when wake time and bedtime are the same', () => {
+    // curve.py reads equal times as a 24-hour day: bright all day, winding down just before the wake time
+    expect(scheduleWarning('07:00', '07:00')).toBe('Wake time and bedtime are the same, so suggestions treat it as a 24-hour day with no night.');
+  });
+
+  it('warns about a day under six hours', () => {
+    expect(scheduleWarning('07:00', '12:00')).toBe('Only 5 hours between waking and bedtime; suggestions will be dim most of the day.');
+    expect(scheduleWarning('23:00', '00:00')).toBe('Only 1 hour between waking and bedtime; suggestions will be dim most of the day.');
+    expect(scheduleWarning('07:00', '12:45')).toBe('Only 5 h 45 min between waking and bedtime; suggestions will be dim most of the day.');
+    expect(scheduleWarning('07:00', '07:30')).toBe('Only 30 min between waking and bedtime; suggestions will be dim most of the day.');
   });
 });

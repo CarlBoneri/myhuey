@@ -4,7 +4,7 @@ import { api } from '../api';
 import { useStore } from '../store';
 import { Field, HueIcon, Panel, Segmented, TextInput, Toggle } from '../components/ui';
 import type { Preferences } from '../types';
-import { quarterHours } from '../lib/suggest';
+import { quarterHours, scheduleWarning } from '../lib/suggest';
 
 export function SettingsView() {
   const { setup, lights, load, lightsError } = useStore();
@@ -108,6 +108,7 @@ function PreferencesPanel() {
     <Segmented label={key} value={String(p[key])} onChange={(v) => set({ [key]: values.find((x) => String(x) === v) } as Partial<Preferences>)}
       options={values.map((v) => ({ value: String(v), label: format(v) }))} />
   );
+  const scheduleNote = scheduleWarning(p.wake_time, p.bed_time); // a hint only; saving is never blocked
   return (
     <Panel title="Preferences">
       <h3 className="pref-group">Rooms</h3>
@@ -130,6 +131,7 @@ function PreferencesPanel() {
       <PreferenceRow label="Bedtime" hint="Suggested scenes warm and dim over the four hours before it, and leave out blue-heavy palettes.">
         <TimeSelect label="Bedtime" value={p.bed_time} onChange={(bed_time) => set({ bed_time })} />
       </PreferenceRow>
+      {scheduleNote && <p className="warn-text" role="status">{scheduleNote}</p>}
       <h3 className="pref-group">Bridge</h3>
       <PreferenceRow label="Refresh light states" hint="How often this page reads the lights while it is open.">
         {choice('poll_seconds', [2, 5, 10, 30, 0], (v) => (v ? `${v}s` : 'Off'))}
