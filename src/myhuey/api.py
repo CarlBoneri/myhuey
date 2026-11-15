@@ -20,6 +20,7 @@ from .migrations import CURRENT_VERSION
 from .palette import MOODS
 from .service import HueRoomService
 from .discovery import discover
+from . import setup as setup_flow
 from .setup import check_bridge, pair_bridge
 from .shapes import BY_ARCHETYPE, BY_MODEL, BY_PRODUCT, DEFAULT_PROFILE
 
@@ -42,6 +43,11 @@ class Body(BaseModel):
 
 class PairRequest(Body):
     bridge_ip: str
+    app_name: str = "myhuey"
+
+
+class PairAnyRequest(Body):
+    bridge_ips: list[str] = Field(..., min_length=1, max_length=8)
     app_name: str = "myhuey"
 
 
@@ -193,6 +199,11 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
             {"id": str(item.get("id", "")), "ip": str(item.get("internalipaddress", "")), "source": str(item.get("source", ""))}
             for item in discover()
         ]
+
+    @app.post("/api/bridge/register-any")
+    def register_any_bridge(body: PairAnyRequest) -> dict[str, Any]:
+        """Pair whichever of these bridges has its link button pressed first."""
+        return setup_flow.pair_any(body.bridge_ips, service=service, app_name=body.app_name, window=pairing_window)
 
     @app.get("/api/bridges/check")
     def bridge_check(ip: str = Query(..., min_length=1, max_length=255)) -> dict[str, Any]:

@@ -4,12 +4,17 @@ from __future__ import annotations
 
 import ipaddress
 import math
+import re
+import socket
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Callable, Iterable
 
-from .errors import BridgeUnreachable, HueApiError, HueError
+from .errors import BridgeUnreachable, HueApiError, HueError, LinkButtonNotPressed
 from .hue import PAIRING_WINDOW, HueBridgeClient
 from .discovery import discover
 from .service import HueRoomService
+from .tls import pinned_bridge_id
 
 _MAX_RANGE_SIZE = 1024
 
@@ -54,6 +59,20 @@ def bridge_address(bridge_ip: str) -> str:
     return host if port == 443 else f"{host}:{port}"
 
 
+def instance_name() -> str:
+    """This computer's name as the bridge's app list shows it (at most 19 characters)."""
+    host = socket.gethostname().split(".")[0]
+    cleaned = re.sub(r"[^A-Za-z0-9_-]+", "-", host).strip("-")[:19].strip("-")
+    return cleaned or "computer"
+
+
+def _save_pairing(address: str, username: str, service: HueRoomService) -> None:
+    """Save the bridge with the ID its verified certificate carries, so it can be found
+    again by ID if its address changes."""
+    host, port = HueBridgeClient.normalize_bridge_endpoint(address)
+    service.set_bridge(address, username, pinned_bridge_id(host, port, service.cert_dir))
+
+
 def check_bridge(bridge_ip: str, *, service: HueRoomService) -> dict[str, Any]:
     """What the bridge at an address says about itself, before pairing: proof that it is a
     Hue bridge, which one, and whether it is the one already paired."""
@@ -81,10 +100,52 @@ def pair_bridge(
     """Wait for the link button, register, and save the bridge. The result never holds the username."""
     address = bridge_address(bridge_ip)
     username = HueBridgeClient.register_user(
-        address, app_name, window=window, on_wait=on_wait, cert_dir=service.cert_dir
+        address, app_name, window=window, on_wait=on_wait, cert_dir=service.cert_dir, instance=instance_name()
     )
-    service.set_bridge(address, username)
+    _save_pairing(address, username, service)
     return {"bridge_ip": address, "app_name": app_name, "status": "ready"}
+
+
+def pair_any(
+    bridge_ips: Iterable[str],
+    *,
+    service: HueRoomService,
+    app_name: str = "myhuey",
+    window: float = PAIRING_WINDOW,
+) -> dict[str, Any]:
+    """Wait for the link button on several bridges at once and pair whichever is pressed.
+
+    Signify's discovery guide suggests this for homes with more than one bridge: the
+    person picks a bridge by pressing its button. The others stop asking at once.
+    """
+    addresses = list(dict.fromkeys(bridge_address(ip) for ip in bridge_ips))
+    if not addresses:
+        raise ValueError("Give at least one bridge address")
+    paired = threading.Event()
+    instance = instance_name()
+
+    def attempt(address: str) -> tuple[str, str]:
+        username = HueBridgeClient.register_user(
+            address, app_name, window=window, cert_dir=service.cert_dir, instance=instance, should_stop=paired.is_set
+        )
+        paired.set()
+        return address, username
+
+    winner: tuple[str, str] | None = None
+    errors: list[HueError] = []
+    with ThreadPoolExecutor(max_workers=len(addresses)) as pool:
+        for future in as_completed([pool.submit(attempt, address) for address in addresses]):
+            try:
+                result = future.result()
+            except HueError as exc:
+                errors.append(exc)
+                continue
+            winner = winner or result
+    if winner is None:
+        # Nobody pressed a button is the likeliest story; report that over an unreachable bridge.
+        raise next((e for e in errors if isinstance(e, LinkButtonNotPressed)), errors[0] if errors else LinkButtonNotPressed(addresses[0], window))
+    _save_pairing(winner[0], winner[1], service)
+    return {"bridge_ip": winner[0], "app_name": app_name, "status": "ready"}
 
 
 def _line_countdown(print_func: Callable[[str], None], every: int = 5) -> Callable[[str, float], None]:

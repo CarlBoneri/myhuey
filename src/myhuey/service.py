@@ -11,7 +11,8 @@ from pathlib import Path
 from typing import Any, Callable
 
 from .color import hex_to_rgb, light_state_to_hex, mired_to_color_temperature, rgb_to_xy, xy_to_hex
-from .errors import BridgeNotConfigured, HueError, RoomNotFound, SceneNotFound
+from .discovery import discover
+from .errors import BridgeNotConfigured, BridgeUnreachable, HueError, RoomNotFound, SceneNotFound
 from .geometry import rectangle
 from .hue import HueBridgeClient
 from .images import ImageSampler, extract_palette, image_path, prune_unreferenced, store_image
@@ -19,11 +20,13 @@ from .models import Furniture, HomePlan, LayoutLight, Opening, Room, RoomPhoto, 
 from .scenes import Scene, evaluate
 from .shapes import profile_for
 from .storage import DEFAULT_STORAGE_PATH, load_config, save_config, uploads_dir
+from .tls import pin_certificate
 from .units import UNIT_SYSTEMS
 
 _GRID_COLUMNS = 3
 _GRID_CELL_CM = (500.0, 350.0)
-_V2_CACHE_SECONDS = 4.0  # gradient state is shown live, so refresh about once per poll
+_V2_CACHE_SECONDS = 4.0
+_RELOCATE_EVERY_SECONDS = 60.0  # gradient state is shown live, so refresh about once per poll
 PRODUCT_KEYS = ("archetype", "productname", "modelid")
 
 
@@ -113,6 +116,7 @@ class HueRoomService:
         self._v2_index: dict[str, dict[str, Any]] = {}
         self._v2_loaded = 0.0
         self.sleep: Callable[[float], None] = time.sleep
+        self._relocate_after = 0.0
 
     def _load(self) -> dict[str, Any]:
         return load_config(self.storage_path)
@@ -130,14 +134,37 @@ class HueRoomService:
     # Bridge
 
     def get_bridge(self) -> dict[str, str]:
-        """The saved bridge as {"ip": ..., "username": ...}, or {} if none is paired."""
+        """The saved bridge as {"ip", "username", and "bridge_id" when known}, or {} if none is paired."""
         bridge = self._load()["bridge"]
         return dict(bridge) if bridge.get("ip") and bridge.get("username") else {}
 
-    def set_bridge(self, ip: str, username: str) -> None:
+    def set_bridge(self, ip: str, username: str, bridge_id: str | None = None) -> None:
         config = self._load()
-        config["bridge"] = {"ip": ip, "username": username}
+        config["bridge"] = {"ip": ip, "username": username, **({"bridge_id": bridge_id.lower()} if bridge_id else {})}
         self._save(config)
+
+    def relocate_bridge(self) -> str | None:
+        """Find the paired bridge again by its ID after its address changed (a router
+        handed it a new one). Checks at most once a minute. Returns the new address.
+
+        As Signify's discovery guide advises, discovery runs only when the saved address
+        stops answering, and the new address must present a verified certificate for the
+        same bridge ID before it is saved.
+        """
+        bridge = self.get_bridge()
+        wanted = str(bridge.get("bridge_id") or "").lower()
+        now = time.monotonic()
+        if not wanted or now < self._relocate_after:
+            return None
+        self._relocate_after = now + _RELOCATE_EVERY_SECONDS
+        for found in discover(mdns_timeout=1.0):
+            address = str(found.get("internalipaddress") or "")
+            if str(found.get("id") or "").lower() == wanted and address and address != bridge["ip"]:
+                host, port = HueBridgeClient.normalize_bridge_endpoint(address)
+                pin_certificate(host, port, cert_dir=self.cert_dir, replace=True, expected_id=wanted)
+                self.set_bridge(address, bridge["username"], wanted)
+                return address
+        return None
 
     def client(self) -> HueBridgeClient:
         """A client for the saved bridge. Rebuilt when the saved bridge changes."""
@@ -181,8 +208,14 @@ class HueRoomService:
 
     def lights(self) -> list[dict[str, Any]]:
         """Every light on the bridge with its live state and physical profile."""
-        index = self.v2_index()
-        raw = self.client().get_lights()
+        try:
+            index = self.v2_index()
+            raw = self.client().get_lights()
+        except BridgeUnreachable:
+            if not self.relocate_bridge():
+                raise
+            index = self.v2_index(refresh=True)
+            raw = self.client().get_lights()
         self._remember_products(raw)
         return [light_snapshot(light_id, raw[light_id], index.get(light_id)) for light_id in sorted(raw, key=_light_order)]
 

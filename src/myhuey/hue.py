@@ -199,20 +199,28 @@ class HueBridgeClient:
         on_wait: Callable[[float], None] | None = None,
         session: Any = None,
         cert_dir: str | Path | None = None,
+        instance: str | None = None,
+        should_stop: Callable[[], bool] | None = None,
     ) -> str:
         """Pair with the bridge and return the new username.
 
         The bridge only agrees after its link button is pressed, so this asks every
         `interval` seconds for up to `window` seconds. `on_wait` is called with the
-        seconds left before each wait. Raises LinkButtonNotPressed when time runs out.
+        seconds left before each wait. Raises LinkButtonNotPressed when time runs out, or
+        as soon as `should_stop` returns True (another bridge was paired instead).
+
+        The bridge lists paired apps as "app#instance"; `instance` names this computer
+        there so a person can tell which pairing is which.
         """
         host, port = HueBridgeClient.normalize_bridge_endpoint(bridge_ip)
         session = session or pinned_session(host, port, cert_dir=cert_dir)
         url = f"https://{host}:{port}/api"
-        payload = {"devicetype": f"{app_name[:20]}#{app_name[:19]}"}
+        payload = {"devicetype": f"{app_name[:20]}#{(instance or app_name)[:19]}"}
 
         deadline = time.monotonic() + window
         while True:
+            if should_stop and should_stop():
+                raise LinkButtonNotPressed(host, window)
             result = _exchange(
                 session, "POST", url, host=host, port=port, cert_dir=cert_dir, timeout=10.0, json=payload
             )
