@@ -11,6 +11,10 @@ Sources:
 Every palette is filtered for room light and tagged; near-duplicates are dropped.
 
     python scripts/build_palettes.py --out src/myhuey/data/palettes.json
+
+An earlier build cut Met titles at 60 characters. To fetch those titles again, in place:
+
+    python scripts/build_palettes.py --out src/myhuey/data/palettes.json --refresh-met-titles
 """
 
 from __future__ import annotations
@@ -37,6 +41,8 @@ MET = "https://collectionapi.metmuseum.org/public/collection/v1"
 MET_SEARCH = "https://collectionapi.metmuseum.org/public/collection/v1.1/search"  # v1/search retired 2026-10-01
 MET_PAGE = 100
 MET_DEPARTMENT_PAINTINGS = 11  # European Paintings
+TITLE_LIMIT = 200
+OLD_TITLE_CUT = 60  # where an earlier build cut credit titles
 
 
 def short_title(text: str, limit: int = 44) -> str:
@@ -45,6 +51,10 @@ def short_title(text: str, limit: int = 44) -> str:
     if len(text) <= limit:
         return text
     return text[:limit].rsplit(" ", 1)[0].rstrip(",;:") + "…"
+
+
+def full_title(text: str) -> str:
+    return " ".join(str(text or "Untitled").split())[:TITLE_LIMIT]
 
 
 def _get(url: str, **params):
@@ -118,7 +128,7 @@ def met(limit: int) -> list[dict]:
                     break
                 if not usable(colors):
                     continue
-                title = " ".join(str(item.get("title") or "Untitled").split())[:200]
+                title = full_title(item.get("title"))
                 palettes.append({
                     "id": f"met-{object_id}-{mood}", "name": f"{short_title(title)} ({mood})", "colors": clean(colors), "source": "met",
                     "credit": {"title": title, "artist": str(item.get("artistDisplayName") or ""),
@@ -151,13 +161,52 @@ def build(limit_cl: int, limit_met: int, generated: int) -> list[dict]:
     return kept
 
 
+def refresh_met_titles(palettes: list[dict]) -> tuple[int, int]:
+    """Fetch the full title of Met entries an earlier build cut at 60 characters.
+
+    A title that can't be fetched is cut at a word boundary with an ellipsis instead. Returns
+    (refreshed, trimmed) counts of entries.
+    """
+    fetched: dict[str, str | None] = {}
+    refreshed = trimmed = 0
+    for palette in palettes:
+        title = palette.get("credit", {}).get("title", "")
+        if palette.get("source") != "met" or len(title) != OLD_TITLE_CUT:
+            continue
+        _, object_id, mood = palette["id"].split("-", 2)
+        if object_id not in fetched:
+            try:
+                fetched[object_id] = full_title(_get(f"{MET}/objects/{object_id}").json().get("title"))
+            except (requests.RequestException, ValueError) as exc:
+                print(f"  object {object_id}: title not fetched ({exc})", file=sys.stderr)
+                fetched[object_id] = None
+        full = fetched[object_id]
+        if full and full.startswith(title):  # the same title, now whole
+            palette["credit"]["title"] = full
+            refreshed += 1
+        else:
+            palette["credit"]["title"] = short_title(title, OLD_TITLE_CUT - 1)
+            trimmed += 1
+        palette["name"] = f"{short_title(palette['credit']['title'])} ({mood})"
+    return refreshed, trimmed
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", required=True)
     parser.add_argument("--limit-cl", type=int, default=600)
     parser.add_argument("--limit-met", type=int, default=300)
     parser.add_argument("--generated", type=int, default=300)
+    parser.add_argument("--refresh-met-titles", action="store_true",
+                        help="fix Met titles cut at 60 characters in the existing --out file, then stop")
     args = parser.parse_args()
+    if args.refresh_met_titles:
+        path = Path(args.out)
+        palettes = json.loads(path.read_text(encoding="utf-8"))
+        refreshed, trimmed = refresh_met_titles(palettes)
+        path.write_text(json.dumps(palettes, indent=1) + "\n", encoding="utf-8")
+        print(f"Met titles: {refreshed} refreshed, {trimmed} trimmed in {args.out}")
+        return
     palettes = build(args.limit_cl, args.limit_met, args.generated)
     Path(args.out).write_text(json.dumps(palettes, indent=1) + "\n", encoding="utf-8")
     counts: dict[str, int] = {}

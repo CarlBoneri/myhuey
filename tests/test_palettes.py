@@ -58,3 +58,12 @@ def test_license_file_ships():
 
     text = resources.files("myhuey.data").joinpath("PALETTES_LICENSE.md").read_text(encoding="utf-8")
     assert "CC BY-NC-SA 3.0" in text and "CC0" in text
+
+
+def test_met_credit_titles_are_not_cut_mid_word():
+    # The build once cut titles at 60 characters; full titles were fetched again, or cut at a word with "…".
+    for palette in load():
+        if palette.source == "met":
+            title = palette.credit["title"]
+            assert len(title) != 60 or title.endswith("…"), palette.id
+            assert palette.name.endswith(f"({palette.id.rsplit('-', 1)[1]})")
