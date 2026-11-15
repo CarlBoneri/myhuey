@@ -76,6 +76,10 @@ class LightPlacement(BaseModel):
     length: float | None = Field(None, ge=5, le=5000)
 
 
+class RoomPower(BaseModel):
+    on: bool
+
+
 class PhotoPlacements(BaseModel):
     placements: dict[str, dict[str, float]]
 
@@ -205,6 +209,11 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
             length=body.length,
         )
         return light.to_dict()
+
+    @app.post("/api/rooms/{room_name}/power")
+    def room_power(room_name: str, body: RoomPower) -> dict[str, Any]:
+        results = service.set_room_power(room_name, body.on)
+        return {"results": results, "failed": sum(1 for item in results if not item["ok"])}
 
     @app.delete("/api/rooms/{room_name}/lights/{light_id}")
     def remove_light(room_name: str, light_id: str) -> dict[str, str]:

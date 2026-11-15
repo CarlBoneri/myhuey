@@ -111,6 +111,23 @@ export function sendLight(id: string, changes: Record<string, unknown>, optimist
   })();
 }
 
+/** Turn every light in a room on or off; the plan updates at once, then reads back the bridge. */
+export async function setRoomPower(room: Room, on: boolean) {
+  const store = useStore.getState();
+  const ids = room.lights.map((l) => l.light_id).filter((id) => store.lights[id]);
+  ids.forEach((id) => store.patchLight(id, { on }));
+  try {
+    const result = await api.roomPower(room.name, on);
+    if (result.failed) {
+      const names = result.results.filter((r) => !r.ok).map((r) => r.label).join(', ');
+      store.toast(`${result.failed} light(s) in ${room.name} did not turn ${on ? 'on' : 'off'}: ${names}`);
+    }
+  } catch (error) {
+    store.toast((error as Error).message);
+  }
+  await useStore.getState().refreshLights();
+}
+
 /** Run an action and report failures as a toast. Returns undefined on failure. */
 export async function attempt<T>(work: () => Promise<T>, success?: string): Promise<T | undefined> {
   try {

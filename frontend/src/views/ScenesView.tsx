@@ -19,7 +19,8 @@ export function ScenePreview({ scene, room }: { scene: Scene; room: Room | undef
       <g clipPath={`url(#${clip})`}>
         {scene.image && (
           <image href={api.imageUrl(scene.image.file)} x={scene.image.x} y={scene.image.y} width={scene.image.width} height={scene.image.height}
-            preserveAspectRatio="none" opacity={scene.image.opacity} />
+            preserveAspectRatio="none" opacity={scene.image.opacity}
+            transform={`rotate(${scene.image.rotation ?? 0} ${scene.image.x + scene.image.width / 2} ${scene.image.y + scene.image.height / 2})`} />
         )}
         {scene.zones.map((zone) => <path key={zone.id} d={pathOf(zone.points)} fill={zone.color} fillOpacity={0.35 + (zone.brightness / 100) * 0.5} />)}
       </g>

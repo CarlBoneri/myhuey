@@ -14,6 +14,7 @@ from .hue import PAIRING_WINDOW, HueBridgeClient
 from .service import HueRoomService
 from .setup import run_setup
 from .tls import fingerprint, load_pin
+from .geometry import fit_image
 from .units import format_length, parse_length
 
 
@@ -60,7 +61,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     room.add_argument(
         "action",
-        choices=["list", "show", "create", "update", "assign", "remove-light", "delete", "import", "photo", "remove-photo"],
+        choices=["list", "show", "create", "update", "assign", "remove-light", "delete", "import", "photo", "remove-photo", "on", "off"],
     )
     room.add_argument("--name", help="Room name")
     room.add_argument("--new-name", help="Rename the room (update)")
@@ -103,6 +104,7 @@ def build_parser() -> argparse.ArgumentParser:
     scene.add_argument("--rect", help='Zone rectangle "x,y,width,height" in cm')
     scene.add_argument("--file", help="Image to lay over the whole room, for image")
     scene.add_argument("--mood", default="colorful", help="Palette mood for image: colorful, bright, muted, deep, dark")
+    scene.add_argument("--rotation", type=float, default=0, help="Degrees to turn the image clockwise, for image")
     scene.set_defaults(handler=handle_scene)
 
     palette = subparsers.add_parser("palette", help="Extract a color theme from an image file")
@@ -251,6 +253,13 @@ def handle_room(args: argparse.Namespace) -> int:
             new_name=args.new_name,
         )
         print(f"Updated {_describe_room(room)}")
+    elif args.action in ("on", "off"):
+        results = service.set_room_power(args.name, args.action == "on")
+        failed = [item for item in results if not item["ok"]]
+        print(f"Turned {args.action} {len(results) - len(failed)} lights in {args.name}.")
+        for item in failed:
+            print(f"  {item['label']}: {item['error']}")
+        return 1 if failed else 0
     elif args.action == "delete":
         service.remove_room(args.name)
         print(f"Deleted room '{args.name}'.")
@@ -376,9 +385,10 @@ def handle_scene(args: argparse.Namespace) -> int:
         room = service.get_room(scene.room)
         xs = [p[0] for p in room.outline]
         ys = [p[1] for p in room.outline]
+        placed = fit_image((min(xs), min(ys), max(xs), max(ys)), args.rotation, uploaded["width"] / uploaded["height"])
         data = scene.to_dict()
         data["image"] = {
-            "file": uploaded["file"], "x": min(xs), "y": min(ys), "width": room.width, "height": room.height,
+            "file": uploaded["file"], **placed, "rotation": args.rotation % 360,
             "mood": args.mood, "picks": uploaded["theme"],
         }
         data["palette"] = [swatch["color"] for swatch in uploaded["theme"]]

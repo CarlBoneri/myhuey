@@ -127,6 +127,7 @@ export interface ImageLayer {
   brightness_from_image: boolean;
   mood: Mood;
   picks: Swatch[];
+  rotation: number;
 }
 
 export type BaseMode = 'off' | 'keep' | 'color' | 'nearest';

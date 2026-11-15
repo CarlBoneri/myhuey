@@ -385,6 +385,46 @@ class HueRoomService:
         self._save(config)
         return light
 
+    def set_room_power(self, room_name: str, on: bool, *, pause: float = 0.1) -> list[dict[str, Any]]:
+        """Turn every light placed in a room on or off. A light that fails does not stop
+        the rest; each result says whether it took the change."""
+        lights = self.get_room(room_name).lights
+        if not lights:
+            return []
+        client = self.client()
+        results = []
+        for light in lights:
+            result: dict[str, Any] = {"light_id": light.light_id, "label": light.label, "ok": True, "retried": False}
+            try:
+                client.set_light_state(light.light_id, {"on": bool(on)})
+            except HueError as exc:
+                result.update(ok=False, error=str(exc))
+            results.append(result)
+            if pause:
+                self.sleep(pause)  # the bridge handles about ten light commands a second
+
+        # Under a burst of commands the bridge can answer success and still drop one.
+        # Read the lights back once and resend to any that did not change.
+        if pause:
+            self.sleep(max(pause * 5, 0.5))
+        try:
+            current = client.get_lights()
+        except HueError:
+            return results
+        if not isinstance(current, dict):
+            return results
+        for result in results:
+            state = (current.get(result["light_id"]) or {}).get("state") or {}
+            if result["ok"] and "on" in state and bool(state["on"]) != bool(on):
+                result["retried"] = True
+                try:
+                    client.set_light_state(result["light_id"], {"on": bool(on)})
+                except HueError as exc:
+                    result.update(ok=False, error=str(exc))
+                if pause:
+                    self.sleep(pause)
+        return results
+
     def remove_light(self, room_name: str, light_id: str) -> None:
         config = self._load()
         room_data = self._room_data(config, room_name)

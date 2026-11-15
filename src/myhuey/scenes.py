@@ -7,6 +7,7 @@ then the image, then the base.
 
 from __future__ import annotations
 
+import math
 import re
 
 from dataclasses import dataclass, field
@@ -106,7 +107,8 @@ class Zone:
 
 @dataclass
 class ImageLayer:
-    """An uploaded image stretched over a rectangle of the room (cm)."""
+    """An uploaded image stretched over a rectangle of the room (cm), turned `rotation`
+    degrees clockwise around that rectangle's center."""
 
     file: str
     x: float
@@ -118,6 +120,7 @@ class ImageLayer:
     brightness_from_image: bool = True
     mood: str = "colorful"
     picks: list[dict[str, Any]] = field(default_factory=list)  # theme swatches: color and x, y (0-1)
+    rotation: float = 0.0
 
     @classmethod
     def from_dict(cls, data: dict[str, Any] | None) -> ImageLayer | None:
@@ -136,6 +139,7 @@ class ImageLayer:
             brightness=_brightness(data.get("brightness")),
             brightness_from_image=bool(data.get("brightness_from_image", True)),
             mood=str(data.get("mood") or "colorful")[:20],
+            rotation=round(float(data.get("rotation") or 0), 2) % 360,
             picks=[
                 {
                     "color": _color(item.get("color", "#ffffff")),
@@ -235,8 +239,14 @@ def sample_points(light: LayoutLight, profile: LightProfile, gradient_points: in
 
 
 def _image_sample(layer: ImageLayer, lookup: ImageLookup, point: Point) -> Sample | None:
-    u = (point[0] - layer.x) / layer.width
-    v = (point[1] - layer.y) / layer.height
+    # Undo the layer's rotation: turn the point back around the image center.
+    cx, cy = layer.x + layer.width / 2, layer.y + layer.height / 2
+    angle = math.radians(-layer.rotation)
+    dx, dy = point[0] - cx, point[1] - cy
+    local_x = dx * math.cos(angle) - dy * math.sin(angle)
+    local_y = dx * math.sin(angle) + dy * math.cos(angle)
+    u = (local_x + layer.width / 2) / layer.width
+    v = (local_y + layer.height / 2) / layer.height
     rgb = lookup(u, v)
     if rgb is None:
         return None

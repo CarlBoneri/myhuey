@@ -1,11 +1,11 @@
 // Paint a scene onto a room: color zones and an optional image. Each light shows the color
 // it would take, computed by the server so the UI, the CLI, and the bridge always agree.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowDown, ArrowUp, Circle, Hand, ImagePlus, Lasso, Play, Radio, Square, Trash2, Wand2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Circle, Expand, Hand, ImagePlus, Lasso, Maximize, Play, Radio, RotateCw, Square, Trash2, Wand2 } from 'lucide-react';
 import { api } from '../api';
 import { attempt, useStore } from '../store';
 import { go } from '../lib/router';
-import { bounds, ellipsePoints, pathOf, rectPoints, round1, simplify } from '../lib/geometry';
+import { bounds, ellipsePoints, fitImage, pathOf, rectPoints, round1, simplify } from '../lib/geometry';
 import { effectiveLength, placedProfile } from '../lib/lights';
 import type { ImageLayer, LightOverride, Mood, Pt, Room, Scene, SceneResult, Zone } from '../types';
 import { PlanCanvas, useDrag, usePlan } from '../components/PlanCanvas';
@@ -99,8 +99,11 @@ function ImageOnPlan({ layer, selected, interactive, onSelect, onChange, onCommi
   const { cmPerPx } = usePlan();
   const latest = useRef(layer);
   latest.current = layer;
+  const rotation = layer.rotation ?? 0;
+  const cx = layer.x + layer.width / 2;
+  const cy = layer.y + layer.height / 2;
   return (
-    <g pointerEvents={interactive ? 'auto' : 'none'}>
+    <g pointerEvents={interactive ? 'auto' : 'none'} transform={`rotate(${rotation} ${cx} ${cy})`}>
       <image
         href={api.imageUrl(layer.file)} x={layer.x} y={layer.y} width={layer.width} height={layer.height} preserveAspectRatio="none" opacity={layer.opacity}
         onPointerDown={(event) => {
@@ -115,15 +118,34 @@ function ImageOnPlan({ layer, selected, interactive, onSelect, onChange, onCommi
       {selected && (
         <>
           <rect x={layer.x} y={layer.y} width={layer.width} height={layer.height} fill="none" stroke="var(--accent)" strokeWidth={1.5 * cmPerPx} strokeDasharray={`${6 * cmPerPx}`} pointerEvents="none" />
+          <line x1={cx} y1={layer.y} x2={cx} y2={layer.y - 24 * cmPerPx} stroke="var(--accent)" strokeWidth={1.5 * cmPerPx} pointerEvents="none" />
+          <g className="end-handle" transform={`translate(${cx},${layer.y - 24 * cmPerPx})`}
+            onPointerDown={(event) => drag(event, {
+              move: (point, _d, e) => {
+                const angle = (Math.atan2(point[1] - cy, point[0] - cx) * 180) / Math.PI + 90;
+                const snapped = e.altKey ? angle : Math.round(angle / 15) * 15;
+                onChange({ ...latest.current, rotation: round1(((snapped % 360) + 360) % 360) });
+              },
+              end: (moved) => moved && onCommit(),
+            })}>
+            <circle r={7 * cmPerPx} strokeWidth={1.5 * cmPerPx} />
+            <title>Drag to rotate the image (hold Alt for free rotation)</title>
+          </g>
           <rect className="resize-handle" x={layer.x + layer.width - 6 * cmPerPx} y={layer.y + layer.height - 6 * cmPerPx} width={12 * cmPerPx} height={12 * cmPerPx}
             onPointerDown={(event) => {
               const start = latest.current;
               const aspect = start.width / start.height;
+              const r = (-(start.rotation ?? 0) * Math.PI) / 180;
+              const centerX = start.x + start.width / 2;
+              const centerY = start.y + start.height / 2;
               drag(event, {
                 move: (_p, d, e) => {
-                  const width = Math.max(20, start.width + d[0]);
-                  const height = e.shiftKey ? Math.max(20, start.height + d[1]) : width / aspect;
-                  onChange({ ...latest.current, width: round1(width), height: round1(height) });
+                  // Resize around the center, in the image's own (turned) frame.
+                  const localX = d[0] * Math.cos(r) - d[1] * Math.sin(r);
+                  const localY = d[0] * Math.sin(r) + d[1] * Math.cos(r);
+                  const width = Math.max(20, start.width + localX * 2);
+                  const height = e.shiftKey ? Math.max(20, start.height + localY * 2) : width / aspect;
+                  onChange({ ...latest.current, width: round1(width), height: round1(height), x: round1(centerX - width / 2), y: round1(centerY - height / 2) });
                 },
                 end: (moved) => moved && onCommit(),
               });
@@ -263,7 +285,7 @@ export function SceneEditor({ id }: { id: string }) {
       palette: uploaded.theme.map((s) => s.color),
       image: {
         file: uploaded.file, x: round1(box.minX + (roomW - width) / 2), y: round1(box.minY + (roomH - height) / 2), width, height,
-        opacity: 0.85, brightness: 100, brightness_from_image: true, mood: uploaded.mood, picks: uploaded.theme,
+        opacity: 0.85, brightness: 100, brightness_from_image: true, mood: uploaded.mood, picks: uploaded.theme, rotation: 0,
       },
     });
     setPick({ type: 'image' });
@@ -331,7 +353,8 @@ export function SceneEditor({ id }: { id: string }) {
             </g>
             {zone && <path d={pathOf(zone.points)} fill="none" stroke="#fff" strokeOpacity={0.35} strokeDasharray="6 6" className="zone-ghost" pointerEvents="none" />}
             {draft.image && pick?.type === 'image' && (
-              <rect x={draft.image.x} y={draft.image.y} width={draft.image.width} height={draft.image.height} fill="none" stroke="var(--accent)" strokeOpacity={0.5} strokeDasharray="6 6" pointerEvents="none" />
+              <rect x={draft.image.x} y={draft.image.y} width={draft.image.width} height={draft.image.height} fill="none" stroke="var(--accent)" strokeOpacity={0.5} strokeDasharray="6 6" pointerEvents="none"
+                transform={`rotate(${draft.image.rotation ?? 0} ${draft.image.x + draft.image.width / 2} ${draft.image.y + draft.image.height / 2})`} />
             )}
             <path d={pathOf(room.outline)} fill="none" className="room-outline" />
             <PreviewLights room={room} results={resultMap} selected={pick?.type === 'light' ? pick.id : undefined}
@@ -392,6 +415,11 @@ export function SceneEditor({ id }: { id: string }) {
                   }}
                   onChange={({ picks, mood }) => change({ ...draftRef.current!, palette: picks.map((p) => p.color), image: { ...draftRef.current!.image!, picks, mood: mood as Mood } })}
                 />
+                <ImagePlacement
+                  layer={draft.image}
+                  room={room}
+                  onChange={(image, save) => (save ? change({ ...draftRef.current!, image }) : setDraft({ ...draftRef.current!, image }))}
+                />
                 <Slider label="Opacity on the plan" value={draft.image.opacity * 100} min={0} max={100} format={(v) => `${Math.round(v)}%`}
                   onChange={(v) => setDraft({ ...draft, image: { ...draft.image!, opacity: v / 100 } })} onCommit={commit} />
                 <Slider label="Brightness" value={draft.image.brightness} min={0} max={100} format={(v) => `${Math.round(v)}%`}
@@ -408,7 +436,7 @@ export function SceneEditor({ id }: { id: string }) {
                     <Trash2 size={14} /> Remove
                   </button>
                 </div>
-                <p className="hint">Drag the image on the plan to move it; drag its corner to resize. Lights under it take the color beneath them.</p>
+                <p className="hint">Drag the image on the plan to move it, its corner to resize, and the handle above it to rotate. Lights under it take the color beneath them.</p>
               </>
             ) : (
               <button type="button" className="dropzone" onClick={() => fileInput.current?.click()}
@@ -551,5 +579,39 @@ function OverridePanel({ lightId, result, override, palette, onChange }: {
         </>
       )}
     </Panel>
+  );
+}
+
+
+/** Rotate the scene image and fit it to the room's outline. */
+function ImagePlacement({ layer, room, onChange }: {
+  layer: ImageLayer; room: Room; onChange: (image: ImageLayer, save: boolean) => void;
+}) {
+  const [aspect, setAspect] = useState<number | null>(null);
+  useEffect(() => {
+    const image = new Image();
+    image.onload = () => setAspect(image.naturalWidth / image.naturalHeight);
+    image.src = api.imageUrl(layer.file);
+  }, [layer.file]);
+  const box = bounds(room.outline);
+  const rotation = layer.rotation ?? 0;
+  const fit = (mode: 'stretch' | 'cover', angle = rotation) =>
+    onChange({ ...layer, rotation: angle, ...fitImage(box, angle, aspect ?? layer.width / layer.height, mode) }, true);
+  return (
+    <div className="image-placement">
+      <Slider label="Rotation" value={rotation} min={0} max={359} format={(v) => `${Math.round(v)}°`}
+        onChange={(v) => onChange({ ...layer, rotation: v }, false)} onCommit={(v) => onChange({ ...layer, rotation: v }, true)} />
+      <div className="button-row">
+        <button type="button" className="button subtle small" onClick={() => onChange({ ...layer, rotation: (Math.round(rotation / 90) * 90 + 90) % 360 }, true)}>
+          <RotateCw size={14} /> Rotate 90°
+        </button>
+        <button type="button" className="button subtle small" title="Stretch the image so it covers the room outline exactly" onClick={() => fit('stretch')}>
+          <Maximize size={14} /> Fit to room
+        </button>
+        <button type="button" className="button subtle small" title="Cover the room, keeping the image's proportions" onClick={() => fit('cover')}>
+          <Expand size={14} /> Fill room
+        </button>
+      </div>
+    </div>
   );
 }

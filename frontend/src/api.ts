@@ -62,6 +62,8 @@ export const api = {
     changes: Partial<{ x: number; y: number; width: number; height: number; outline: Pt[]; units: string; furniture: Furniture[]; name: string }>,
   ) => call<Room>(room(name), { method: 'PATCH', json: changes }),
   deleteRoom: (name: string) => call(room(name), { method: 'DELETE' }),
+  roomPower: (name: string, on: boolean) =>
+    call<{ results: { light_id: string; label: string; ok: boolean; error?: string }[]; failed: number }>(`${room(name)}/power`, { method: 'POST', json: { on } }),
   placeLight: (name: string, body: { light_id: string; x: number; y: number; rotation?: number; length?: number | null; label?: string }) =>
     call(`${room(name)}/lights`, { method: 'POST', json: body }),
   removeLight: (name: string, id: string) => call(`${room(name)}/lights/${encodeURIComponent(id)}`, { method: 'DELETE' }),

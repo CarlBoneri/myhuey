@@ -75,3 +75,31 @@ def sample_along(center: Point, rotation_deg: float, length: float, count: int) 
 
 def rectangle(width: float, height: float, x: float = 0.0, y: float = 0.0) -> list[Point]:
     return [(x, y), (x + width, y), (x + width, y + height), (x, y + height)]
+
+
+def fit_image(
+    box: tuple[float, float, float, float], rotation: float, aspect: float, mode: str = "stretch"
+) -> dict[str, float]:
+    """Place an image turned `rotation` degrees so it covers `box` (min_x, min_y, max_x, max_y).
+
+    Mirrors fitImage in the web app: "stretch" makes the turned image's bounds equal the box;
+    "cover" keeps `aspect` (width / height). Where an exact stretch is impossible, it covers.
+    """
+    min_x, min_y, max_x, max_y = box
+    big_w, big_h = max_x - min_x, max_y - min_y
+    angle = math.radians(rotation)
+    c, s = abs(math.cos(angle)), abs(math.sin(angle))
+    det = c * c - s * s
+    width = height = 0.0
+    if mode == "stretch" and abs(det) > 0.2:
+        width = (big_w * c - big_h * s) / det
+        height = (big_h * c - big_w * s) / det
+    if mode == "cover" or abs(det) <= 0.2 or not (width > 0 and height > 0):
+        width = max(big_w / (c + s / aspect), big_h / (s + c / aspect))
+        height = width / aspect
+    return {
+        "x": round(min_x + big_w / 2 - width / 2, 1),
+        "y": round(min_y + big_h / 2 - height / 2, 1),
+        "width": round(width, 1),
+        "height": round(height, 1),
+    }

@@ -1,8 +1,8 @@
 // The whole home: every room at its real size and place. Drag a room to move it; click to open.
 import { useMemo, useRef, useState } from 'react';
-import { Download, Plus } from 'lucide-react';
+import { Download, Plus, Power, PowerOff } from 'lucide-react';
 import { api } from '../api';
-import { attempt, useStore } from '../store';
+import { attempt, setRoomPower, useStore } from '../store';
 import { go } from '../lib/router';
 import { area, bounds, pathOf } from '../lib/geometry';
 import { formatArea, formatLength, parseLength, snap } from '../lib/units';
@@ -47,6 +47,24 @@ function RoomOnPlan({ room, offset, onMove, onDrop }: { room: Room; offset: Pt; 
         );
       })}
       <text x={box.minX + 12 * cmPerPx} y={box.minY + fontSize * 1.4} className="room-name" fontSize={fontSize}>{room.name}</text>
+      {room.lights.some((p) => lights[p.light_id]) && (() => {
+        const anyOn = room.lights.some((p) => lights[p.light_id]?.on);
+        const r = Math.max(14 * cmPerPx, 10);
+        return (
+          <g
+            className={`room-power${anyOn ? ' on' : ''}`}
+            transform={`translate(${box.maxX - r * 1.6},${box.minY + r * 1.6})`}
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => { event.stopPropagation(); void setRoomPower(room, !anyOn); }}
+            role="button"
+            aria-label={`Turn every light in ${room.name} ${anyOn ? 'off' : 'on'}`}
+          >
+            <title>{anyOn ? 'All off' : 'All on'}</title>
+            <circle r={r} strokeWidth={1.5 * cmPerPx} />
+            <path d={`M0,${-r * 0.55}V${-r * 0.05}M${-r * 0.42},${-r * 0.32}A${r * 0.5},${r * 0.5} 0 1 0 ${r * 0.42},${-r * 0.32}`} fill="none" strokeWidth={2 * cmPerPx} strokeLinecap="round" />
+          </g>
+        );
+      })()}
       <text x={box.minX + 12 * cmPerPx} y={box.minY + fontSize * 2.6} className="room-size" fontSize={fontSize * 0.75}>
         {formatLength(room.width, room.units)} × {formatLength(room.height, room.units)}
       </text>
@@ -133,14 +151,30 @@ export function HomeView() {
         <aside className="inspector">
           <Panel title="Rooms">
             <ul className="room-list">
-              {rooms.map((room) => (
-                <li key={room.name}>
-                  <a href={`#/room/${encodeURIComponent(room.name)}`}>
-                    <span>{room.name}</span>
-                    <small>{formatArea(area(room.outline), room.units)} · {room.lights.length} lights</small>
-                  </a>
-                </li>
-              ))}
+              {rooms.map((room) => {
+                const known = room.lights.filter((p) => lights[p.light_id]);
+                const onCount = known.filter((p) => lights[p.light_id].on).length;
+                return (
+                  <li key={room.name} className="room-row">
+                    <a href={`#/room/${encodeURIComponent(room.name)}`}>
+                      <span>{room.name}</span>
+                      <small>
+                        {known.length ? `${onCount} of ${known.length} on` : `${room.lights.length} lights`} · {formatArea(area(room.outline), room.units)}
+                      </small>
+                    </a>
+                    {known.length > 0 && (
+                      <div className="room-power-buttons">
+                        <button type="button" className={`icon-button${onCount === known.length ? ' lit' : ''}`} title="All on" aria-label={`Turn on every light in ${room.name}`} onClick={() => setRoomPower(room, true)}>
+                          <Power size={16} strokeWidth={1.6} />
+                        </button>
+                        <button type="button" className={`icon-button${onCount === 0 ? ' dim' : ''}`} title="All off" aria-label={`Turn off every light in ${room.name}`} onClick={() => setRoomPower(room, false)}>
+                          <PowerOff size={16} strokeWidth={1.6} />
+                        </button>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </Panel>
           <Panel title="Add a room">

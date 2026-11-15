@@ -305,3 +305,20 @@ def test_apply_skips_a_mode_or_effect_the_light_does_not_have(service, fake_brid
     assert len(puts) == 1 and "mode" not in puts[0]["gradient"]  # colors still land
     assert results["5"]["applied"] is True
     assert "segmented_palette" in results["5"]["warning"] and "fire" in results["5"]["warning"]
+
+
+def test_a_rotated_image_colors_lights_by_where_it_now_lies():
+    """Turned 90° clockwise, the image's left half (green) lies along the top of its box."""
+    def lookup(u, v):
+        if not (0 <= u <= 1 and 0 <= v <= 1):
+            return None
+        return (0, 255, 0) if u < 0.5 else (255, 255, 255)
+
+    layer = {"file": "x.jpg", "x": 0, "y": 0, "width": 400, "height": 400}
+    upright = Scene.from_dict({"name": "Pic", "room": "Den", "image": layer})
+    turned = Scene.from_dict({"name": "Pic", "room": "Den", "image": {**layer, "rotation": 90}})
+
+    assert color_at(turned, (200, 50), lookup)[0] == "#00ff00"   # top of the box
+    assert color_at(turned, (200, 350), lookup)[0] == "#ffffff"  # bottom of the box
+    assert color_at(upright, (50, 200), lookup)[0] == "#00ff00"
+    assert turned.image.rotation == 90 and Scene.from_dict({"name": "P", "room": "D", "image": {**layer, "rotation": -90}}).image.rotation == 270

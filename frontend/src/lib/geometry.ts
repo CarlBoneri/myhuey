@@ -67,3 +67,41 @@ export function simplify(points: Pt[], minGap: number): Pt[] {
 }
 
 export const round1 = (value: number) => Math.round(value * 10) / 10;
+
+/**
+ * Where to put an image turned `rotation` degrees (clockwise, around its center) so it
+ * covers a room's bounding box. `stretch` makes the turned image's bounds equal the box
+ * exactly; `cover` keeps the image's `aspect` (width / height) and covers the box. Near 45°
+ * an exact stretch is impossible, so stretch falls back to cover.
+ */
+export function fitImage(
+  box: { minX: number; minY: number; maxX: number; maxY: number },
+  rotation: number,
+  aspect: number,
+  mode: 'stretch' | 'cover',
+): { x: number; y: number; width: number; height: number } {
+  const W = box.maxX - box.minX;
+  const H = box.maxY - box.minY;
+  const r = (rotation * Math.PI) / 180;
+  const c = Math.abs(Math.cos(r));
+  const s = Math.abs(Math.sin(r));
+  let width = 0;
+  let height = 0;
+  const det = c * c - s * s;
+  if (mode === 'stretch' && Math.abs(det) > 0.2) {
+    // Solve w·c + h·s = W and w·s + h·c = H.
+    width = (W * c - H * s) / det;
+    height = (H * c - W * s) / det;
+  }
+  if (mode === 'cover' || Math.abs(det) <= 0.2 || !(width > 0 && height > 0)) {
+    width = Math.max(W / (c + s / aspect), H / (s + c / aspect));
+    height = width / aspect;
+  }
+  const round = (v: number) => Math.round(v * 10) / 10;
+  return {
+    x: round(box.minX + W / 2 - width / 2),
+    y: round(box.minY + H / 2 - height / 2),
+    width: round(width),
+    height: round(height),
+  };
+}

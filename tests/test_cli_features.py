@@ -92,8 +92,10 @@ def test_scene_lifecycle_from_the_cli(run, db_path, fake_bridge, picture):
     code, out, _ = run("scene", "preview", "--scene", "Cozy")
     assert "#ff0000 at 70%" in out
 
-    code, out, _ = run("scene", "image", "--scene", "Cozy", "--file", picture, "--mood", "bright")
+    code, out, _ = run("scene", "image", "--scene", "Cozy", "--file", picture, "--mood", "bright", "--rotation", "90")
     assert code == 0 and "Palette:" in out
+    layer = HueRoomService(db_path).get_scene("Cozy").image
+    assert layer.rotation == 90 and (layer.width, layer.height) == (300, 400)  # turned, it still covers the 4 m x 3 m room
 
     fake_bridge({"1": {"name": "Lamp", "state": {"on": False, "xy": [0.3, 0.3]}}}, [{"success": {}}])
     code, out, err = run("scene", "apply", "--scene", "Cozy")

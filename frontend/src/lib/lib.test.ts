@@ -167,3 +167,37 @@ describe('the light write queue', () => {
     expect(writes).toEqual([{ type: 'gradient', colors: base.colors, mode: base.mode }]);
   });
 });
+
+describe('fitting a rotated image to a room', () => {
+  const box = { minX: 0, minY: 0, maxX: 400, maxY: 300 };
+  const rotatedBounds = (l: { x: number; y: number; width: number; height: number }, deg: number) => {
+    const r = (deg * Math.PI) / 180;
+    const w = l.width * Math.abs(Math.cos(r)) + l.height * Math.abs(Math.sin(r));
+    const h = l.width * Math.abs(Math.sin(r)) + l.height * Math.abs(Math.cos(r));
+    const cx = l.x + l.width / 2;
+    const cy = l.y + l.height / 2;
+    return [cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2].map((v) => Math.round(v) || 0);
+  };
+  it('stretches to the room box when upright or turned a quarter', async () => {
+    const { fitImage } = await import('./geometry');
+    expect(fitImage(box, 0, 1, 'stretch')).toEqual({ x: 0, y: 0, width: 400, height: 300 });
+    const turned = fitImage(box, 90, 1, 'stretch');
+    expect([turned.width, turned.height]).toEqual([300, 400]);
+    expect(rotatedBounds(turned, 90)).toEqual([0, 0, 400, 300]);
+  });
+  it('stretches at any angle so the turned image covers exactly the room box', async () => {
+    const { fitImage } = await import('./geometry');
+    expect(rotatedBounds(fitImage(box, 20, 1, 'stretch'), 20)).toEqual([0, 0, 400, 300]);
+  });
+  it('never produces a negative size when an exact stretch is impossible', async () => {
+    const { fitImage } = await import('./geometry');
+    const fit = fitImage(box, 37, 1.5, 'stretch');
+    expect(fit.width > 0 && fit.height > 0).toBe(true);
+  });
+  it('fills the room keeping proportions', async () => {
+    const { fitImage } = await import('./geometry');
+    expect(fitImage(box, 0, 2, 'cover')).toEqual({ x: -100, y: 0, width: 600, height: 300 });
+    const b = rotatedBounds(fitImage(box, 30, 1.5, 'cover'), 30);
+    expect(b[0] <= 0 && b[1] <= 0 && b[2] >= 400 && b[3] >= 300).toBe(true);
+  });
+});
