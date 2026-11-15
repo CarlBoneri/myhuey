@@ -7,8 +7,9 @@ import { attempt, useStore } from '../store';
 import { liveColor, placedProfile } from '../lib/lights';
 import { darkness, glowLayout, heightPreset, nudge, parseTag, resolvableTags, tagKey, type HeightPreset, type TagKind } from '../lib/photo';
 import { oneAtATime } from '../lib/suggest';
-import { applyHomography, solveHomography, type Pt2 } from '../lib/homography';
-import { bounds } from '../lib/geometry';
+import { floorMapper, type Pt2 } from '../lib/homography';
+import { bounds, pointInPolygon } from '../lib/geometry';
+import { roomCenter } from '../lib/photo';
 import { formatLength } from '../lib/units';
 import type { CatalogItem, PhotoSpot, Pt, Room, Suggestion } from '../types';
 import { LightControls } from '../components/LightControls';
@@ -54,7 +55,8 @@ export function PhotoView({ room }: { room: Room }) {
   const roomRef = useRef(room);
   roomRef.current = room;
   const save = useRef(oneAtATime(async (isLast) => {
-    const current = roomRef.current;
+    // The store's copy is the freshest (a light planned a moment ago is already there).
+    const current = useStore.getState().rooms.find((r) => r.name === roomRef.current.name) ?? roomRef.current;
     const updated = await attempt(() => api.savePhotoTags(current.name, resolvableTags(spotsRef.current, current)));
     if (!isLast()) return;
     if (updated) {
@@ -102,21 +104,27 @@ export function PhotoView({ room }: { room: Room }) {
   };
 
   const floor = room.photo?.floor_transform ?? null;
-  const toPlan = floor ? solveHomography(floor.photo as Pt2[], floor.plan as Pt2[]) : null;
-  const toPhoto = floor ? solveHomography(floor.plan as Pt2[], floor.photo as Pt2[]) : null;
+  const mapper = floor ? floorMapper(floor.photo as Pt2[], floor.plan as Pt2[]) : null;
 
   /** A catalog light dropped on the photo becomes a planned light where that floor point is on the plan. */
   const planFromPhoto = async (catalogId: string, at: { x: number; y: number }) => {
-    const box = bounds(room.outline);
-    const [x, y] = toPlan ? applyHomography(toPlan, [at.x, at.y]) : [(box.minX + box.maxX) / 2, (box.minY + box.maxY) / 2];
-    const created = await attempt(() => api.addPlannedLight(room.name, { catalog: catalogId, x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 }),
-      toPlan ? undefined : 'Planned. Map the floor so lights dropped on the photo land in the right spot on the plan.');
+    let point: Pt2 = roomCenter(room.outline);
+    if (mapper) {
+      const mapped = mapper.toPlan([at.x, at.y]);
+      if (!mapped || !pointInPolygon(mapped, room.outline)) {
+        useStore.getState().toast("That spot isn't on this room's floor. Drop a light where its base meets the floor.");
+        return;
+      }
+      point = mapped;
+    }
+    const created = await attempt(() => api.addPlannedLight(room.name, { catalog: catalogId, x: Math.round(point[0] * 10) / 10, y: Math.round(point[1] * 10) / 10 }),
+      mapper ? undefined : 'Planned. Map the floor so lights dropped on the photo land in the right spot on the plan.');
     if (!created) return;
-    const key = tagKey('light', created.light_id);
-    const tags = { ...spotsRef.current, [key]: { x: at.x, y: at.y, rotation: 0, scale: 1 } };
-    const updated = await attempt(() => api.savePhotoTags(room.name, tags));
     await refreshRooms();
-    if (updated) { replaceRoom(room.name, updated); setSelected(key); }
+    const key = tagKey('light', created.light_id);
+    update({ ...spotsRef.current, [key]: { x: at.x, y: at.y, rotation: 0, scale: 1 } });
+    setSelected(key);
+    void save();
   };
 
   if (!room.photo) {
@@ -152,12 +160,12 @@ export function PhotoView({ room }: { room: Room }) {
   const size = { width: room.photo.width, height: room.photo.height };
   // Planned lights placed on the plan show up on the photo by themselves once the floor is mapped.
   const autoSpots: Record<string, PhotoSpot> = {};
-  if (toPhoto) {
+  if (mapper) {
     for (const light of room.lights) {
       const key = tagKey('light', light.light_id);
       if (!light.planned || spots[key]) continue;
-      const [u, v] = applyHomography(toPhoto, [light.x, light.y]);
-      if (u >= 0 && u <= 1 && v >= 0 && v <= 1) autoSpots[key] = { x: u, y: v, rotation: 0, scale: 1 };
+      const seen = mapper.toPhoto([light.x, light.y]);  // null when it is behind the camera
+      if (seen && seen[0] >= 0 && seen[0] <= 1 && seen[1] >= 0 && seen[1] <= 1) autoSpots[key] = { x: seen[0], y: seen[1], rotation: 0, scale: 1 };
     }
   }
   const allSpots = { ...autoSpots, ...spots };

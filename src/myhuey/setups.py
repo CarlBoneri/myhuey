@@ -28,9 +28,12 @@ BIAS_BEHIND_CM = 12.0
 SIDE_OUT_CM = 90.0
 SIDE_BACK_CM = 20.0
 DESK_LAMP_OUT_CM = 35.0
+DESK_LAMP_CLEAR_CM = 20.0  # past the edge of the outermost screen
 DESK_LAMP_FORWARD_CM = 15.0
+TASK_REACH_CM = 120.0
+VIEW_CLEAR_ANGLE = 45.0  # a little wider than the view cone (40°) so proposals never sit on its edge
 CORNER_INSET_CM = 25.0
-CORNER_MIN_ANGLE, CORNER_MAX_ANGLE = 40.0, 120.0
+CORNER_MAX_ANGLE = 120.0  # at or past this, a light is behind the seat
 SUMMARY_MODES = ("code", "work", "read", "relax")
 
 _SETUPS = [
@@ -56,6 +59,49 @@ def _angle_from_gaze(focus: Focus, point: Point) -> float:
     return math.degrees(math.acos(max(-1.0, min(1.0, ahead / distance))))
 
 
+PULL_STEPS = (1.0, 0.85, 0.7, 0.55, 0.4)
+
+
+def _fits(room: Room, focus: Focus, point: Point, *, allow_ahead: bool = False) -> bool:
+    """Inside the room, and (unless it's the bias strip) not in the line of sight or behind the seat."""
+    if not _inside(room, point):
+        return False
+    angle = _angle_from_gaze(focus, point)
+    if angle >= CORNER_MAX_ANGLE:
+        return False
+    return allow_ahead or angle >= VIEW_CLEAR_ANGLE
+
+
+def _pulled(room: Room, focus: Focus, point: Point, *, toward: Point | None = None, allow_ahead: bool = False) -> Point | None:
+    """The point, or the first one pulled toward the seat (or `toward`) that fits."""
+    anchor = toward or focus.seat
+    for step in PULL_STEPS:
+        candidate = (anchor[0] + (point[0] - anchor[0]) * step, anchor[1] + (point[1] - anchor[1]) * step)
+        if _fits(room, focus, candidate, allow_ahead=allow_ahead):
+            return candidate
+    return None
+
+
+def _convex_corners(room: Room) -> list[tuple[Point, Point]]:
+    """Outline corners that point out of the room (not inner corners of an L), each with an inward direction."""
+    points = [(float(x), float(y)) for x, y in room.outline]
+    count = len(points)
+    signed = sum(points[i][0] * points[(i + 1) % count][1] - points[(i + 1) % count][0] * points[i][1] for i in range(count))
+    corners = []
+    for i, here in enumerate(points):
+        before, after = points[i - 1], points[(i + 1) % count]
+        turn = (here[0] - before[0]) * (after[1] - here[1]) - (here[1] - before[1]) * (after[0] - here[0])
+        if turn * signed <= 0:
+            continue  # an inner corner: a wall washer there would wash nothing
+        a = (before[0] - here[0], before[1] - here[1])
+        b = (after[0] - here[0], after[1] - here[1])
+        la, lb = math.hypot(*a) or 1.0, math.hypot(*b) or 1.0
+        inward = (a[0] / la + b[0] / lb, a[1] / la + b[1] / lb)
+        length = math.hypot(*inward) or 1.0
+        corners.append((here, (inward[0] / length, inward[1] / length)))
+    return corners
+
+
 def _block(room: Room, focus: Focus, kind: str) -> dict[str, Any] | None:
     gaze = focus.gaze
     left = (gaze[1], -gaze[0])
@@ -63,34 +109,41 @@ def _block(room: Room, focus: Focus, kind: str) -> dict[str, Any] | None:
     if kind == "bias":
         if focus.screen is None:
             return None
-        point = _add(focus.screen, gaze, BIAS_BEHIND_CM)
+        point = _pulled(room, focus, _add(focus.screen, gaze, BIAS_BEHIND_CM), allow_ahead=True)
+        if point is None:
+            return None
         return {"catalog": "gradient-strip", "point": point, "elevation": focus.screen_height, "rotation": along_screen,
                 "why": "Behind your monitor: a soft bias light evens out the contrast between a bright screen and a dark wall."}
     if kind == "side":
-        for side, name in ((1, "left"), (-1, "right")):
-            point = _add(_add(focus.seat, left, side * SIDE_OUT_CM), gaze, -SIDE_BACK_CM)
-            if _inside(room, point):
-                return {"catalog": "floor-lamp", "point": point, "elevation": None, "rotation": 0.0,
-                        "why": f"To your {name}, a little behind your shoulder: lights the room around you without glare on the screen."}
-        return None
+        sides = [((1, "left")), ((-1, "right"))]
+        targets = [(name, _add(_add(focus.seat, left, side * SIDE_OUT_CM), gaze, -SIDE_BACK_CM)) for side, name in sides]
+        # A side with room for the lamp at full distance wins; only then pull one in toward the seat.
+        found = next(((name, p) for name, p in targets if _fits(room, focus, p)), None)
+        if found is None:
+            found = next(((name, p) for name, p in ((n, _pulled(room, focus, t)) for n, t in targets) if p is not None), None)
+        if found is None:
+            return None
+        name, point = found
+        return {"catalog": "floor-lamp", "point": point, "elevation": None, "rotation": 0.0,
+                "why": f"To your {name}, a little behind your shoulder: lights the room around you without glare on the screen."}
     if kind == "desk":
         anchor = focus.screen or _add(focus.seat, gaze, 60)
+        out = focus.screen_half_width + DESK_LAMP_CLEAR_CM if focus.screen else DESK_LAMP_OUT_CM
         for side in (1, -1):
-            point = _add(_add(anchor, left, side * DESK_LAMP_OUT_CM), gaze, -DESK_LAMP_FORWARD_CM)
-            if _inside(room, point):
+            point = _add(_add(anchor, left, side * out), gaze, -DESK_LAMP_FORWARD_CM)
+            if _fits(room, focus, point) and math.hypot(point[0] - focus.seat[0], point[1] - focus.seat[1]) <= TASK_REACH_CM:
                 return {"catalog": "desk-lamp", "point": point, "elevation": None, "rotation": 0.0,
-                        "why": "Beside the monitor, a little toward you: white task light on the desk for paper and keyboard."}
+                        "why": "Beside your monitors, a little toward you: white task light on the desk for paper and keyboard."}
         return None
     if kind == "corner":
-        corners = [(float(x), float(y)) for x, y in room.outline]
-        candidates = [corner for corner in corners if CORNER_MIN_ANGLE <= _angle_from_gaze(focus, corner) < CORNER_MAX_ANGLE]
-        if not candidates:
+        options = []
+        for corner, inward in _convex_corners(room):
+            point = _add(corner, inward, CORNER_INSET_CM)
+            if _fits(room, focus, point):
+                options.append(point)
+        if not options:
             return None
-        corner = max(candidates, key=lambda c: (math.hypot(c[0] - focus.seat[0], c[1] - focus.seat[1]), -c[0], -c[1]))
-        cx = sum(c[0] for c in corners) / len(corners)
-        cy = sum(c[1] for c in corners) / len(corners)
-        length = math.hypot(cx - corner[0], cy - corner[1]) or 1.0
-        point = _add(corner, ((cx - corner[0]) / length, (cy - corner[1]) / length), CORNER_INSET_CM)
+        point = max(options, key=lambda p: (math.hypot(p[0] - focus.seat[0], p[1] - focus.seat[1]), -p[0], -p[1]))
         return {"catalog": "wall-washer", "point": point, "elevation": None, "rotation": 0.0,
                 "why": "In a corner off to the side: washes the wall with color for depth, away from your line of sight."}
     raise ValueError(f"Unknown block '{kind}'")

@@ -285,9 +285,11 @@ class HueRoomService:
 
     def set_light(self, light_id: str, **changes: Any) -> None:
         """Change a light. Takes on, brightness, color, xy, and color_temp."""
+        _not_planned(light_id)
         self.client().set_light_color(light_id, **changes)
 
     def _v2_light(self, light_id: str) -> dict[str, Any]:
+        _not_planned(light_id)
         info = self.v2_index(refresh=True).get(str(light_id))
         if info is None:
             raise ValueError(f"Light {light_id} is not on the bridge's v2 API")
@@ -465,6 +467,7 @@ class HueRoomService:
         product: dict[str, Any] | None = None,
         elevation: float | str | None = None,
         role: str | None = None,
+        planned: bool | None = None,
     ) -> LayoutLight:
         """Place a light in a room, or move it if it is already there.
 
@@ -494,6 +497,7 @@ class HueRoomService:
                 "product": product or existing.get("product") or {},
                 "elevation": existing.get("elevation") if elevation is None else elevation,
                 "role": role or existing.get("role") or "auto",
+                "planned": existing.get("planned", False) if planned is None else planned,
             }
         )
         if not existing:
@@ -584,14 +588,8 @@ class HueRoomService:
         and is skipped whenever something is sent to the bridge."""
         item = catalog_item(catalog_id)
         light_id = f"planned-{new_id()}"
-        self.assign_light(room_name, light_id, x=x, y=y, label=label or item.label, rotation=rotation,
-                          product=item.product(), elevation=elevation, role=role)
-        config = self._load()
-        for placed in self._room_data(config, room_name)["lights"]:
-            if placed["light_id"] == light_id:
-                placed["planned"] = True
-        self._save(config)
-        return next(light for light in self.get_room(room_name).lights if light.light_id == light_id)
+        return self.assign_light(room_name, light_id, x=x, y=y, label=label or item.label, rotation=rotation,
+                                 product=item.product(), elevation=elevation, role=role, planned=True)
 
     def swap_planned_light(self, room_name: str, planned_id: str, real_id: str) -> LayoutLight:
         """Replace a planned light with a real one once it's paired, keeping where it sits,
@@ -611,6 +609,11 @@ class HueRoomService:
         tags = (room_data.get("photo") or {}).get("tags")
         if tags and f"light:{planned_id}" in tags:
             tags[f"light:{real_id}"] = tags.pop(f"light:{planned_id}")
+        # Scenes keep working: a planned light's settings move to the real light.
+        for scene in config.get("scenes", []):
+            overrides = scene.get("overrides") or {}
+            if scene.get("room") == room_data.get("name") and planned_id in overrides:
+                overrides[real_id] = overrides.pop(planned_id)
         self._save(config)
         return next(light for light in self.get_room(room_name).lights if light.light_id == real_id)
 
@@ -949,6 +952,11 @@ class HueRoomService:
                 self.sleep(pause)  # the bridge handles about ten light commands a second
         self._v2_loaded = 0.0  # gradients and effects just changed
         return results
+
+
+def _not_planned(light_id: str) -> None:
+    if str(light_id).startswith("planned-"):
+        raise ValueError(f"'{light_id}' is a planned light: it isn't installed, so there is nothing to change yet")
 
 
 def _clock(at: str | None) -> datetime:

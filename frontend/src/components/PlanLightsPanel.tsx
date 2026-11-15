@@ -3,6 +3,7 @@ import { Plus, ShoppingBag, Sparkles } from 'lucide-react';
 import { api } from '../api';
 import { attempt, useStore } from '../store';
 import { bounds } from '../lib/geometry';
+import { roomCenter } from '../lib/photo';
 import { MODE_LABELS } from '../lib/suggest';
 import { lightFill } from '../lib/suggest';
 import { Panel } from './ui';
@@ -19,11 +20,10 @@ export function PlanLightsPanel({ room }: { room: Room }) {
 
   useEffect(() => { api.catalog().then(setCatalog).catch(() => setCatalog([])); }, []);
 
-  const box = bounds(room.outline);
   const addItem = async (item: CatalogItem) => {
-    const ok = await attempt(() => api.addPlannedLight(room.name, {
-      catalog: item.id, x: Math.round((box.minX + box.maxX) / 2), y: Math.round((box.minY + box.maxY) / 2),
-    }), `Planned a ${item.label}. Drag it where it would go.`);
+    const [x, y] = roomCenter(room.outline);
+    const ok = await attempt(() => api.addPlannedLight(room.name, { catalog: item.id, x: Math.round(x), y: Math.round(y) }),
+      `Planned a ${item.label}. Drag it where it would go.`);
     if (ok) await refreshRooms();
   };
   const loadSetups = async () => {

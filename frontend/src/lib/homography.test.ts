@@ -35,3 +35,26 @@ describe('four-point homography', () => {
     expect(solveHomography([[0, 0], [1, 1], [2, 2], [3, 3]], plan)).toBeNull();
   });
 });
+
+import { floorMapper } from './homography';
+
+describe('floor mapper guards', () => {
+  const photo: [number, number][] = [[0.1, 0.9], [0.9, 0.9], [0.7, 0.5], [0.3, 0.5]];
+  const plan: [number, number][] = [[0, 400], [400, 400], [400, 0], [0, 0]];
+  const mapper = floorMapper(photo, plan)!;
+
+  it('maps floor points both ways', () => {
+    const [x, y] = mapper.toPlan([0.5, 0.7])!;
+    const [u, v] = mapper.toPhoto([x, y])!;
+    expect(u).toBeCloseTo(0.5, 6);
+    expect(v).toBeCloseTo(0.7, 6);
+  });
+
+  it('refuses photo points beyond the horizon (they are not on the floor)', () => {
+    expect(mapper.toPlan([0.5, 0.05])).toBeNull();
+  });
+
+  it('refuses plan points behind the camera', () => {
+    expect(mapper.toPhoto([200, 5000])).toBeNull();
+  });
+});
