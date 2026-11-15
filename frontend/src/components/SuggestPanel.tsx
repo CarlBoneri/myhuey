@@ -123,7 +123,7 @@ function SuggestionCard({ room, item, mode, onSaved, onTry, onShow, shown }: {
         ) : (
           <div className="button-row">
             {onShow && (
-              <button type="button" className={`button small${shown ? ' active' : ''}`} onClick={onShow}><Eye size={14} /> {shown ? 'On the photo' : 'Show on photo'}</button>
+              <button type="button" className={`button small${shown ? ' active' : ''}`} aria-pressed={!!shown} onClick={onShow}><Eye size={14} /> {shown ? 'On the photo' : 'Show on photo'}</button>
             )}
             <button type="button" className="button small" onClick={onTry}><Lightbulb size={14} /> Preview on lights</button>
             <button type="button" className="button small subtle" onClick={() => setNaming(true)}><Save size={14} /> Save as scene</button>

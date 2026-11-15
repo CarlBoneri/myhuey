@@ -81,3 +81,27 @@ export function darkness(results: GlowInput[]): number {
   const level = lit.reduce((sum, result) => sum + result.brightness, 0) / lit.length / 100;
   return Math.round(MAX_DARKNESS * (1 - Math.max(0, Math.min(1, level))) * 1000) / 1000;
 }
+
+/** Only the tags that name a light, furniture piece, or opening still in the room (what the server accepts). */
+export function resolvableTags<T>(tags: Record<string, T>, room: Room): Record<string, T> {
+  const ids: Record<TagKind, Set<string>> = {
+    light: new Set(room.lights.map((l) => l.light_id)),
+    furniture: new Set(room.furniture.map((f) => f.id)),
+    opening: new Set(room.openings.map((o) => o.id)),
+  };
+  return Object.fromEntries(Object.entries(tags).filter(([key]) => {
+    const tag = parseTag(key);
+    return !!tag && ids[tag.kind].has(tag.id);
+  }));
+}
+
+const NUDGES: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+
+/** A tag moved by an arrow key: 1% of the photo, 5% with shift. Null for other keys. */
+export function nudge<T extends Spot>(spot: T, key: string, shift: boolean): T | null {
+  const step = NUDGES[key];
+  if (!step) return null;
+  const amount = shift ? 0.05 : 0.01;
+  const clamp = (value: number) => Math.round(Math.min(1, Math.max(0, value)) * 1000) / 1000;
+  return { ...spot, x: clamp(spot.x + step[0] * amount), y: clamp(spot.y + step[1] * amount) };
+}

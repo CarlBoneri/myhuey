@@ -99,3 +99,31 @@ def test_cli_tag_untag_and_list(service, db_path, capsys):
     assert "furniture:desk1" in capsys.readouterr().out
     assert _cli(db_path, "room", "untag", "--name", "Den", "--item", "furniture:desk1") == 0
     assert service.get_room("Den").photo.tags == {}
+
+
+def test_migration_drops_placements_for_lights_no_longer_in_the_room():
+    doc = {"schema_version": 4, "home": {"plan": None}, "rooms": [
+        {"name": "Den", "lights": [{"light_id": "1"}], "furniture": [], "openings": [],
+         "photo": {"file": "a.jpg", "width": 1, "height": 1,
+                   "placements": {"1": {"x": 0.2, "y": 0.3}, "9": {"x": 0.5, "y": 0.5}, "": {"x": 0.1, "y": 0.1}}}},
+        {"name": "Bare", "lights": [], "furniture": [], "openings": [], "photo": None}]}
+    upgraded, _ = migrate(doc)
+    assert set(upgraded["rooms"][0]["photo"]["tags"]) == {"light:1"}
+    assert upgraded["rooms"][1]["photo"] is None
+
+
+def test_a_malformed_stored_tag_is_skipped_on_read():
+    photo = RoomPhoto.from_dict({"file": "a.jpg", "width": 1, "height": 1,
+                                 "tags": {"bogus": {"x": 0.1, "y": 0.1}, "light:1": {"x": 0.2, "y": 0.2}}})
+    assert set(photo.tags) == {"light:1"}
+
+
+def test_saving_drops_stale_stored_tags_instead_of_failing(service):
+    service.set_photo_tags("Den", {"light:1": {"x": 0.1, "y": 0.2}})
+    config = service._load()
+    config["rooms"][0]["photo"]["tags"]["light:9"] = {"x": 0.5, "y": 0.5}  # left behind by older data
+    service._save(config)
+    room = service.set_photo_tags("Den", {"light:1": {"x": 0.3, "y": 0.2}, "light:9": {"x": 0.5, "y": 0.5}})
+    assert set(room.photo.tags) == {"light:1"}
+    with pytest.raises(ValueError):  # a new tag for something not in the room is still an error
+        service.set_photo_tags("Den", {"light:1": {"x": 0.3, "y": 0.2}, "light:42": {"x": 0.5, "y": 0.5}})

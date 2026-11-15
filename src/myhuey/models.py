@@ -246,7 +246,10 @@ class RoomPhoto:
             raw = {f"light:{light_id}": spot for light_id, spot in (data.get("placements") or {}).items()}
         tags = {}
         for key, spot in raw.items():
-            split_tag(key)
+            try:
+                split_tag(key)
+            except ValueError:
+                continue  # a malformed key never stops the room from loading; it is dropped on the next save
             tags[str(key)] = {
                 "x": min(1.0, max(0.0, _num(spot.get("x"), 0.5))),
                 "y": min(1.0, max(0.0, _num(spot.get("y"), 0.5))),

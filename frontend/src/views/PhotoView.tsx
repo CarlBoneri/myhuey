@@ -5,7 +5,8 @@ import { ImagePlus, MapPin, Plus, Sparkles, Trash2, Upload } from 'lucide-react'
 import { api } from '../api';
 import { attempt, useStore } from '../store';
 import { liveColor, placedProfile } from '../lib/lights';
-import { darkness, glowLayout, heightPreset, parseTag, tagKey, type HeightPreset, type TagKind } from '../lib/photo';
+import { darkness, glowLayout, heightPreset, nudge, parseTag, resolvableTags, tagKey, type HeightPreset, type TagKind } from '../lib/photo';
+import { latestOnly } from '../lib/suggest';
 import { formatLength } from '../lib/units';
 import type { PhotoSpot, Room, Suggestion } from '../types';
 import { LightControls } from '../components/LightControls';
@@ -41,9 +42,19 @@ export function PhotoView({ room }: { room: Room }) {
     spotsRef.current = next;
     setSpots(next);
   };
+  const saves = useRef(latestOnly());
   const save = async () => {
-    const updated = await attempt(() => api.savePhotoTags(room.name, spotsRef.current));
-    if (updated) replaceRoom(room.name, updated);
+    // Only tags the server accepts are sent, only the newest answer is used, and a failed save
+    // puts the photo back the way the server has it, so one bad tag can't block the rest.
+    const token = saves.current.next();
+    const updated = await attempt(() => api.savePhotoTags(room.name, resolvableTags(spotsRef.current, room)));
+    if (!saves.current.isLatest(token)) return;
+    if (updated) {
+      replaceRoom(room.name, updated);
+    } else {
+      const current = useStore.getState().rooms.find((r) => r.name === room.name);
+      update(current?.photo?.tags ?? {});
+    }
   };
 
   const uploadFile = async (file: File | undefined) => {
@@ -125,9 +136,11 @@ export function PhotoView({ room }: { room: Room }) {
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {
             e.preventDefault();
+            const lightId = e.dataTransfer.getData('application/x-myhuey-light');
             const key = e.dataTransfer.getData('application/x-myhuey-tag')
-              || (e.dataTransfer.getData('application/x-myhuey-light') && tagKey('light', e.dataTransfer.getData('application/x-myhuey-light')));
+              || (lightId && room.lights.some((l) => l.light_id === lightId) ? tagKey('light', lightId) : '');
             if (key) place(key, position(e.clientX, e.clientY));
+            else if (lightId) useStore.getState().toast('Place that light on the plan first, then tag it on the photo.');
           }}
         >
           <img src={api.imageUrl(room.photo.file)} alt={`Photo of ${room.name}`} draggable={false} />
@@ -172,11 +185,20 @@ export function PhotoView({ room }: { room: Room }) {
               window.addEventListener('pointermove', move);
               window.addEventListener('pointerup', up);
             };
+            const keys = (event: React.KeyboardEvent) => {
+              const moved = nudge(spotsRef.current[key], event.key, event.shiftKey);
+              if (!moved) return;
+              event.preventDefault();
+              update({ ...spotsRef.current, [key]: moved });
+              void save();
+            };
+            const select = () => setSelected(key);
             if (tag.kind !== 'light') {
               return (
                 <button key={key} type="button" className={`photo-pin ${tag.kind}${selected === key ? ' active' : ''}`}
                   style={{ left: `${spot.x * 100}%`, top: `${spot.y * 100}%` }} title={label}
-                  aria-label={`${label} on the photo. Drag to move.`} onPointerDown={drag}>
+                  aria-label={`${label} on the photo. Drag or use the arrow keys to move.`} aria-pressed={selected === key}
+                  onPointerDown={drag} onClick={select} onKeyDown={keys}>
                   <MapPin size={16} /><span className="marker-label">{label}</span>
                 </button>
               );
@@ -198,8 +220,11 @@ export function PhotoView({ room }: { room: Room }) {
                   color: color ?? '#8d88a8', ['--glow' as string]: color ?? 'transparent',
                 }}
                 title={label}
-                aria-label={`${label} on the photo. Drag to move.`}
+                aria-label={`${label} on the photo. Drag or use the arrow keys to move.`}
+                aria-pressed={selected === key}
                 onPointerDown={drag}
+                onClick={select}
+                onKeyDown={keys}
               >
                 <HueIcon name={profile.icon} size={34} />
                 <span className="marker-label">{label}{role && role !== 'ambient' ? <em className={`role-badge ${role}`}>{role}</em> : null}</span>
@@ -210,7 +235,8 @@ export function PhotoView({ room }: { room: Room }) {
       </div>
       <aside className="inspector">
         <div className="button-row">
-          <button type="button" className={`button${suggesting ? ' active' : ''}`} onClick={() => { setSuggesting(!suggesting); if (suggesting) setShown(null); }}>
+          <button type="button" className={`button${suggesting ? ' active' : ''}`} aria-pressed={suggesting}
+            onClick={() => { setSuggesting(!suggesting); if (suggesting) setShown(null); }}>
             <Sparkles size={15} /> Suggest
           </button>
           {shown && <button type="button" className="button subtle" onClick={() => setShown(null)}>Show live colors</button>}

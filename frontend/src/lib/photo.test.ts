@@ -73,3 +73,21 @@ describe('glow on the photo', () => {
     expect(darkness([])).toBeCloseTo(0.55);
   });
 });
+
+import { nudge, resolvableTags } from './photo';
+
+describe('safe photo saves and keyboard moves', () => {
+  it('keeps only tags that name something in the room', () => {
+    const r = { ...room([desk()]), lights: [light(0, 0)], openings: [] };
+    const tags = { 'light:1': { x: 0.1, y: 0.1 }, 'light:9': { x: 0.2, y: 0.2 }, 'furniture:d': { x: 0.3, y: 0.3 }, 'furniture:x': { x: 0.4, y: 0.4 }, bogus: { x: 0, y: 0 } };
+    expect(Object.keys(resolvableTags(tags, r)).sort()).toEqual(['furniture:d', 'light:1']);
+  });
+
+  it('nudges with the arrow keys, further with shift, inside the photo', () => {
+    const spot = { x: 0.5, y: 0.5, rotation: 0, scale: 1 };
+    expect(nudge(spot, 'ArrowLeft', false)).toMatchObject({ x: 0.49, y: 0.5 });
+    expect(nudge(spot, 'ArrowDown', true)).toMatchObject({ x: 0.5, y: 0.55 });
+    expect(nudge({ ...spot, x: 0.995 }, 'ArrowRight', true)).toMatchObject({ x: 1 });
+    expect(nudge(spot, 'Enter', false)).toBeNull();
+  });
+});

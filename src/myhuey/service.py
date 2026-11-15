@@ -649,7 +649,11 @@ class HueRoomService:
         if not room_data.get("photo"):
             raise ValueError(f"Room '{room_name}' has no photo yet")
         room = Room.from_dict(room_data)
-        missing = sorted(key for key in tags if not room.has_tag_target(key))
+        stored = set((room_data["photo"].get("tags") or {}))
+        gone = {key for key in tags if not _tag_resolves(room, key)}
+        # Tags already stored for something since removed are dropped; new ones must resolve.
+        tags = {key: spot for key, spot in tags.items() if key not in gone}
+        missing = sorted(gone - stored)
         if missing:
             raise ValueError(f"Put these on the plan before tagging them on the photo: {', '.join(missing)}")
         photo = RoomPhoto.from_dict({**room_data["photo"], "tags": tags})
@@ -876,6 +880,13 @@ class HueRoomService:
                 self.sleep(pause)  # the bridge handles about ten light commands a second
         self._v2_loaded = 0.0  # gradients and effects just changed
         return results
+
+
+def _tag_resolves(room: Room, key: str) -> bool:
+    try:
+        return room.has_tag_target(key)
+    except ValueError:
+        return False
 
 
 def _mirek_for(kelvin: int, raw_light: dict[str, Any]) -> int:

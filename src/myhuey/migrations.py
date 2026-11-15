@@ -141,7 +141,9 @@ def _v4_to_v5(config: dict[str, Any]) -> dict[str, Any]:
         photo = room.get("photo")
         if photo:
             placements = photo.pop("placements", None) or {}
-            photo.setdefault("tags", {f"light:{light_id}": spot for light_id, spot in placements.items()})
+            present = {str(light.get("light_id")) for light in room.get("lights", [])}
+            photo.setdefault("tags", {f"light:{light_id}": spot for light_id, spot in placements.items()
+                                      if str(light_id) in present})
             photo.setdefault("floor_transform", None)
     upgraded["schema_version"] = 5
     return upgraded
