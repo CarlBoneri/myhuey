@@ -1,21 +1,23 @@
 // One room, drawn to scale: its outline, furniture, and lights at their physical sizes.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Armchair, Camera, Copy, Hand, Map as MapIcon, PenLine, Plus, RotateCw, Trash2 } from 'lucide-react';
+import { Armchair, Camera, Copy, DoorOpen, Hand, Map as MapIcon, PenLine, Plus, RotateCw, Trash2 } from 'lucide-react';
 import { api } from '../api';
 import { attempt, useStore } from '../store';
 import { go } from '../lib/router';
 import { area, bounds, pathOf, round1 } from '../lib/geometry';
 import { formatArea, formatLength, snap } from '../lib/units';
 import { effectiveLength, liveColors, placedProfile } from '../lib/lights';
-import type { Furniture, Placement, Pt, Room, Units } from '../types';
+import type { Furniture, Opening, Placement, Pt, Room, Units } from '../types';
+import { openingAt } from '../lib/plan';
 import { PlanCanvas, useDrag, usePlan } from '../components/PlanCanvas';
-import { FURNITURE_CATALOG, FurnitureShape, LightSilhouette } from '../components/Shapes';
+import { FURNITURE_CATALOG, FurnitureShape, LightSilhouette, OpeningShape } from '../components/Shapes';
 import { LightControls } from '../components/LightControls';
 import { Empty, Field, HueIcon, IconButton, LengthInput, Panel, Segmented, Slider, TextInput } from '../components/ui';
 import { PhotoView } from './PhotoView';
 
-type Selection = { type: 'light'; id: string } | { type: 'furniture'; id: string } | null;
-type Tool = 'select' | 'outline';
+type Selection = { type: 'light'; id: string } | { type: 'furniture'; id: string } | { type: 'opening'; id: string } | null;
+type Tool = 'select' | 'outline' | 'openings';
+const OPENING_WIDTH = { door: 81, window: 90 } as const;
 
 const angleOf = (from: Pt, to: Pt) => (Math.atan2(to[1] - from[1], to[0] - from[0]) * 180) / Math.PI;
 const norm = (deg: number) => ((Math.round(deg * 10) / 10) % 360 + 360) % 360;
@@ -122,6 +124,22 @@ function OutlineHandles({ outline, units, onChange, onCommit }: { outline: Pt[];
           <title>Drag to move this corner. Double-click to remove it. Hold Alt to skip squaring.</title>
         </circle>
       ))}
+    </g>
+  );
+}
+
+/** Wide invisible strokes along each wall: click one to put a door or window there. */
+function WallHits({ outline, onPick }: { outline: Pt[]; onPick: (point: Pt) => void }) {
+  const { cmPerPx, toPlan } = usePlan();
+  return (
+    <g className="wall-hits">
+      {outline.map((a, i) => {
+        const b = outline[(i + 1) % outline.length];
+        return (
+          <line key={i} x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke="transparent" strokeWidth={24 * cmPerPx} style={{ cursor: 'copy' }}
+            onPointerDown={(event) => { event.stopPropagation(); onPick(toPlan(event.clientX, event.clientY)); }} />
+        );
+      })}
     </g>
   );
 }
@@ -251,6 +269,7 @@ export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' })
   const [draft, setDraft, draftRef] = useDraft(source);
   const [selection, setSelection] = useState<Selection>(null);
   const [tool, setTool] = useState<Tool>('select');
+  const [openingKind, setOpeningKind] = useState<Opening['kind']>('window');
 
   const fit = useMemo(() => {
     if (!source) return { x: 0, y: 0, w: 450, h: 300 };
@@ -288,6 +307,24 @@ export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' })
     setDraft({ ...current, furniture: current.furniture.map((f) => (f.id === item.id ? item : f)) });
   };
   const commitFurniture = () => saveRoom({ furniture: draftRef.current!.furniture });
+  const updateLocalOpening = (opening: Opening) => {
+    const current = draftRef.current!;
+    setDraft({ ...current, openings: current.openings.map((o) => (o.id === opening.id ? opening : o)) });
+  };
+  const commitOpenings = () => saveRoom({ openings: draftRef.current!.openings });
+  const addOpening = (point: Pt) => {
+    const current = draftRef.current!;
+    const spot = openingAt(current.outline, point, OPENING_WIDTH[openingKind], 40);
+    if (!spot) return;
+    const opening: Opening = {
+      id: Math.random().toString(16).slice(2, 14), kind: openingKind, ...spot,
+      sill: openingKind === 'window' ? 90 : null, top: openingKind === 'window' ? 210 : 203,
+    };
+    const openings = [...current.openings, opening];
+    setDraft({ ...current, openings });
+    setSelection({ type: 'opening', id: opening.id });
+    void saveRoom({ openings });
+  };
 
   const addLight = async (lightId: string, point?: Pt) => {
     const current = draftRef.current!;
@@ -327,6 +364,10 @@ export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' })
       const furniture = current.furniture.filter((f) => f.id !== selection.id);
       setDraft({ ...current, furniture });
       await saveRoom({ furniture });
+    } else if (selection.type === 'opening') {
+      const openings = current.openings.filter((o) => o.id !== selection.id);
+      setDraft({ ...current, openings });
+      await saveRoom({ openings });
     } else {
       const ok = await attempt(() => api.removeLight(current.name, selection.id));
       if (ok) await refreshRooms();
@@ -349,6 +390,8 @@ export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' })
       if (event.key === 'Delete' || event.key === 'Backspace') {
         event.preventDefault();
         void removeSelected();
+      } else if (selection.type === 'opening') {
+        return;
       } else if (moves[event.key] || event.key === 'r' || event.key === 'R') {
         event.preventDefault();
         const [dx, dy] = moves[event.key] ?? [0, 0];
@@ -378,6 +421,7 @@ export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' })
   const tray = Object.values(lights).filter((light) => !placedIds.has(light.id));
   const selectedLight = selection?.type === 'light' ? draft.lights.find((l) => l.light_id === selection.id) : undefined;
   const selectedFurniture = selection?.type === 'furniture' ? draft.furniture.find((f) => f.id === selection.id) : undefined;
+  const selectedOpening = selection?.type === 'opening' ? draft.openings.find((o) => o.id === selection.id) : undefined;
   const roomScenes = scenes.filter((scene) => scene.room === draft.name);
 
   return (
@@ -408,6 +452,11 @@ export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' })
             <div className="toolbar floating">
               <IconButton label="Select and move" active={tool === 'select'} onClick={() => setTool('select')}><Hand size={18} strokeWidth={1.5} /></IconButton>
               <IconButton label="Edit the room outline" active={tool === 'outline'} onClick={() => { setTool('outline'); setSelection(null); }}><PenLine size={18} strokeWidth={1.5} /></IconButton>
+              <IconButton label="Add doors and windows" active={tool === 'openings'} onClick={() => { setTool('openings'); setSelection(null); }}><DoorOpen size={18} strokeWidth={1.5} /></IconButton>
+              {tool === 'openings' && (
+                <Segmented label="Opening" value={openingKind} onChange={setOpeningKind}
+                  options={[{ value: 'window', label: 'Window' }, { value: 'door', label: 'Door' }]} />
+              )}
             </div>
             <PlanCanvas
               fit={fit}
@@ -420,6 +469,9 @@ export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' })
             >
               <path d={pathOf(draft.outline)} className={`room-floor big${tool === 'outline' ? ' editing' : ''}`} />
               <EdgeLabels outline={draft.outline} units={draft.units} />
+              {tool === 'openings' && <WallHits outline={draft.outline} onPick={addOpening} />}
+              <OpeningsLayer room={draft} selectedId={selection?.type === 'opening' ? selection.id : undefined}
+                onSelect={(id) => setSelection({ type: 'opening', id })} />
               <g className={tool === 'outline' ? 'dimmed' : ''}>
                 {draft.furniture.map((item) => (
                   <PlacedFurniture key={item.id} item={item} units={draft.units} selected={selection?.type === 'furniture' && selection.id === item.id}
@@ -443,6 +495,7 @@ export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' })
               )}
             </PlanCanvas>
             {tool === 'outline' && <p className="stage-hint">Drag corners to reshape. Drag a + to add a corner. Double-click a corner to remove it.</p>}
+            {tool === 'openings' && <p className="stage-hint">Click a wall to add a {openingKind} there. Doors and windows on walls that change shape are removed.</p>}
           </div>
 
           <aside className="inspector">
@@ -450,6 +503,24 @@ export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' })
               <Panel title="Light" actions={<IconButton label="Remove from room" danger onClick={removeSelected}><Trash2 size={16} /></IconButton>}>
                 {lights[selectedLight.light_id] ? <LightControls light={lights[selectedLight.light_id]} /> : <p className="hint">{selectedLight.label} is not on the bridge right now.</p>}
                 <LightPlacementFields placement={selectedLight} units={draft.units} onChange={(next) => { updateLocalLight(next); void saveLight(next); }} />
+              </Panel>
+            )}
+            {selectedOpening && (
+              <Panel title={selectedOpening.kind === 'door' ? 'Door' : 'Window'} actions={<IconButton label="Delete" danger onClick={removeSelected}><Trash2 size={16} /></IconButton>}>
+                <Segmented label="Kind" value={selectedOpening.kind}
+                  onChange={(kind) => { updateLocalOpening({ ...selectedOpening, kind, sill: kind === 'window' ? selectedOpening.sill ?? 90 : null, top: selectedOpening.top ?? (kind === 'window' ? 210 : 203) }); void commitOpenings(); }}
+                  options={[{ value: 'window', label: 'Window' }, { value: 'door', label: 'Door' }]} />
+                <div className="field-row">
+                  <LengthInput label="Width" value={selectedOpening.width} units={draft.units} onCommit={(width) => { updateLocalOpening({ ...selectedOpening, width: round1(width) }); void commitOpenings(); }} />
+                  <LengthInput label="From corner" value={selectedOpening.offset} units={draft.units} onCommit={(offset) => { updateLocalOpening({ ...selectedOpening, offset: round1(offset) }); void commitOpenings(); }} />
+                </div>
+                <div className="field-row">
+                  {selectedOpening.kind === 'window' && (
+                    <LengthInput label="Sill height" value={selectedOpening.sill ?? 90} units={draft.units} onCommit={(sill) => { updateLocalOpening({ ...selectedOpening, sill: round1(sill) }); void commitOpenings(); }} />
+                  )}
+                  <LengthInput label="Top height" value={selectedOpening.top ?? 203} units={draft.units} onCommit={(top) => { updateLocalOpening({ ...selectedOpening, top: round1(top) }); void commitOpenings(); }} />
+                </div>
+                <p className="hint">Windows are daylight sources for glare checks, so their heights matter.</p>
               </Panel>
             )}
             {selectedFurniture && (
@@ -463,6 +534,10 @@ export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' })
                 <div className="field-row">
                   <LengthInput label="Width" value={selectedFurniture.width} units={draft.units} onCommit={(width) => { updateLocalFurniture({ ...selectedFurniture, width }); void commitFurniture(); }} />
                   <LengthInput label="Depth" value={selectedFurniture.depth} units={draft.units} onCommit={(depth) => { updateLocalFurniture({ ...selectedFurniture, depth }); void commitFurniture(); }} />
+                </div>
+                <div className="field-row">
+                  <LengthInput label="Off the floor" value={selectedFurniture.elevation ?? 0} units={draft.units} onCommit={(elevation) => { updateLocalFurniture({ ...selectedFurniture, elevation: round1(elevation) }); void commitFurniture(); }} />
+                  <LengthInput label="Height" value={selectedFurniture.height ?? 75} units={draft.units} onCommit={(height) => { updateLocalFurniture({ ...selectedFurniture, height: round1(height) }); void commitFurniture(); }} />
                 </div>
                 <Slider label="Rotation" value={selectedFurniture.rotation} min={0} max={359} format={(v) => `${Math.round(v)}°`}
                   onChange={(rotation) => updateLocalFurniture({ ...selectedFurniture, rotation })} onCommit={commitFurniture} />
@@ -571,6 +646,7 @@ function RoomFields({ room, onSave, onDelete }: { room: Room; onSave: (changes: 
         <LengthInput label="Width" value={room.width} units={room.units} onCommit={(width) => onSave({ width })} />
         <LengthInput label="Depth" value={room.height} units={room.units} onCommit={(height) => onSave({ height })} />
       </div>
+      <LengthInput label="Ceiling height" value={room.ceiling} units={room.units} onCommit={(ceiling) => onSave({ ceiling: round1(ceiling) })} />
       <p className="hint">{formatArea(area(room.outline), room.units)} · {room.outline.length} corners. Width and depth stretch the outline.</p>
       <div className="button-row">
         <button type="button" className="button subtle" onClick={() => onSave({ outline: [[box.minX, box.minY], [box.maxX, box.minY], [box.maxX, box.maxY], [box.minX, box.maxY]] })}>Rectangle</button>
@@ -581,3 +657,16 @@ function RoomFields({ room, onSave, onDelete }: { room: Room; onSave: (changes: 
   );
 }
 
+
+function OpeningsLayer({ room, selectedId, onSelect }: { room: Room; selectedId?: string; onSelect: (id: string) => void }) {
+  const { cmPerPx } = usePlan();
+  return (
+    <g className="openings">
+      {room.openings.map((opening) => (
+        <g key={opening.id} style={{ cursor: 'pointer' }} onPointerDown={(event) => { event.stopPropagation(); onSelect(opening.id); }}>
+          <OpeningShape outline={room.outline} opening={opening} cmPerPx={cmPerPx} selected={opening.id === selectedId} />
+        </g>
+      ))}
+    </g>
+  );
+}
