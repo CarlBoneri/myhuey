@@ -12,7 +12,7 @@ import requests
 
 from .color import build_hue_state
 from .errors import BridgeCertificateError, BridgeUnreachable, HueApiError, LinkButtonNotPressed
-from .tls import pin_path, pinned_session
+from .tls import pin_path, pinned_session, repin
 
 DISCOVERY_URL = "https://discovery.meethue.com"
 PAIRING_WINDOW = 30.0
@@ -242,20 +242,33 @@ class HueBridgeClient:
         payload: dict[str, Any] | None = None,
         timeout: float | None = None,
     ) -> Any:
-        """Call a path under /api/<username>. Raises HueApiError if the bridge reports an error."""
-        if self._session is None:
-            self._session = pinned_session(self.bridge_ip, self.port, cert_dir=self._cert_dir)
-        result = _exchange(
-            self._session,
-            method.upper(),
-            f"{self.base_url}{path}",
-            host=self.bridge_ip,
-            port=self.port,
-            cert_dir=self._cert_dir,
-            timeout=timeout or self.timeout,
-            params=params,
-            json=payload,
-        )
+        """Call a path under /api/<username>. Raises HueApiError if the bridge reports an error.
+
+        If the bridge renewed its certificate, the new one is verified and pinned (same bridge
+        ID only) and the call is sent once more.
+        """
+        def send() -> Any:
+            if self._session is None:
+                self._session = pinned_session(self.bridge_ip, self.port, cert_dir=self._cert_dir)
+            return _exchange(
+                self._session,
+                method.upper(),
+                f"{self.base_url}{path}",
+                host=self.bridge_ip,
+                port=self.port,
+                cert_dir=self._cert_dir,
+                timeout=timeout or self.timeout,
+                params=params,
+                json=payload,
+            )
+
+        try:
+            result = send()
+        except BridgeCertificateError:
+            if not repin(self.bridge_ip, self.port, cert_dir=self._cert_dir):
+                raise
+            self._session = None
+            result = send()
         error = _first_error(result)
         if error:
             raise error
