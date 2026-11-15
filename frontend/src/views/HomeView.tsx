@@ -1,0 +1,176 @@
+// The whole home: every room at its real size and place. Drag a room to move it; click to open.
+import { useMemo, useRef, useState } from 'react';
+import { Download, Plus } from 'lucide-react';
+import { api } from '../api';
+import { attempt, useStore } from '../store';
+import { go } from '../lib/router';
+import { area, bounds, pathOf } from '../lib/geometry';
+import { formatArea, formatLength, parseLength, snap } from '../lib/units';
+import { liveColors, placedProfile, effectiveLength } from '../lib/lights';
+import type { Pt, Room } from '../types';
+import { PlanCanvas, useDrag, usePlan } from '../components/PlanCanvas';
+import { LightSilhouette } from '../components/Shapes';
+import { Empty, Field, Panel, TextInput } from '../components/ui';
+
+function RoomOnPlan({ room, offset, onMove, onDrop }: { room: Room; offset: Pt; onMove: (d: Pt) => void; onDrop: () => void }) {
+  const drag = useDrag();
+  const { cmPerPx } = usePlan();
+  const { lights, profiles } = useStore();
+  const box = bounds(room.outline);
+  const fontSize = Math.max(12 * cmPerPx, 14);
+  return (
+    <g
+      className="home-room"
+      transform={`translate(${room.x + offset[0]},${room.y + offset[1]})`}
+      onPointerDown={(event) =>
+        drag(event, {
+          move: (_, delta) => onMove([snap(delta[0], room.units), snap(delta[1], room.units)]),
+          end: (moved) => (moved ? onDrop() : go({ view: 'room', room: room.name, tab: 'plan' })),
+        })
+      }
+      role="button"
+      aria-label={`${room.name}, ${formatLength(room.width, room.units)} by ${formatLength(room.height, room.units)}`}
+    >
+      <path d={pathOf(room.outline)} className="room-floor" strokeWidth={1.5 * cmPerPx} />
+      {room.furniture.map((item) => (
+        <rect key={item.id} x={-item.width / 2} y={-item.depth / 2} width={item.width} height={item.depth}
+          transform={`translate(${item.x},${item.y}) rotate(${item.rotation})`} className="furniture ghost" rx={4} />
+      ))}
+      {room.lights.map((placement) => {
+        const bridge = lights[placement.light_id];
+        const profile = placedProfile(placement, bridge, profiles);
+        const colors = liveColors(bridge);
+        return (
+          <g key={placement.light_id} transform={`translate(${placement.x},${placement.y}) rotate(${placement.rotation})`} pointerEvents="none">
+            <LightSilhouette profile={profile} length={effectiveLength(placement, profile)} colors={colors} on={!!colors} cmPerPx={cmPerPx} mode={bridge?.gradient?.mode} />
+          </g>
+        );
+      })}
+      <text x={box.minX + 12 * cmPerPx} y={box.minY + fontSize * 1.4} className="room-name" fontSize={fontSize}>{room.name}</text>
+      <text x={box.minX + 12 * cmPerPx} y={box.minY + fontSize * 2.6} className="room-size" fontSize={fontSize * 0.75}>
+        {formatLength(room.width, room.units)} × {formatLength(room.height, room.units)}
+      </text>
+    </g>
+  );
+}
+
+export function HomeView() {
+  const { rooms, setup, refreshRooms, replaceRoom, lights } = useStore();
+  const [moving, setMovingState] = useState<{ name: string; delta: Pt } | null>(null);
+  const movingRef = useRef<{ name: string; delta: Pt } | null>(null);
+  const setMoving = (next: { name: string; delta: Pt } | null) => {
+    movingRef.current = next; // drag handlers outlive the render that created them
+    setMovingState(next);
+  };
+  const [name, setName] = useState('');
+  const [width, setWidth] = useState(`14' 9"`);
+  const [depth, setDepth] = useState(`9' 10"`);
+
+  const fit = useMemo(() => {
+    if (!rooms.length) return { x: 0, y: 0, w: 1000, h: 700 };
+    const corners = rooms.flatMap((room) => room.outline.map(([x, y]) => [x + room.x, y + room.y] as Pt));
+    const box = bounds(corners);
+    return { x: box.minX, y: box.minY, w: box.maxX - box.minX, h: box.maxY - box.minY };
+  }, [rooms]);
+
+  const create = async () => {
+    const w = parseLength(width);
+    const d = parseLength(depth);
+    if (!name.trim() || !w || !d) {
+      useStore.getState().toast('Give the room a name, a width, and a depth.');
+      return;
+    }
+    const room = await attempt(() => api.createRoom(name.trim(), w, d));
+    if (room) {
+      setName('');
+      await refreshRooms();
+      go({ view: 'room', room: room.name, tab: 'plan' });
+    }
+  };
+
+  const lightsOn = Object.values(lights).filter((light) => light.on).length;
+
+  return (
+    <div className="page home">
+      <header className="page-head">
+        <div>
+          <p className="eyebrow">Home</p>
+          <h1>Floor plan</h1>
+        </div>
+        <div className="stat-pills">
+          <span className="pill static">{rooms.length} rooms</span>
+          <span className="pill static">{Object.keys(lights).length} lights</span>
+          <span className="pill static glow">{lightsOn} on</span>
+        </div>
+      </header>
+      <div className="split">
+        <div className="stage">
+          {rooms.length ? (
+            <PlanCanvas fit={fit} units={rooms[0]?.units ?? 'imperial'}>
+              {rooms.map((room) => (
+                <RoomOnPlan
+                  key={room.name}
+                  room={room}
+                  offset={moving?.name === room.name ? moving.delta : [0, 0]}
+                  onMove={(delta) => setMoving({ name: room.name, delta })}
+                  onDrop={async () => {
+                    const current = movingRef.current;
+                    const delta = current?.name === room.name ? current.delta : null;
+                    setMoving(null);
+                    if (!delta) return;
+                    const updated = await attempt(() => api.updateRoom(room.name, { x: room.x + delta[0], y: room.y + delta[1] }));
+                    if (updated) replaceRoom(room.name, updated);
+                  }}
+                />
+              ))}
+            </PlanCanvas>
+          ) : (
+            <Empty title="No rooms yet">
+              <p>Add a room with its real size, or import the rooms from your Hue bridge.</p>
+            </Empty>
+          )}
+        </div>
+        <aside className="inspector">
+          <Panel title="Rooms">
+            <ul className="room-list">
+              {rooms.map((room) => (
+                <li key={room.name}>
+                  <a href={`#/room/${encodeURIComponent(room.name)}`}>
+                    <span>{room.name}</span>
+                    <small>{formatArea(area(room.outline), room.units)} · {room.lights.length} lights</small>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </Panel>
+          <Panel title="Add a room">
+            <Field label="Name"><TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="Living room" /></Field>
+            <div className="field-row">
+              <Field label="Width"><TextInput value={width} onChange={(e) => setWidth(e.target.value)} /></Field>
+              <Field label="Depth"><TextInput value={depth} onChange={(e) => setDepth(e.target.value)} /></Field>
+            </div>
+            <div className="button-row">
+              <button type="button" className="button primary" onClick={create}><Plus size={16} /> Add room</button>
+              {setup?.configured && (
+                <button
+                  type="button"
+                  className="button"
+                  onClick={async () => {
+                    const result = await attempt(() => api.importRooms());
+                    if (result) {
+                      useStore.getState().toast(result.added.length ? `Imported ${result.added.join(', ')}` : 'No new rooms to import.', false);
+                      await refreshRooms();
+                    }
+                  }}
+                >
+                  <Download size={16} /> Import from Hue
+                </button>
+              )}
+            </div>
+            <p className="hint">Drag rooms to arrange the home. Scroll to zoom, drag the background to pan.</p>
+          </Panel>
+        </aside>
+      </div>
+    </div>
+  );
+}

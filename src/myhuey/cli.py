@@ -14,6 +14,7 @@ from .hue import PAIRING_WINDOW, HueBridgeClient
 from .service import HueRoomService
 from .setup import run_setup
 from .tls import fingerprint, load_pin
+from .units import format_length, parse_length
 
 
 def _parse_bool(value: str) -> bool:
@@ -51,24 +52,78 @@ def build_parser() -> argparse.ArgumentParser:
     bridge.add_argument("--force", action="store_true", help="Pair again even if the saved pairing still works")
     bridge.set_defaults(handler=handle_bridge)
 
-    room = subparsers.add_parser("room", help="Manage rooms and where lights sit in them")
-    room.add_argument("action", choices=["list", "create", "assign", "remove-light", "delete", "import"])
+    room = subparsers.add_parser(
+        "room",
+        help="Manage rooms, their shape, and where lights sit in them",
+        description="Lengths take units: 12ft, 12'6\", 3.8m, 380cm. A bare number is feet "
+        "(imperial rooms) or meters (metric rooms). Positions --x/--y are in cm from the room's corner.",
+    )
+    room.add_argument(
+        "action",
+        choices=["list", "show", "create", "update", "assign", "remove-light", "delete", "import", "photo", "remove-photo"],
+    )
     room.add_argument("--name", help="Room name")
+    room.add_argument("--new-name", help="Rename the room (update)")
     room.add_argument("--light-id", help="Hue light ID")
-    room.add_argument("--x", type=int, default=0)
-    room.add_argument("--y", type=int, default=0)
+    room.add_argument("--x", type=float, default=0, help="cm")
+    room.add_argument("--y", type=float, default=0, help="cm")
+    room.add_argument("--rotation", type=float, help="Degrees, for assign")
+    room.add_argument("--length", help="Lightstrip or string length, for assign (for example 2m or 6ft)")
     room.add_argument("--label", default=None)
-    room.add_argument("--width", type=int, default=900)
-    room.add_argument("--height", type=int, default=600)
+    room.add_argument("--width", help="Room width, for example 14ft or 4.5m")
+    room.add_argument("--height", help="Room depth, for example 10ft 6in or 3.2m")
+    room.add_argument("--outline", help='Corners as "x,y x,y x,y ..." in the room\'s units, for example "0,0 14,0 14,10 0,10"')
+    room.add_argument("--units", choices=["imperial", "metric"])
+    room.add_argument("--file", help="Photo of the room, for photo")
     room.set_defaults(handler=handle_room)
 
+    furniture = subparsers.add_parser("furniture", help="Add or remove furniture in a room")
+    furniture.add_argument("action", choices=["list", "add", "remove"])
+    furniture.add_argument("--room", required=True)
+    furniture.add_argument("--id", help="Furniture ID, for remove")
+    furniture.add_argument("--kind", default="custom", help="sofa, bed, table, desk, tv, rug, ...")
+    furniture.add_argument("--label")
+    furniture.add_argument("--width", default="3ft", help="Width, for example 7ft or 2.1m")
+    furniture.add_argument("--depth", default="3ft", help="Depth, for example 3ft or 90cm")
+    furniture.add_argument("--x", type=float, default=0, help="Center, cm")
+    furniture.add_argument("--y", type=float, default=0, help="Center, cm")
+    furniture.add_argument("--rotation", type=float, default=0)
+    furniture.add_argument("--shape", choices=["rect", "ellipse"], default="rect")
+    furniture.set_defaults(handler=handle_furniture)
+
+    scene = subparsers.add_parser("scene", help="List, build, and apply scenes painted onto rooms")
+    scene.add_argument("action", choices=["list", "show", "create", "zone", "image", "preview", "apply", "delete"])
+    scene.add_argument("--scene", help="Scene ID or name")
+    scene.add_argument("--name", help="Scene name, for create")
+    scene.add_argument("--room", help="Room name, for create and list")
+    scene.add_argument("--base-mode", choices=["off", "keep", "color", "nearest"], default="off",
+                       help="What lights outside every zone do")
+    scene.add_argument("--color", default="#ffffff", help="Hex color for the base or a zone")
+    scene.add_argument("--brightness", type=float, default=100, help="0 to 100")
+    scene.add_argument("--rect", help='Zone rectangle "x,y,width,height" in cm')
+    scene.add_argument("--file", help="Image to lay over the whole room, for image")
+    scene.add_argument("--mood", default="colorful", help="Palette mood for image: colorful, bright, muted, deep, dark")
+    scene.set_defaults(handler=handle_scene)
+
+    palette = subparsers.add_parser("palette", help="Extract a color theme from an image file")
+    palette.add_argument("--file", required=True)
+    palette.add_argument("--mood", default="colorful", choices=["colorful", "bright", "muted", "deep", "dark"])
+    palette.add_argument("--count", type=int, default=5)
+    palette.set_defaults(handler=handle_palette)
+
     lights = subparsers.add_parser("lights", help="List or change the lights on the paired bridge")
-    lights.add_argument("action", choices=["list", "set"])
+    lights.add_argument("action", choices=["list", "set", "gradient", "effect"])
     lights.add_argument("--light-id", help="Hue light ID")
     lights.add_argument("--on", type=_parse_bool, metavar="on|off")
     lights.add_argument("--brightness", type=int, help="1 to 254")
     lights.add_argument("--color", help="Hex color such as #ff8000")
     lights.add_argument("--color-temp", type=float, help="Color temperature in Kelvin, such as 2700")
+    lights.add_argument("--colors", help='Gradient colors start to end, for gradient: "#ff0000,#0000ff" (2 to 5)')
+    lights.add_argument(
+        "--mode",
+        help="Gradient mode: interpolated_palette, interpolated_palette_mirrored, segmented_palette, random_pixelated",
+    )
+    lights.add_argument("--effect", help="Effect, for effect: candle, fire, prism, sparkle, opal, ... or no_effect")
     lights.set_defaults(handler=handle_lights)
 
     serve = subparsers.add_parser("serve", help="Run the MyHuey web app")
@@ -150,6 +205,19 @@ def _bridge_status(service: HueRoomService) -> int:
     return 0
 
 
+def _outline(text: str, units: str) -> list[list[float]]:
+    points = []
+    for pair in text.replace(";", " ").split():
+        x, _, y = pair.partition(",")
+        points.append([parse_length(x, units), parse_length(y, units)])
+    return points
+
+
+def _describe_room(room) -> str:
+    size = f"{format_length(room.width, room.units)} x {format_length(room.height, room.units)}"
+    return f"{room.name}: {size}, {len(room.outline)} corners, {len(room.lights)} lights, {len(room.furniture)} furniture"
+
+
 def handle_room(args: argparse.Namespace) -> int:
     service = HueRoomService(args.db)
     if args.action == "list":
@@ -162,19 +230,179 @@ def handle_room(args: argparse.Namespace) -> int:
 
     if not args.name:
         raise ValueError(f"--name is required for `room {args.action}`")
-    if args.action == "create":
-        print(json.dumps(service.add_room(args.name, args.width, args.height).to_dict(), indent=2))
+    units = args.units or (service.get_room(args.name).units if args.action not in ("create",) else "imperial")
+    if args.action == "show":
+        print(json.dumps(service.get_room(args.name).to_dict(), indent=2))
+    elif args.action == "create":
+        width = parse_length(args.width or "14ft 9in", units)
+        height = parse_length(args.height or "9ft 10in", units)
+        outline = _outline(args.outline, units) if args.outline else None
+        room = service.add_room(args.name, width, height, outline)
+        if args.units:
+            room = service.update_room(room.name, units=args.units)
+        print(f"Created {_describe_room(room)}")
+    elif args.action == "update":
+        room = service.update_room(
+            args.name,
+            width=parse_length(args.width, units) if args.width else None,
+            height=parse_length(args.height, units) if args.height else None,
+            outline=_outline(args.outline, units) if args.outline else None,
+            units=args.units,
+            new_name=args.new_name,
+        )
+        print(f"Updated {_describe_room(room)}")
     elif args.action == "delete":
         service.remove_room(args.name)
         print(f"Deleted room '{args.name}'.")
+    elif args.action == "photo":
+        if not args.file:
+            raise ValueError("--file is required for `room photo`")
+        with open(args.file, "rb") as handle:
+            room = service.set_room_photo(args.name, handle.read())
+        print(f"Saved a {room.photo.width}x{room.photo.height} photo for '{room.name}'.")
+    elif args.action == "remove-photo":
+        service.remove_room_photo(args.name)
+        print(f"Removed the photo of '{args.name}'.")
     elif not args.light_id:
         raise ValueError(f"--light-id is required for `room {args.action}`")
     elif args.action == "assign":
-        light = service.assign_light(args.name, args.light_id, x=args.x, y=args.y, label=args.label)
+        light = service.assign_light(
+            args.name,
+            args.light_id,
+            x=args.x,
+            y=args.y,
+            label=args.label,
+            rotation=args.rotation,
+            length=parse_length(args.length, units) if args.length else None,
+        )
         print(json.dumps(light.to_dict(), indent=2))
     else:
         service.remove_light(args.name, args.light_id)
         print(f"Removed light {args.light_id} from '{args.name}'.")
+    return 0
+
+
+def handle_furniture(args: argparse.Namespace) -> int:
+    service = HueRoomService(args.db)
+    room = service.get_room(args.room)
+    if args.action == "list":
+        for item in room.furniture:
+            size = f"{format_length(item.width, room.units)} x {format_length(item.depth, room.units)}"
+            print(f"{item.id}  {item.label} ({item.kind}), {size} at {item.x:.0f},{item.y:.0f} cm")
+        return 0
+    if args.action == "remove":
+        if not args.id:
+            raise ValueError("--id is required for `furniture remove`")
+        service.remove_furniture(args.room, args.id)
+        print(f"Removed furniture {args.id}.")
+        return 0
+    piece = service.add_furniture(
+        args.room,
+        {
+            "kind": args.kind,
+            "label": args.label or args.kind,
+            "width": parse_length(args.width, room.units),
+            "depth": parse_length(args.depth, room.units),
+            "x": args.x,
+            "y": args.y,
+            "rotation": args.rotation,
+            "shape": args.shape,
+        },
+    )
+    print(f"Added {piece.label} ({piece.id}).")
+    return 0
+
+
+def _print_results(results: list[dict]) -> None:
+    for item in results:
+        if item.get("keep"):
+            what = "unchanged"
+        elif not item["on"]:
+            what = "off"
+        else:
+            what = f"{item['color']} at {item['brightness']:.0f}%"
+            if item.get("gradient"):
+                what += f", gradient {' '.join(item['gradient'])}"
+        if item.get("error"):
+            what += f"  FAILED: {item['error']}"
+        print(f"  {item['light_id']:>4}  {item['label']}: {what}")
+
+
+def handle_scene(args: argparse.Namespace) -> int:
+    service = HueRoomService(args.db)
+    if args.action == "list":
+        for scene in service.scenes(args.room):
+            extras = f"{len(scene.zones)} zones" + (", image" if scene.image else "")
+            print(f"{scene.id}  {scene.name}  ({scene.room}; {extras})")
+        return 0
+    if args.action == "create":
+        if not (args.name and args.room):
+            raise ValueError("--name and --room are required for `scene create`")
+        scene = service.save_scene(
+            {
+                "name": args.name,
+                "room": args.room,
+                "base_mode": args.base_mode,
+                "base_color": args.color,
+                "base_brightness": args.brightness,
+            }
+        )
+        print(f"Created scene {scene.id} '{scene.name}' in {scene.room}.")
+        return 0
+
+    if not args.scene:
+        raise ValueError(f"--scene is required for `scene {args.action}`")
+    scene = service.get_scene(args.scene)
+    if args.action == "show":
+        print(json.dumps(scene.to_dict(), indent=2))
+    elif args.action == "delete":
+        service.delete_scene(scene.id)
+        print(f"Deleted scene '{scene.name}'.")
+    elif args.action == "zone":
+        if not args.rect:
+            raise ValueError('--rect "x,y,width,height" is required for `scene zone`')
+        x, y, w, h = (float(part) for part in args.rect.split(","))
+        data = scene.to_dict()
+        data["zones"].append(
+            {"points": [[x, y], [x + w, y], [x + w, y + h], [x, y + h]], "color": args.color, "brightness": args.brightness}
+        )
+        service.save_scene(data)
+        print(f"Added a {args.color} zone to '{scene.name}'.")
+    elif args.action == "image":
+        if not args.file:
+            raise ValueError("--file is required for `scene image`")
+        with open(args.file, "rb") as handle:
+            uploaded = service.upload_image(handle.read(), mood=args.mood)
+        room = service.get_room(scene.room)
+        xs = [p[0] for p in room.outline]
+        ys = [p[1] for p in room.outline]
+        data = scene.to_dict()
+        data["image"] = {
+            "file": uploaded["file"], "x": min(xs), "y": min(ys), "width": room.width, "height": room.height,
+            "mood": args.mood, "picks": uploaded["theme"],
+        }
+        data["palette"] = [swatch["color"] for swatch in uploaded["theme"]]
+        service.save_scene(data)
+        print(f"Laid the image over '{scene.room}'. Palette: {' '.join(data['palette'])}")
+    elif args.action == "preview":
+        print(f"Scene '{scene.name}' in {scene.room}:")
+        _print_results(service.preview_scene(scene))
+    else:
+        results = service.apply_scene(scene.id)
+        print(f"Applied '{scene.name}' to {scene.room}:")
+        _print_results(results)
+        if any(item.get("error") for item in results):
+            return 1
+    return 0
+
+
+def handle_palette(args: argparse.Namespace) -> int:
+    from .images import theme_from_bytes
+
+    with open(args.file, "rb") as handle:
+        theme = theme_from_bytes(handle.read(), args.count, args.mood)
+    for swatch in theme:
+        print(f"{swatch['color']}  at {swatch['x']:.0%} across, {swatch['y']:.0%} down")
     return 0
 
 
@@ -185,7 +413,18 @@ def handle_lights(args: argparse.Namespace) -> int:
         return 0
 
     if not args.light_id:
-        raise ValueError("--light-id is required for `lights set`")
+        raise ValueError(f"--light-id is required for `lights {args.action}`")
+    if args.action == "gradient":
+        colors = [part.strip() for part in (args.colors or "").split(",") if part.strip()]
+        service.set_gradient(args.light_id, colors, args.mode)
+        print(f"Set a {len(colors)}-color gradient on light {args.light_id}.")
+        return 0
+    if args.action == "effect":
+        if not args.effect:
+            raise ValueError("--effect is required for `lights effect`")
+        service.set_effect(args.light_id, args.effect)
+        print(f"Light {args.light_id} effect: {args.effect}.")
+        return 0
     changes = {
         "on": args.on,
         "brightness": args.brightness,

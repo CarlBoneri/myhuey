@@ -3,11 +3,12 @@ from myhuey.service import HueRoomService
 
 
 def test_room_model_tracks_lights_and_layout():
-    room = Room(name="Living Room", width=900, height=600)
+    room = Room(name="Living Room", outline=[[0, 0], [450, 0], [450, 300], [0, 300]])
     room.add_light(LayoutLight(light_id="1", label="Lamp 1", x=50, y=80))
     room.add_light(LayoutLight(light_id="2", label="Sconces", x=200, y=90))
 
     assert room.name == "Living Room"
+    assert (room.width, room.height) == (450, 300)
     assert len(room.lights) == 2
     assert room.get_light("1").label == "Lamp 1"
     assert room.get_light("2").x == 200

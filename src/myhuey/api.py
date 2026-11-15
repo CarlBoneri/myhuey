@@ -1,19 +1,35 @@
-"""HTTP routes for the web UI. Each route is a thin call into the library."""
+"""HTTP routes for the web UI. Each route is a thin call into the library.
+
+The React app is built into static/app (see frontend/). Nothing here returns the bridge
+username: setup status reports the bridge address only, and the bridge config is stripped
+of its whitelist.
+"""
 
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import FastAPI, File, HTTPException, Query, Request, UploadFile
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from .errors import BridgeNotConfigured, HueError, LinkButtonNotPressed, RoomNotFound
+from .errors import BridgeNotConfigured, HueError, LinkButtonNotPressed, RoomNotFound, SceneNotFound
 from .hue import COLLECTIONS, PAIRING_WINDOW, HueBridgeClient
+from .images import MAX_UPLOAD_BYTES, media_type
+from .palette import MOODS
 from .service import HueRoomService
 from .setup import pair_bridge
+from .shapes import BY_ARCHETYPE, BY_MODEL, BY_PRODUCT, DEFAULT_PROFILE
 
 BASE_DIR = Path(__file__).resolve().parents[2]
+APP_DIR = BASE_DIR / "static" / "app"
+CM = Field(None, ge=-10000, le=10000)
+
+_NOT_BUILT = """<!doctype html><meta charset="utf-8"><title>MyHuey</title>
+<body style="font-family:system-ui;background:#0f0e17;color:#e8e6f0;padding:3rem">
+<h1>MyHuey</h1><p>The web app has not been built yet. Run:</p>
+<pre>npm --prefix frontend install
+npm --prefix frontend run build</pre><p>then reload this page.</p></body>"""
 
 
 class PairRequest(BaseModel):
@@ -23,15 +39,32 @@ class PairRequest(BaseModel):
 
 class RoomCreate(BaseModel):
     name: str
-    width: int = Field(900, ge=100, le=10000)
-    height: int = Field(600, ge=100, le=10000)
+    width: float = Field(450, ge=30, le=10000, description="cm")
+    height: float = Field(300, ge=30, le=10000, description="cm")
+    outline: list[list[float]] | None = None
+
+
+class FurnitureItem(BaseModel):
+    id: str | None = None
+    kind: str = "custom"
+    label: str | None = None
+    x: float = 0
+    y: float = 0
+    width: float = Field(60, ge=1, le=2000)
+    depth: float = Field(60, ge=1, le=2000)
+    rotation: float = 0
+    shape: str = "rect"
 
 
 class RoomUpdate(BaseModel):
-    x: float | None = None
-    y: float | None = None
-    width: int | None = Field(None, ge=100, le=10000)
-    height: int | None = Field(None, ge=100, le=10000)
+    x: float | None = CM
+    y: float | None = CM
+    width: float | None = Field(None, ge=30, le=10000)
+    height: float | None = Field(None, ge=30, le=10000)
+    outline: list[list[float]] | None = None
+    units: str | None = None
+    furniture: list[FurnitureItem] | None = None
+    name: str | None = None
 
 
 class LightPlacement(BaseModel):
@@ -39,6 +72,12 @@ class LightPlacement(BaseModel):
     x: float = 0
     y: float = 0
     label: str | None = None
+    rotation: float | None = None
+    length: float | None = Field(None, ge=5, le=5000)
+
+
+class PhotoPlacements(BaseModel):
+    placements: dict[str, dict[str, float]]
 
 
 class LightState(BaseModel):
@@ -49,8 +88,17 @@ class LightState(BaseModel):
     color_temp: float | None = Field(None, gt=0)
 
 
+class GradientChange(BaseModel):
+    colors: list[str] = Field(..., min_length=1, max_length=10)
+    mode: str | None = None
+
+
+class EffectChange(BaseModel):
+    effect: str
+
+
 def _status_for(exc: Exception) -> int:
-    if isinstance(exc, RoomNotFound):
+    if isinstance(exc, (RoomNotFound, SceneNotFound)):
         return 404
     if isinstance(exc, LinkButtonNotPressed):
         return 409
@@ -64,11 +112,18 @@ def _require_collection(collection: str) -> None:
         raise HTTPException(status_code=404, detail=f"Collection '{collection}' is not supported")
 
 
+async def _read_upload(upload: UploadFile) -> bytes:
+    data = await upload.read(MAX_UPLOAD_BYTES + 1)
+    if len(data) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail=f"Images can be at most {MAX_UPLOAD_BYTES // (1024 * 1024)} MB")
+    return data
+
+
 def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRING_WINDOW) -> FastAPI:
     """Build the web app. Config is read from storage on every request, never cached."""
     service = HueRoomService(storage_path)
     app = FastAPI(title="MyHuey")
-    app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
+    app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static"), check_dir=False), name="static")
 
     @app.exception_handler(HueError)
     @app.exception_handler(ValueError)
@@ -77,7 +132,8 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
 
     @app.get("/", response_class=HTMLResponse)
     def index() -> HTMLResponse:
-        return HTMLResponse((BASE_DIR / "templates" / "index.html").read_text(encoding="utf-8"))
+        page = APP_DIR / "index.html"
+        return HTMLResponse(page.read_text(encoding="utf-8") if page.is_file() else _NOT_BUILT)
 
     @app.get("/api/health")
     def health() -> dict[str, str]:
@@ -113,7 +169,7 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
 
     @app.post("/api/rooms")
     def create_room(body: RoomCreate) -> dict[str, Any]:
-        return service.add_room(body.name, body.width, body.height).to_dict()
+        return service.add_room(body.name, body.width, body.height, body.outline).to_dict()
 
     @app.post("/api/rooms/import")
     def import_rooms() -> dict[str, Any]:
@@ -125,7 +181,11 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
 
     @app.patch("/api/rooms/{room_name}")
     def update_room(room_name: str, body: RoomUpdate) -> dict[str, Any]:
-        changes = {key: round(value) for key, value in body.model_dump(exclude_none=True).items()}
+        changes = body.model_dump(exclude_none=True)
+        if "furniture" in changes:
+            changes["furniture"] = [item.model_dump() for item in body.furniture or []]
+        if "name" in changes:
+            changes["new_name"] = changes.pop("name")
         return service.update_room(room_name, **changes).to_dict()
 
     @app.delete("/api/rooms/{room_name}")
@@ -135,7 +195,15 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
 
     @app.post("/api/rooms/{room_name}/lights")
     def place_light(room_name: str, body: LightPlacement) -> dict[str, Any]:
-        light = service.assign_light(room_name, body.light_id, x=round(body.x), y=round(body.y), label=body.label)
+        light = service.assign_light(
+            room_name,
+            body.light_id,
+            x=body.x,
+            y=body.y,
+            label=body.label,
+            rotation=body.rotation,
+            length=body.length,
+        )
         return light.to_dict()
 
     @app.delete("/api/rooms/{room_name}/lights/{light_id}")
@@ -143,15 +211,102 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
         service.remove_light(room_name, light_id)
         return {"status": "removed"}
 
+    # Room photos
+
+    @app.post("/api/rooms/{room_name}/photo")
+    async def upload_room_photo(room_name: str, file: UploadFile = File(...)) -> dict[str, Any]:
+        service.get_room(room_name)
+        return service.set_room_photo(room_name, await _read_upload(file)).to_dict()
+
+    @app.delete("/api/rooms/{room_name}/photo")
+    def delete_room_photo(room_name: str) -> dict[str, str]:
+        service.remove_room_photo(room_name)
+        return {"status": "removed"}
+
+    @app.put("/api/rooms/{room_name}/photo/placements")
+    def save_photo_placements(room_name: str, body: PhotoPlacements) -> dict[str, Any]:
+        return service.set_photo_placements(room_name, body.placements).to_dict()
+
+    # Images
+
+    @app.post("/api/images")
+    async def upload_image(
+        file: UploadFile = File(...), count: int = Query(5, ge=1, le=10), mood: str = Query("colorful")
+    ) -> dict[str, Any]:
+        return service.upload_image(await _read_upload(file), count, mood)
+
+    @app.get("/api/images/{name}")
+    def get_image(name: str) -> FileResponse:
+        path = service.image_file(name)
+        return FileResponse(path, media_type=media_type(name), headers={"Cache-Control": "private, max-age=31536000"})
+
+    @app.get("/api/images/{name}/theme")
+    def image_theme(name: str, count: int = Query(5, ge=1, le=10), mood: str = Query("colorful")) -> dict[str, Any]:
+        return {"mood": mood, "moods": list(MOODS), "theme": service.palette(name, count, mood)}
+
+    # Scenes
+
+    @app.get("/api/scenes")
+    def list_scenes(room: str | None = None) -> list[dict[str, Any]]:
+        return [scene.to_dict() for scene in service.scenes(room)]
+
+    @app.post("/api/scenes")
+    def create_scene(body: dict[str, Any]) -> dict[str, Any]:
+        body = {key: value for key, value in body.items() if key != "id"}
+        return service.save_scene(body).to_dict()
+
+    @app.post("/api/scenes/preview")
+    def preview_scene(body: dict[str, Any]) -> list[dict[str, Any]]:
+        return service.preview_scene(body)
+
+    @app.get("/api/scenes/{scene_id}")
+    def get_scene(scene_id: str) -> dict[str, Any]:
+        return service.get_scene(scene_id).to_dict()
+
+    @app.put("/api/scenes/{scene_id}")
+    def update_scene(scene_id: str, body: dict[str, Any]) -> dict[str, Any]:
+        service.get_scene(scene_id)
+        return service.save_scene({**body, "id": scene_id}).to_dict()
+
+    @app.delete("/api/scenes/{scene_id}")
+    def delete_scene(scene_id: str) -> dict[str, str]:
+        service.delete_scene(scene_id)
+        return {"status": "deleted"}
+
+    @app.post("/api/scenes/{scene_id}/apply")
+    def apply_scene(scene_id: str) -> dict[str, Any]:
+        results = service.apply_scene(scene_id)
+        return {"results": results, "failed": sum(1 for item in results if item.get("error"))}
+
     # Lights and other bridge resources
 
     @app.get("/api/lights")
     def list_lights() -> list[dict[str, Any]]:
         return service.lights()
 
+    @app.get("/api/light-profiles")
+    def light_profiles() -> dict[str, Any]:
+        """The shape table, so the UI draws lights the same way scenes compute them."""
+        return {
+            "default": DEFAULT_PROFILE.to_dict(),
+            "archetype": {key: value.to_dict() for key, value in BY_ARCHETYPE.items()},
+            "product": {key: value.to_dict() for key, value in BY_PRODUCT.items()},
+            "model": {key: value.to_dict() for key, value in BY_MODEL.items()},
+        }
+
     @app.put("/api/lights/{light_id}/state")
     def update_light_state(light_id: str, body: LightState) -> dict[str, str]:
         service.set_light(light_id, **body.model_dump(exclude_none=True))
+        return {"light_id": light_id, "status": "ok"}
+
+    @app.put("/api/lights/{light_id}/gradient")
+    def update_light_gradient(light_id: str, body: GradientChange) -> dict[str, str]:
+        service.set_gradient(light_id, body.colors, body.mode)
+        return {"light_id": light_id, "status": "ok"}
+
+    @app.put("/api/lights/{light_id}/effect")
+    def update_light_effect(light_id: str, body: EffectChange) -> dict[str, str]:
+        service.set_effect(light_id, body.effect)
         return {"light_id": light_id, "status": "ok"}
 
     @app.get("/api/hue/{collection}")
@@ -168,6 +323,12 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
         if collection == "config":
             raise HTTPException(status_code=404, detail="The bridge config has no sub-resources here")
         return service.client().resource(collection, resource_id)
+
+    @app.get("/{path:path}", include_in_schema=False)
+    def spa_fallback(path: str) -> HTMLResponse:
+        if path.startswith(("api/", "static/")):
+            raise HTTPException(status_code=404, detail="Not found")
+        return index()
 
     return app
 

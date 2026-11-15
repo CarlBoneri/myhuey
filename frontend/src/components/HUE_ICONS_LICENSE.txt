@@ -1,0 +1,8 @@
+The light and room icons in hueIcons.ts are path data from hass-hue-icons
+by Andrew Allsopp: https://github.com/arallsopp/hass-hue-icons
+
+They are licensed under Creative Commons Attribution-NonCommercial-ShareAlike 4.0
+International: https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+They are provided as-is, without warranties. They may be used for non-commercial
+purposes only. The rest of MyHuey is not covered by this license.

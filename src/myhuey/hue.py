@@ -67,15 +67,18 @@ def _exchange(
     port: int,
     cert_dir: str | Path | None,
     timeout: float,
+    error_body_ok: bool = False,
     **kwargs: Any,
 ) -> Any:
     """Send one request and return the decoded JSON.
 
-    Errors are re-raised without the URL, because the URL carries the username.
+    Errors are re-raised without the URL or headers, because they carry the username.
+    With `error_body_ok`, a 4xx answer is decoded too (the v2 API explains errors in its body).
     """
     try:
         response = session.request(method, url, timeout=timeout, **kwargs)
-        response.raise_for_status()
+        if not (error_body_ok and 400 <= response.status_code < 500):
+            response.raise_for_status()
     except requests.exceptions.SSLError as exc:
         if "fingerprint" not in str(exc).lower():
             raise BridgeUnreachable(f"Cannot reach the Hue bridge at {host}:{port} (TLS handshake failed).") from None
@@ -94,6 +97,16 @@ def _exchange(
         return response.json()
     except ValueError:
         raise BridgeUnreachable(f"The device at {host} did not answer like a Hue bridge.") from None
+
+
+def _clip_error(payload: Any) -> HueApiError | None:
+    errors = payload.get("errors") if isinstance(payload, dict) else None
+    if errors:
+        description = "; ".join(str(item.get("description", "error")) for item in errors if isinstance(item, dict))
+        return HueApiError(0, description or "unknown error")
+    if not isinstance(payload, dict):
+        return HueApiError(0, "unexpected answer from the v2 API")
+    return None
 
 
 class HueBridgeClient:
@@ -295,3 +308,37 @@ class HueBridgeClient:
 
     def get_config(self) -> dict[str, Any]:
         return self.collection("config")
+
+    # Hue API v2 (CLIP). The v1 username doubles as the v2 application key.
+
+    def clip(self, method: str, resource: str, resource_id: str | None = None, payload: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+        """Call /clip/v2/resource/<resource>[/<id>] and return its `data` list."""
+        if self._session is None:
+            self._session = pinned_session(self.bridge_ip, self.port, cert_dir=self._cert_dir)
+        path = f"/clip/v2/resource/{_segment(resource)}"
+        if resource_id:
+            path = f"{path}/{_segment(resource_id)}"
+        result = _exchange(
+            self._session,
+            method.upper(),
+            f"https://{self.bridge_ip}:{self.port}{path}",
+            host=self.bridge_ip,
+            port=self.port,
+            cert_dir=self._cert_dir,
+            timeout=self.timeout,
+            error_body_ok=True,
+            headers={"hue-application-key": self.username},
+            json=payload,
+        )
+        error = _clip_error(result)
+        if error:
+            raise error
+        data = result.get("data")
+        return data if isinstance(data, list) else []
+
+    def get_v2_lights(self) -> list[dict[str, Any]]:
+        return self.clip("GET", "light")
+
+    def set_v2_light(self, light_rid: str, body: dict[str, Any]) -> list[dict[str, Any]]:
+        """Send a v2 light update, for example {"gradient": {"points": [...]}}."""
+        return self.clip("PUT", "light", light_rid, body)

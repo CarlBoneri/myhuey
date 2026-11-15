@@ -20,7 +20,7 @@ def test_health_and_index(web):
 
     page = web.get("/")
     assert page.status_code == 200
-    assert "/static/app.js" in page.text
+    assert "MyHuey" in page.text
 
 
 # Missing bridge
@@ -198,13 +198,13 @@ def test_rooms_and_light_placement_round_trip(web):
     assert web.post("/api/rooms", json={"name": "   "}).status_code == 400
 
     placed = web.post("/api/rooms/Office/lights", json={"light_id": "1", "x": 120.4, "y": 90, "label": "Desk"})
-    assert placed.json()["x"] == 120
+    assert placed.json()["x"] == 120.4
     moved = web.post("/api/rooms/Office/lights", json={"light_id": "1", "x": 300, "y": 200})
     assert moved.json()["label"] == "Desk"  # moving a light keeps its label
 
     assert web.patch("/api/rooms/Office", json={"x": 500, "y": 40}).json()["x"] == 500
     room = web.get("/api/rooms/Office").json()
-    assert (room["x"], room["y"], room["width"], room["height"]) == (500, 40, 900, 600)
+    assert (room["x"], room["y"], room["width"], room["height"]) == (500, 40, 450, 300)  # cm
     assert [(light["light_id"], light["x"], light["y"]) for light in room["lights"]] == [("1", 300, 200)]
 
     assert web.delete("/api/rooms/Office/lights/1").status_code == 200
@@ -232,4 +232,4 @@ def test_importing_rooms_copies_hue_rooms_and_their_lights(web, db_path, fake_br
         ("1", "Desk lamp"),
         ("2", "Hall"),
     ]
-    assert (rooms["Office"]["x"], rooms["Porch-Yard"]["x"]) == (0, 960)  # laid out side by side
+    assert (rooms["Office"]["x"], rooms["Porch-Yard"]["x"]) == (0, 500)  # laid out side by side

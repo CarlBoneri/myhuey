@@ -45,3 +45,8 @@ class LinkButtonNotPressed(HueError):
             f"The link button on the bridge at {bridge_ip} was not pressed within {window:.0f} seconds. "
             f"Press the round button on that bridge, then try again."
         )
+
+
+class SceneNotFound(HueError, LookupError):
+    def __init__(self, key: str) -> None:
+        super().__init__(f"Scene '{key}' not found")

@@ -25,8 +25,15 @@ class FakeSession:
     def __init__(self, *answers):
         self.answers = list(answers)
         self.calls = []
+        self.clip_calls = []
+        self.v2_lights = []  # what GET /clip/v2/resource/light answers
 
     def request(self, method, url, **kwargs):
+        if "/clip/v2/" in url:
+            # v2 calls are recorded apart so v1 answer queues stay in order.
+            self.clip_calls.append({"method": method, "url": url, **kwargs})
+            data = self.v2_lights if method == "GET" else [{"rid": url.rsplit("/", 1)[1], "rtype": "light"}]
+            return FakeResponse({"errors": [], "data": data})
         self.calls.append({"method": method, "url": url, **kwargs})
         answer = self.answers.pop(0) if len(self.answers) > 1 else self.answers[0]
         if isinstance(answer, Exception):
