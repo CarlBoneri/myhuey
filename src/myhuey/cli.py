@@ -11,6 +11,7 @@ from typing import Sequence, TextIO
 
 from .errors import HueError
 from .hue import PAIRING_WINDOW, HueBridgeClient
+from .modes import MODES
 from .service import HueRoomService
 from .setup import run_setup
 from .tls import fingerprint, load_pin
@@ -122,6 +123,23 @@ def build_parser() -> argparse.ArgumentParser:
     palette.add_argument("--mood", default="colorful", choices=["colorful", "bright", "muted", "deep", "dark"])
     palette.add_argument("--count", type=int, default=5)
     palette.set_defaults(handler=handle_palette)
+
+    suggest = subparsers.add_parser("suggest", help="Suggest scenes for a room from a mode, the time, and its layout")
+    suggest.add_argument("--room", required=True, help="Room name")
+    suggest.add_argument("--mode", required=True, choices=list(MODES), help="What you are doing")
+    suggest.add_argument("--at", help="Time of day HH:MM (default now)")
+    suggest.add_argument("--palette", help="Palette ID (see `myhuey palettes`); default: myhuey picks")
+    suggest.add_argument("--count", type=int, default=4, choices=range(1, 7), metavar="1-6")
+    suggest.add_argument("--seed", type=int, default=0, help="Change it for different picks")
+    suggest.add_argument("--save", metavar="NAME", help="Save the first suggestion as a scene with this name")
+    suggest.add_argument("--apply", action="store_true", help="Send the first suggestion to the lights")
+    suggest.set_defaults(handler=handle_suggest)
+
+    palettes = subparsers.add_parser("palettes", help="Browse the palette library suggestions choose from")
+    palettes.add_argument("--tag", help="warm, cool, muted, vivid, analogous, accent, blue_heavy")
+    palettes.add_argument("--search", help="Text in the palette name")
+    palettes.add_argument("--limit", type=int, default=20)
+    palettes.set_defaults(handler=handle_palettes)
 
     lights = subparsers.add_parser("lights", help="List or change the lights on the paired bridge")
     lights.add_argument("action", choices=["list", "set", "gradient", "effect"])
@@ -441,6 +459,45 @@ def handle_scene(args: argparse.Namespace) -> int:
         _print_results(results)
         if any(item.get("error") for item in results):
             return 1
+    return 0
+
+
+def handle_suggest(args: argparse.Namespace) -> int:
+    import re
+
+    if args.at and not re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", args.at):
+        raise ValueError("--at takes a time such as 07:30 or 22:00")
+    service = HueRoomService(args.db)
+    items = service.suggest(args.room, args.mode, at=args.at, palette_id=args.palette, count=args.count, seed=args.seed)
+    for number, item in enumerate(items, 1):
+        palette = item["palette"]
+        print(f"{number}. {item['scene']['name']}  ({palette['id']})  {' '.join(palette['colors'])}")
+        for light in item["preview"]:
+            shown = f"{light['color_temp']} K" if light.get("color_temp") else (light.get("color") or "off")
+            role = item["roles"].get(light["light_id"], "")
+            print(f"     {light['label']:<20} {role:<8} {shown:<9} {light['brightness']:>5}%")
+    if not items:
+        return 0
+    first = items[0]["scene"]
+    if args.save:
+        saved = service.save_scene({**first, "id": None, "name": args.save})
+        print(f"Saved '{saved.name}' ({saved.id}).")
+    if args.apply:
+        from .scenes import Scene
+
+        results = service.apply_scene_object(Scene.from_dict(first))
+        print(f"Applied '{first['name']}' to {args.room}:")
+        _print_results(results)
+        if any(item.get("error") for item in results):
+            return 1
+    return 0
+
+
+def handle_palettes(args: argparse.Namespace) -> int:
+    from .palettes import search
+
+    for palette in search(tag=args.tag, q=args.search, limit=args.limit):
+        print(f"{palette.id:<22} {palette.name:<36} {' '.join(palette.colors)}  [{', '.join(palette.tags)}]")
     return 0
 
 

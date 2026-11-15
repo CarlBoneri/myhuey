@@ -9,6 +9,7 @@ from __future__ import annotations
 import functools
 import threading
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
 
@@ -21,6 +22,7 @@ from .images import ImageSampler, extract_palette, image_path, prune_unreference
 from .models import Furniture, HomePlan, LayoutLight, Opening, Room, RoomPhoto, opening_fits, reanchor_openings, validate_outline
 from .preferences import chosen as chosen_preferences, merged as merged_preferences, validate as validate_preferences
 from .scenes import Scene, evaluate
+from .suggest import suggest as suggest_scenes
 from .shapes import profile_for
 from .storage import DEFAULT_STORAGE_PATH, load_config, save_config, uploads_dir
 from .tls import pin_certificate, pinned_bridge_id
@@ -764,6 +766,25 @@ class HueRoomService:
             return ImageSampler(self.image_file(scene.image.file)).color_at
         except ValueError:
             return None
+
+    def suggest(
+        self, room_name: str, mode: str, *, at: str | None = None, palette_id: str | None = None,
+        count: int = 4, seed: int = 0,
+    ) -> list[dict[str, Any]]:
+        """Suggested scenes for a room, as previews: nothing is saved and no light changes.
+
+        `at` is "HH:MM" (default: now); the wake time and bedtime come from the preferences.
+        """
+        room = self.get_room(room_name)
+        prefs = self.preferences()
+        now = datetime.now()
+        when = now.replace(hour=int(at[:2]), minute=int(at[3:5]), second=0, microsecond=0) if at else now
+        items = suggest_scenes(room, mode, at=when, wake=prefs["wake_time"], bed=prefs["bed_time"],
+                               palette_id=palette_id, count=count, seed=seed)
+        return [
+            {**item, "scene": item["scene"].to_dict(), "preview": evaluate(item["scene"], room)}
+            for item in items
+        ]
 
     def preview_scene(self, scene: Scene | dict[str, Any], gradient_points: dict[str, int] | None = None) -> list[dict[str, Any]]:
         """What each light would show, without changing any light."""

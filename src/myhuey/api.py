@@ -18,7 +18,10 @@ from .hue import COLLECTIONS, PAIRING_WINDOW, HueBridgeClient
 from .images import MAX_UPLOAD_BYTES, media_type
 from .models import Room
 from .palette import MOODS
+from .palettes import search as search_palettes
 from .placement import resolved_elevation
+from .roles import find_focus, resolve_roles
+from .scenes import Scene
 from .service import HueRoomService
 from .discovery import discover
 from . import setup as setup_flow
@@ -119,6 +122,14 @@ class LightPlacement(Body):
     role: Literal["auto", "bias", "task", "view"] | None = None
 
 
+class SuggestRequest(Body):
+    mode: str = Field(..., max_length=20)
+    at: str | None = Field(None, pattern=r"^([01]\d|2[0-3]):[0-5]\d$", description="HH:MM; default now")
+    palette_id: str | None = Field(None, max_length=80)
+    count: StrictInt = Field(4, ge=1, le=6)
+    seed: StrictInt = Field(0, ge=0, le=1_000_000)
+
+
 class RoomBrightness(Body):
     brightness: StrictInt = Field(..., ge=1, le=100, description="percent")
 
@@ -173,8 +184,10 @@ async def _read_upload(upload: UploadFile) -> bytes:
 def room_json(room: Room) -> dict[str, Any]:
     """A room as the app sees it: what is saved, plus each light's worked-out height."""
     data = room.to_dict()
+    roles = resolve_roles(room, find_focus(room, "desk"))
     for light, saved in zip(room.lights, data["lights"]):
         saved["resolved_elevation"] = resolved_elevation(light, room)
+        saved["resolved_role"] = roles[light.light_id]
     return data
 
 
@@ -289,6 +302,23 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
     def room_brightness(room_name: str, body: RoomBrightness) -> dict[str, Any]:
         results = service.set_room_brightness(room_name, body.brightness)
         return {"results": results, "failed": sum(1 for item in results if not item["ok"])}
+
+    @app.post("/api/rooms/{room_name}/suggest")
+    def suggest(room_name: str, body: SuggestRequest) -> list[dict[str, Any]]:
+        return service.suggest(room_name, body.mode, at=body.at, palette_id=body.palette_id, count=body.count, seed=body.seed)
+
+    @app.post("/api/rooms/{room_name}/suggest/apply")
+    def apply_suggestion(room_name: str, body: dict[str, Any]) -> dict[str, Any]:
+        scene = Scene.from_dict({**body, "room": room_name})
+        results = service.apply_scene_object(scene)
+        return {"scene": scene.name, "results": results}
+
+    @app.get("/api/palettes")
+    def palettes(
+        tag: str | None = Query(None, max_length=20), q: str | None = Query(None, max_length=60),
+        limit: int = Query(60, ge=1, le=500),
+    ) -> list[dict[str, Any]]:
+        return [palette.to_dict() for palette in search_palettes(tag=tag, q=q, limit=limit)]
 
     @app.get("/api/preferences")
     def get_preferences() -> dict[str, Any]:
