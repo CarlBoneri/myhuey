@@ -19,7 +19,7 @@ from .images import MAX_UPLOAD_BYTES, media_type
 from .migrations import CURRENT_VERSION
 from .palette import MOODS
 from .service import HueRoomService
-from .setup import pair_bridge
+from .setup import check_bridge, pair_bridge
 from .shapes import BY_ARCHETYPE, BY_MODEL, BY_PRODUCT, DEFAULT_PROFILE
 
 BASE_DIR = Path(__file__).resolve().parents[2]
@@ -191,6 +191,10 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
             {"id": str(item.get("id", "")), "ip": str(item.get("internalipaddress", ""))}
             for item in HueBridgeClient.discover_bridges()
         ]
+
+    @app.get("/api/bridges/check")
+    def bridge_check(ip: str = Query(..., min_length=1, max_length=255)) -> dict[str, Any]:
+        return check_bridge(ip, service=service)
 
     @app.post("/api/bridge/register")
     def register_bridge(body: PairRequest) -> dict[str, Any]:

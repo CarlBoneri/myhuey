@@ -176,6 +176,20 @@ class HueBridgeClient:
         return payload if isinstance(payload, list) else []
 
     @staticmethod
+    def probe(bridge_ip: str, *, session: Any = None, cert_dir: str | Path | None = None) -> dict[str, Any]:
+        """The bridge's public config (name, model, id, firmware), read without pairing.
+
+        Pins the certificate on first contact, as pairing would. Raises BridgeUnreachable
+        when nothing answers or the answer is not from a Hue bridge.
+        """
+        host, port = HueBridgeClient.normalize_bridge_endpoint(bridge_ip)
+        session = session or pinned_session(host, port, cert_dir=cert_dir)
+        config = _exchange(session, "GET", f"https://{host}:{port}/api/config", host=host, port=port, cert_dir=cert_dir, timeout=5.0)
+        if not isinstance(config, dict) or not (config.get("bridgeid") or config.get("modelid")):
+            raise BridgeUnreachable(f"The device at {host} did not answer like a Hue bridge.")
+        return config
+
+    @staticmethod
     def register_user(
         bridge_ip: str,
         app_name: str = "myhuey",

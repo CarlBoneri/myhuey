@@ -53,6 +53,22 @@ def bridge_address(bridge_ip: str) -> str:
     return host if port == 443 else f"{host}:{port}"
 
 
+def check_bridge(bridge_ip: str, *, service: HueRoomService) -> dict[str, Any]:
+    """What the bridge at an address says about itself, before pairing: proof that it is a
+    Hue bridge, which one, and whether it is the one already paired."""
+    address = bridge_address(bridge_ip)
+    config = HueBridgeClient.probe(address, cert_dir=service.cert_dir)
+    return {
+        "bridge_ip": address,
+        "name": str(config.get("name") or "Hue bridge"),
+        "model": str(config.get("modelid") or ""),
+        "bridge_id": str(config.get("bridgeid") or ""),
+        "software": str(config.get("swversion") or ""),
+        "api_version": str(config.get("apiversion") or ""),
+        "paired": service.get_bridge().get("ip") == address,
+    }
+
+
 def pair_bridge(
     bridge_ip: str,
     *,
