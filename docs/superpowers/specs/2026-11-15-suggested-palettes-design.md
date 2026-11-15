@@ -147,7 +147,7 @@ A mode has:
 | work | desk + monitor | ×1.0 | 0 | bias on | 0.5 | muted, analogous |
 | study | desk | ×1.1 | 0 | palette color on ambient lights only | 0.35 | muted |
 | read | armchair, bed, or desk | ×1.2 at task light | 0 | task light ≥ 4000 K | 0.4 | warm, muted |
-| relax | sofa + TV, or none | ×0.7 | −500 | — | 1.0 | warm, vivid, accent |
+| relax | sofa + TV, or none | ×0.7 | −500 | bias on (TV bias light; user decision 2026-11-15) | 1.0 | warm, vivid, accent |
 
 Brightness is clamped to 1–100 and kelvin to 2000–6500. From 3 hours before bedtime until
 wake time, palettes tagged `blue_heavy` are excluded.

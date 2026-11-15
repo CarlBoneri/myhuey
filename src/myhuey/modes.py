@@ -33,7 +33,7 @@ MODES: dict[str, Mode] = {
         Mode("work", "desk", brightness=1.0, color_strength=0.5, bias=True, prefers=("muted", "analogous")),
         Mode("study", "desk", brightness=1.1, color_strength=0.35, ambient_only=True, prefers=("muted",)),
         Mode("read", "read", task_brightness=1.2, task_min_kelvin=4000, color_strength=0.4, prefers=("warm", "muted")),
-        Mode("relax", "sofa", brightness=0.7, kelvin_offset=-500, color_strength=1.0, prefers=("warm", "vivid", "accent")),
+        Mode("relax", "sofa", brightness=0.7, kelvin_offset=-500, color_strength=1.0, bias=True, prefers=("warm", "vivid", "accent")),
     )
 }
 

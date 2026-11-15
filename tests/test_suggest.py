@@ -51,7 +51,7 @@ def _distance(first, second):
 
 def test_modes_hold_the_spec_values():
     assert MODES["code"].brightness == 0.8 and MODES["code"].bias and MODES["code"].color_strength == 0.6
-    assert MODES["relax"].kelvin_offset == -500 and MODES["relax"].color_strength == 1.0 and not MODES["relax"].bias
+    assert MODES["relax"].kelvin_offset == -500 and MODES["relax"].color_strength == 1.0 and MODES["relax"].bias
     assert MODES["read"].task_min_kelvin == 4000 and MODES["read"].task_brightness == 1.2
     assert MODES["study"].ambient_only and MODES["study"].brightness == 1.1
 
@@ -153,12 +153,19 @@ def test_read_task_light_at_least_4000k_even_at_night():
     assert overrides[DESK_LAMP]["white"] >= 4000
 
 
-def test_bias_light_is_off_in_a_mode_without_bias():
+def test_relax_keeps_the_tv_bias_light_dim_and_white():
     room = Room(name="Living", furniture=[_f("sofa", 200, 300, 213, 91), _f("tv", 200, 20, 145, 8)],
                 lights=[_light("tvstrip", 200, 10, STRIP, elevation=100)])
     item = _one(room, "relax", dt(20))
     assert item["roles"]["tvstrip"] == "bias"
-    assert item["scene"].overrides["tvstrip"] == {"on": False}
+    override = item["scene"].overrides["tvstrip"]
+    assert override["white"] == item["kelvin"] and 10 <= override["brightness"] <= 20
+
+
+def test_bias_light_is_off_in_a_mode_without_bias():
+    item = _one(_office(), "study", dt(12))
+    assert item["roles"][BIAS_STRIP] == "bias"
+    assert item["scene"].overrides[BIAS_STRIP] == {"on": False}
 
 
 def test_pinned_bias_without_a_screen_is_dim_and_low_color():
