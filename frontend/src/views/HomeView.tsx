@@ -11,6 +11,7 @@ import type { Pt, Room } from '../types';
 import { PlanCanvas, useDrag, usePlan } from '../components/PlanCanvas';
 import { LightSilhouette, OpeningShape } from '../components/Shapes';
 import { Empty, Field, Panel, TextInput } from '../components/ui';
+import { RoomDimmer } from '../components/RoomDimmer';
 
 export function RoomOnPlan({ room, offset, onMove, onDrop }: { room: Room; offset: Pt; onMove: (d: Pt) => void; onDrop: () => void }) {
   const drag = useDrag();
@@ -174,6 +175,7 @@ export function HomeView() {
                         </button>
                       </div>
                     )}
+                    <RoomDimmer room={room} compact />
                   </li>
                 );
               })}

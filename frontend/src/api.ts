@@ -1,4 +1,5 @@
 import type { BridgeInfo } from './lib/setupFlow';
+import type { Preferences } from './types';
 import type { HomePlan, Opening, ImageLayer, Mood, ProfileTable, Room, Scene, SceneResult, SetupStatus, Swatch, BridgeLight, Furniture, PhotoSpot, Pt } from './types';
 
 export class ApiError extends Error {
@@ -70,6 +71,10 @@ export const api = {
     changes: Partial<{ x: number; y: number; width: number; height: number; outline: Pt[]; units: string; furniture: Furniture[]; name: string; openings: Opening[]; ceiling: number }>,
   ) => call<Room>(room(name), { method: 'PATCH', json: changes }),
   deleteRoom: (name: string) => call(room(name), { method: 'DELETE' }),
+  roomBrightness: (name: string, brightness: number) =>
+    call<{ results: { light_id: string; label: string; ok: boolean; error?: string }[]; failed: number }>(`${room(name)}/brightness`, { method: 'POST', json: { brightness } }),
+  preferences: () => call<Preferences>('/api/preferences'),
+  updatePreferences: (changes: Partial<Preferences>) => call<Preferences>('/api/preferences', { method: 'PATCH', json: changes }),
   roomPower: (name: string, on: boolean) =>
     call<{ results: { light_id: string; label: string; ok: boolean; error?: string }[]; failed: number }>(`${room(name)}/power`, { method: 'POST', json: { on } }),
   placeLight: (name: string, body: { light_id: string; x: number; y: number; rotation?: number; length?: number | null; label?: string }) =>

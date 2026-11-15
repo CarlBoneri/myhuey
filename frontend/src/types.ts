@@ -190,6 +190,15 @@ export interface SceneResult {
   warning?: string;
 }
 
+export interface Preferences {
+  room_sliders: boolean;
+  room_sliders_when_on_only: boolean;
+  show_light_glow: boolean;
+  poll_seconds: 0 | 2 | 5 | 10 | 30;
+  command_gap_ms: 100 | 150 | 200 | 300;
+  default_units: Units;
+}
+
 export interface SetupStatus {
   configured: boolean;
   bridge: { ip?: string };

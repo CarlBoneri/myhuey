@@ -472,3 +472,20 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .bridge-who { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
 .bridge-who small { flex-basis: 100%; color: var(--text-2); }
 .pick-by-button { color: var(--text-2); margin: 8px 0; }
+
+/* Room dimmer and preferences */
+.room-row { flex-wrap: wrap; }
+.room-dimmer { width: 100%; }
+.room-dimmer.compact { display: flex; align-items: center; gap: 8px; padding: 2px 4px 6px; color: var(--text-2); }
+.room-dimmer.compact .slider { flex: 1; }
+.room-dimmer.compact .slider-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.room-dimmer.off { opacity: 0.5; }
+.no-glow .light-glow { display: none; }
+.pref-group { margin: 14px 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-2); }
+.pref-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 8px 0; border-top: 1px solid var(--border); }
+.pref-row > .pref-text { display: grid; gap: 2px; }
+.pref-row small { color: var(--text-2); font-size: 12px; }
+.pref-row { flex-wrap: wrap; }
+.pref-row > .pref-text { flex: 1 1 220px; }
+.pref-row .segmented { flex: none; flex-wrap: nowrap; }
+.pref-row .segmented button { padding: 6px 10px; white-space: nowrap; }

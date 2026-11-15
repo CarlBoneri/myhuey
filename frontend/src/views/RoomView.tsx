@@ -14,6 +14,7 @@ import { FURNITURE_CATALOG, FurnitureShape, LightSilhouette, OpeningShape } from
 import { LightControls } from '../components/LightControls';
 import { Empty, Field, HueIcon, IconButton, LengthInput, Panel, Segmented, Slider, TextInput } from '../components/ui';
 import { PhotoView } from './PhotoView';
+import { RoomDimmer } from '../components/RoomDimmer';
 
 type Selection = { type: 'light'; id: string } | { type: 'furniture'; id: string } | { type: 'opening'; id: string } | null;
 type Tool = 'select' | 'outline' | 'openings';
@@ -641,6 +642,7 @@ function RoomFields({ room, onSave, onDelete }: { room: Room; onSave: (changes: 
   };
   return (
     <Panel title="Room">
+      <RoomDimmer room={room} />
       <Field label="Name">
         <TextInput value={name} onChange={(e) => setName(e.target.value)} onBlur={() => name.trim() && name !== room.name && onSave({ name: name.trim() })} />
       </Field>

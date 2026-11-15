@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link2, Search } from 'lucide-react';
 import { api } from '../api';
 import { useStore } from '../store';
-import { Field, HueIcon, Panel, TextInput } from '../components/ui';
+import { Field, HueIcon, Panel, Segmented, TextInput, Toggle } from '../components/ui';
+import type { Preferences } from '../types';
 
 export function SettingsView() {
   const { setup, lights, load, lightsError } = useStore();
@@ -73,6 +74,7 @@ export function SettingsView() {
           <p><a className="button subtle" href="#/setup">Run the setup guide</a></p>
           <p className="hint">The bridge certificate is pinned on first contact. The pairing key stays on this computer and is never sent to the browser.</p>
         </Panel>
+        <PreferencesPanel />
         <Panel title="Command line">
           <p className="hint">Everything here also works from the terminal:</p>
           <pre className="code">{`myhuey bridge setup
@@ -84,5 +86,47 @@ myhuey palette --file photo.jpg --mood bright`}</pre>
         </Panel>
       </div>
     </div>
+  );
+}
+
+function PreferenceRow({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <div className="pref-row">
+      <div className="pref-text"><span>{label}</span>{hint && <small>{hint}</small>}</div>
+      {children}
+    </div>
+  );
+}
+
+function PreferencesPanel() {
+  const { preferences: p, setPreferences } = useStore();
+  const set = (changes: Partial<Preferences>) => void setPreferences(changes);
+  const choice = <K extends keyof Preferences>(key: K, values: Preferences[K][], format: (v: Preferences[K]) => string) => (
+    <Segmented label={key} value={String(p[key])} onChange={(v) => set({ [key]: values.find((x) => String(x) === v) } as Partial<Preferences>)}
+      options={values.map((v) => ({ value: String(v), label: format(v) }))} />
+  );
+  return (
+    <Panel title="Preferences">
+      <h3 className="pref-group">Rooms</h3>
+      <PreferenceRow label="Brightness slider on each room" hint="Dims or brightens every light that is on, in the room list and on the room page.">
+        <Toggle checked={p.room_sliders} onChange={(room_sliders) => set({ room_sliders })} label="Brightness slider on each room" />
+      </PreferenceRow>
+      <PreferenceRow label="Only while lights are on" hint="Hide a room's slider while all its lights are off.">
+        <Toggle checked={p.room_sliders_when_on_only} onChange={(room_sliders_when_on_only) => set({ room_sliders_when_on_only })} label="Only while lights are on" />
+      </PreferenceRow>
+      <PreferenceRow label="Glow around lit lights" hint="The soft halo on plans. Turn off for a calmer screen.">
+        <Toggle checked={p.show_light_glow} onChange={(show_light_glow) => set({ show_light_glow })} label="Glow around lit lights" />
+      </PreferenceRow>
+      <PreferenceRow label="Units for new rooms">
+        {choice('default_units', ['imperial', 'metric'], (v) => (v === 'imperial' ? 'Feet & inches' : 'Meters'))}
+      </PreferenceRow>
+      <h3 className="pref-group">Bridge</h3>
+      <PreferenceRow label="Refresh light states" hint="How often this page reads the lights while it is open.">
+        {choice('poll_seconds', [2, 5, 10, 30, 0], (v) => (v ? `${v}s` : 'Off'))}
+      </PreferenceRow>
+      <PreferenceRow label="Gap between light commands" hint="Signify advises about 100 ms. Wider is gentler when switches and other apps share the bridge.">
+        {choice('command_gap_ms', [100, 150, 200, 300], (v) => `${v} ms`)}
+      </PreferenceRow>
+    </Panel>
   );
 }

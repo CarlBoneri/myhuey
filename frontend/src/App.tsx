@@ -22,7 +22,7 @@ const NAV: { route: Route; label: string; icon: typeof House; match: Route['view
 
 export function App() {
   const route = useRoute();
-  const { ready, setup, load, refreshLights, toasts, dismiss, lightsError, serverStale } = useStore();
+  const { ready, setup, load, refreshLights, toasts, dismiss, lightsError, serverStale, preferences } = useStore();
 
   useEffect(() => {
     void load();
@@ -36,13 +36,14 @@ export function App() {
     if (!skipped) go({ view: 'setup' });
   }, [ready]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Poll the bridge every 5 seconds while the page is visible.
+  // Read the lights from the bridge while the page is visible, as often as the preferences say (0 = never).
   useEffect(() => {
+    if (!preferences.poll_seconds) return;
     const timer = setInterval(() => {
       if (document.visibilityState === 'visible') void refreshLights();
-    }, 5000);
+    }, preferences.poll_seconds * 1000);
     return () => clearInterval(timer);
-  }, [refreshLights]);
+  }, [refreshLights, preferences.poll_seconds]);
 
   const view = (() => {
     if (!ready) return <div className="loading">Loading your home…</div>;
@@ -67,7 +68,7 @@ export function App() {
   })();
 
   return (
-    <div className="shell">
+    <div className={`shell${preferences.show_light_glow ? '' : ' no-glow'}`}>
       <div className="backdrop" aria-hidden="true" />
       <nav className="rail" aria-label="Main">
         <a className="brand" href="#/" aria-label="MyHuey home">

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { API_VERSION, api } from './api';
+import type { Preferences } from './types';
 import type { BridgeLight, HomePlan, ProfileTable, Room, Scene, SetupStatus } from './types';
 
 export interface Toast { id: number; message: string; error: boolean }
@@ -14,6 +15,7 @@ interface State {
   rooms: Room[];
   scenes: Scene[];
   plan: HomePlan | null;
+  preferences: Preferences;
   profiles: ProfileTable | null;
   toasts: Toast[];
   load: () => Promise<void>;
@@ -21,6 +23,7 @@ interface State {
   refreshRooms: () => Promise<void>;
   refreshScenes: () => Promise<void>;
   setPlan: (plan: HomePlan | null) => void;
+  setPreferences: (changes: Partial<Preferences>) => Promise<void>;
   replaceRoom: (previousName: string, room: Room) => void;
   patchLight: (id: string, changes: Partial<BridgeLight>) => void;
   toast: (message: string, error?: boolean) => void;
@@ -28,6 +31,11 @@ interface State {
 }
 
 let toastId = 0;
+
+/** Mirrors the defaults in myhuey/preferences.py, used until the server answers. */
+export const DEFAULT_PREFERENCES: Preferences = {
+  room_sliders: true, room_sliders_when_on_only: true, show_light_glow: true, poll_seconds: 5, command_gap_ms: 100, default_units: 'imperial',
+};
 
 export const useStore = create<State>((set, get) => ({
   ready: false,
@@ -38,6 +46,7 @@ export const useStore = create<State>((set, get) => ({
   rooms: [],
   scenes: [],
   plan: null,
+  preferences: DEFAULT_PREFERENCES,
   profiles: null,
   toasts: [],
 
@@ -49,8 +58,10 @@ export const useStore = create<State>((set, get) => ({
       // reported by the calls below
     }
     try {
-      const [setup, rooms, scenes, profiles, plan] = await Promise.all([api.setup(), api.rooms(), api.scenes(), api.profiles(), api.plan()]);
-      set({ setup, rooms, scenes, profiles, plan });
+      const [setup, rooms, scenes, profiles, plan, preferences] = await Promise.all([
+        api.setup(), api.rooms(), api.scenes(), api.profiles(), api.plan(), api.preferences().catch(() => DEFAULT_PREFERENCES),
+      ]);
+      set({ setup, rooms, scenes, profiles, plan, preferences });
       if (setup.configured) await get().refreshLights();
     } catch (error) {
       get().toast((error as Error).message);
@@ -78,6 +89,17 @@ export const useStore = create<State>((set, get) => ({
 
   setPlan(plan) {
     set({ plan });
+  },
+
+  async setPreferences(changes) {
+    const previous = get().preferences;
+    set({ preferences: { ...previous, ...changes } });
+    try {
+      set({ preferences: await api.updatePreferences(changes) });
+    } catch (error) {
+      set({ preferences: previous });
+      get().toast((error as Error).message);
+    }
   },
 
   replaceRoom(previousName, room) {
@@ -137,6 +159,22 @@ export async function setRoomPower(room: Room, on: boolean) {
     if (result.failed) {
       const names = result.results.filter((r) => !r.ok).map((r) => r.label).join(', ');
       store.toast(`${result.failed} light(s) in ${room.name} did not turn ${on ? 'on' : 'off'}: ${names}`);
+    }
+  } catch (error) {
+    store.toast((error as Error).message);
+  }
+  await useStore.getState().refreshLights();
+}
+
+/** Dim or brighten every light that is on in a room. The plan updates at once, then reads back the bridge. */
+export async function setRoomBrightness(room: Room, percent: number) {
+  const store = useStore.getState();
+  const bri = Math.max(1, Math.round(percent * 2.54));
+  room.lights.forEach((p) => store.lights[p.light_id]?.on && store.patchLight(p.light_id, { brightness: bri }));
+  try {
+    const result = await api.roomBrightness(room.name, Math.round(percent));
+    if (result.failed) {
+      store.toast(`${result.failed} light(s) in ${room.name} did not change: ${result.results.filter((r) => !r.ok).map((r) => r.label).join(', ')}`);
     }
   } catch (error) {
     store.toast((error as Error).message);
