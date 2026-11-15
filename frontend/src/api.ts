@@ -1,4 +1,4 @@
-import type { ImageLayer, Mood, ProfileTable, Room, Scene, SceneResult, SetupStatus, Swatch, BridgeLight, Furniture, PhotoSpot, Pt } from './types';
+import type { HomePlan, Opening, ImageLayer, Mood, ProfileTable, Room, Scene, SceneResult, SetupStatus, Swatch, BridgeLight, Furniture, PhotoSpot, Pt } from './types';
 
 export class ApiError extends Error {
   constructor(message: string, readonly status: number) {
@@ -54,12 +54,12 @@ export const api = {
     call(`/api/lights/${encodeURIComponent(id)}/effect`, { method: 'PUT', json: { effect } }),
 
   rooms: () => call<Room[]>('/api/rooms'),
-  createRoom: (name: string, width: number, height: number) =>
-    call<Room>('/api/rooms', { method: 'POST', json: { name, width, height } }),
+  createRoom: (name: string, width: number, height: number, extra: { outline?: Pt[]; x?: number; y?: number } = {}) =>
+    call<Room>('/api/rooms', { method: 'POST', json: { name, width, height, ...extra } }),
   importRooms: () => call<{ added: string[] }>('/api/rooms/import', { method: 'POST' }),
   updateRoom: (
     name: string,
-    changes: Partial<{ x: number; y: number; width: number; height: number; outline: Pt[]; units: string; furniture: Furniture[]; name: string }>,
+    changes: Partial<{ x: number; y: number; width: number; height: number; outline: Pt[]; units: string; furniture: Furniture[]; name: string; openings: Opening[]; ceiling: number }>,
   ) => call<Room>(room(name), { method: 'PATCH', json: changes }),
   deleteRoom: (name: string) => call(room(name), { method: 'DELETE' }),
   roomPower: (name: string, on: boolean) =>
@@ -67,6 +67,12 @@ export const api = {
   placeLight: (name: string, body: { light_id: string; x: number; y: number; rotation?: number; length?: number | null; label?: string }) =>
     call(`${room(name)}/lights`, { method: 'POST', json: body }),
   removeLight: (name: string, id: string) => call(`${room(name)}/lights/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+
+  plan: () => call<HomePlan | null>('/api/plan'),
+  uploadPlan: (file: File) => upload<HomePlan>('/api/plan/image', file),
+  updatePlan: (changes: Partial<Pick<HomePlan, 'cm_per_px' | 'offset' | 'rotation' | 'opacity'>>) =>
+    call<HomePlan>('/api/plan', { method: 'PATCH', json: changes }),
+  deletePlan: () => call('/api/plan', { method: 'DELETE' }),
 
   uploadPhoto: (name: string, file: File) => upload<Room>(`${room(name)}/photo`, file),
   deletePhoto: (name: string) => call(`${room(name)}/photo`, { method: 'DELETE' }),

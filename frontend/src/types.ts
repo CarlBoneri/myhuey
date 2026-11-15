@@ -71,6 +71,31 @@ export interface Furniture {
   depth: number;
   rotation: number;
   shape: 'rect' | 'ellipse';
+  /** cm from the floor to the piece's bottom, and its own height. */
+  elevation?: number;
+  height?: number;
+}
+
+export interface Opening {
+  id: string;
+  kind: 'door' | 'window';
+  /** The outline edge from corner `edge` to the next one. */
+  edge: number;
+  offset: number;
+  width: number;
+  sill: number | null;
+  top: number | null;
+}
+
+/** A floor-plan image under the home: image pixel p lands at offset + rotate(rotation)(p * cm_per_px). */
+export interface HomePlan {
+  file: string;
+  cm_per_px: number;
+  offset: Pt;
+  rotation: number;
+  opacity: number;
+  width: number;
+  height: number;
 }
 
 export interface PhotoSpot {
@@ -98,6 +123,8 @@ export interface Room {
   lights: Placement[];
   furniture: Furniture[];
   photo: RoomPhoto | null;
+  ceiling: number;
+  openings: Opening[];
 }
 
 export interface Swatch {

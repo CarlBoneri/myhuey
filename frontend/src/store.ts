@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { api } from './api';
-import type { BridgeLight, ProfileTable, Room, Scene, SetupStatus } from './types';
+import type { BridgeLight, HomePlan, ProfileTable, Room, Scene, SetupStatus } from './types';
 
 export interface Toast { id: number; message: string; error: boolean }
 
@@ -11,12 +11,14 @@ interface State {
   lightsError: string;
   rooms: Room[];
   scenes: Scene[];
+  plan: HomePlan | null;
   profiles: ProfileTable | null;
   toasts: Toast[];
   load: () => Promise<void>;
   refreshLights: () => Promise<void>;
   refreshRooms: () => Promise<void>;
   refreshScenes: () => Promise<void>;
+  setPlan: (plan: HomePlan | null) => void;
   replaceRoom: (previousName: string, room: Room) => void;
   patchLight: (id: string, changes: Partial<BridgeLight>) => void;
   toast: (message: string, error?: boolean) => void;
@@ -32,13 +34,14 @@ export const useStore = create<State>((set, get) => ({
   lightsError: '',
   rooms: [],
   scenes: [],
+  plan: null,
   profiles: null,
   toasts: [],
 
   async load() {
     try {
-      const [setup, rooms, scenes, profiles] = await Promise.all([api.setup(), api.rooms(), api.scenes(), api.profiles()]);
-      set({ setup, rooms, scenes, profiles });
+      const [setup, rooms, scenes, profiles, plan] = await Promise.all([api.setup(), api.rooms(), api.scenes(), api.profiles(), api.plan()]);
+      set({ setup, rooms, scenes, profiles, plan });
       if (setup.configured) await get().refreshLights();
     } catch (error) {
       get().toast((error as Error).message);
@@ -62,6 +65,10 @@ export const useStore = create<State>((set, get) => ({
 
   async refreshScenes() {
     set({ scenes: await api.scenes() });
+  },
+
+  setPlan(plan) {
+    set({ plan });
   },
 
   replaceRoom(previousName, room) {
