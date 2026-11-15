@@ -6,7 +6,7 @@ of its whitelist.
 """
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
@@ -16,7 +16,9 @@ from pydantic import BaseModel, ConfigDict, Field, StrictInt
 from .errors import BridgeNotConfigured, HueError, LinkButtonNotPressed, PairingInProgress, RoomNotFound, SceneNotFound
 from .hue import COLLECTIONS, PAIRING_WINDOW, HueBridgeClient
 from .images import MAX_UPLOAD_BYTES, media_type
+from .models import Room
 from .palette import MOODS
+from .placement import resolved_elevation
 from .service import HueRoomService
 from .discovery import discover
 from . import setup as setup_flow
@@ -113,6 +115,8 @@ class LightPlacement(Body):
     label: str | None = None
     rotation: float | None = None
     length: float | None = Field(None, ge=5, le=5000)
+    elevation: float | Literal["auto"] | None = None  # cm; "auto" goes back to the product's guess
+    role: Literal["auto", "bias", "task", "view"] | None = None
 
 
 class RoomBrightness(Body):
@@ -163,6 +167,14 @@ async def _read_upload(upload: UploadFile) -> bytes:
     data = await upload.read(MAX_UPLOAD_BYTES + 1)
     if len(data) > MAX_UPLOAD_BYTES:
         raise HTTPException(status_code=413, detail=f"Images can be at most {MAX_UPLOAD_BYTES // (1024 * 1024)} MB")
+    return data
+
+
+def room_json(room: Room) -> dict[str, Any]:
+    """A room as the app sees it: what is saved, plus each light's worked-out height."""
+    data = room.to_dict()
+    for light, saved in zip(room.lights, data["lights"]):
+        saved["resolved_elevation"] = resolved_elevation(light, room)
     return data
 
 
@@ -223,11 +235,11 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
 
     @app.get("/api/rooms")
     def list_rooms() -> list[dict[str, Any]]:
-        return [room.to_dict() for room in service.rooms()]
+        return [room_json(room) for room in service.rooms()]
 
     @app.post("/api/rooms")
     def create_room(body: RoomCreate) -> dict[str, Any]:
-        return service.add_room(body.name, body.width, body.height, body.outline, body.x, body.y).to_dict()
+        return room_json(service.add_room(body.name, body.width, body.height, body.outline, body.x, body.y))
 
     @app.post("/api/rooms/import")
     def import_rooms() -> dict[str, Any]:
@@ -235,7 +247,7 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
 
     @app.get("/api/rooms/{room_name}")
     def get_room(room_name: str) -> dict[str, Any]:
-        return service.get_room(room_name).to_dict()
+        return room_json(service.get_room(room_name))
 
     @app.patch("/api/rooms/{room_name}")
     def update_room(room_name: str, body: RoomUpdate) -> dict[str, Any]:
@@ -246,7 +258,7 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
             changes["openings"] = [item.model_dump() for item in body.openings or []]
         if "name" in changes:
             changes["new_name"] = changes.pop("name")
-        return service.update_room(room_name, **changes).to_dict()
+        return room_json(service.update_room(room_name, **changes))
 
     @app.delete("/api/rooms/{room_name}")
     def delete_room(room_name: str) -> dict[str, str]:
@@ -263,6 +275,8 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
             label=body.label,
             rotation=body.rotation,
             length=body.length,
+            elevation=body.elevation,
+            role=body.role,
         )
         return light.to_dict()
 
@@ -313,7 +327,7 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
     @app.post("/api/rooms/{room_name}/photo")
     async def upload_room_photo(room_name: str, file: UploadFile = File(...)) -> dict[str, Any]:
         service.get_room(room_name)
-        return service.set_room_photo(room_name, await _read_upload(file)).to_dict()
+        return room_json(service.set_room_photo(room_name, await _read_upload(file)))
 
     @app.delete("/api/rooms/{room_name}/photo")
     def delete_room_photo(room_name: str) -> dict[str, str]:
@@ -322,7 +336,7 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
 
     @app.put("/api/rooms/{room_name}/photo/placements")
     def save_photo_placements(room_name: str, body: PhotoPlacements) -> dict[str, Any]:
-        return service.set_photo_placements(room_name, body.placements).to_dict()
+        return room_json(service.set_photo_placements(room_name, body.placements))
 
     # Images
 

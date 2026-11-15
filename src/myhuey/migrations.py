@@ -4,6 +4,7 @@ Version 1 (no `schema_version`) measured rooms in abstract units, 900 x 600 by d
 lights as center points. Version 2 measures everything in centimeters, gives rooms an outline
 polygon, and adds furniture, rotation, room photos, and scenes. Version 3 adds doors and windows
 as openings on a room's edges, a ceiling height, furniture heights, and a home plan image.
+Version 4 gives placed lights a height (None = automatic from the product) and a role.
 """
 
 from __future__ import annotations
@@ -12,7 +13,7 @@ import copy
 import math
 from typing import Any
 
-CURRENT_VERSION = 3
+CURRENT_VERSION = 4
 
 # A default v1 room (900 x 600 units) becomes 4.5 m x 3 m, about 14'9" x 9'10".
 V1_CM_PER_UNIT = 0.5
@@ -122,7 +123,17 @@ def _v2_to_v3(config: dict[str, Any]) -> dict[str, Any]:
     return upgraded
 
 
-_STEPS = {1: _v1_to_v2, 2: _v2_to_v3}
+def _v3_to_v4(config: dict[str, Any]) -> dict[str, Any]:
+    upgraded = copy.deepcopy(config)
+    for room in upgraded.get("rooms", []):
+        for light in room.get("lights", []):
+            light.setdefault("elevation", None)
+            light.setdefault("role", "auto")
+    upgraded["schema_version"] = 4
+    return upgraded
+
+
+_STEPS = {1: _v1_to_v2, 2: _v2_to_v3, 3: _v3_to_v4}
 
 
 def migrate(config: dict[str, Any]) -> tuple[dict[str, Any], int]:

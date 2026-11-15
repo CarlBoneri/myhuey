@@ -457,8 +457,13 @@ class HueRoomService:
         rotation: float | None = None,
         length: float | None = None,
         product: dict[str, Any] | None = None,
+        elevation: float | str | None = None,
+        role: str | None = None,
     ) -> LayoutLight:
-        """Place a light in a room, or move it if it is already there."""
+        """Place a light in a room, or move it if it is already there.
+
+        `elevation` and `role` are kept when left out; elevation "auto" clears a set height.
+        """
         light_id = str(light_id).strip()
         if not light_id:
             raise ValueError("light_id is required")
@@ -481,6 +486,8 @@ class HueRoomService:
                 "on": on,
                 "metadata": metadata if metadata is not None else existing.get("metadata") or {},
                 "product": product or existing.get("product") or {},
+                "elevation": existing.get("elevation") if elevation is None else elevation,
+                "role": role or existing.get("role") or "auto",
             }
         )
         if not existing:

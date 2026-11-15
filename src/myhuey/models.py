@@ -46,6 +46,9 @@ FURNITURE_HEIGHTS: dict[str, tuple[float, float]] = {
 }
 DEFAULT_FURNITURE_HEIGHT = (0.0, 75.0)
 
+# Roles a user can pin on a light. Suggestions also use "behind" and "ambient" internally.
+PINNABLE_ROLES = ("auto", "bias", "task", "view")
+
 
 def new_id() -> str:
     return uuid.uuid4().hex[:12]
@@ -101,11 +104,25 @@ class LayoutLight:
     xy: tuple[float, float] | None = None
     product: dict[str, Any] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
+    # Height of the light in cm, or None to work it out from the product (see placement.py).
+    elevation: float | None = None
+    # "auto" lets suggestions work the role out from where the light sits; the rest pin it.
+    role: str = "auto"
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> LayoutLight:
         light_id = str(data["light_id"])
         length = data.get("length")
+        elevation = data.get("elevation")
+        if elevation in ("", "auto"):
+            elevation = None
+        if elevation is not None:
+            elevation = _num(elevation)
+            if not 0 <= elevation <= 1000:
+                raise ValueError("A light's height must be between 0 and 10 m")
+        role = str(data.get("role") or "auto")
+        if role not in PINNABLE_ROLES:
+            raise ValueError(f"A light's role must be one of {', '.join(PINNABLE_ROLES)}")
         return cls(
             light_id=light_id,
             label=data.get("label") or f"Light {light_id}",
@@ -119,6 +136,8 @@ class LayoutLight:
             xy=tuple(data["xy"]) if data.get("xy") else None,
             product=dict(data.get("product") or {}),
             metadata=dict(data.get("metadata") or {}),
+            elevation=elevation,
+            role=role,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -135,6 +154,8 @@ class LayoutLight:
             "xy": list(self.xy) if self.xy else None,
             "product": self.product,
             "metadata": self.metadata,
+            "elevation": self.elevation,
+            "role": self.role,
         }
 
 

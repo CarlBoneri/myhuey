@@ -70,6 +70,9 @@ def build_parser() -> argparse.ArgumentParser:
     room.add_argument("--y", type=float, default=0, help="cm")
     room.add_argument("--rotation", type=float, help="Degrees, for assign")
     room.add_argument("--length", help="Lightstrip or string length, for assign (for example 2m or 6ft)")
+    room.add_argument("--elevation", help="Height of the light, for assign (for example 120cm or 4ft), or auto")
+    room.add_argument("--role", choices=["auto", "bias", "task", "view"],
+                      help="Pin the light's role for suggested scenes, for assign (default auto)")
     room.add_argument("--label", default=None)
     room.add_argument("--width", help="Room width, for example 14ft or 4.5m")
     room.add_argument("--height", help="Room depth, for example 10ft 6in or 3.2m")
@@ -316,6 +319,8 @@ def handle_room(args: argparse.Namespace) -> int:
             label=args.label,
             rotation=args.rotation,
             length=parse_length(args.length, units) if args.length else None,
+            elevation=_elevation_arg(args.elevation, units),
+            role=args.role,
         )
         print(json.dumps(light.to_dict(), indent=2))
     else:
@@ -507,6 +512,12 @@ def handle_serve(args: argparse.Namespace) -> int:
         print("No Hue bridge is paired yet. Run `myhuey bridge setup`, or pair from the web page.")
     uvicorn.run(create_app(args.db), host=args.host, port=args.port)
     return 0
+
+
+def _elevation_arg(text: str | None, units: str) -> float | str | None:
+    if text is None:
+        return None
+    return "auto" if text.strip().lower() == "auto" else parse_length(text, units)
 
 
 def main(argv: Sequence[str] | None = None) -> None:

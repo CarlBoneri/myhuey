@@ -1,6 +1,7 @@
 import pytest
 import requests
 
+from myhuey.migrations import CURRENT_VERSION
 from myhuey.color import (
     build_hue_state,
     color_temperature_to_mired,
@@ -244,7 +245,7 @@ def test_sqlite_storage_round_trip(tmp_path):
 def test_sqlite_storage_creates_missing_parent_directory(tmp_path):
     db_path = tmp_path / "missing" / "nested" / "myhuey.db"
 
-    assert load_config(db_path) == {"bridge": {}, "rooms": [], "scenes": [], "home": {"plan": None}, "schema_version": 3}
+    assert load_config(db_path) == {"bridge": {}, "rooms": [], "scenes": [], "home": {"plan": None}, "schema_version": CURRENT_VERSION}
     assert db_path.exists()
 
 
@@ -256,10 +257,10 @@ def test_storage_file_is_private_to_the_owner(tmp_path):
 
 def test_json_storage_round_trip_and_recovery(tmp_path):
     path = tmp_path / "config.json"
-    assert load_config(path) == {"bridge": {}, "rooms": [], "scenes": [], "home": {"plan": None}, "schema_version": 3}
+    assert load_config(path) == {"bridge": {}, "rooms": [], "scenes": [], "home": {"plan": None}, "schema_version": CURRENT_VERSION}
 
     save_config({"rooms": [{"name": "Den"}], "schema_version": 3}, path)
     assert load_config(path)["rooms"] == [{"name": "Den"}]
 
     path.write_text("{not json", encoding="utf-8")
-    assert load_config(path) == {"bridge": {}, "rooms": [], "scenes": [], "home": {"plan": None}, "schema_version": 3}
+    assert load_config(path) == {"bridge": {}, "rooms": [], "scenes": [], "home": {"plan": None}, "schema_version": CURRENT_VERSION}
