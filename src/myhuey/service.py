@@ -243,7 +243,8 @@ class HueRoomService:
     def update_preferences(self, changes: dict[str, Any]) -> dict[str, Any]:
         validate_preferences(changes)
         config = self._load()
-        config["preferences"] = {**chosen_preferences(config.get("preferences")), **changes}
+        saved = config.get("preferences")
+        config["preferences"] = chosen_preferences({**(saved if isinstance(saved, dict) else {}), **changes})
         self._save(config)
         return self.preferences()
 

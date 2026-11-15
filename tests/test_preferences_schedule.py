@@ -28,8 +28,24 @@ def test_only_changed_keys_are_saved(service):
 
 def test_legacy_full_dict_still_reads_and_updates(service):
     config = service._load()
-    config["preferences"] = {"poll_seconds": 5, "command_gap_ms": 100, "bogus": 1}
+    config["preferences"] = {"poll_seconds": 5, "command_gap_ms": 150, "bogus": 1}
     service._save(config)
     service.update_preferences({"wake_time": "06:30"})
     assert service.preferences()["wake_time"] == "06:30"
-    assert "bogus" not in service._load()["preferences"]
+    assert service._load()["preferences"] == {"command_gap_ms": 150, "wake_time": "06:30"}
+
+
+def test_stored_copies_of_defaults_are_dropped_on_update(service):
+    config = service._load()
+    config["preferences"] = {"poll_seconds": 5, "command_gap_ms": 100}  # what older versions saved
+    service._save(config)
+    service.update_preferences({"show_light_glow": False})
+    saved = service._load()["preferences"]
+    assert "poll_seconds" not in saved and "command_gap_ms" not in saved
+    assert service.preferences()["poll_seconds"] == 5
+
+
+def test_setting_a_preference_back_to_its_default_stores_nothing(service):
+    service.update_preferences({"poll_seconds": 10})
+    service.update_preferences({"poll_seconds": 5})
+    assert service._load()["preferences"] == {}

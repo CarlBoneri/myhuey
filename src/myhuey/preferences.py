@@ -40,13 +40,17 @@ def merged(saved: Any) -> dict[str, Any]:
 
 
 def chosen(saved: Any) -> dict[str, Any]:
-    """Only the saved preferences that are still known and valid: what the user chose.
+    """Only the saved preferences that are still known, valid, and not the default: what the user chose.
 
     Defaults are never stored, so a better default later reaches everyone who left it alone.
+    That includes copies of defaults older versions saved: they are dropped here too.
     """
     if not isinstance(saved, dict):
         return {}
-    return {key: value for key, value in saved.items() if key in PREFERENCES and _valid(key, value)}
+    return {
+        key: value for key, value in saved.items()
+        if key in PREFERENCES and _valid(key, value) and value != PREFERENCES[key][0]
+    }
 
 
 def _valid(key: str, value: Any) -> bool:
