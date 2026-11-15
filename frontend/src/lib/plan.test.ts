@@ -1,0 +1,55 @@
+import { describe, expect, it } from 'vitest';
+import { calibrate, imageToPlan, lightsOutside, openingAt, openingSegment, planToImage, snapPoint } from './plan';
+import type { HomePlan, Opening, Placement, Pt } from '../types';
+
+const plan: HomePlan = { file: 'x.png', cm_per_px: 2, offset: [100, 50], rotation: 90, opacity: 0.5, width: 800, height: 600 };
+const SQUARE: Pt[] = [[0, 0], [400, 0], [400, 300], [0, 300]];
+
+describe('plan transforms', () => {
+  it('maps image pixels onto the home and back', () => {
+    const [x, y] = imageToPlan([10, 0], plan);
+    expect(x).toBeCloseTo(100);
+    expect(y).toBeCloseTo(70); // 10 px * 2 cm turned 90° clockwise points down
+    const back = planToImage([x, y], plan);
+    expect(back[0]).toBeCloseTo(10);
+    expect(back[1]).toBeCloseTo(0);
+  });
+
+  it('calibrates from a line over a printed dimension', () => {
+    expect(calibrate([0, 0], [300, 400], 1000)).toBe(2);
+    expect(calibrate([0, 0], [2, 2], 100)).toBeNull(); // too short to measure
+    expect(calibrate([0, 0], [100, 0], 0)).toBeNull();
+    expect(calibrate([0, 0], [100, 0], Number.NaN)).toBeNull();
+    expect(calibrate([0, 0], [10, 0], 5000)).toBeNull(); // 500 cm per px is a typo
+  });
+});
+
+describe('drawing snaps', () => {
+  const options = { units: 'metric' as const, radius: 10, corners: [[100, 100]] as Pt[], edges: [[[0, 200], [400, 200]]] as [Pt, Pt][] };
+  it('prefers a nearby corner over an edge', () => {
+    expect(snapPoint([104, 103], options)).toEqual([100, 100]);
+    expect(snapPoint([95, 195], { ...options, corners: [[100, 196]] })).toEqual([100, 196]);
+  });
+  it('slides onto a nearby edge, else snaps to the grid', () => {
+    expect(snapPoint([250.4, 206], options)).toEqual([250.4, 200]);
+    expect(snapPoint([250.4, 150.6], options)).toEqual([250, 151]);
+  });
+});
+
+describe('openings', () => {
+  const door: Opening = { id: 'd', kind: 'door', edge: 1, offset: 50, width: 80, sill: null, top: 203 };
+  it('finds the wall segment an opening covers', () => {
+    expect(openingSegment(SQUARE, door)).toEqual([[400, 50], [400, 130]]);
+  });
+  it('places an opening centered on a click near a wall, inside the wall', () => {
+    expect(openingAt(SQUARE, [200, 6], 90, 20)).toEqual({ edge: 0, offset: 155, width: 90 });
+    expect(openingAt(SQUARE, [395, 290], 90, 20)).toEqual({ edge: 1, offset: 210, width: 90 });
+    expect(openingAt(SQUARE, [200, 150], 90, 20)).toBeNull();
+    expect(openingAt([[0, 0], [50, 0], [50, 300]], [25, 2], 90, 20)).toEqual({ edge: 0, offset: 0, width: 50 });
+  });
+});
+
+it('lists lights left outside a new outline', () => {
+  const lights = [{ light_id: '1', x: 50, y: 50 }, { light_id: '2', x: 350, y: 50 }] as Placement[];
+  expect(lightsOutside(lights, [[0, 0], [200, 0], [200, 300], [0, 300]]).map((l) => l.light_id)).toEqual(['2']);
+});

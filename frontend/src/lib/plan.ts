@@ -1,0 +1,80 @@
+// The whole-home plan: mapping a scanned plan image onto home centimeters, snapping while
+// drawing rooms, and placing doors and windows on room edges.
+import type { HomePlan, Opening, Placement, Pt, Units } from '../types';
+import { nearestOnSegment, pointInPolygon } from './geometry';
+import { snap } from './units';
+
+const turn = ([x, y]: Pt, degrees: number): Pt => {
+  const r = (degrees * Math.PI) / 180;
+  return [x * Math.cos(r) - y * Math.sin(r), x * Math.sin(r) + y * Math.cos(r)];
+};
+
+/** Where an image pixel of the plan lands on the home, in cm. Rotation is clockwise on screen, like SVG. */
+export function imageToPlan(p: Pt, plan: Pick<HomePlan, 'cm_per_px' | 'offset' | 'rotation'>): Pt {
+  const [x, y] = turn([p[0] * plan.cm_per_px, p[1] * plan.cm_per_px], plan.rotation);
+  return [plan.offset[0] + x, plan.offset[1] + y];
+}
+
+export function planToImage(p: Pt, plan: Pick<HomePlan, 'cm_per_px' | 'offset' | 'rotation'>): Pt {
+  const [x, y] = turn([p[0] - plan.offset[0], p[1] - plan.offset[1]], -plan.rotation);
+  return [x / plan.cm_per_px, y / plan.cm_per_px];
+}
+
+/** cm per image pixel, from a line drawn over a printed dimension of `cm`. Null when it cannot be trusted. */
+export function calibrate(a: Pt, b: Pt, cm: number): number | null {
+  const px = Math.hypot(b[0] - a[0], b[1] - a[1]);
+  if (px < 5 || !(cm > 0) || !Number.isFinite(cm)) return null;
+  const scale = cm / px;
+  return scale <= 100 ? scale : null;
+}
+
+/** Snap a drawing point: to a nearby corner, else onto a nearby edge, else to the inch or cm grid. */
+export function snapPoint(p: Pt, { units, radius, corners, edges }: { units: Units; radius: number; corners: Pt[]; edges: [Pt, Pt][] }): Pt {
+  let best: Pt | null = null;
+  let bestDistance = radius;
+  for (const c of corners) {
+    const d = Math.hypot(c[0] - p[0], c[1] - p[1]);
+    if (d <= bestDistance) [best, bestDistance] = [c, d];
+  }
+  if (best) return best;
+  for (const [a, b] of edges) {
+    const near = nearestOnSegment(p, a, b);
+    if (near.distance <= bestDistance) [best, bestDistance] = [near.point, near.distance];
+  }
+  return best ?? [snap(p[0], units), snap(p[1], units)];
+}
+
+function edgeOf(outline: Pt[], index: number): { a: Pt; length: number; unit: Pt } {
+  const a = outline[index];
+  const b = outline[(index + 1) % outline.length];
+  const length = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+  return { a, length, unit: [(b[0] - a[0]) / length, (b[1] - a[1]) / length] };
+}
+
+/** The stretch of wall a door or window covers, start to end, in room cm. */
+export function openingSegment(outline: Pt[], opening: Pick<Opening, 'edge' | 'offset' | 'width'>): [Pt, Pt] {
+  const { a, unit } = edgeOf(outline, opening.edge);
+  const at = (d: number): Pt => [a[0] + unit[0] * d, a[1] + unit[1] * d];
+  return [at(opening.offset), at(opening.offset + opening.width)];
+}
+
+/** An opening `width` wide centered on the wall nearest `p`, kept inside that wall. Null if no wall is within `maxDistance`. */
+export function openingAt(outline: Pt[], p: Pt, width: number, maxDistance: number): { edge: number; offset: number; width: number } | null {
+  let found: { edge: number; t: number; distance: number } | null = null;
+  outline.forEach((a, edge) => {
+    const near = nearestOnSegment(p, a, outline[(edge + 1) % outline.length]);
+    if (near.distance <= maxDistance && (!found || near.distance < found.distance)) found = { edge, t: near.t, distance: near.distance };
+  });
+  if (!found) return null;
+  const { edge, t } = found;
+  const { length } = edgeOf(outline, edge);
+  const fitted = Math.min(width, length);
+  const offset = Math.min(Math.max(t * length - fitted / 2, 0), length - fitted);
+  const round = (v: number) => Math.round(v * 10) / 10;
+  return { edge, offset: round(offset), width: round(fitted) };
+}
+
+/** Placed lights whose center falls outside a room outline (room cm). */
+export function lightsOutside(lights: Placement[], outline: Pt[]): Placement[] {
+  return lights.filter((light) => !pointInPolygon([light.x, light.y], outline));
+}
