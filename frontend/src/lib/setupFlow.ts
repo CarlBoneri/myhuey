@@ -76,3 +76,12 @@ export function setupReducer(state: SetupState, event: SetupEvent): SetupState {
       return BACK[state.step] ? { ...state, step: BACK[state.step]!, error: '' } : state;
   }
 }
+
+/** A bridge discovery found, with what it said about itself (null if it did not answer the check). */
+export interface FoundBridge { ip: string; info: BridgeInfo | null }
+
+/** The order to offer found bridges in: the one already paired first, then by name, then any that did not answer. */
+export function orderBridges(found: FoundBridge[]): FoundBridge[] {
+  const rank = (b: FoundBridge) => (b.info?.paired ? 0 : b.info ? 1 : 2);
+  return [...found].sort((a, b) => rank(a) - rank(b) || (a.info?.name ?? a.ip).localeCompare(b.info?.name ?? b.ip, undefined, { numeric: true }));
+}

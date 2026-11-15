@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { initialSetup, setupReducer, type BridgeInfo, type SetupState } from './setupFlow';
+import { initialSetup, orderBridges, setupReducer, type BridgeInfo, type SetupState } from './setupFlow';
 
 const bridge: BridgeInfo = {
   bridge_ip: '10.0.0.77', name: 'Philips hue', model: 'BSB002', bridge_id: 'ECB5FAFFFE000001', software: '1972004020', api_version: '1.72.0', paired: false,
@@ -40,5 +40,18 @@ describe('setup wizard steps', () => {
     expect(setupReducer(at('confirm', { bridge }), { type: 'back' }).step).toBe('find');
     expect(setupReducer(at('press', { bridge }), { type: 'back' }).step).toBe('confirm');
     expect(setupReducer(at('done'), { type: 'back' }).step).toBe('done');
+  });
+});
+
+describe('several bridges found', () => {
+  const found = (ip: string, name: string, paired = false): BridgeInfo => ({ ...bridge, bridge_ip: ip, name, paired });
+  it('lists the paired bridge first, then by name, and unknown ones last', () => {
+    const order = orderBridges([
+      { ip: '10.0.0.9', info: null },
+      { ip: '10.0.0.93', info: found('10.0.0.93', 'Upstairs') },
+      { ip: '10.0.0.77', info: found('10.0.0.77', 'Hue Bridge Pro', true) },
+      { ip: '10.0.0.50', info: found('10.0.0.50', 'Garage') },
+    ]).map((b) => b.ip);
+    expect(order).toEqual(['10.0.0.77', '10.0.0.50', '10.0.0.93', '10.0.0.9']);
   });
 });

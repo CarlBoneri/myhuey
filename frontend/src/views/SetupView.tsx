@@ -5,7 +5,7 @@ import { ArrowLeft, Check, Download, Map as MapIcon, Search, ShieldCheck, Wifi }
 import { ApiError, api } from '../api';
 import { useStore } from '../store';
 import { go } from '../lib/router';
-import { initialSetup, setupReducer, SETUP_STEPS, type PairFailure } from '../lib/setupFlow';
+import { initialSetup, orderBridges, setupReducer, SETUP_STEPS, type FoundBridge, type PairFailure } from '../lib/setupFlow';
 import { Field, HueIcon, Panel, TextInput } from '../components/ui';
 
 export const SETUP_SKIPPED_KEY = 'myhuey.setup.skipped';
@@ -28,7 +28,7 @@ function Countdown({ seconds, total }: { seconds: number; total: number }) {
 export function SetupView() {
   const { setup, lights, load, refreshRooms } = useStore();
   const [state, dispatch] = useReducer(setupReducer, undefined, initialSetup);
-  const [found, setFound] = useState<{ id: string; ip: string }[] | null>(null);
+  const [found, setFound] = useState<FoundBridge[] | null>(null);
   const [finding, setFinding] = useState(false);
   const [checking, setChecking] = useState('');
   const [manual, setManual] = useState('');
@@ -40,7 +40,11 @@ export function SetupView() {
   useEffect(() => {
     if (state.step !== 'find' || found !== null || finding) return;
     setFinding(true);
-    api.discover().then(setFound, () => setFound([])).finally(() => setFinding(false));
+    // Ask each bridge found who it is, so a home with several can tell them apart by name.
+    api.discover()
+      .then((list) => Promise.all(list.map(async ({ ip }) => ({ ip, info: await api.checkBridge(ip).catch(() => null) }))))
+      .then((list) => setFound(orderBridges(list)), () => setFound([]))
+      .finally(() => setFinding(false));
   }, [state.step, found, finding]);
 
   // Each new attempt on the press step asks the bridge to pair while the person presses its button.
@@ -117,23 +121,43 @@ export function SetupView() {
           <>
             <h2>Which bridge?</h2>
             {finding ? <p className="hint">Looking for bridges on your network…</p> : found?.length ? (
-              <ul className="found">
-                {found.map((b) => (
-                  <li key={b.id || b.ip}>
-                    <span className="mono">{b.ip}</span>
-                    <button type="button" className="button small primary" disabled={!!checking} onClick={() => check(b.ip)}>{checking === b.ip ? 'Checking…' : 'Use this one'}</button>
-                  </li>
-                ))}
-              </ul>
+              <>
+                {found.length > 1 && (
+                  <div className="notice multi-bridge">
+                    <p><strong>{found.length} bridges found.</strong> MyHuey works with one bridge: choose the one your lights are on. To be sure which, check its address in the Hue app on your phone:</p>
+                    <ol>
+                      <li>Open the Hue app and tap <strong>Settings</strong>.</li>
+                      <li>Tap <strong>Bridges</strong>, then the bridge that runs these lights.</li>
+                      <li>Open <strong>Network settings</strong>. Its <strong>IP address</strong> is the one to choose below.</li>
+                    </ol>
+                    <p className="hint">Menu names shift a little between app versions. The bridge's name and ID are on the same screen and match the list below.</p>
+                  </div>
+                )}
+                <ul className="found bridges">
+                  {found.map((b) => (
+                    <li key={b.ip}>
+                      <span className="bridge-who">
+                        <strong>{b.info?.name ?? 'Did not answer'}</strong>
+                        {b.info?.paired && <span className="pill static glow">Paired now</span>}
+                        <small>
+                          <span className="mono">{b.ip}</span>
+                          {b.info && <> · {b.info.model} · ID <span className="mono">{b.info.bridge_id.slice(-6)}</span></>}
+                        </small>
+                      </span>
+                      <button type="button" className={`button small${b.info ? ' primary' : ''}`} disabled={!!checking} onClick={() => check(b.ip)}>{checking === b.ip ? 'Checking…' : 'Use this one'}</button>
+                    </li>
+                  ))}
+                </ul>
+              </>
             ) : found && <p className="hint">No bridge answered the search. That is common on networks that block discovery; type its address instead.</p>}
-            <Field label="Bridge address" hint="The Hue app shows it in the bridge's settings, under Network. Your router's device list does too.">
+            <Field label="Bridge address" hint="In the Hue app: Settings → Bridges → your bridge → Network settings → IP address. Your router's device list shows it too.">
               <TextInput value={manual} placeholder="192.168.1.50" onChange={(e) => setManual(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && check(manual)} />
             </Field>
             {state.error && <p className="error-text" role="alert">{state.error}</p>}
             <div className="button-row">
               <button type="button" className="button subtle" onClick={() => dispatch({ type: 'back' })}><ArrowLeft size={14} /> Back</button>
               <button type="button" className="button" disabled={finding} onClick={() => setFound(null)}><Search size={14} /> Search again</button>
-              <button type="button" className="button primary" disabled={!manual.trim() || !!checking} onClick={() => check(manual)}>{checking === manual ? 'Checking…' : 'Check address'}</button>
+              <button type="button" className="button primary" disabled={!manual.trim() || !!checking} onClick={() => check(manual)}>{checking && checking === manual ? 'Checking…' : 'Check address'}</button>
             </div>
           </>
         )}

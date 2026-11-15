@@ -466,3 +466,8 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .countdown-ring .track { fill: none; stroke: rgba(255, 255, 255, 0.08); stroke-width: 8; }
 .countdown-ring .progress { fill: none; stroke: var(--accent); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 0.25s linear; }
 .countdown-ring text { fill: var(--text); font-size: 34px; font-weight: 600; }
+.multi-bridge ol { margin: 8px 0; padding-left: 20px; display: grid; gap: 4px; }
+.multi-bridge p { margin: 0; }
+.found.bridges li { align-items: center; }
+.bridge-who { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.bridge-who small { flex-basis: 100%; color: var(--text-2); }
