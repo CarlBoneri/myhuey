@@ -22,11 +22,12 @@ from .roles import Focus, find_focus, resolve_roles
 from .scenes import MAX_GRADIENT_POINTS, WHITE_RANGE, Scene, placed_profile
 
 NIGHT_WINDOW_MIN = 180  # no blue-heavy palettes from this long before bed until wake
+NIGHT_TASK_KELVIN = 2700  # in the night window the task light drops the mode's floor to this
 BIAS_RANGE = (10.0, 20.0)
 BIAS_SHARE = 0.2
 VIEW_COLOR, VIEW_LEVEL = 0.25, 0.5
 BEHIND_COLOR, BEHIND_LEVEL = 0.1, 0.4
-LOST_BIAS_COLOR, LOST_BIAS_LEVEL = 0.25, 0.3
+LOST_BIAS_COLOR, LOST_BIAS_LEVEL = 0.25, 0.3  # a pinned role with nothing to serve: dim, low-color ambient
 FAR_CM = 300.0
 
 
@@ -34,10 +35,16 @@ def _clamp(value: float, low: float, high: float) -> float:
     return max(low, min(high, value))
 
 
+def _night(at: datetime, wake: str, bed: str) -> bool:
+    """From NIGHT_WINDOW_MIN before bedtime until wake time."""
+    return (minutes_until_bed(at.time(), wake, bed) or 0) <= NIGHT_WINDOW_MIN
+
+
 def _choose(mode: Mode, at: datetime, wake: str, bed: str, palette_id: str | None, count: int, seed: int) -> list[Palette]:
-    if palette_id:
-        return [by_id(palette_id)] * count
-    night = (minutes_until_bed(at.time(), wake, bed) or 0) <= NIGHT_WINDOW_MIN
+    if palette_id:  # one palette, shown in up to as many rotations as it has colors
+        palette = by_id(palette_id)
+        return [palette] * min(count, len(palette.colors))
+    night = _night(at, wake, bed)
     pool = [palette for palette in load() if not (night and "blue_heavy" in palette.tags)]
     # Every palette that shares a tag with the mode can come up, weighted by how many it
     # shares (a seeded weighted draw without replacement), so Shuffle reaches the whole library.
@@ -90,11 +97,16 @@ def suggest(
     roles = resolve_roles(room, focus)
     center = _center(room, focus)
     stamp = at.strftime("%H:%M")
+    # The task floor (read's 4000 K) holds only outside the night window; near bed it stays warm.
+    floor = chosen_mode.task_min_kelvin
+    if floor and _night(at, wake, bed):
+        floor = min(floor, NIGHT_TASK_KELVIN)
+    task_kelvin = max(kelvin, floor)
 
     results = []
     for index, palette in enumerate(_choose(chosen_mode, at, wake, bed, palette_id, count, seed)):
-        colors = _order(palette.colors, seed if palette_id else seed + index)
-        overrides = _overrides(room, chosen_mode, roles, focus, center, colors, kelvin, level, white)
+        colors = _order(palette.colors, seed + index)
+        overrides = _overrides(room, chosen_mode, roles, focus, center, colors, kelvin, task_kelvin, level, white)
         scene = Scene(
             id=new_id(), name=f"{chosen_mode.title} · {palette.name}", room=room.name, overrides=overrides,
             origin={"mode": chosen_mode.name, "palette_id": palette.id, "palette_name": palette.name, "at": stamp},
@@ -105,7 +117,7 @@ def suggest(
 
 def _overrides(
     room: Room, mode: Mode, roles: dict[str, str], focus: Focus | None, center: tuple[float, float],
-    colors: list[str], kelvin: int, level: float, white: str,
+    colors: list[str], kelvin: int, task_kelvin: int, level: float, white: str,
 ) -> dict[str, dict[str, Any]]:
     overrides: dict[str, dict[str, Any]] = {}
     strength = mode.color_strength
@@ -113,20 +125,21 @@ def _overrides(
     colored = 0  # the next palette color to hand out, going around the room
     for light in _around(room.lights, center):
         role = roles[light.light_id]
-        if role == "task":
+        # A pinned task or view light when the mode finds no seat, or a pinned bias light with no
+        # screen, has nothing to serve: it falls back to dim, low-color ambient (and keeps its pin).
+        if (role in ("task", "view") and focus is None) or (role == "bias" and not has_screen):
+            share, brightness = LOST_BIAS_COLOR * strength, level * LOST_BIAS_LEVEL
+        elif role == "task":
             overrides[light.light_id] = {
-                "white": max(kelvin, mode.task_min_kelvin), "brightness": round(_clamp(level * mode.task_brightness, 1, 100), 1),
+                "white": task_kelvin, "brightness": round(_clamp(level * mode.task_brightness, 1, 100), 1),
             }
             continue
-        if role == "bias":
-            if not has_screen:
-                share, brightness = LOST_BIAS_COLOR * strength, level * LOST_BIAS_LEVEL
-            elif mode.bias:
+        elif role == "bias":
+            if mode.bias:
                 overrides[light.light_id] = {"white": kelvin, "brightness": round(_clamp(level * BIAS_SHARE, *BIAS_RANGE), 1)}
-                continue
             else:
                 overrides[light.light_id] = {"on": False}
-                continue
+            continue
         elif role == "view":
             share, brightness = (0.0 if mode.ambient_only else VIEW_COLOR * strength), level * VIEW_LEVEL
         elif role == "behind":
@@ -139,7 +152,8 @@ def _overrides(
             overrides[light.light_id] = {"white": kelvin, "brightness": brightness}
             continue
         profile = placed_profile(light)
-        points = min(MAX_GRADIENT_POINTS, max(2, len(colors))) if profile.gradient else 1
+        # Only ambient gradient lights spread the palette along their length; treated lights get one color.
+        points = min(MAX_GRADIENT_POINTS, max(2, len(colors))) if profile.gradient and role == "ambient" else 1
         picked = [colors[(colored + step) % len(colors)] for step in range(points)]
         colored += 1
         override: dict[str, Any] = {"colors": [mix(color, white, share) for color in picked], "brightness": brightness}

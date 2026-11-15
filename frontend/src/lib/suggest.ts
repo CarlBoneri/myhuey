@@ -43,6 +43,25 @@ export function quarterHours(): string[] {
   return times;
 }
 
+const SHORT_DAY_MINUTES = 6 * 60;
+const toMinutes = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
+
+function spell(minutes: number): string {
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (!rest) return `${hours} ${hours === 1 ? 'hour' : 'hours'}`;
+  return hours ? `${hours} h ${rest} min` : `${rest} min`;
+}
+
+/** A warning for a schedule suggestions can't do much with (the same times, or a short day), else ''. */
+export function scheduleWarning(wake: string, bed: string): string {
+  const day = (((toMinutes(bed) - toMinutes(wake)) % 1440) + 1440) % 1440;
+  // The curve reads equal times as a 24-hour day (see curve.py), not as no day at all.
+  if (day === 0) return 'Wake time and bedtime are the same, so suggestions treat it as a 24-hour day with no night.';
+  if (day < SHORT_DAY_MINUTES) return `Only ${spell(day)} between waking and bedtime; suggestions will be dim most of the day.`;
+  return '';
+}
+
 export function lightFill(result: { on: boolean; color: string | null; brightness: number }): { fill: string; opacity: number } {
   if (!result.on || !result.color) return { fill: '#2a2a2a', opacity: 1 };
   return { fill: result.color, opacity: Math.round((0.2 + (0.8 * result.brightness) / 100) * 100) / 100 };
@@ -60,4 +79,15 @@ export function placementNeedsRefresh<T extends HeightAndRole>(previous: T | und
 export function latestOnly(): { next: () => number; isLatest: (token: number) => boolean } {
   let latest = 0;
   return { next: () => ++latest, isLatest: (token) => token === latest };
+}
+
+/** Focus kinds the server works roles out for, with the name the user knows them by. */
+const FOCUS_LABELS: [string, string][] = [['desk', 'desk'], ['read', 'read'], ['sofa', 'relax']];
+
+/** The Auto role option's label: "Auto (task)" when every focus agrees, else the role per focus. */
+export function autoRoleLabel(resolved: Record<string, string> | undefined): string {
+  const found = FOCUS_LABELS.filter(([kind]) => resolved?.[kind]).map(([kind, label]) => [label, resolved![kind]]);
+  if (!found.length) return 'Auto';
+  if (new Set(found.map(([, role]) => role)).size === 1) return `Auto (${found[0][1]})`;
+  return `Auto (${found.map(([label, role]) => `${label}: ${role}`).join(' · ')})`;
 }

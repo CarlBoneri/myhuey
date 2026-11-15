@@ -77,10 +77,13 @@ def test_api_palettes(service, db_path):
     assert 0 < len(warm) <= 5 and all("warm" in p["tags"] for p in warm)
 
 
-def test_room_json_has_resolved_role(service, db_path):
+def test_room_json_has_resolved_roles_per_focus(service, db_path):
     room = TestClient(create_app(db_path)).get("/api/rooms/Den").json()
-    roles = {light["light_id"]: light["resolved_role"] for light in room["lights"]}
-    assert roles == {"1": "task", "2": "ambient", "3": "bias"}
+    roles = {light["light_id"]: light["resolved_roles"] for light in room["lights"]}
+    assert {key: value["desk"] for key, value in roles.items()} == {"1": "task", "2": "ambient", "3": "bias"}
+    assert {key: value["sofa"] for key, value in roles.items()} == {"1": "ambient", "2": "ambient", "3": "ambient"}  # no sofa
+    assert roles["3"]["read"] == "view"  # read sits at the desk, and with no screen the strip is in view
+    assert all("resolved_role" not in light for light in room["lights"])
 
 
 def _cli(db_path, *argv):

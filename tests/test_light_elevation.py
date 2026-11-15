@@ -25,7 +25,7 @@ def _v3_document():
 
 def test_v3_document_migrates_to_v4_with_auto_fields():
     upgraded, start = migrate(_v3_document())
-    assert start == 3 and CURRENT_VERSION == 4 and upgraded["schema_version"] == 4
+    assert start == 3 and upgraded["schema_version"] == CURRENT_VERSION >= 4
     light = upgraded["rooms"][0]["lights"][0]
     assert light["elevation"] is None and light["role"] == "auto"
 

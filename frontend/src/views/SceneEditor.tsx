@@ -9,6 +9,7 @@ import { bounds, ellipsePoints, fitImage, pathOf, rectPoints, round1, simplify }
 import { effectiveLength, placedProfile } from '../lib/lights';
 import type { ImageLayer, LightOverride, Mood, PaletteEntry, Pt, Room, Scene, SceneOrigin, SceneResult, Zone } from '../types';
 import { MODE_LABELS, creditText } from '../lib/suggest';
+import { WHITE_MAX, WHITE_MIN, WHITE_STEP, clampKelvin, withColors, withWhite } from '../lib/overrides';
 import { PlanCanvas, useDrag, usePlan } from '../components/PlanCanvas';
 import { FurnitureShape, LightSilhouette } from '../components/Shapes';
 import { ColorPicker } from '../components/ColorPicker';
@@ -547,6 +548,7 @@ function OverridePanel({ lightId, result, override, palette, onChange }: {
   }
 
   const colors = override.colors?.length ? override.colors : fromScene().colors!;
+  const isWhite = override.white != null && !override.colors?.length; // colors win on the server
   return (
     <Panel title={name} actions={<button type="button" className="button subtle small" onClick={() => onChange(null)}>Clear override</button>}>
       <label className="check-row">
@@ -555,10 +557,18 @@ function OverridePanel({ lightId, result, override, palette, onChange }: {
       </label>
       <Slider label="Brightness" value={override.brightness ?? 80} min={1} max={100} format={(v) => `${Math.round(v)}%`}
         onChange={(brightness) => onChange({ ...override, brightness })} />
-      {gradient ? (
+      <Segmented label="Light as" value={isWhite ? 'white' : 'colors'}
+        options={[{ value: 'colors', label: 'Colors' }, { value: 'white', label: 'White' }]}
+        onChange={(kind) => onChange(kind === 'white'
+          ? withWhite(override, clampKelvin(result?.color_temp))
+          : withColors(override, fromScene().colors!, fromScene().mode))} />
+      {isWhite ? (
+        <Slider label="White" value={override.white!} min={WHITE_MIN} max={WHITE_MAX} step={WHITE_STEP}
+          format={(v) => `${Math.round(v)} K`} onChange={(white) => onChange({ ...override, white })} />
+      ) : gradient ? (
         <GradientEditor
           value={{ colors: colors.length >= 2 ? colors : [colors[0], colors[0]], mode: override.mode ?? gradient.mode, effect: override.effect ?? 'no_effect' }}
-          onChange={(next) => onChange({ ...override, colors: next.colors, mode: next.mode, effect: next.effect ?? undefined })}
+          onChange={(next) => onChange({ ...withColors(override, next.colors, next.mode), effect: next.effect ?? undefined })}
           modes={gradient.modes}
           capable={gradient.points_capable}
           effects={light?.effect?.values}
@@ -566,7 +576,7 @@ function OverridePanel({ lightId, result, override, palette, onChange }: {
         />
       ) : (
         <>
-          <ColorPicker compact value={colors[0]} palette={palette} onChange={(hex) => onChange({ ...override, colors: [hex] })} />
+          <ColorPicker compact value={colors[0]} palette={palette} onChange={(hex) => onChange(withColors(override, [hex]))} />
           {light?.effect && light.effect.values.length > 1 && (
             <div className="pill-row" role="radiogroup" aria-label="Effect">
               {light.effect.values.map((effect) => (

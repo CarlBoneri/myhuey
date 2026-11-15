@@ -62,7 +62,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     room.add_argument(
         "action",
-        choices=["list", "show", "create", "update", "assign", "remove-light", "delete", "import", "photo", "remove-photo", "on", "off", "dim"],
+        choices=["list", "show", "create", "update", "assign", "remove-light", "delete", "import", "photo", "remove-photo", "on", "off", "dim",
+                 "tags", "tag", "untag"],
     )
     room.add_argument("--name", help="Room name")
     room.add_argument("--new-name", help="Rename the room (update)")
@@ -71,6 +72,7 @@ def build_parser() -> argparse.ArgumentParser:
     room.add_argument("--y", type=float, default=0, help="cm")
     room.add_argument("--rotation", type=float, help="Degrees, for assign")
     room.add_argument("--length", help="Lightstrip or string length, for assign (for example 2m or 6ft)")
+    room.add_argument("--item", help="Photo tag, for tag and untag: light:<id>, furniture:<id>, or opening:<id>")
     room.add_argument("--elevation", help="Height of the light, for assign (for example 120cm or 4ft), or auto")
     room.add_argument("--role", choices=["auto", "bias", "task", "view"],
                       help="Pin the light's role for suggested scenes, for assign (default auto)")
@@ -323,6 +325,8 @@ def handle_room(args: argparse.Namespace) -> int:
         with open(args.file, "rb") as handle:
             room = service.set_room_photo(args.name, handle.read())
         print(f"Saved a {room.photo.width}x{room.photo.height} photo for '{room.name}'.")
+    elif args.action in ("tags", "tag", "untag"):
+        return _photo_tags(service, args)
     elif args.action == "remove-photo":
         service.remove_room_photo(args.name)
         print(f"Removed the photo of '{args.name}'.")
@@ -568,6 +572,30 @@ def handle_serve(args: argparse.Namespace) -> int:
     else:
         print("No Hue bridge is paired yet. Run `myhuey bridge setup`, or pair from the web page.")
     uvicorn.run(create_app(args.db), host=args.host, port=args.port)
+    return 0
+
+
+def _photo_tags(service: HueRoomService, args: argparse.Namespace) -> int:
+    room = service.get_room(args.name)
+    if not room.photo:
+        raise ValueError(f"Room '{room.name}' has no photo yet (add one with `room photo --file`)")
+    tags = dict(room.photo.tags)
+    if args.action == "tags":
+        for key, spot in sorted(tags.items()):
+            print(f"{key:<28} {spot['x']:.3f}, {spot['y']:.3f}")
+        if not tags:
+            print("Nothing is tagged on the photo yet.")
+        return 0
+    if not args.item:
+        raise ValueError(f"--item is required for `room {args.action}`")
+    if args.action == "untag":
+        tags.pop(args.item, None)
+    else:
+        if not (0 <= args.x <= 1 and 0 <= args.y <= 1):
+            raise ValueError("For `room tag`, --x and --y are fractions of the photo, 0 to 1")
+        tags[args.item] = {**tags.get(args.item, {}), "x": args.x, "y": args.y}
+    service.set_photo_tags(room.name, tags)
+    print(f"{'Removed' if args.action == 'untag' else 'Tagged'} {args.item} on the photo of '{room.name}'.")
     return 0
 
 

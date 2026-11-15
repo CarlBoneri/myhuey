@@ -5,6 +5,8 @@ lights as center points. Version 2 measures everything in centimeters, gives roo
 polygon, and adds furniture, rotation, room photos, and scenes. Version 3 adds doors and windows
 as openings on a room's edges, a ceiling height, furniture heights, and a home plan image.
 Version 4 gives placed lights a height (None = automatic from the product) and a role.
+Version 5 turns a room photo's light placements into tags that can also pin furniture and
+openings, and reserves a photo-to-floor transform.
 """
 
 from __future__ import annotations
@@ -13,7 +15,7 @@ import copy
 import math
 from typing import Any
 
-CURRENT_VERSION = 4
+CURRENT_VERSION = 5
 
 # A default v1 room (900 x 600 units) becomes 4.5 m x 3 m, about 14'9" x 9'10".
 V1_CM_PER_UNIT = 0.5
@@ -133,7 +135,21 @@ def _v3_to_v4(config: dict[str, Any]) -> dict[str, Any]:
     return upgraded
 
 
-_STEPS = {1: _v1_to_v2, 2: _v2_to_v3, 3: _v3_to_v4}
+def _v4_to_v5(config: dict[str, Any]) -> dict[str, Any]:
+    upgraded = copy.deepcopy(config)
+    for room in upgraded.get("rooms", []):
+        photo = room.get("photo")
+        if photo:
+            placements = photo.pop("placements", None) or {}
+            present = {str(light.get("light_id")) for light in room.get("lights", [])}
+            photo.setdefault("tags", {f"light:{light_id}": spot for light_id, spot in placements.items()
+                                      if str(light_id) in present})
+            photo.setdefault("floor_transform", None)
+    upgraded["schema_version"] = 5
+    return upgraded
+
+
+_STEPS = {1: _v1_to_v2, 2: _v2_to_v3, 3: _v3_to_v4, 4: _v4_to_v5}
 
 
 def migrate(config: dict[str, Any]) -> tuple[dict[str, Any], int]:

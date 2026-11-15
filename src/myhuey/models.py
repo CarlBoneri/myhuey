@@ -210,32 +210,58 @@ class Furniture:
         return dict(self.__dict__)
 
 
+TAG_KINDS = ("light", "furniture", "opening")
+
+
+def split_tag(key: str) -> tuple[str, str]:
+    """A photo tag key such as "light:26" or "furniture:ab12" as (kind, id)."""
+    kind, _, item_id = str(key).partition(":")
+    if kind not in TAG_KINDS or not item_id:
+        raise ValueError(f"A photo tag is kind:id with kind one of {', '.join(TAG_KINDS)}, not '{key}'")
+    return kind, item_id
+
+
 @dataclass
 class RoomPhoto:
-    """A photo of the real room, stored under ~/.myhuey/uploads. Placements are fractions
-    of the photo's width and height (0 to 1), so they survive any display size."""
+    """A photo of the real room, stored under ~/.myhuey/uploads.
+
+    Tags pin plan items where they appear in the photo: keys are "light:<id>",
+    "furniture:<id>", or "opening:<id>", and positions are fractions of the photo's width and
+    height (0 to 1), so they survive any display size. The photo never moves anything on the
+    plan. `floor_transform` is reserved for a photo-to-floor mapping (not used yet).
+    """
 
     file: str
     width: int
     height: int
-    placements: dict[str, dict[str, float]] = field(default_factory=dict)
+    tags: dict[str, dict[str, float]] = field(default_factory=dict)
+    floor_transform: Any = None
 
     @classmethod
     def from_dict(cls, data: dict[str, Any] | None) -> RoomPhoto | None:
         if not data or not data.get("file"):
             return None
-        placements = {}
-        for light_id, spot in (data.get("placements") or {}).items():
-            placements[str(light_id)] = {
+        raw = data.get("tags")
+        if raw is None:  # before schema v5: light placements keyed by light ID
+            raw = {f"light:{light_id}": spot for light_id, spot in (data.get("placements") or {}).items()}
+        tags = {}
+        for key, spot in raw.items():
+            try:
+                split_tag(key)
+            except ValueError:
+                continue  # a malformed key never stops the room from loading; it is dropped on the next save
+            tags[str(key)] = {
                 "x": min(1.0, max(0.0, _num(spot.get("x"), 0.5))),
                 "y": min(1.0, max(0.0, _num(spot.get("y"), 0.5))),
                 "rotation": _num(spot.get("rotation")) % 360,
                 "scale": min(10.0, max(0.1, _num(spot.get("scale"), 1.0))),
             }
-        return cls(str(data["file"]), int(data.get("width", 0)), int(data.get("height", 0)), placements)
+        return cls(str(data["file"]), int(data.get("width", 0)), int(data.get("height", 0)), tags,
+                   data.get("floor_transform"))
 
     def to_dict(self) -> dict[str, Any]:
-        return {"file": self.file, "width": self.width, "height": self.height, "placements": self.placements}
+        return {"file": self.file, "width": self.width, "height": self.height, "tags": self.tags,
+                "floor_transform": self.floor_transform}
 
 
 OPENING_KINDS = ("door", "window")
@@ -435,6 +461,19 @@ class Room:
             if light.light_id == light_id:
                 return light
         return None
+
+    def has_tag_target(self, key: str) -> bool:
+        kind, item_id = split_tag(key)
+        if kind == "light":
+            return any(light.light_id == item_id for light in self.lights)
+        if kind == "furniture":
+            return any(item.id == item_id for item in self.furniture)
+        return any(opening.id == item_id for opening in self.openings)
+
+    def prune_photo_tags(self) -> None:
+        """Drop photo tags whose light, furniture, or opening is no longer in the room."""
+        if self.photo:
+            self.photo.tags = {key: spot for key, spot in self.photo.tags.items() if self.has_tag_target(key)}
 
     def to_dict(self) -> dict[str, Any]:
         return {

@@ -20,7 +20,7 @@ from .models import Room
 from .palette import MOODS
 from .palettes import search as search_palettes
 from .placement import resolved_elevation
-from .roles import find_focus, resolve_roles
+from .roles import FOCUS_KINDS, find_focus, resolve_roles
 from .scenes import Scene
 from .service import HueRoomService
 from .discovery import discover
@@ -142,6 +142,10 @@ class PhotoPlacements(BaseModel):
     placements: dict[str, dict[str, float]]
 
 
+class PhotoTags(BaseModel):
+    tags: dict[str, dict[str, float]] = Field(..., max_length=500)
+
+
 class LightState(BaseModel):
     on: bool | None = None
     brightness: int | None = Field(None, ge=0, le=254)
@@ -182,12 +186,13 @@ async def _read_upload(upload: UploadFile) -> bytes:
 
 
 def room_json(room: Room) -> dict[str, Any]:
-    """A room as the app sees it: what is saved, plus each light's worked-out height."""
+    """A room as the app sees it: what is saved, plus each light's worked-out height and its
+    role for each kind of focus ("desk", "read", "sofa")."""
     data = room.to_dict()
-    roles = resolve_roles(room, find_focus(room, "desk"))
+    roles = {kind: resolve_roles(room, find_focus(room, kind)) for kind in FOCUS_KINDS}
     for light, saved in zip(room.lights, data["lights"]):
         saved["resolved_elevation"] = resolved_elevation(light, room)
-        saved["resolved_role"] = roles[light.light_id]
+        saved["resolved_roles"] = {kind: roles[kind][light.light_id] for kind in FOCUS_KINDS}
     return data
 
 
@@ -363,6 +368,10 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
     def delete_room_photo(room_name: str) -> dict[str, str]:
         service.remove_room_photo(room_name)
         return {"status": "removed"}
+
+    @app.put("/api/rooms/{room_name}/photo/tags")
+    def save_photo_tags(room_name: str, body: PhotoTags) -> dict[str, Any]:
+        return room_json(service.set_photo_tags(room_name, body.tags))
 
     @app.put("/api/rooms/{room_name}/photo/placements")
     def save_photo_placements(room_name: str, body: PhotoPlacements) -> dict[str, Any]:

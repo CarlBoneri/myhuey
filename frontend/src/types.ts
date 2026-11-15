@@ -63,7 +63,7 @@ export interface Placement {
   elevation?: number | null; // cm; null = worked out from the product
   role?: PinnableRole;
   resolved_elevation?: number;
-  resolved_role?: string;
+  resolved_roles?: Record<string, string>; // the Auto role per focus: desk, read, sofa
 }
 
 export type PinnableRole = 'auto' | 'bias' | 'task' | 'view';
@@ -116,7 +116,9 @@ export interface RoomPhoto {
   file: string;
   width: number;
   height: number;
-  placements: Record<string, PhotoSpot>;
+  /** "light:<id>", "furniture:<id>", or "opening:<id>" → where it appears in the photo. */
+  tags: Record<string, PhotoSpot>;
+  floor_transform?: unknown;
 }
 
 export interface Room {

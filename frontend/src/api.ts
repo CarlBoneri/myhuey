@@ -92,8 +92,8 @@ export const api = {
 
   uploadPhoto: (name: string, file: File) => upload<Room>(`${room(name)}/photo`, file),
   deletePhoto: (name: string) => call(`${room(name)}/photo`, { method: 'DELETE' }),
-  savePhotoPlacements: (name: string, placements: Record<string, PhotoSpot>) =>
-    call<Room>(`${room(name)}/photo/placements`, { method: 'PUT', json: { placements } }),
+  savePhotoTags: (name: string, tags: Record<string, PhotoSpot>) =>
+    call<Room>(`${room(name)}/photo/tags`, { method: 'PUT', json: { tags } }),
 
   uploadImage: (file: File, mood: Mood, count = 5) =>
     upload<{ file: string; width: number; height: number; mood: Mood; theme: Swatch[] }>(`/api/images?mood=${mood}&count=${count}`, file),

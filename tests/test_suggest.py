@@ -147,10 +147,14 @@ def test_study_puts_color_only_on_ambient_lights():
         assert ("colors" in item["scene"].overrides[light_id]) == (role == "ambient")
 
 
-def test_read_task_light_at_least_4000k_even_at_night():
-    room = _office()
-    overrides = _one(room, "read", dt(0, 30))["scene"].overrides
+def test_read_task_light_at_least_4000k_during_the_day():
+    overrides = _one(_office(), "read", dt(12))["scene"].overrides
     assert overrides[DESK_LAMP]["white"] >= 4000
+
+
+def test_read_task_light_drops_the_4000k_floor_after_bedtime():
+    overrides = _one(_office(), "read", dt(0, 30))["scene"].overrides
+    assert overrides[DESK_LAMP]["white"] == 2700
 
 
 def test_relax_keeps_the_tv_bias_light_dim_and_white():
@@ -196,3 +200,40 @@ def test_shuffling_reaches_far_into_the_library(mode):
             for item in suggest(_office(), mode, at=dt(12), wake="07:00", bed="23:00", count=4, seed=seed)}
     assert len(seen) > 60
     assert any(palette_id.startswith("met-") for palette_id in seen)
+
+
+def test_gradient_lights_in_view_or_behind_get_one_color():
+    room = _office()
+    room.lights += [_light("gview", 210, 20, GRADIENT, elevation=100), _light("gbehind", 210, 350, GRADIENT, elevation=50)]
+    item = _one(room, "code", dt(12))
+    assert item["roles"]["gview"] == "view" and item["roles"]["gbehind"] == "behind"
+    for light_id in ("gview", "gbehind"):
+        override = item["scene"].overrides[light_id]
+        assert len(override["colors"]) == 1 and "mode" not in override
+
+
+@pytest.mark.parametrize("pinned", ["task", "view"])
+def test_pinned_task_or_view_without_a_focus_is_dim_and_low_color(pinned):
+    room = _office(furniture=False)  # no desk, so code mode has no focus
+    room.lights.append(_light("pinned", 50, 50, FLOOR, role=pinned))
+    item = _one(room, "code", dt(12))
+    level = 100 * MODES["code"].brightness
+    override = item["scene"].overrides["pinned"]
+    assert item["roles"]["pinned"] == pinned
+    assert "white" not in override and len(override["colors"]) == 1
+    assert override["brightness"] <= level * 0.3 + 0.1
+    assert room.lights[-1].role == pinned  # the pin stays
+
+
+def test_palette_id_with_count_gives_different_rotations():
+    chosen = next(p for p in load() if len(set(p.colors)) >= 4)
+    items = suggest(_office(furniture=False), "relax", at=dt(12), wake="07:00", bed="23:00", palette_id=chosen.id, count=3)
+    assert len(items) == 3 and all(item["palette"]["id"] == chosen.id for item in items)
+    sets = [repr(sorted(item["scene"].overrides.items())) for item in items]
+    assert len(set(sets)) == 3
+
+
+def test_palette_id_count_is_capped_at_its_colors():
+    chosen = next(p for p in load() if len(set(p.colors)) >= 3)
+    items = suggest(_office(), "code", at=dt(12), wake="07:00", bed="23:00", palette_id=chosen.id, count=20)
+    assert len(items) == len(chosen.colors)
