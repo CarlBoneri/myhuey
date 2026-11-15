@@ -150,7 +150,8 @@ def _overrides(
             overrides[light.light_id] = {"white": kelvin, "brightness": brightness}
             continue
         profile = placed_profile(light)
-        points = min(MAX_GRADIENT_POINTS, max(2, len(colors))) if profile.gradient else 1
+        # Only ambient gradient lights spread the palette along their length; treated lights get one color.
+        points = min(MAX_GRADIENT_POINTS, max(2, len(colors))) if profile.gradient and role == "ambient" else 1
         picked = [colors[(colored + step) % len(colors)] for step in range(points)]
         colored += 1
         override: dict[str, Any] = {"colors": [mix(color, white, share) for color in picked], "brightness": brightness}

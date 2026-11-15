@@ -200,3 +200,13 @@ def test_shuffling_reaches_far_into_the_library(mode):
             for item in suggest(_office(), mode, at=dt(12), wake="07:00", bed="23:00", count=4, seed=seed)}
     assert len(seen) > 60
     assert any(palette_id.startswith("met-") for palette_id in seen)
+
+
+def test_gradient_lights_in_view_or_behind_get_one_color():
+    room = _office()
+    room.lights += [_light("gview", 210, 20, GRADIENT, elevation=100), _light("gbehind", 210, 350, GRADIENT, elevation=50)]
+    item = _one(room, "code", dt(12))
+    assert item["roles"]["gview"] == "view" and item["roles"]["gbehind"] == "behind"
+    for light_id in ("gview", "gbehind"):
+        override = item["scene"].overrides[light_id]
+        assert len(override["colors"]) == 1 and "mode" not in override
