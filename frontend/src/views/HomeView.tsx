@@ -4,7 +4,7 @@ import { Download, Plus, Power, PowerOff } from 'lucide-react';
 import { api } from '../api';
 import { attempt, setRoomPower, useStore } from '../store';
 import { go } from '../lib/router';
-import { area, bounds, pathOf } from '../lib/geometry';
+import { area, bounds, labelPoint, pathOf } from '../lib/geometry';
 import { formatArea, formatLength, parseLength, snap } from '../lib/units';
 import { liveColors, placedProfile, effectiveLength } from '../lib/lights';
 import type { Pt, Room } from '../types';
@@ -16,7 +16,8 @@ export function RoomOnPlan({ room, offset, onMove, onDrop }: { room: Room; offse
   const drag = useDrag();
   const { cmPerPx } = usePlan();
   const { lights, profiles } = useStore();
-  const box = bounds(room.outline);
+  // Name, size, and power sit together at the room's most open spot, never outside a slanted wall.
+  const [lx, ly] = useMemo(() => labelPoint(room.outline), [room.outline]);
   const fontSize = Math.max(12 * cmPerPx, 14);
   return (
     <g
@@ -47,14 +48,14 @@ export function RoomOnPlan({ room, offset, onMove, onDrop }: { room: Room; offse
           </g>
         );
       })}
-      <text x={box.minX + 12 * cmPerPx} y={box.minY + fontSize * 1.4} className="room-name" fontSize={fontSize}>{room.name}</text>
+      <text x={lx} y={ly} className="room-name" fontSize={fontSize} textAnchor="middle" pointerEvents="none">{room.name}</text>
       {room.lights.some((p) => lights[p.light_id]) && (() => {
         const anyOn = room.lights.some((p) => lights[p.light_id]?.on);
         const r = Math.max(14 * cmPerPx, 10);
         return (
           <g
             className={`room-power${anyOn ? ' on' : ''}`}
-            transform={`translate(${box.maxX - r * 1.6},${box.minY + r * 1.6})`}
+            transform={`translate(${lx},${ly - fontSize - r * 1.2})`}
             onPointerDown={(event) => event.stopPropagation()}
             onClick={(event) => { event.stopPropagation(); void setRoomPower(room, !anyOn); }}
             role="button"
@@ -66,7 +67,7 @@ export function RoomOnPlan({ room, offset, onMove, onDrop }: { room: Room; offse
           </g>
         );
       })()}
-      <text x={box.minX + 12 * cmPerPx} y={box.minY + fontSize * 2.6} className="room-size" fontSize={fontSize * 0.75}>
+      <text x={lx} y={ly + fontSize * 1.1} className="room-size" fontSize={fontSize * 0.75} textAnchor="middle" pointerEvents="none">
         {formatLength(room.width, room.units)} × {formatLength(room.height, room.units)}
       </text>
     </g>

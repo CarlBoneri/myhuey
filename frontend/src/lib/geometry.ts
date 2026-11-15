@@ -105,3 +105,38 @@ export function fitImage(
     height: round(height),
   };
 }
+
+function distanceToOutline(p: Pt, polygon: Pt[]): number {
+  let best = Infinity;
+  polygon.forEach((a, i) => { best = Math.min(best, nearestOnSegment(p, a, polygon[(i + 1) % polygon.length]).distance); });
+  return best;
+}
+
+/**
+ * Where to write a room's name: the point inside the outline farthest from every wall
+ * (an approximate pole of inaccessibility). A bounding-box corner can sit outside a
+ * slanted or L-shaped room; this never does. Coarse grid, then two finer passes.
+ */
+export function labelPoint(polygon: Pt[]): Pt {
+  const { minX, minY, maxX, maxY } = bounds(polygon);
+  let best: Pt = polygon[0];
+  let bestDistance = -1;
+  let cell = Math.max(maxX - minX, maxY - minY) / 24;
+  let [x0, y0, x1, y1] = [minX, minY, maxX, maxY];
+  const [cx, cy] = [(minX + maxX) / 2, (minY + maxY) / 2];
+  for (let pass = 0; pass < 3 && cell > 0; pass++) {
+    for (let x = x0 + cell / 2; x <= x1; x += cell) {
+      for (let y = y0 + cell / 2; y <= y1; y += cell) {
+        if (!pointInPolygon([x, y], polygon)) continue;
+        // Many points tie in a plain rectangle (its whole midline); prefer the one nearest the middle.
+        const d = distanceToOutline([x, y], polygon);
+        const tie = Math.abs(d - bestDistance) < 1e-6 * (1 + d);
+        if (d > bestDistance && !tie) [best, bestDistance] = [[x, y], d];
+        else if (tie && Math.hypot(x - cx, y - cy) < Math.hypot(best[0] - cx, best[1] - cy)) best = [x, y];
+      }
+    }
+    [x0, y0, x1, y1] = [best[0] - cell, best[1] - cell, best[0] + cell, best[1] + cell];
+    cell /= 6;
+  }
+  return best;
+}

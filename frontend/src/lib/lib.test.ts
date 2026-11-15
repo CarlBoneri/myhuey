@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { formatLength, parseLength, snap } from './units';
-import { area, ellipsePoints, pointInPolygon, rectPoints, simplify } from './geometry';
+import { area, ellipsePoints, labelPoint, pointInPolygon, rectPoints, simplify } from './geometry';
 import { gradientStops, harmonies, hctToHex, hexToHct, hexToOklch, normalizeHex, oklchToHex, tonalPalette } from './color';
 import { effectiveLength, placedProfile } from './lights';
 import type { Placement, ProfileTable } from '../types';
@@ -27,6 +27,18 @@ describe('geometry', () => {
     expect(area(L)).toBe(30000);
     expect(pointInPolygon([50, 150], L)).toBe(true);
     expect(pointInPolygon([150, 150], L)).toBe(false);
+  });
+  it('puts a room label inside the room, away from its walls', () => {
+    const [x, y] = labelPoint([[0, 0], [400, 0], [400, 300], [0, 300]]);
+    expect(Math.abs(x - 200)).toBeLessThan(10);
+    expect(Math.abs(y - 150)).toBeLessThan(10);
+    expect(pointInPolygon(labelPoint(L), L)).toBe(true);
+    // A traced bedroom with a slanted wall and a narrow spike: its bounding-box corner is outside it.
+    const bedroom: [number, number][] = [[897, 1798], [1316, 1798], [1392, 1750], [1390, 1458], [1516, 1458], [1494, 1755], [1321, 1880],
+      [1204, 1877], [1202, 1956], [1222, 1963], [1219, 2144], [1036, 2200], [897, 2235]];
+    const spot = labelPoint(bedroom);
+    expect(pointInPolygon(spot, bedroom)).toBe(true);
+    expect(spot[1]).toBeGreaterThan(1798); // in the body of the room, not the spike
   });
   it('builds zone shapes', () => {
     expect(rectPoints([10, 10], [0, 0])).toEqual([[0, 0], [10, 0], [10, 10], [0, 10]]);
