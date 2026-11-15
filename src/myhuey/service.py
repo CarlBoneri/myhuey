@@ -19,7 +19,7 @@ from .geometry import rectangle
 from .hue import HueBridgeClient
 from .images import ImageSampler, extract_palette, image_path, prune_unreferenced, store_image
 from .models import Furniture, HomePlan, LayoutLight, Opening, Room, RoomPhoto, opening_fits, reanchor_openings, validate_outline
-from .preferences import merged as merged_preferences, validate as validate_preferences
+from .preferences import chosen as chosen_preferences, merged as merged_preferences, validate as validate_preferences
 from .scenes import Scene, evaluate
 from .shapes import profile_for
 from .storage import DEFAULT_STORAGE_PATH, load_config, save_config, uploads_dir
@@ -241,7 +241,7 @@ class HueRoomService:
     def update_preferences(self, changes: dict[str, Any]) -> dict[str, Any]:
         validate_preferences(changes)
         config = self._load()
-        config["preferences"] = {**merged_preferences(config.get("preferences")), **changes}
+        config["preferences"] = {**chosen_preferences(config.get("preferences")), **changes}
         self._save(config)
         return self.preferences()
 

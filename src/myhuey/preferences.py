@@ -8,6 +8,9 @@ from __future__ import annotations
 
 from typing import Any
 
+# Times of day in 15-minute steps, "00:00" to "23:45".
+QUARTER_HOURS = tuple(f"{hour:02d}:{minute:02d}" for hour in range(24) for minute in (0, 15, 30, 45))
+
 PREFERENCES: dict[str, tuple[Any, Any]] = {
     # Home screen
     "room_sliders": (True, bool),  # a brightness slider on each room
@@ -20,6 +23,9 @@ PREFERENCES: dict[str, tuple[Any, Any]] = {
     "command_gap_ms": (100, (100, 150, 200, 300)),
     # New rooms
     "default_units": ("imperial", ("imperial", "metric")),
+    # Your day, which suggested scenes read the clock against
+    "wake_time": ("07:00", QUARTER_HOURS),
+    "bed_time": ("23:00", QUARTER_HOURS),
 }
 
 
@@ -31,6 +37,16 @@ def merged(saved: Any) -> dict[str, Any]:
             if key in PREFERENCES and _valid(key, value):
                 values[key] = value
     return values
+
+
+def chosen(saved: Any) -> dict[str, Any]:
+    """Only the saved preferences that are still known and valid: what the user chose.
+
+    Defaults are never stored, so a better default later reaches everyone who left it alone.
+    """
+    if not isinstance(saved, dict):
+        return {}
+    return {key: value for key, value in saved.items() if key in PREFERENCES and _valid(key, value)}
 
 
 def _valid(key: str, value: Any) -> bool:
