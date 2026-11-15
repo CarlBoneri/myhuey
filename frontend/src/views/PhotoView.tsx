@@ -6,7 +6,7 @@ import { api } from '../api';
 import { attempt, useStore } from '../store';
 import { liveColor, placedProfile } from '../lib/lights';
 import { darkness, glowLayout, heightPreset, nudge, parseTag, resolvableTags, tagKey, type HeightPreset, type TagKind } from '../lib/photo';
-import { latestOnly } from '../lib/suggest';
+import { oneAtATime } from '../lib/suggest';
 import { formatLength } from '../lib/units';
 import type { PhotoSpot, Room, Suggestion } from '../types';
 import { LightControls } from '../components/LightControls';
@@ -42,20 +42,22 @@ export function PhotoView({ room }: { room: Room }) {
     spotsRef.current = next;
     setSpots(next);
   };
-  const saves = useRef(latestOnly());
-  const save = async () => {
-    // Only tags the server accepts are sent, only the newest answer is used, and a failed save
-    // puts the photo back the way the server has it, so one bad tag can't block the rest.
-    const token = saves.current.next();
-    const updated = await attempt(() => api.savePhotoTags(room.name, resolvableTags(spotsRef.current, room)));
-    if (!saves.current.isLatest(token)) return;
+  // Saves go one at a time and changes made meanwhile fold into one follow-up save, so the
+  // newest tags always reach the server last. Only tags the server accepts are sent, and a
+  // failed save puts the photo back the way the server has it, so one bad tag can't block the rest.
+  const roomRef = useRef(room);
+  roomRef.current = room;
+  const save = useRef(oneAtATime(async (isLast) => {
+    const current = roomRef.current;
+    const updated = await attempt(() => api.savePhotoTags(current.name, resolvableTags(spotsRef.current, current)));
+    if (!isLast()) return;
     if (updated) {
-      replaceRoom(room.name, updated);
+      replaceRoom(current.name, updated);
     } else {
-      const current = useStore.getState().rooms.find((r) => r.name === room.name);
-      update(current?.photo?.tags ?? {});
+      const saved = useStore.getState().rooms.find((r) => r.name === current.name);
+      update(saved?.photo?.tags ?? {});
     }
-  };
+  })).current;
 
   const uploadFile = async (file: File | undefined) => {
     if (!file) return;
