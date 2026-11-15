@@ -16,7 +16,7 @@ import { Empty, Field, HueIcon, IconButton, LengthInput, Panel, Segmented, Slide
 import { PhotoView } from './PhotoView';
 import { RoomDimmer } from '../components/RoomDimmer';
 import { SuggestPanel } from '../components/SuggestPanel';
-import { placementNeedsRefresh } from '../lib/suggest';
+import { autoRoleLabel, placementNeedsRefresh } from '../lib/suggest';
 
 type Selection = { type: 'light'; id: string } | { type: 'furniture'; id: string } | { type: 'opening'; id: string } | null;
 type Tool = 'select' | 'outline' | 'openings';
@@ -648,9 +648,9 @@ function LightPlacementFields({ placement, units, onChange }: { placement: Place
           <button type="button" className="button subtle small" onClick={() => onChange({ ...placement, elevation: null })}>Auto</button>
         )}
       </div>
-      <Field label="Role in suggestions" hint="Auto works it out from where the light sits relative to the desk and screen.">
+      <Field label="Role in suggestions" hint="Auto works it out from where the light sits relative to the seat and screen for each mode.">
         <select className="input" value={placement.role ?? 'auto'} onChange={(e) => onChange({ ...placement, role: e.target.value as PinnableRole })}>
-          <option value="auto">Auto{placement.resolved_role ? ` (${placement.resolved_role})` : ''}</option>
+          <option value="auto">{autoRoleLabel(placement.resolved_roles)}</option>
           <option value="bias">Bias: behind the screen</option>
           <option value="task">Task: lights your desk</option>
           <option value="view">View: in your line of sight</option>

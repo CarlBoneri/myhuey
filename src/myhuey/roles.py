@@ -118,7 +118,8 @@ def _read_focus(room: Room) -> Focus | None:
     return Focus(focus.seat, focus.gaze, focus.eye_height) if focus else None
 
 
-_FINDERS = {"desk": _desk_focus, "sofa": _sofa_focus, "read": _read_focus}
+_FINDERS = {"desk": _desk_focus, "read": _read_focus, "sofa": _sofa_focus}
+FOCUS_KINDS = tuple(_FINDERS)
 
 
 def find_focus(room: Room, kind: str) -> Focus | None:

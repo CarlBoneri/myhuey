@@ -63,7 +63,7 @@ export interface Placement {
   elevation?: number | null; // cm; null = worked out from the product
   role?: PinnableRole;
   resolved_elevation?: number;
-  resolved_role?: string;
+  resolved_roles?: Record<string, string>; // the Auto role per focus: desk, read, sofa
 }
 
 export type PinnableRole = 'auto' | 'bias' | 'task' | 'view';

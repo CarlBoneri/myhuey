@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cardTitle, creditText, lightFill, nowHHMM, quarterHours } from './suggest';
+import { autoRoleLabel, cardTitle, creditText, lightFill, nowHHMM, quarterHours } from './suggest';
 
 describe('suggest helpers', () => {
   it('titles a card by mode and palette', () => {
@@ -49,5 +49,20 @@ describe('request hygiene', () => {
     const second = guard.next();
     expect(guard.isLatest(first)).toBe(false);
     expect(guard.isLatest(second)).toBe(true);
+  });
+});
+
+describe('autoRoleLabel', () => {
+  it('shows one role when every focus agrees', () => {
+    expect(autoRoleLabel({ desk: 'task', read: 'task', sofa: 'task' })).toBe('Auto (task)');
+  });
+
+  it('shows the role per focus when they differ, calling sofa relax', () => {
+    expect(autoRoleLabel({ desk: 'bias', read: 'ambient', sofa: 'ambient' })).toBe('Auto (desk: bias · read: ambient · relax: ambient)');
+  });
+
+  it('is plain Auto before the server has worked roles out', () => {
+    expect(autoRoleLabel(undefined)).toBe('Auto');
+    expect(autoRoleLabel({})).toBe('Auto');
   });
 });

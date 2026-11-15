@@ -61,3 +61,14 @@ export function latestOnly(): { next: () => number; isLatest: (token: number) =>
   let latest = 0;
   return { next: () => ++latest, isLatest: (token) => token === latest };
 }
+
+/** Focus kinds the server works roles out for, with the name the user knows them by. */
+const FOCUS_LABELS: [string, string][] = [['desk', 'desk'], ['read', 'read'], ['sofa', 'relax']];
+
+/** The Auto role option's label: "Auto (task)" when every focus agrees, else the role per focus. */
+export function autoRoleLabel(resolved: Record<string, string> | undefined): string {
+  const found = FOCUS_LABELS.filter(([kind]) => resolved?.[kind]).map(([kind, label]) => [label, resolved![kind]]);
+  if (!found.length) return 'Auto';
+  if (new Set(found.map(([, role]) => role)).size === 1) return `Auto (${found[0][1]})`;
+  return `Auto (${found.map(([label, role]) => `${label}: ${role}`).join(' · ')})`;
+}

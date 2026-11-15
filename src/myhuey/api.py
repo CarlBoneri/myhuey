@@ -20,7 +20,7 @@ from .models import Room
 from .palette import MOODS
 from .palettes import search as search_palettes
 from .placement import resolved_elevation
-from .roles import find_focus, resolve_roles
+from .roles import FOCUS_KINDS, find_focus, resolve_roles
 from .scenes import Scene
 from .service import HueRoomService
 from .discovery import discover
@@ -182,12 +182,13 @@ async def _read_upload(upload: UploadFile) -> bytes:
 
 
 def room_json(room: Room) -> dict[str, Any]:
-    """A room as the app sees it: what is saved, plus each light's worked-out height."""
+    """A room as the app sees it: what is saved, plus each light's worked-out height and its
+    role for each kind of focus ("desk", "read", "sofa")."""
     data = room.to_dict()
-    roles = resolve_roles(room, find_focus(room, "desk"))
+    roles = {kind: resolve_roles(room, find_focus(room, kind)) for kind in FOCUS_KINDS}
     for light, saved in zip(room.lights, data["lights"]):
         saved["resolved_elevation"] = resolved_elevation(light, room)
-        saved["resolved_role"] = roles[light.light_id]
+        saved["resolved_roles"] = {kind: roles[kind][light.light_id] for kind in FOCUS_KINDS}
     return data
 
 
