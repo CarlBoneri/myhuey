@@ -9,18 +9,20 @@ from __future__ import annotations
 import functools
 import threading
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
 
-from .color import hex_to_rgb, light_state_to_hex, mired_to_color_temperature, rgb_to_xy, xy_to_hex
+from .color import hex_to_rgb, light_state_to_hex, mired_to_color_temperature, rgb_to_xy, xy_to_hex, xy_to_kelvin
 from .discovery import discover
 from .errors import BridgeNotConfigured, BridgeUnreachable, HueError, RoomNotFound, SceneNotFound
 from .geometry import rectangle
 from .hue import HueBridgeClient
 from .images import ImageSampler, extract_palette, image_path, prune_unreferenced, store_image
 from .models import Furniture, HomePlan, LayoutLight, Opening, Room, RoomPhoto, opening_fits, reanchor_openings, validate_outline
-from .preferences import merged as merged_preferences, validate as validate_preferences
+from .preferences import chosen as chosen_preferences, merged as merged_preferences, validate as validate_preferences
 from .scenes import Scene, evaluate
+from .suggest import suggest as suggest_scenes
 from .shapes import profile_for
 from .storage import DEFAULT_STORAGE_PATH, load_config, save_config, uploads_dir
 from .tls import pin_certificate, pinned_bridge_id
@@ -241,7 +243,7 @@ class HueRoomService:
     def update_preferences(self, changes: dict[str, Any]) -> dict[str, Any]:
         validate_preferences(changes)
         config = self._load()
-        config["preferences"] = {**merged_preferences(config.get("preferences")), **changes}
+        config["preferences"] = {**chosen_preferences(config.get("preferences")), **changes}
         self._save(config)
         return self.preferences()
 
@@ -457,8 +459,13 @@ class HueRoomService:
         rotation: float | None = None,
         length: float | None = None,
         product: dict[str, Any] | None = None,
+        elevation: float | str | None = None,
+        role: str | None = None,
     ) -> LayoutLight:
-        """Place a light in a room, or move it if it is already there."""
+        """Place a light in a room, or move it if it is already there.
+
+        `elevation` and `role` are kept when left out; elevation "auto" clears a set height.
+        """
         light_id = str(light_id).strip()
         if not light_id:
             raise ValueError("light_id is required")
@@ -481,6 +488,8 @@ class HueRoomService:
                 "on": on,
                 "metadata": metadata if metadata is not None else existing.get("metadata") or {},
                 "product": product or existing.get("product") or {},
+                "elevation": existing.get("elevation") if elevation is None else elevation,
+                "role": role or existing.get("role") or "auto",
             }
         )
         if not existing:
@@ -758,6 +767,25 @@ class HueRoomService:
         except ValueError:
             return None
 
+    def suggest(
+        self, room_name: str, mode: str, *, at: str | None = None, palette_id: str | None = None,
+        count: int = 4, seed: int = 0,
+    ) -> list[dict[str, Any]]:
+        """Suggested scenes for a room, as previews: nothing is saved and no light changes.
+
+        `at` is "HH:MM" (default: now); the wake time and bedtime come from the preferences.
+        """
+        room = self.get_room(room_name)
+        prefs = self.preferences()
+        now = datetime.now()
+        when = now.replace(hour=int(at[:2]), minute=int(at[3:5]), second=0, microsecond=0) if at else now
+        items = suggest_scenes(room, mode, at=when, wake=prefs["wake_time"], bed=prefs["bed_time"],
+                               palette_id=palette_id, count=count, seed=seed)
+        return [
+            {**item, "scene": item["scene"].to_dict(), "preview": evaluate(item["scene"], room)}
+            for item in items
+        ]
+
     def preview_scene(self, scene: Scene | dict[str, Any], gradient_points: dict[str, int] | None = None) -> list[dict[str, Any]]:
         """What each light would show, without changing any light."""
         if isinstance(scene, dict):
@@ -767,11 +795,20 @@ class HueRoomService:
 
     @_one_bridge_write
     def apply_scene(self, key: str, *, pause: float | None = None) -> list[dict[str, Any]]:
+        """Send a saved scene to the lights."""
+        return self._apply(self.get_scene(key), pause)
+
+    @_one_bridge_write
+    def apply_scene_object(self, scene: Scene, *, pause: float | None = None) -> list[dict[str, Any]]:
+        """Send a scene that may not be saved (a suggestion being previewed) to the lights."""
+        self.get_room(scene.room)
+        return self._apply(scene, pause)
+
+    def _apply(self, scene: Scene, pause: float | None) -> list[dict[str, Any]]:
         """Send a scene to the lights. Gradient lights get their colors along their length
         through the v2 API; everything else uses v1. Returns what each light was sent,
         with an `error` for lights that refused."""
         pause = self._command_gap() if pause is None else pause
-        scene = self.get_scene(key)
         client = self.client()
         raw = client.get_lights()
         index = self.v2_index()
@@ -806,8 +843,13 @@ class HueRoomService:
                     changes: dict[str, Any] = {"brightness": max(1, round(result["brightness"] * 2.54))}
                     if not state.get("on"):
                         changes["on"] = True
-                    if "xy" in state:
+                    if result.get("color_temp") and "ct" in state:
+                        changes["color_temp"] = _mirek_for(result["color_temp"], raw.get(light_id) or {})
+                    elif "xy" in state:
                         changes["xy"] = result["xy"]
+                    elif "ct" in state and result.get("xy"):
+                        # A white-only bulb can't show the color; give it the nearest white.
+                        changes["color_temp"] = _mirek_for(xy_to_kelvin(result["xy"]), raw.get(light_id) or {})
                     client.set_light_color(light_id, **changes)
                 # On the bridge an effect clears the gradient and a gradient cancels the effect,
                 # so a real effect goes last and "no_effect" is never sent: the light command
@@ -822,6 +864,13 @@ class HueRoomService:
                 self.sleep(pause)  # the bridge handles about ten light commands a second
         self._v2_loaded = 0.0  # gradients and effects just changed
         return results
+
+
+def _mirek_for(kelvin: int, raw_light: dict[str, Any]) -> int:
+    """Mirek for a white temperature, clamped to what this light reports it can do."""
+    ct = ((raw_light.get("capabilities") or {}).get("control") or {}).get("ct") or {}
+    low, high = int(ct.get("min") or 153), int(ct.get("max") or 500)
+    return max(low, min(high, round(1_000_000 / kelvin)))
 
 
 def gradient_body(rgbs: list[tuple[int, int, int]], mode: str | None = None, brightness: float | None = None) -> dict[str, Any]:

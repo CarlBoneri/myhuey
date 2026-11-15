@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable
 
-from .color import hex_to_rgb, rgb_to_hex, rgb_to_xy
+from .color import color_temperature_to_rgb, hex_to_rgb, rgb_to_hex, rgb_to_xy
 from .geometry import Point, as_points, distance_to_polygon, point_in_polygon, sample_along
 from .models import LayoutLight, Room, new_id
 from .shapes import LightProfile, light_profile
@@ -35,6 +35,7 @@ def _color(value: Any) -> str:
     return rgb_to_hex(hex_to_rgb(str(value)))
 
 
+WHITE_RANGE = (2000, 6500)  # kelvin a white override may ask for
 GRADIENT_MODES = ("interpolated_palette", "interpolated_palette_mirrored", "segmented_palette", "random_pixelated")
 _EFFECT_NAME = re.compile(r"^[a-z_]{1,40}$")
 
@@ -67,6 +68,11 @@ def _override(data: Any) -> dict[str, Any]:
         if not isinstance(data["effect"], str) or not _EFFECT_NAME.match(data["effect"]):
             raise ValueError("effect must be an effect name such as candle or no_effect")
         clean["effect"] = data["effect"]
+    if data.get("white") is not None:
+        white = data["white"]
+        if isinstance(white, bool) or not isinstance(white, (int, float)) or not WHITE_RANGE[0] <= white <= WHITE_RANGE[1]:
+            raise ValueError(f"An override's white must be {WHITE_RANGE[0]} to {WHITE_RANGE[1]} kelvin")
+        clean["white"] = int(round(white))
     if data.get("brightness") is not None:
         if isinstance(data["brightness"], bool) or not isinstance(data["brightness"], (int, float)):
             raise ValueError("An override's brightness must be a number from 0 to 100")
@@ -76,6 +82,17 @@ def _override(data: Any) -> dict[str, Any]:
             raise ValueError("An override's on must be true or false")
         clean["on"] = data["on"]
     return clean
+
+
+_ORIGIN_KEYS = ("mode", "palette_id", "palette_name", "at")
+
+
+def _origin(raw: Any) -> dict[str, str] | None:
+    if not raw:
+        return None
+    if not isinstance(raw, dict):
+        raise ValueError("A scene's origin must be an object")
+    return {key: str(raw[key])[:80] for key in _ORIGIN_KEYS if raw.get(key) is not None}
 
 
 @dataclass
@@ -167,8 +184,10 @@ class Scene:
     palette: list[str] = field(default_factory=list)
     updated_at: str = ""
     # Per-light settings that replace what the zones give: colors (2-5, start to end), mode,
-    # effect, brightness (0-100), on. Any of them may be left out.
+    # effect, white (kelvin), brightness (0-100), on. Any of them may be left out.
     overrides: dict[str, dict[str, Any]] = field(default_factory=dict)
+    # Where a suggested scene came from: mode, palette_id, palette_name, at. None for others.
+    origin: dict[str, str] | None = None
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Scene:
@@ -193,6 +212,7 @@ class Scene:
             palette=[_color(item) for item in (data.get("palette") or [])][:16],
             updated_at=str(data.get("updated_at") or ""),
             overrides=_overrides(data.get("overrides")),
+            origin=_origin(data.get("origin")),
         )
 
     def touch(self) -> None:
@@ -211,6 +231,7 @@ class Scene:
             "palette": self.palette,
             "updated_at": self.updated_at,
             "overrides": self.overrides,
+            "origin": self.origin,
         }
 
 
@@ -302,7 +323,7 @@ def evaluate(
 
         result: dict[str, Any] = {
             "light_id": light.light_id, "label": light.label, "keep": False,
-            "mode": None, "effect": None, "override": False,
+            "mode": None, "effect": None, "override": False, "color_temp": None,
         }
         if not lit:
             keep = scene.base_mode == "keep" and all(sample is None for sample in samples)
@@ -336,6 +357,12 @@ def _apply_override(result: dict[str, Any], override: dict[str, Any], gradient_c
     """Lay a per-light override over what the zones gave this light."""
     result["override"] = True
     result["keep"] = False
+    white = override.get("white")
+    if white and not override.get("colors"):
+        rgb = color_temperature_to_rgb(white)
+        result.update(on=True, color_temp=white, color=rgb_to_hex(rgb), xy=list(rgb_to_xy(rgb)), gradient=None)
+        if not result["brightness"]:
+            result["brightness"] = 100.0
     colors = override.get("colors")
     if colors:
         result["on"] = True

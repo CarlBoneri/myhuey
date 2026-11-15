@@ -4,6 +4,7 @@ import { api } from '../api';
 import { useStore } from '../store';
 import { Field, HueIcon, Panel, Segmented, TextInput, Toggle } from '../components/ui';
 import type { Preferences } from '../types';
+import { quarterHours } from '../lib/suggest';
 
 export function SettingsView() {
   const { setup, lights, load, lightsError } = useStore();
@@ -82,7 +83,9 @@ myhuey room update --name Office --width 12ft --height "10ft 6in"
 myhuey furniture add --room Office --kind desk --width 5ft --depth 30in
 myhuey scene list
 myhuey scene apply --scene "Sunset"
-myhuey palette --file photo.jpg --mood bright`}</pre>
+myhuey palette --file photo.jpg --mood bright
+myhuey suggest --room Office --mode code --save "Late night"
+myhuey palettes --tag warm`}</pre>
         </Panel>
       </div>
     </div>
@@ -120,6 +123,13 @@ function PreferencesPanel() {
       <PreferenceRow label="Units for new rooms">
         {choice('default_units', ['imperial', 'metric'], (v) => (v === 'imperial' ? 'Feet & inches' : 'Meters'))}
       </PreferenceRow>
+      <h3 className="pref-group">Your day</h3>
+      <PreferenceRow label="Wake time" hint="Suggested scenes brighten and cool after you wake.">
+        <TimeSelect label="Wake time" value={p.wake_time} onChange={(wake_time) => set({ wake_time })} />
+      </PreferenceRow>
+      <PreferenceRow label="Bedtime" hint="Suggested scenes warm and dim over the four hours before it, and leave out blue-heavy palettes.">
+        <TimeSelect label="Bedtime" value={p.bed_time} onChange={(bed_time) => set({ bed_time })} />
+      </PreferenceRow>
       <h3 className="pref-group">Bridge</h3>
       <PreferenceRow label="Refresh light states" hint="How often this page reads the lights while it is open.">
         {choice('poll_seconds', [2, 5, 10, 30, 0], (v) => (v ? `${v}s` : 'Off'))}
@@ -128,5 +138,13 @@ function PreferencesPanel() {
         {choice('command_gap_ms', [100, 150, 200, 300], (v) => `${v} ms`)}
       </PreferenceRow>
     </Panel>
+  );
+}
+
+function TimeSelect({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  return (
+    <select className="input time-select" aria-label={label} value={value} onChange={(e) => onChange(e.target.value)}>
+      {quarterHours().map((time) => <option key={time} value={time}>{time}</option>)}
+    </select>
   );
 }

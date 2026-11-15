@@ -30,7 +30,7 @@ def _item(kind, x, y, width=81, depth=5, rotation=0):
 def test_v2_door_near_edge_becomes_opening():
     upgraded, start = migrate(_v2([_item("door", 140, 5)]))
     room = upgraded["rooms"][0]
-    assert start == 2 and upgraded["schema_version"] == CURRENT_VERSION == 3
+    assert start == 2 and upgraded["schema_version"] == CURRENT_VERSION
     assert room["furniture"] == []
     (opening,) = room["openings"]
     assert opening["kind"] == "door" and opening["edge"] == 0

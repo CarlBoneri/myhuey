@@ -94,6 +94,17 @@ def mired_to_color_temperature(mired: float) -> int:
     return int(round((1000000.0 / mired) / 100.0) * 100)
 
 
+def xy_to_kelvin(xy: Iterable[float]) -> int:
+    """The white temperature nearest a color (McCamy's approximation), kept to 2000-6500 K.
+
+    Used for white-only bulbs asked to show a color: they show the closest white instead.
+    """
+    x, y = (float(value) for value in xy)
+    n = (x - 0.3320) / (0.1858 - y) if y != 0.1858 else 0.0
+    kelvin = 449 * n**3 + 3525 * n**2 + 6823.3 * n + 5520.33
+    return int(round(clamp(kelvin, 2000, 6500)))
+
+
 def color_temperature_to_rgb(temperature_k: float) -> tuple[int, int, int]:
     """Approximate the sRGB color of white light at a color temperature (Tanner Helland's fit)."""
     value = clamp(temperature_k, 1000, 40000) / 100.0

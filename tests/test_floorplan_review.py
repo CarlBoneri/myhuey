@@ -61,7 +61,7 @@ def test_migrated_opening_gets_a_stable_id():
         {"name": "A", "outline": SQUARE, "lights": [], "furniture": [door], "photo": None}]})
     opening_id = upgraded["rooms"][0]["openings"][0]["id"]
     assert opening_id and Room.from_dict(upgraded["rooms"][0]).openings[0].id == opening_id
-    assert CURRENT_VERSION == 3
+    assert CURRENT_VERSION >= 3
 
 
 def test_create_small_traced_room(db_path):

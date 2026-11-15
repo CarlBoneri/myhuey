@@ -1,13 +1,13 @@
 // One room, drawn to scale: its outline, furniture, and lights at their physical sizes.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Armchair, Camera, Copy, DoorOpen, Hand, Map as MapIcon, PenLine, Plus, RotateCw, Trash2 } from 'lucide-react';
+import { Armchair, Camera, Copy, DoorOpen, Hand, Map as MapIcon, PenLine, Plus, RotateCw, Sparkles, Trash2 } from 'lucide-react';
 import { api } from '../api';
 import { attempt, useStore } from '../store';
 import { go } from '../lib/router';
 import { area, bounds, pathOf, round1 } from '../lib/geometry';
 import { formatArea, formatLength, snap } from '../lib/units';
 import { effectiveLength, liveColors, placedProfile } from '../lib/lights';
-import type { Furniture, Opening, Placement, Pt, Room, Units } from '../types';
+import type { Furniture, Opening, PinnableRole, Placement, Pt, Room, Units } from '../types';
 import { openingAt, reanchorOpenings } from '../lib/plan';
 import { PlanCanvas, useDrag, usePlan } from '../components/PlanCanvas';
 import { FURNITURE_CATALOG, FurnitureShape, LightSilhouette, OpeningShape } from '../components/Shapes';
@@ -15,6 +15,8 @@ import { LightControls } from '../components/LightControls';
 import { Empty, Field, HueIcon, IconButton, LengthInput, Panel, Segmented, Slider, TextInput } from '../components/ui';
 import { PhotoView } from './PhotoView';
 import { RoomDimmer } from '../components/RoomDimmer';
+import { SuggestPanel } from '../components/SuggestPanel';
+import { placementNeedsRefresh } from '../lib/suggest';
 
 type Selection = { type: 'light'; id: string } | { type: 'furniture'; id: string } | { type: 'opening'; id: string } | null;
 type Tool = 'select' | 'outline' | 'openings';
@@ -270,6 +272,7 @@ export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' })
   const [draft, setDraft, draftRef] = useDraft(source);
   const [selection, setSelection] = useState<Selection>(null);
   const [tool, setTool] = useState<Tool>('select');
+  const [suggesting, setSuggesting] = useState(false);
   const [openingKind, setOpeningKind] = useState<Opening['kind']>('window');
 
   const fit = useMemo(() => {
@@ -293,11 +296,16 @@ export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' })
   const saveLight = useCallback(async (placement: Placement) => {
     const current = draftRef.current;
     if (!current) return;
+    const saved = useStore.getState().rooms.find((r) => r.name === current.name)?.lights.find((l) => l.light_id === placement.light_id);
     const ok = await attempt(() => api.placeLight(current.name, {
       light_id: placement.light_id, x: placement.x, y: placement.y, rotation: placement.rotation, length: placement.length, label: placement.label,
+      elevation: placement.elevation === null ? 'auto' : placement.elevation, role: placement.role,
     }));
     if (ok) replaceRoom(current.name, { ...current, lights: current.lights.map((l) => (l.light_id === placement.light_id ? placement : l)) });
-  }, [draftRef, replaceRoom]);
+    // The worked-out height and role depend on the whole room, so read them back.
+    // Only a height or role change needs that; moves and nudges don't.
+    if (ok && placementNeedsRefresh(saved, placement)) await refreshRooms();
+  }, [draftRef, replaceRoom, refreshRooms]);
 
   const updateLocalLight = (placement: Placement) => {
     const current = draftRef.current!;
@@ -433,6 +441,11 @@ export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' })
           <h1>{draft.name}</h1>
         </div>
         <div className="head-tools">
+          {tab === 'plan' && (
+            <button type="button" className={`button${suggesting ? ' active' : ''}`} onClick={() => setSuggesting(!suggesting)}>
+              <Sparkles size={15} /> Suggest
+            </button>
+          )}
           <Segmented
             label="View"
             value={tab}
@@ -504,6 +517,8 @@ export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' })
           </div>
 
           <aside className="inspector">
+            {/* The saved room, so suggestions reload when a change is committed, not on every drag step. */}
+            {suggesting && <SuggestPanel room={source ?? draft} onClose={() => setSuggesting(false)} />}
             {selectedLight && (
               <Panel title="Light" actions={<IconButton label="Remove from room" danger onClick={removeSelected}><Trash2 size={16} /></IconButton>}>
                 {lights[selectedLight.light_id] ? <LightControls light={lights[selectedLight.light_id]} /> : <p className="hint">{selectedLight.label} is not on the bridge right now.</p>}
@@ -626,6 +641,21 @@ function LightPlacementFields({ placement, units, onChange }: { placement: Place
           <RotateCw size={14} /> Turn 90°
         </button>
       )}
+      <div className="field-row">
+        <LengthInput label={placement.elevation == null ? 'Height (auto)' : 'Height'} value={placement.elevation ?? placement.resolved_elevation ?? 150}
+          units={units} onCommit={(elevation) => onChange({ ...placement, elevation: round1(elevation) })} />
+        {placement.elevation != null && (
+          <button type="button" className="button subtle small" onClick={() => onChange({ ...placement, elevation: null })}>Auto</button>
+        )}
+      </div>
+      <Field label="Role in suggestions" hint="Auto works it out from where the light sits relative to the desk and screen.">
+        <select className="input" value={placement.role ?? 'auto'} onChange={(e) => onChange({ ...placement, role: e.target.value as PinnableRole })}>
+          <option value="auto">Auto{placement.resolved_role ? ` (${placement.resolved_role})` : ''}</option>
+          <option value="bias">Bias: behind the screen</option>
+          <option value="task">Task: lights your desk</option>
+          <option value="view">View: in your line of sight</option>
+        </select>
+      </Field>
     </div>
   );
 }
