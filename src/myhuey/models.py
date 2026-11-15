@@ -6,6 +6,7 @@ room's own origin; a room's x and y place that origin on the home floor plan.
 
 from __future__ import annotations
 
+import math
 import uuid
 from dataclasses import dataclass, field
 from typing import Any
@@ -15,6 +16,35 @@ from .units import UNIT_SYSTEMS
 
 MAX_EXTENT_CM = 10000.0  # 100 m. Anything larger is a typo.
 DEFAULT_ROOM_CM = (450.0, 300.0)
+DEFAULT_CEILING_CM = 244.0  # 8 ft
+EDGE_TOLERANCE_CM = 0.5
+
+# (elevation, height) in cm for furniture kinds whose height matters for light and glare.
+# Elevation is how far the piece's bottom sits off the floor.
+FURNITURE_HEIGHTS: dict[str, tuple[float, float]] = {
+    "desk": (0, 75),
+    "desk-l": (0, 75),
+    "desk-standing": (0, 110),
+    "monitor-24": (75, 36),
+    "monitor-27": (75, 40),
+    "monitor-34": (75, 37),
+    "tv": (60, 84),
+    "pillar-round": (0, DEFAULT_CEILING_CM),
+    "pillar-square": (0, DEFAULT_CEILING_CM),
+    "bookshelf": (0, 180),
+    "dresser": (0, 80),
+    "nightstand": (0, 60),
+    "rug": (0, 1),
+    "bed-king": (0, 60),
+    "bed-queen": (0, 60),
+    "bed-full": (0, 60),
+    "bed-twin": (0, 60),
+    "counter": (0, 91),
+    "island": (0, 91),
+    "sofa": (0, 85),
+    "sectional": (0, 85),
+}
+DEFAULT_FURNITURE_HEIGHT = (0.0, 75.0)
 
 
 def new_id() -> str:
@@ -123,6 +153,8 @@ class Furniture:
     depth: float
     rotation: float = 0.0
     shape: str = "rect"
+    elevation: float = 0.0
+    height: float = 75.0
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Furniture:
@@ -132,9 +164,15 @@ class Furniture:
         shape = data.get("shape") or "rect"
         if shape not in FURNITURE_SHAPES:
             raise ValueError(f"Furniture shape must be one of {', '.join(FURNITURE_SHAPES)}")
+        kind = str(data.get("kind") or "custom")[:40]
+        default_elevation, default_height = FURNITURE_HEIGHTS.get(kind, DEFAULT_FURNITURE_HEIGHT)
+        elevation = _num(data.get("elevation"), default_elevation) if data.get("elevation") is not None else default_elevation
+        height = _num(data.get("height"), default_height) if data.get("height") is not None else default_height
+        if not (0 <= elevation <= 1000 and 0 < height <= 1000):
+            raise ValueError("Furniture elevation and height must be between 0 and 10 m")
         return cls(
             id=str(data.get("id") or new_id()),
-            kind=str(data.get("kind") or "custom")[:40],
+            kind=kind,
             label=str(data.get("label") or data.get("kind") or "Furniture")[:80],
             x=_clamp_extent(_num(data.get("x")), "Furniture"),
             y=_clamp_extent(_num(data.get("y")), "Furniture"),
@@ -142,6 +180,8 @@ class Furniture:
             depth=depth,
             rotation=_num(data.get("rotation")) % 360,
             shape=shape,
+            elevation=float(elevation),
+            height=float(height),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -176,6 +216,101 @@ class RoomPhoto:
         return {"file": self.file, "width": self.width, "height": self.height, "placements": self.placements}
 
 
+OPENING_KINDS = ("door", "window")
+
+
+def edge_length(outline: list[list[float]], index: int) -> float:
+    a = outline[index]
+    b = outline[(index + 1) % len(outline)]
+    return math.hypot(b[0] - a[0], b[1] - a[1])
+
+
+@dataclass
+class Opening:
+    """A door or window in a room's wall. It sits on outline edge `edge` (from corner `edge`
+    to the next), starting `offset` cm along it, `width` cm wide. Windows have a sill and a
+    top height off the floor; doors only a top."""
+
+    id: str
+    kind: str
+    edge: int
+    offset: float
+    width: float
+    sill: float | None = None
+    top: float | None = None
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Opening:
+        kind = data.get("kind")
+        if kind not in OPENING_KINDS:
+            raise ValueError(f"An opening must be one of {', '.join(OPENING_KINDS)}")
+        try:
+            edge = int(data.get("edge"))
+        except (TypeError, ValueError):
+            raise ValueError("An opening needs the index of its wall edge") from None
+        offset, width = _num(data.get("offset")), _num(data.get("width"))
+        if edge < 0 or offset < 0 or not (1 <= width <= 2000):
+            raise ValueError("An opening needs an edge, an offset of 0 or more, and a width from 1 cm to 20 m")
+        top = _num(data.get("top"), 0) if data.get("top") is not None else None
+        sill = None
+        if kind == "window":
+            sill = _num(data.get("sill"), 0) if data.get("sill") is not None else 90.0
+            top = top if top is not None else 210.0
+            if not (0 <= sill < top <= 1000):
+                raise ValueError("A window's sill must be below its top")
+        elif top is not None and not (0 < top <= 1000):
+            raise ValueError("A door's top must be between 0 and 10 m")
+        return cls(str(data.get("id") or new_id()), kind, edge, offset, width, sill, top)
+
+    def to_dict(self) -> dict[str, Any]:
+        return dict(self.__dict__)
+
+
+def opening_fits(outline: list[list[float]], opening: Opening) -> bool:
+    if opening.edge >= len(outline):
+        return False
+    return opening.offset + opening.width <= edge_length(outline, opening.edge) + EDGE_TOLERANCE_CM
+
+
+@dataclass
+class HomePlan:
+    """A floor-plan image under the home. A pixel (px, py) of the stored image lands at
+    offset + rotate(rotation) * (px, py) * cm_per_px on the home plan."""
+
+    file: str
+    cm_per_px: float = 1.0
+    offset: list[float] = field(default_factory=lambda: [0.0, 0.0])
+    rotation: float = 0.0
+    opacity: float = 0.5
+    width: int = 0
+    height: int = 0
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any] | None) -> HomePlan | None:
+        if not data or not data.get("file"):
+            return None
+        try:
+            scale = float(data.get("cm_per_px", 1.0))
+        except (TypeError, ValueError):
+            raise ValueError("cm_per_px must be a number") from None
+        if not (0 < scale <= 100) or math.isnan(scale):
+            raise ValueError("cm_per_px must be above 0 and at most 100")
+        raw_offset = data.get("offset") or [0, 0]
+        offset = [_clamp_extent(_num(raw_offset[0]), "The plan"), _clamp_extent(_num(raw_offset[1]), "The plan")]
+        return cls(
+            file=str(data["file"]),
+            cm_per_px=round(scale, 6),
+            offset=offset,
+            rotation=_num(data.get("rotation")) % 360,
+            opacity=min(1.0, max(0.0, _num(data.get("opacity"), 0.5))),
+            width=int(data.get("width") or 0),
+            height=int(data.get("height") or 0),
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return dict(self.__dict__)
+
+
 @dataclass
 class Room:
     """A room drawn to scale. `outline` is its floor polygon in cm, relative to the room origin."""
@@ -188,6 +323,8 @@ class Room:
     lights: list[LayoutLight] = field(default_factory=list)
     furniture: list[Furniture] = field(default_factory=list)
     photo: RoomPhoto | None = None
+    ceiling: float = DEFAULT_CEILING_CM
+    openings: list[Opening] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Room:
@@ -195,15 +332,25 @@ class Room:
         if not outline:
             outline = [list(p) for p in rectangle(_num(data.get("width"), 450), _num(data.get("height"), 300))]
         units = data.get("units") if data.get("units") in UNIT_SYSTEMS else "imperial"
+        outline = validate_outline(outline)
+        ceiling = _num(data.get("ceiling"), DEFAULT_CEILING_CM) if data.get("ceiling") is not None else DEFAULT_CEILING_CM
+        if not (150 <= ceiling <= 1000):
+            raise ValueError("A ceiling must be between 1.5 m and 10 m high")
+        openings = [Opening.from_dict(item) for item in data.get("openings") or []][:100]
+        for opening in openings:
+            if not opening_fits(outline, opening):
+                raise ValueError(f"The {opening.kind} on edge {opening.edge} does not fit on that wall")
         return cls(
             name=data["name"],
-            outline=validate_outline(outline),
+            outline=outline,
             x=_num(data.get("x")),
             y=_num(data.get("y")),
             units=units,
             lights=[LayoutLight.from_dict(light) for light in data.get("lights", [])],
             furniture=[Furniture.from_dict(item) for item in data.get("furniture", [])],
             photo=RoomPhoto.from_dict(data.get("photo")),
+            ceiling=ceiling,
+            openings=openings,
         )
 
     @property
@@ -244,4 +391,6 @@ class Room:
             "lights": [light.to_dict() for light in self.lights],
             "furniture": [item.to_dict() for item in self.furniture],
             "photo": self.photo.to_dict() if self.photo else None,
+            "ceiling": self.ceiling,
+            "openings": [opening.to_dict() for opening in self.openings],
         }
