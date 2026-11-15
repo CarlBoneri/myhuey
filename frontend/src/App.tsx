@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
-import { House, LayoutGrid, Lightbulb, Palette, Settings, X } from 'lucide-react';
+import { House, LayoutGrid, Lightbulb, Map as MapIcon, Palette, Settings, X } from 'lucide-react';
 import { useStore } from './store';
 import { href, useRoute, type Route } from './lib/router';
 import { HomeView } from './views/HomeView';
+import { PlanView } from './views/PlanView';
 import { RoomView } from './views/RoomView';
 import { ScenesView } from './views/ScenesView';
 import { SceneEditor } from './views/SceneEditor';
@@ -11,6 +12,7 @@ import { SettingsView } from './views/SettingsView';
 
 const NAV: { route: Route; label: string; icon: typeof House; match: Route['view'][] }[] = [
   { route: { view: 'home' }, label: 'Home', icon: House, match: ['home', 'room'] },
+  { route: { view: 'plan' }, label: 'Plan', icon: MapIcon, match: ['plan'] },
   { route: { view: 'scenes' }, label: 'Scenes', icon: Palette, match: ['scenes', 'scene'] },
   { route: { view: 'lights' }, label: 'Lights', icon: Lightbulb, match: ['lights'] },
   { route: { view: 'settings' }, label: 'Bridge', icon: Settings, match: ['settings'] },
@@ -43,6 +45,8 @@ export function App() {
         return <SceneEditor id={route.id} />;
       case 'lights':
         return <LightsView />;
+      case 'plan':
+        return <PlanView />;
       case 'settings':
         return <SettingsView />;
       default:

@@ -1,6 +1,7 @@
 // Lights and furniture drawn at real size, in plan centimeters.
 import { useId } from 'react';
-import type { Furniture, Profile } from '../types';
+import type { Furniture, Opening, Profile, Pt } from '../types';
+import { openingSegment } from '../lib/plan';
 import { renderStops } from '../lib/color';
 
 const OFF = '#3a3650';
@@ -101,8 +102,11 @@ export function FurnitureShape({ item, selected, cmPerPx }: { item: Furniture; s
         );
       case 'tv':
         return <line x1={-w / 2 + 3} x2={w / 2 - 3} y1={d / 2} y2={d / 2} stroke="var(--accent-2)" strokeWidth={2 * cmPerPx} />;
-      case 'door':
-        return <path d={`M${-w / 2},${d / 2} A${w},${w} 0 0 1 ${w / 2},${d / 2 - w}`} fill="none" className="furniture-detail-line" strokeWidth={cmPerPx} />;
+      case 'monitor-24':
+      case 'monitor-27':
+      case 'monitor-34':
+        // The screen faces +y (toward the viewer's chair); its stand sits behind.
+        return <line x1={-w / 2 + 2} x2={w / 2 - 2} y1={d / 2 - 2} y2={d / 2 - 2} stroke="var(--accent-2)" strokeWidth={2 * cmPerPx} />;
       default:
         return null;
     }
@@ -156,3 +160,32 @@ export const FURNITURE_CATALOG: { kind: string; label: string; width: number; de
   { kind: 'pillar-round', label: 'Round pillar', width: 30, depth: 30, shape: 'ellipse' },
   { kind: 'pillar-square', label: 'Square pillar', width: 30, depth: 30 },
 ];
+
+/** A door or window drawn on its wall: a door as a gap with its swing, a window as a double line. Room cm. */
+export function OpeningShape({ outline, opening, cmPerPx, selected }: { outline: Pt[]; opening: Opening; cmPerPx: number; selected?: boolean }) {
+  const [a, b] = openingSegment(outline, opening);
+  const stroke = selected ? 'var(--accent)' : opening.kind === 'window' ? 'var(--accent-2)' : 'var(--text-2)';
+  const ux = (b[0] - a[0]) / (opening.width || 1);
+  const uy = (b[1] - a[1]) / (opening.width || 1);
+  // Inward normal for a clockwise outline in screen coordinates.
+  const [nx, ny] = [-uy, ux];
+  if (opening.kind === 'window') {
+    const o = 3;
+    return (
+      <g className="opening window">
+        <line x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke="var(--bg, #0f0e17)" strokeWidth={8 * cmPerPx} />
+        <line x1={a[0] - nx * o} y1={a[1] - ny * o} x2={b[0] - nx * o} y2={b[1] - ny * o} stroke={stroke} strokeWidth={1.6 * cmPerPx} />
+        <line x1={a[0] + nx * o} y1={a[1] + ny * o} x2={b[0] + nx * o} y2={b[1] + ny * o} stroke={stroke} strokeWidth={1.6 * cmPerPx} />
+      </g>
+    );
+  }
+  const w = opening.width;
+  const tip: Pt = [a[0] + nx * w, a[1] + ny * w];
+  return (
+    <g className="opening door">
+      <line x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke="var(--bg, #0f0e17)" strokeWidth={6 * cmPerPx} />
+      <line x1={a[0]} y1={a[1]} x2={tip[0]} y2={tip[1]} stroke={stroke} strokeWidth={1.6 * cmPerPx} />
+      <path d={`M${tip[0]},${tip[1]} A${w},${w} 0 0 1 ${b[0]},${b[1]}`} fill="none" stroke={stroke} strokeWidth={cmPerPx} strokeDasharray={`${4 * cmPerPx} ${3 * cmPerPx}`} />
+    </g>
+  );
+}

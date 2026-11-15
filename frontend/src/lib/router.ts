@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 
 export type Route =
   | { view: 'home' }
+  | { view: 'plan' }
   | { view: 'room'; room: string; tab: 'plan' | 'photo' }
   | { view: 'scenes' }
   | { view: 'scene'; id: string }
@@ -14,6 +15,7 @@ export function parseRoute(hash: string): Route {
   if (parts[0] === 'scenes' && parts[1]) return { view: 'scene', id: parts[1] };
   if (parts[0] === 'scenes') return { view: 'scenes' };
   if (parts[0] === 'lights') return { view: 'lights' };
+  if (parts[0] === 'plan') return { view: 'plan' };
   if (parts[0] === 'settings') return { view: 'settings' };
   return { view: 'home' };
 }

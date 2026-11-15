@@ -9,10 +9,10 @@ import { formatArea, formatLength, parseLength, snap } from '../lib/units';
 import { liveColors, placedProfile, effectiveLength } from '../lib/lights';
 import type { Pt, Room } from '../types';
 import { PlanCanvas, useDrag, usePlan } from '../components/PlanCanvas';
-import { LightSilhouette } from '../components/Shapes';
+import { LightSilhouette, OpeningShape } from '../components/Shapes';
 import { Empty, Field, Panel, TextInput } from '../components/ui';
 
-function RoomOnPlan({ room, offset, onMove, onDrop }: { room: Room; offset: Pt; onMove: (d: Pt) => void; onDrop: () => void }) {
+export function RoomOnPlan({ room, offset, onMove, onDrop }: { room: Room; offset: Pt; onMove: (d: Pt) => void; onDrop: () => void }) {
   const drag = useDrag();
   const { cmPerPx } = usePlan();
   const { lights, profiles } = useStore();
@@ -32,6 +32,7 @@ function RoomOnPlan({ room, offset, onMove, onDrop }: { room: Room; offset: Pt; 
       aria-label={`${room.name}, ${formatLength(room.width, room.units)} by ${formatLength(room.height, room.units)}`}
     >
       <path d={pathOf(room.outline)} className="room-floor" strokeWidth={1.5 * cmPerPx} />
+      {room.openings.map((opening) => <OpeningShape key={opening.id} outline={room.outline} opening={opening} cmPerPx={cmPerPx} />)}
       {room.furniture.map((item) => (
         <rect key={item.id} x={-item.width / 2} y={-item.depth / 2} width={item.width} height={item.depth}
           transform={`translate(${item.x},${item.y}) rotate(${item.rotation})`} className="furniture ghost" rx={4} />
