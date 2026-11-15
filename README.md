@@ -28,6 +28,16 @@ myhuey serve --port 8000             # open http://127.0.0.1:8000
 
 For UI development, run `myhuey serve` and `npm --prefix frontend run dev` together. The Vite dev server proxies `/api` to port 8000.
 
+## Suggested scenes
+
+Open a room and press **Suggest** (or run `myhuey suggest --room Office --mode code`). Pick what you are doing: **code**, **work**, **study**, **read**, or **relax**. MyHuey suggests scenes from a palette library, the time of day, and where each light sits in the room:
+
+- **The clock**: white light cools and brightens after your wake time and warms and dims over the four hours before your bedtime (set both in Settings). Blue-heavy palettes are left out from three hours before bed until you wake.
+- **Your eyes**: lights by the desk stay white (task), a light just behind the monitor stays dim (bias), and lights in your line of sight or behind your chair are dimmed and kept near white, so the screen doesn't fight glare or reflections. The palette colors the rest of the room.
+- **Heights and roles**: each light's height is guessed from its product (ceiling, floor lamp, table lamp, strip) and the furniture under it; set it in the light's details if the guess is off. A light's role is worked out automatically, or pin it to Bias, Task, or View.
+
+A suggestion is a normal scene: preview it on the lights, then save it and edit it like any other. Put your monitors on the plan so MyHuey knows where the screen is.
+
 ## CLI
 
 Lengths accept units: `12ft`, `12'6"`, `3.8m`, `380cm`. A bare number means feet in imperial rooms and meters in metric rooms. Positions (`--x`, `--y`) are in centimeters from the room's corner.

@@ -3,7 +3,7 @@ import { Lightbulb, Palette as PaletteIcon, Save, Shuffle, Sparkles, X } from 'l
 import { api } from '../api';
 import { useStore } from '../store';
 import { bounds } from '../lib/geometry';
-import { MODE_LABELS, cardTitle, creditText, lightFill, nowHHMM, quarterHours } from '../lib/suggest';
+import { MODE_LABELS, cardTitle, creditText, lightFill, quarterHours } from '../lib/suggest';
 import { Field, IconButton, Panel, Segmented, TextInput } from './ui';
 import type { PaletteEntry, Room, Suggestion } from '../types';
 
@@ -46,7 +46,7 @@ export function SuggestPanel({ room, onClose }: { room: Room; onClose: () => voi
       <div className="field-row">
         <Field label="Time">
           <select className="input" value={at} onChange={(e) => setAt(e.target.value)}>
-            <option value="">Now ({nowHHMM()})</option>
+            <option value="">Now</option>
             {times.map((time) => <option key={time} value={time}>{time}</option>)}
           </select>
         </Field>
