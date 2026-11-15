@@ -43,3 +43,18 @@ def test_search_by_tag_and_text():
     assert warm and all("warm" in p.tags for p in warm)
     named = load()[0].name.split()[0]
     assert all(named.lower() in p.name.lower() for p in search(q=named, limit=500))
+
+
+def test_every_colourlovers_entry_has_author_and_url():
+    for palette in load():
+        if palette.source == "colourlovers":
+            assert palette.credit.get("author") and palette.credit.get("url", "").startswith("http")
+        if palette.source == "met":
+            assert palette.credit.get("title") and palette.credit.get("url", "").startswith("http")
+
+
+def test_license_file_ships():
+    from importlib import resources
+
+    text = resources.files("myhuey.data").joinpath("PALETTES_LICENSE.md").read_text(encoding="utf-8")
+    assert "CC BY-NC-SA 3.0" in text and "CC0" in text

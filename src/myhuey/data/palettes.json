@@ -1,5 +1,6543 @@
 [
  {
+  "id": "met-437139-muted",
+  "name": "An Artist Painting a Heraldic Shield in a\u2026 (muted)",
+  "colors": [
+   "#776d6b",
+   "#9c7d44",
+   "#978463",
+   "#9d907f",
+   "#b29f7f"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "An Artist Painting a Heraldic Shield in a Cabinet of Curiosi",
+   "artist": "Monogrammist FA",
+   "url": "https://www.metmuseum.org/art/collection/search/437139",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437139-deep",
+  "name": "An Artist Painting a Heraldic Shield in a\u2026 (deep)",
+  "colors": [
+   "#5c5d5f",
+   "#4169b1",
+   "#766f55",
+   "#8d898a",
+   "#bba786"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "An Artist Painting a Heraldic Shield in a Cabinet of Curiosi",
+   "artist": "Monogrammist FA",
+   "url": "https://www.metmuseum.org/art/collection/search/437139",
+   "license": "CC0"
+  },
+  "tags": [
+   "cool",
+   "muted",
+   "accent"
+  ]
+ },
+ {
+  "id": "met-436109-muted",
+  "name": "Benjamin Franklin (1706\u20131790), after a\u2026 (muted)",
+  "colors": [
+   "#4b352a",
+   "#4b4839",
+   "#817962",
+   "#c1b295",
+   "#cabb9a"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Benjamin Franklin (1706\u20131790), after a Painting by Greuze of",
+   "artist": "Charles Paul J\u00e9r\u00f4me de Br\u00e9a",
+   "url": "https://www.metmuseum.org/art/collection/search/436109",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436109-deep",
+  "name": "Benjamin Franklin (1706\u20131790), after a\u2026 (deep)",
+  "colors": [
+   "#382500",
+   "#443e32",
+   "#444233",
+   "#7c7155"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Benjamin Franklin (1706\u20131790), after a Painting by Greuze of",
+   "artist": "Charles Paul J\u00e9r\u00f4me de Br\u00e9a",
+   "url": "https://www.metmuseum.org/art/collection/search/436109",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-438467-muted",
+  "name": "The Birth and Naming of Saint John the\u2026 (muted)",
+  "colors": [
+   "#534336",
+   "#7c6555",
+   "#c2a67f",
+   "#d4baa1",
+   "#f0d1bc"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Birth and Naming of Saint John the Baptist; (reverse) Tr",
+   "artist": "Bernard van Orley",
+   "url": "https://www.metmuseum.org/art/collection/search/438467",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-438467-deep",
+  "name": "The Birth and Naming of Saint John the\u2026 (deep)",
+  "colors": [
+   "#35291d",
+   "#571813",
+   "#674d3e",
+   "#605245",
+   "#ab5d51"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Birth and Naming of Saint John the Baptist; (reverse) Tr",
+   "artist": "Bernard van Orley",
+   "url": "https://www.metmuseum.org/art/collection/search/438467",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436347-muted",
+  "name": "Trompe l'oeil with Palettes and Miniature (muted)",
+  "colors": [
+   "#40240e",
+   "#54300c",
+   "#693e11",
+   "#86653a",
+   "#a19773"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Trompe l'oeil with Palettes and Miniature",
+   "artist": "Jean Fran\u00e7ois de Le Motte",
+   "url": "https://www.metmuseum.org/art/collection/search/436347",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436347-deep",
+  "name": "Trompe l'oeil with Palettes and Miniature (deep)",
+  "colors": [
+   "#5e3309",
+   "#64370d",
+   "#704010",
+   "#734416",
+   "#82551a"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Trompe l'oeil with Palettes and Miniature",
+   "artist": "Jean Fran\u00e7ois de Le Motte",
+   "url": "https://www.metmuseum.org/art/collection/search/436347",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous"
+  ]
+ },
+ {
+  "id": "met-435645-muted",
+  "name": "Madonna and Child (muted)",
+  "colors": [
+   "#42210e",
+   "#85512a",
+   "#925d33",
+   "#a9723a"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Madonna and Child",
+   "artist": "Jacopo Bellini",
+   "url": "https://www.metmuseum.org/art/collection/search/435645",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous"
+  ]
+ },
+ {
+  "id": "met-435645-deep",
+  "name": "Madonna and Child (deep)",
+  "colors": [
+   "#421f19",
+   "#835545",
+   "#9c6841",
+   "#a06e4d",
+   "#ad6d3f"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Madonna and Child",
+   "artist": "Jacopo Bellini",
+   "url": "https://www.metmuseum.org/art/collection/search/435645",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437403-muted",
+  "name": "Christ and the Woman of Samaria (muted)",
+  "colors": [
+   "#473521",
+   "#4e4b3c",
+   "#5a4b36",
+   "#7b796d"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Christ and the Woman of Samaria",
+   "artist": "Rembrandt",
+   "url": "https://www.metmuseum.org/art/collection/search/437403",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437403-deep",
+  "name": "Christ and the Woman of Samaria (deep)",
+  "colors": [
+   "#412b1d",
+   "#442f1a",
+   "#4e4b3c",
+   "#5a4b36",
+   "#5f5845"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Christ and the Woman of Samaria",
+   "artist": "Rembrandt",
+   "url": "https://www.metmuseum.org/art/collection/search/437403",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436010-muted",
+  "name": "A Brook in the Forest (muted)",
+  "colors": [
+   "#363725",
+   "#3b392a",
+   "#5a543c",
+   "#5c5a41",
+   "#7b7960"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "A Brook in the Forest",
+   "artist": "Gustave Courbet",
+   "url": "https://www.metmuseum.org/art/collection/search/436010",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436010-deep",
+  "name": "A Brook in the Forest (deep)",
+  "colors": [
+   "#31301e",
+   "#303322",
+   "#56513d",
+   "#666852",
+   "#7a7b59"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "A Brook in the Forest",
+   "artist": "Gustave Courbet",
+   "url": "https://www.metmuseum.org/art/collection/search/436010",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436839-muted",
+  "name": "The Penitent Magdalen (muted)",
+  "colors": [
+   "#582e16",
+   "#8a5f3f",
+   "#ab8d67"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Penitent Magdalen",
+   "artist": "Georges de La Tour",
+   "url": "https://www.metmuseum.org/art/collection/search/436839",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436839-deep",
+  "name": "The Penitent Magdalen (deep)",
+  "colors": [
+   "#452411",
+   "#693e1b",
+   "#957151",
+   "#a38255"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Penitent Magdalen",
+   "artist": "Georges de La Tour",
+   "url": "https://www.metmuseum.org/art/collection/search/436839",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437755-muted",
+  "name": "In the Studio (muted)",
+  "colors": [
+   "#6b5138",
+   "#765b40",
+   "#876947",
+   "#907a63",
+   "#ecdbc1"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "In the Studio",
+   "artist": "Alfred Stevens",
+   "url": "https://www.metmuseum.org/art/collection/search/437755",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437755-deep",
+  "name": "In the Studio (deep)",
+  "colors": [
+   "#4b2a17",
+   "#483622",
+   "#552f1c",
+   "#682715",
+   "#674b35"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "In the Studio",
+   "artist": "Alfred Stevens",
+   "url": "https://www.metmuseum.org/art/collection/search/437755",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-770595-muted",
+  "name": "The Crucifixion (muted)",
+  "colors": [
+   "#2f2919",
+   "#513118",
+   "#563a22",
+   "#66341d",
+   "#9a7040"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Crucifixion",
+   "artist": "Stefano da Verona (Stefano di Giovanni d'Arbosio di Francia)",
+   "url": "https://www.metmuseum.org/art/collection/search/770595",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-770595-deep",
+  "name": "The Crucifixion (deep)",
+  "colors": [
+   "#4f3524",
+   "#6a2923",
+   "#972c26",
+   "#9b653f"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Crucifixion",
+   "artist": "Stefano da Verona (Stefano di Giovanni d'Arbosio di Francia)",
+   "url": "https://www.metmuseum.org/art/collection/search/770595",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous"
+  ]
+ },
+ {
+  "id": "met-437039-muted",
+  "name": "Classical Landscape with Figures (muted)",
+  "colors": [
+   "#665132",
+   "#6c552c",
+   "#6d5934",
+   "#728a8e",
+   "#bfaa8b"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Classical Landscape with Figures",
+   "artist": "Henri Mauperch\u00e9",
+   "url": "https://www.metmuseum.org/art/collection/search/437039",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437039-deep",
+  "name": "Classical Landscape with Figures (deep)",
+  "colors": [
+   "#48381f",
+   "#5a4528",
+   "#4f4a2d",
+   "#78552f",
+   "#815332"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Classical Landscape with Figures",
+   "artist": "Henri Mauperch\u00e9",
+   "url": "https://www.metmuseum.org/art/collection/search/437039",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436509-muted",
+  "name": "The Adoration of the Magi (muted)",
+  "colors": [
+   "#182c47",
+   "#78672f",
+   "#596e6f",
+   "#8c816b",
+   "#ffffda"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Adoration of the Magi",
+   "artist": "Giovanni di Paolo (Giovanni di Paolo di Grazia)",
+   "url": "https://www.metmuseum.org/art/collection/search/436509",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436509-deep",
+  "name": "The Adoration of the Magi (deep)",
+  "colors": [
+   "#21385a",
+   "#5a3d13",
+   "#67552f",
+   "#675a26",
+   "#9f411b"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Adoration of the Magi",
+   "artist": "Giovanni di Paolo (Giovanni di Paolo di Grazia)",
+   "url": "https://www.metmuseum.org/art/collection/search/436509",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm"
+  ]
+ },
+ {
+  "id": "met-437245-muted",
+  "name": "Modern Rome (muted)",
+  "colors": [
+   "#6a5f41",
+   "#817356",
+   "#8e7758",
+   "#837b64",
+   "#8a8065"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Modern Rome",
+   "artist": "Giovanni Paolo Panini",
+   "url": "https://www.metmuseum.org/art/collection/search/437245",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437245-deep",
+  "name": "Modern Rome (deep)",
+  "colors": [
+   "#5c2e1e",
+   "#50442a",
+   "#724027",
+   "#60543e",
+   "#6b5d40"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Modern Rome",
+   "artist": "Giovanni Paolo Panini",
+   "url": "https://www.metmuseum.org/art/collection/search/437245",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-438722-muted",
+  "name": "The Potato Peeler (reverse: Self-Portrait\u2026 (muted)",
+  "colors": [
+   "#32281f",
+   "#3a312a",
+   "#473d33",
+   "#594d3f",
+   "#756855"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Potato Peeler (reverse: Self-Portrait with a Straw Hat)",
+   "artist": "Vincent van Gogh",
+   "url": "https://www.metmuseum.org/art/collection/search/438722",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-438722-deep",
+  "name": "The Potato Peeler (reverse: Self-Portrait\u2026 (deep)",
+  "colors": [
+   "#352c25",
+   "#423930",
+   "#483829",
+   "#4b403a",
+   "#534739"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Potato Peeler (reverse: Self-Portrait with a Straw Hat)",
+   "artist": "Vincent van Gogh",
+   "url": "https://www.metmuseum.org/art/collection/search/438722",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435852-muted",
+  "name": "Two Children Teasing a Cat (muted)",
+  "colors": [
+   "#483123",
+   "#563b2a",
+   "#785947",
+   "#7f5f4a",
+   "#9a866d"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Two Children Teasing a Cat",
+   "artist": "Annibale Carracci",
+   "url": "https://www.metmuseum.org/art/collection/search/435852",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435852-deep",
+  "name": "Two Children Teasing a Cat (deep)",
+  "colors": [
+   "#4e3729",
+   "#563b2a",
+   "#7b4739",
+   "#6c5641",
+   "#7d5a44"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Two Children Teasing a Cat",
+   "artist": "Annibale Carracci",
+   "url": "https://www.metmuseum.org/art/collection/search/435852",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437794-muted",
+  "name": "The Battle of Vercellae (muted)",
+  "colors": [
+   "#5c4b31",
+   "#64543b",
+   "#666040",
+   "#637780",
+   "#a6a088"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Battle of Vercellae",
+   "artist": "Giovanni Battista Tiepolo",
+   "url": "https://www.metmuseum.org/art/collection/search/437794",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437794-deep",
+  "name": "The Battle of Vercellae (deep)",
+  "colors": [
+   "#553a27",
+   "#4f4635",
+   "#46504f",
+   "#624c34",
+   "#836646"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Battle of Vercellae",
+   "artist": "Giovanni Battista Tiepolo",
+   "url": "https://www.metmuseum.org/art/collection/search/437794",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437472-muted",
+  "name": "Arches in Ruins (muted)",
+  "colors": [
+   "#543f2c",
+   "#6e5f42",
+   "#785d3f",
+   "#878570",
+   "#a5a08c"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Arches in Ruins",
+   "artist": "Hubert Robert",
+   "url": "https://www.metmuseum.org/art/collection/search/437472",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437472-deep",
+  "name": "Arches in Ruins (deep)",
+  "colors": [
+   "#493723",
+   "#553d25",
+   "#494a44",
+   "#4f4a37",
+   "#73583b"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Arches in Ruins",
+   "artist": "Hubert Robert",
+   "url": "https://www.metmuseum.org/art/collection/search/437472",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436334-muted",
+  "name": "Madonna and Child (muted)",
+  "colors": [
+   "#614c31",
+   "#725438",
+   "#798486",
+   "#a97e5c",
+   "#c29e7e"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Madonna and Child",
+   "artist": "Francesco Francia",
+   "url": "https://www.metmuseum.org/art/collection/search/436334",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436334-deep",
+  "name": "Madonna and Child (deep)",
+  "colors": [
+   "#462820",
+   "#56402b",
+   "#47595d",
+   "#726457",
+   "#8b6e50"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Madonna and Child",
+   "artist": "Francesco Francia",
+   "url": "https://www.metmuseum.org/art/collection/search/436334",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437258-muted",
+  "name": "The Golden Age (muted)",
+  "colors": [
+   "#554d36",
+   "#475c5f",
+   "#635d4f",
+   "#80807e"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Golden Age",
+   "artist": "Jean-Baptiste Joseph Pater",
+   "url": "https://www.metmuseum.org/art/collection/search/437258",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437258-deep",
+  "name": "The Golden Age (deep)",
+  "colors": [
+   "#4f4231",
+   "#4d4636",
+   "#5e523a",
+   "#5e5744",
+   "#435f63"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Golden Age",
+   "artist": "Jean-Baptiste Joseph Pater",
+   "url": "https://www.metmuseum.org/art/collection/search/437258",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436829-muted",
+  "name": "Hugo van der Goes Making a Portrait of Mary\u2026 (muted)",
+  "colors": [
+   "#492e13",
+   "#917333",
+   "#9c7b38",
+   "#a98d4c"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Hugo van der Goes Making a Portrait of Mary of Burgundy",
+   "artist": "Wilhelm (Guillaume) Koller",
+   "url": "https://www.metmuseum.org/art/collection/search/436829",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous"
+  ]
+ },
+ {
+  "id": "met-436829-deep",
+  "name": "Hugo van der Goes Making a Portrait of Mary\u2026 (deep)",
+  "colors": [
+   "#68260c",
+   "#5d3210",
+   "#634c2a",
+   "#836423",
+   "#87622d"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Hugo van der Goes Making a Portrait of Mary of Burgundy",
+   "artist": "Wilhelm (Guillaume) Koller",
+   "url": "https://www.metmuseum.org/art/collection/search/436829",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous"
+  ]
+ },
+ {
+  "id": "met-435766-muted",
+  "name": "Virgin and Child (muted)",
+  "colors": [
+   "#5d4b35",
+   "#664830",
+   "#6d5d39",
+   "#8e795e",
+   "#957e5f"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Virgin and Child",
+   "artist": "Dieric Bouts",
+   "url": "https://www.metmuseum.org/art/collection/search/435766",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435766-deep",
+  "name": "Virgin and Child (deep)",
+  "colors": [
+   "#692325",
+   "#533823",
+   "#6c281d",
+   "#6c3b2d",
+   "#684330"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Virgin and Child",
+   "artist": "Dieric Bouts",
+   "url": "https://www.metmuseum.org/art/collection/search/435766",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436114-muted",
+  "name": "The Experts (muted)",
+  "colors": [
+   "#402c14",
+   "#51330f",
+   "#51361b",
+   "#97793b",
+   "#ae9457"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Experts",
+   "artist": "Alexandre-Gabriel Decamps",
+   "url": "https://www.metmuseum.org/art/collection/search/436114",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436114-deep",
+  "name": "The Experts (deep)",
+  "colors": [
+   "#3e2e1e",
+   "#4e3924",
+   "#735732",
+   "#886b3f",
+   "#97793b"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Experts",
+   "artist": "Alexandre-Gabriel Decamps",
+   "url": "https://www.metmuseum.org/art/collection/search/436114",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436616-muted",
+  "name": "Young Man and Woman in an Inn (muted)",
+  "colors": [
+   "#3d3327",
+   "#544b3a",
+   "#5b503c",
+   "#625b49",
+   "#8d725f"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Young Man and Woman in an Inn",
+   "artist": "Frans Hals",
+   "url": "https://www.metmuseum.org/art/collection/search/436616",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436752-muted",
+  "name": "Pomegranates and Other Fruit in a Landscape (muted)",
+  "colors": [
+   "#4a2f1a",
+   "#573613",
+   "#82673c",
+   "#946b37",
+   "#ac925f"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Pomegranates and Other Fruit in a Landscape",
+   "artist": "Abraham Brueghel",
+   "url": "https://www.metmuseum.org/art/collection/search/436752",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436752-deep",
+  "name": "Pomegranates and Other Fruit in a Landscape (deep)",
+  "colors": [
+   "#55351e",
+   "#66421e",
+   "#6a4324",
+   "#82501d",
+   "#85612d"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Pomegranates and Other Fruit in a Landscape",
+   "artist": "Abraham Brueghel",
+   "url": "https://www.metmuseum.org/art/collection/search/436752",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436680-muted",
+  "name": "The Annunciation of the Death of the Virgin (muted)",
+  "colors": [
+   "#3f3327",
+   "#56442e",
+   "#6e563a",
+   "#8c7f5f",
+   "#97927c"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Annunciation of the Death of the Virgin",
+   "artist": "Samuel van Hoogstraten",
+   "url": "https://www.metmuseum.org/art/collection/search/436680",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436680-deep",
+  "name": "The Annunciation of the Death of the Virgin (deep)",
+  "colors": [
+   "#362d24",
+   "#4d3d2d",
+   "#524630",
+   "#735e41",
+   "#887151"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Annunciation of the Death of the Virgin",
+   "artist": "Samuel van Hoogstraten",
+   "url": "https://www.metmuseum.org/art/collection/search/436680",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-441230-muted",
+  "name": "A Female Martyr Saint (muted)",
+  "colors": [
+   "#4e2d24",
+   "#5c4631",
+   "#725a42",
+   "#8c6e52",
+   "#af8a6d"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "A Female Martyr Saint",
+   "artist": "Carlo Francesco Nuvolone",
+   "url": "https://www.metmuseum.org/art/collection/search/441230",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-441230-deep",
+  "name": "A Female Martyr Saint (deep)",
+  "colors": [
+   "#433326",
+   "#533628",
+   "#5a4532",
+   "#6a543c",
+   "#87684c"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "A Female Martyr Saint",
+   "artist": "Carlo Francesco Nuvolone",
+   "url": "https://www.metmuseum.org/art/collection/search/441230",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436816-muted",
+  "name": "The Lacemaker (muted)",
+  "colors": [
+   "#412812",
+   "#6f5b38",
+   "#785f41",
+   "#906d4d"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Lacemaker",
+   "artist": "Bernhard Keil",
+   "url": "https://www.metmuseum.org/art/collection/search/436816",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436816-deep",
+  "name": "The Lacemaker (deep)",
+  "colors": [
+   "#412307",
+   "#393126",
+   "#4c2b02",
+   "#5a3612",
+   "#684d30"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Lacemaker",
+   "artist": "Bernhard Keil",
+   "url": "https://www.metmuseum.org/art/collection/search/436816",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435743-muted",
+  "name": "The Dispatch of the Messenger (muted)",
+  "colors": [
+   "#433222",
+   "#494230",
+   "#5f503d",
+   "#6b675c",
+   "#857f7f"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Dispatch of the Messenger",
+   "artist": "Fran\u00e7ois Boucher",
+   "url": "https://www.metmuseum.org/art/collection/search/435743",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435743-deep",
+  "name": "The Dispatch of the Messenger (deep)",
+  "colors": [
+   "#4e483a",
+   "#74312b",
+   "#4f4b3f",
+   "#5a5446",
+   "#937e69"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Dispatch of the Messenger",
+   "artist": "Fran\u00e7ois Boucher",
+   "url": "https://www.metmuseum.org/art/collection/search/435743",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437986-muted",
+  "name": "The Denial of Saint Peter (muted)",
+  "colors": [
+   "#38230e",
+   "#633a1e",
+   "#745b3c"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Denial of Saint Peter",
+   "artist": "Caravaggio (Michelangelo Merisi)",
+   "url": "https://www.metmuseum.org/art/collection/search/437986",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435639-muted",
+  "name": "Vase of Flowers in a Niche (muted)",
+  "colors": [
+   "#786344",
+   "#88775b",
+   "#93856a",
+   "#9a9075",
+   "#ac9c7b"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Vase of Flowers in a Niche",
+   "artist": "Michel Bruno Belleng\u00e9",
+   "url": "https://www.metmuseum.org/art/collection/search/435639",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435639-deep",
+  "name": "Vase of Flowers in a Niche (deep)",
+  "colors": [
+   "#402d1c",
+   "#414439",
+   "#8c7c62",
+   "#a08e7a",
+   "#b08f62"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Vase of Flowers in a Niche",
+   "artist": "Michel Bruno Belleng\u00e9",
+   "url": "https://www.metmuseum.org/art/collection/search/435639",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435746-muted",
+  "name": "Washerwomen (muted)",
+  "colors": [
+   "#5d563c",
+   "#636e66",
+   "#716e5d",
+   "#71746b",
+   "#7f7764"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Washerwomen",
+   "artist": "Fran\u00e7ois Boucher",
+   "url": "https://www.metmuseum.org/art/collection/search/435746",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435746-deep",
+  "name": "Washerwomen (deep)",
+  "colors": [
+   "#43321e",
+   "#414234",
+   "#46483a",
+   "#565340",
+   "#555644"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Washerwomen",
+   "artist": "Fran\u00e7ois Boucher",
+   "url": "https://www.metmuseum.org/art/collection/search/435746",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437919-muted",
+  "name": "Two Tritons at the Feast of Achelo\u00fcs (muted)",
+  "colors": [
+   "#4c341a",
+   "#4c4847",
+   "#5c493a",
+   "#826138",
+   "#ad7f4e"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Two Tritons at the Feast of Achelo\u00fcs",
+   "artist": "Anthony van Dyck",
+   "url": "https://www.metmuseum.org/art/collection/search/437919",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437919-deep",
+  "name": "Two Tritons at the Feast of Achelo\u00fcs (deep)",
+  "colors": [
+   "#3b2f21",
+   "#524e45",
+   "#845e37",
+   "#8b603e"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Two Tritons at the Feast of Achelo\u00fcs",
+   "artist": "Anthony van Dyck",
+   "url": "https://www.metmuseum.org/art/collection/search/437919",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436325-muted",
+  "name": "The Stolen Kiss (muted)",
+  "colors": [
+   "#361f0f",
+   "#4b3623",
+   "#7b5226",
+   "#8e745b",
+   "#a8977b"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Stolen Kiss",
+   "artist": "Jean Honor\u00e9 Fragonard",
+   "url": "https://www.metmuseum.org/art/collection/search/436325",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436325-deep",
+  "name": "The Stolen Kiss (deep)",
+  "colors": [
+   "#3a1c11",
+   "#3a1e10",
+   "#503d2e",
+   "#896e53",
+   "#c6a187"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Stolen Kiss",
+   "artist": "Jean Honor\u00e9 Fragonard",
+   "url": "https://www.metmuseum.org/art/collection/search/436325",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435672-muted",
+  "name": "Angelica and Medoro (muted)",
+  "colors": [
+   "#3b2a10",
+   "#6f5731",
+   "#837046",
+   "#92845f",
+   "#dbcd9e"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Angelica and Medoro",
+   "artist": "Jacques Blanchard",
+   "url": "https://www.metmuseum.org/art/collection/search/435672",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435672-deep",
+  "name": "Angelica and Medoro (deep)",
+  "colors": [
+   "#3b2a10",
+   "#4f402d",
+   "#7a2f18",
+   "#6f5731",
+   "#896437"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Angelica and Medoro",
+   "artist": "Jacques Blanchard",
+   "url": "https://www.metmuseum.org/art/collection/search/435672",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-438127-muted",
+  "name": "The Declaration of Love (muted)",
+  "colors": [
+   "#4e2e19",
+   "#6c3b2c",
+   "#574b31",
+   "#8d8779",
+   "#8d8872"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Declaration of Love",
+   "artist": "Jean Fran\u00e7ois de Troy",
+   "url": "https://www.metmuseum.org/art/collection/search/438127",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-438127-deep",
+  "name": "The Declaration of Love (deep)",
+  "colors": [
+   "#441b07",
+   "#522d1a",
+   "#50381c",
+   "#473e2f",
+   "#81442f"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Declaration of Love",
+   "artist": "Jean Fran\u00e7ois de Troy",
+   "url": "https://www.metmuseum.org/art/collection/search/438127",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-438677-muted",
+  "name": "The Banks of the Rance, Brittany (muted)",
+  "colors": [
+   "#6b785a",
+   "#748165",
+   "#90876a",
+   "#8e9172",
+   "#999675"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Banks of the Rance, Brittany",
+   "artist": "Pierre Henri de Valenciennes",
+   "url": "https://www.metmuseum.org/art/collection/search/438677",
+   "license": "CC0"
+  },
+  "tags": [
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-438677-deep",
+  "name": "The Banks of the Rance, Brittany (deep)",
+  "colors": [
+   "#3d3626",
+   "#48432d",
+   "#5c5538",
+   "#647258",
+   "#cba882"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Banks of the Rance, Brittany",
+   "artist": "Pierre Henri de Valenciennes",
+   "url": "https://www.metmuseum.org/art/collection/search/438677",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-438012-muted",
+  "name": "Bouquet of Chrysanthemums (muted)",
+  "colors": [
+   "#563f2d",
+   "#8d6f4d",
+   "#a48255",
+   "#a98761",
+   "#d5b89a"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Bouquet of Chrysanthemums",
+   "artist": "Auguste Renoir",
+   "url": "https://www.metmuseum.org/art/collection/search/438012",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-438012-deep",
+  "name": "Bouquet of Chrysanthemums (deep)",
+  "colors": [
+   "#5c130c",
+   "#573c35",
+   "#5f432d",
+   "#a14020",
+   "#985e39"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Bouquet of Chrysanthemums",
+   "artist": "Auguste Renoir",
+   "url": "https://www.metmuseum.org/art/collection/search/438012",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous"
+  ]
+ },
+ {
+  "id": "met-438009-muted",
+  "name": "The Pink Dress (Albertie-Marguerite Carr\u00e9\u2026 (muted)",
+  "colors": [
+   "#4c3b1f",
+   "#81726b",
+   "#9b8e88",
+   "#b0988c",
+   "#d0adab"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Pink Dress (Albertie-Marguerite Carr\u00e9, later Madame Ferd",
+   "artist": "Berthe Morisot",
+   "url": "https://www.metmuseum.org/art/collection/search/438009",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-438009-deep",
+  "name": "The Pink Dress (Albertie-Marguerite Carr\u00e9\u2026 (deep)",
+  "colors": [
+   "#423c30",
+   "#463f2f",
+   "#534c3a",
+   "#635c54",
+   "#745e53"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Pink Dress (Albertie-Marguerite Carr\u00e9, later Madame Ferd",
+   "artist": "Berthe Morisot",
+   "url": "https://www.metmuseum.org/art/collection/search/438009",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437033-muted",
+  "name": "Virgin and Child (muted)",
+  "colors": [
+   "#583927",
+   "#61553d",
+   "#83601e",
+   "#b48d48",
+   "#b39b81"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Virgin and Child",
+   "artist": "Follower of Rogier van der Weyden (Master of the Saint Ursula Legend Group, Netherlandish, active late 15th century)",
+   "url": "https://www.metmuseum.org/art/collection/search/437033",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437033-deep",
+  "name": "Virgin and Child (deep)",
+  "colors": [
+   "#3d2109",
+   "#6f2316",
+   "#7e1b16",
+   "#816e2a",
+   "#907337"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Virgin and Child",
+   "artist": "Follower of Rogier van der Weyden (Master of the Saint Ursula Legend Group, Netherlandish, active late 15th century)",
+   "url": "https://www.metmuseum.org/art/collection/search/437033",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm"
+  ]
+ },
+ {
+  "id": "met-437646-muted",
+  "name": "Madonna and Child with Saints and Donors (muted)",
+  "colors": [
+   "#502c16",
+   "#5f6982",
+   "#946d44",
+   "#ab8763",
+   "#ad977f"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Madonna and Child with Saints and Donors",
+   "artist": "Sebastiano del Piombo",
+   "url": "https://www.metmuseum.org/art/collection/search/437646",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437646-deep",
+  "name": "Madonna and Child with Saints and Donors (deep)",
+  "colors": [
+   "#3c2517",
+   "#612a16",
+   "#6e523a",
+   "#5c6882",
+   "#90653b"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Madonna and Child with Saints and Donors",
+   "artist": "Sebastiano del Piombo",
+   "url": "https://www.metmuseum.org/art/collection/search/437646",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-438169-muted",
+  "name": "Salvator Mundi (muted)",
+  "colors": [
+   "#614d35",
+   "#8c796b",
+   "#738091",
+   "#93846d",
+   "#a4906f"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Salvator Mundi",
+   "artist": "Domenico Fetti",
+   "url": "https://www.metmuseum.org/art/collection/search/438169",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-438169-deep",
+  "name": "Salvator Mundi (deep)",
+  "colors": [
+   "#00295d",
+   "#0c2f55",
+   "#523c2e",
+   "#6e5b4a",
+   "#506c93"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Salvator Mundi",
+   "artist": "Domenico Fetti",
+   "url": "https://www.metmuseum.org/art/collection/search/438169",
+   "license": "CC0"
+  },
+  "tags": [
+   "cool",
+   "muted",
+   "blue_heavy"
+  ]
+ },
+ {
+  "id": "met-436906-muted",
+  "name": "The Temptation (muted)",
+  "colors": [
+   "#56472a",
+   "#7a6546",
+   "#866d4e",
+   "#b1a187",
+   "#fef3c6"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Temptation",
+   "artist": "Pietro Longhi (Pietro Falca)",
+   "url": "https://www.metmuseum.org/art/collection/search/436906",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436906-deep",
+  "name": "The Temptation (deep)",
+  "colors": [
+   "#30351f",
+   "#473b25",
+   "#5d5137",
+   "#645131",
+   "#776243"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Temptation",
+   "artist": "Pietro Longhi (Pietro Falca)",
+   "url": "https://www.metmuseum.org/art/collection/search/436906",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437819-muted",
+  "name": "Doge Alvise Mocenigo (1507\u20131577) Presented\u2026 (muted)",
+  "colors": [
+   "#543c30",
+   "#5e4f38",
+   "#6d553b",
+   "#4e6d7f",
+   "#958979"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Doge Alvise Mocenigo (1507\u20131577) Presented to the Redeemer",
+   "artist": "Jacopo Tintoretto (Jacopo Robusti)",
+   "url": "https://www.metmuseum.org/art/collection/search/437819",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437819-deep",
+  "name": "Doge Alvise Mocenigo (1507\u20131577) Presented\u2026 (deep)",
+  "colors": [
+   "#274d50",
+   "#4f666c",
+   "#876448",
+   "#957043"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Doge Alvise Mocenigo (1507\u20131577) Presented to the Redeemer",
+   "artist": "Jacopo Tintoretto (Jacopo Robusti)",
+   "url": "https://www.metmuseum.org/art/collection/search/437819",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435757-muted",
+  "name": "Portrait of a Young Boy (muted)",
+  "colors": [
+   "#373737",
+   "#3d3d3d",
+   "#b1b1b1",
+   "#ebebeb"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Portrait of a Young Boy",
+   "artist": "S\u00e9bastien Bourdon",
+   "url": "https://www.metmuseum.org/art/collection/search/435757",
+   "license": "CC0"
+  },
+  "tags": [
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435757-deep",
+  "name": "Portrait of a Young Boy (deep)",
+  "colors": [
+   "#343434",
+   "#383838",
+   "#4f4f4f",
+   "#868686"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Portrait of a Young Boy",
+   "artist": "S\u00e9bastien Bourdon",
+   "url": "https://www.metmuseum.org/art/collection/search/435757",
+   "license": "CC0"
+  },
+  "tags": [
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436644-muted",
+  "name": "A Bather (Echo) (muted)",
+  "colors": [
+   "#564029",
+   "#726145",
+   "#77663b",
+   "#a49c6e",
+   "#ccc79f"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "A Bather (Echo)",
+   "artist": "Jean-Jacques Henner",
+   "url": "https://www.metmuseum.org/art/collection/search/436644",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436644-deep",
+  "name": "A Bather (Echo) (deep)",
+  "colors": [
+   "#4a3929",
+   "#52412f",
+   "#59432b",
+   "#695135",
+   "#7e6441"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "A Bather (Echo)",
+   "artist": "Jean-Jacques Henner",
+   "url": "https://www.metmuseum.org/art/collection/search/436644",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435656-muted",
+  "name": "The Assumption of the Virgin (muted)",
+  "colors": [
+   "#4c4437",
+   "#4e8c97",
+   "#bba28e",
+   "#d2c3a2"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Assumption of the Virgin",
+   "artist": "Bergognone (Ambrogio di Stefano da Fossano)",
+   "url": "https://www.metmuseum.org/art/collection/search/435656",
+   "license": "CC0"
+  },
+  "tags": [
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435656-deep",
+  "name": "The Assumption of the Virgin (deep)",
+  "colors": [
+   "#3f241b",
+   "#5e3107",
+   "#4d3c2c",
+   "#544623",
+   "#786844"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Assumption of the Virgin",
+   "artist": "Bergognone (Ambrogio di Stefano da Fossano)",
+   "url": "https://www.metmuseum.org/art/collection/search/435656",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435647-muted",
+  "name": "Vaprio d'Adda (muted)",
+  "colors": [
+   "#4e6970",
+   "#4c7b83",
+   "#77827c",
+   "#6690a0",
+   "#7c9da4"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Vaprio d'Adda",
+   "artist": "Bernardo Bellotto",
+   "url": "https://www.metmuseum.org/art/collection/search/435647",
+   "license": "CC0"
+  },
+  "tags": [
+   "cool",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435647-deep",
+  "name": "Vaprio d'Adda (deep)",
+  "colors": [
+   "#313b33",
+   "#3f412c",
+   "#3e575e",
+   "#457287",
+   "#67746b"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Vaprio d'Adda",
+   "artist": "Bernardo Bellotto",
+   "url": "https://www.metmuseum.org/art/collection/search/435647",
+   "license": "CC0"
+  },
+  "tags": [
+   "cool",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435744-muted",
+  "name": "Virgin and Child with the Young Saint John\u2026 (muted)",
+  "colors": [
+   "#40362a",
+   "#605f64",
+   "#7c6d68",
+   "#887b75",
+   "#988c80"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Virgin and Child with the Young Saint John the Baptist and A",
+   "artist": "Fran\u00e7ois Boucher",
+   "url": "https://www.metmuseum.org/art/collection/search/435744",
+   "license": "CC0"
+  },
+  "tags": [
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435744-deep",
+  "name": "Virgin and Child with the Young Saint John\u2026 (deep)",
+  "colors": [
+   "#3f382e",
+   "#483d39",
+   "#484743",
+   "#4a5a67",
+   "#725a50"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Virgin and Child with the Young Saint John the Baptist and A",
+   "artist": "Fran\u00e7ois Boucher",
+   "url": "https://www.metmuseum.org/art/collection/search/435744",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435853-muted",
+  "name": "The Coronation of the Virgin (muted)",
+  "colors": [
+   "#654c36",
+   "#694d35",
+   "#735638",
+   "#6d6149"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Coronation of the Virgin",
+   "artist": "Annibale Carracci",
+   "url": "https://www.metmuseum.org/art/collection/search/435853",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435853-deep",
+  "name": "The Coronation of the Virgin (deep)",
+  "colors": [
+   "#513d24",
+   "#5d4b37",
+   "#6c615f",
+   "#8c5e3a",
+   "#976645"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Coronation of the Virgin",
+   "artist": "Annibale Carracci",
+   "url": "https://www.metmuseum.org/art/collection/search/435853",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436875-muted",
+  "name": "The Interior of a Woman Painter's Studio (muted)",
+  "colors": [
+   "#4b301b",
+   "#624d38",
+   "#6f5b3a",
+   "#856b46",
+   "#c49e71"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Interior of a Woman Painter's Studio",
+   "artist": "Marie Victoire Lemoine",
+   "url": "https://www.metmuseum.org/art/collection/search/436875",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436875-deep",
+  "name": "The Interior of a Woman Painter's Studio (deep)",
+  "colors": [
+   "#4c3527",
+   "#514132",
+   "#644c34",
+   "#7a6142",
+   "#89734e"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Interior of a Woman Painter's Studio",
+   "artist": "Marie Victoire Lemoine",
+   "url": "https://www.metmuseum.org/art/collection/search/436875",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-441226-muted",
+  "name": "Lions in a Mountainous Landscape (muted)",
+  "colors": [
+   "#452b1e",
+   "#563c25",
+   "#705738",
+   "#836c4c",
+   "#ab9063"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Lions in a Mountainous Landscape",
+   "artist": "Th\u00e9odore G\u00e9ricault",
+   "url": "https://www.metmuseum.org/art/collection/search/441226",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436329-muted",
+  "name": "Gathering Olives at Tivoli (muted)",
+  "colors": [
+   "#52482d",
+   "#574829",
+   "#867557",
+   "#9f9174",
+   "#baad8d"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Gathering Olives at Tivoli",
+   "artist": "Fran\u00e7ois-Louis Fran\u00e7ais",
+   "url": "https://www.metmuseum.org/art/collection/search/436329",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436329-deep",
+  "name": "Gathering Olives at Tivoli (deep)",
+  "colors": [
+   "#46361f",
+   "#534226",
+   "#5c5133",
+   "#61552f",
+   "#685334"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Gathering Olives at Tivoli",
+   "artist": "Fran\u00e7ois-Louis Fran\u00e7ais",
+   "url": "https://www.metmuseum.org/art/collection/search/436329",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435642-muted",
+  "name": "Madonna and Child with Saints (muted)",
+  "colors": [
+   "#82694a",
+   "#97784a",
+   "#9e8370",
+   "#8295c0",
+   "#9e9b8c"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Madonna and Child with Saints",
+   "artist": "Giovanni Bellini",
+   "url": "https://www.metmuseum.org/art/collection/search/435642",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435642-deep",
+  "name": "Madonna and Child with Saints (deep)",
+  "colors": [
+   "#273c75",
+   "#5f421a",
+   "#594d4d",
+   "#75482b",
+   "#535e22"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Madonna and Child with Saints",
+   "artist": "Giovanni Bellini",
+   "url": "https://www.metmuseum.org/art/collection/search/435642",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-872016-muted",
+  "name": "A Man Seated and Asleep (muted)",
+  "colors": [
+   "#3a2c21",
+   "#5d594d",
+   "#675d54",
+   "#9d8e79"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "A Man Seated and Asleep",
+   "artist": "Giuseppe Abbati",
+   "url": "https://www.metmuseum.org/art/collection/search/872016",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-872016-deep",
+  "name": "A Man Seated and Asleep (deep)",
+  "colors": [
+   "#413924",
+   "#564444",
+   "#747c71"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "A Man Seated and Asleep",
+   "artist": "Giuseppe Abbati",
+   "url": "https://www.metmuseum.org/art/collection/search/872016",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435844-muted",
+  "name": "The Musicians (muted)",
+  "colors": [
+   "#725334",
+   "#78522d",
+   "#8e8574",
+   "#a89378",
+   "#aea795"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Musicians",
+   "artist": "Caravaggio (Michelangelo Merisi)",
+   "url": "https://www.metmuseum.org/art/collection/search/435844",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435844-deep",
+  "name": "The Musicians (deep)",
+  "colors": [
+   "#501f1b",
+   "#5d4e39",
+   "#734b28",
+   "#77614c"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Musicians",
+   "artist": "Caravaggio (Michelangelo Merisi)",
+   "url": "https://www.metmuseum.org/art/collection/search/435844",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-438002-muted",
+  "name": "Madame Manet (Suzanne Leenhoff, 1829\u20131906)\u2026 (muted)",
+  "colors": [
+   "#5d674c",
+   "#7f6942",
+   "#a0906f",
+   "#b1a283",
+   "#a5ab87"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Madame Manet (Suzanne Leenhoff, 1829\u20131906) at Bellevue",
+   "artist": "Edouard Manet",
+   "url": "https://www.metmuseum.org/art/collection/search/438002",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-438002-deep",
+  "name": "Madame Manet (Suzanne Leenhoff, 1829\u20131906)\u2026 (deep)",
+  "colors": [
+   "#262b15",
+   "#053c1d",
+   "#285439",
+   "#4b524a",
+   "#5a6940"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Madame Manet (Suzanne Leenhoff, 1829\u20131906) at Bellevue",
+   "artist": "Edouard Manet",
+   "url": "https://www.metmuseum.org/art/collection/search/438002",
+   "license": "CC0"
+  },
+  "tags": [
+   "cool",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-439553-muted",
+  "name": "The Lamentation (muted)",
+  "colors": [
+   "#695a3b",
+   "#5b717c",
+   "#836c4c",
+   "#b2a27e",
+   "#aca794"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Lamentation",
+   "artist": "Domenichino (Domenico Zampieri)",
+   "url": "https://www.metmuseum.org/art/collection/search/439553",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-439553-deep",
+  "name": "The Lamentation (deep)",
+  "colors": [
+   "#6a231f",
+   "#4c535b",
+   "#65512e",
+   "#af504c"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Lamentation",
+   "artist": "Domenichino (Domenico Zampieri)",
+   "url": "https://www.metmuseum.org/art/collection/search/439553",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-665702-muted",
+  "name": "The Sacrifice of Iphigenia (muted)",
+  "colors": [
+   "#49281f",
+   "#563627",
+   "#664232",
+   "#845239",
+   "#a8866d"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Sacrifice of Iphigenia",
+   "artist": "Gaetano Gandolfi",
+   "url": "https://www.metmuseum.org/art/collection/search/665702",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-665702-deep",
+  "name": "The Sacrifice of Iphigenia (deep)",
+  "colors": [
+   "#662b1b",
+   "#5f3a28",
+   "#703321",
+   "#644030",
+   "#875743"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Sacrifice of Iphigenia",
+   "artist": "Gaetano Gandolfi",
+   "url": "https://www.metmuseum.org/art/collection/search/665702",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436484-muted",
+  "name": "Tiger and Cubs (muted)",
+  "colors": [
+   "#4e3304",
+   "#5c4511",
+   "#604c29",
+   "#ab8b52"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Tiger and Cubs",
+   "artist": "Jean-L\u00e9on G\u00e9r\u00f4me",
+   "url": "https://www.metmuseum.org/art/collection/search/436484",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436484-deep",
+  "name": "Tiger and Cubs (deep)",
+  "colors": [
+   "#301f0f",
+   "#57411a",
+   "#5d451f",
+   "#705a29",
+   "#987849"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Tiger and Cubs",
+   "artist": "Jean-L\u00e9on G\u00e9r\u00f4me",
+   "url": "https://www.metmuseum.org/art/collection/search/436484",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-438779-muted",
+  "name": "A Peasant Family (muted)",
+  "colors": [
+   "#4f4029",
+   "#573e1f",
+   "#60543e",
+   "#7d6d54",
+   "#99806a"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "A Peasant Family",
+   "artist": "Antoine Le Nain",
+   "url": "https://www.metmuseum.org/art/collection/search/438779",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-438779-deep",
+  "name": "A Peasant Family (deep)",
+  "colors": [
+   "#752605",
+   "#524228",
+   "#52482f",
+   "#6d5d44"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "A Peasant Family",
+   "artist": "Antoine Le Nain",
+   "url": "https://www.metmuseum.org/art/collection/search/438779",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437935-muted",
+  "name": "An Old Bridge at Hendon, Middlesex (muted)",
+  "colors": [
+   "#5c5237",
+   "#665939",
+   "#786d4f",
+   "#93896e",
+   "#9fa38a"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "An Old Bridge at Hendon, Middlesex",
+   "artist": "Frederick Waters Watts",
+   "url": "https://www.metmuseum.org/art/collection/search/437935",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437935-deep",
+  "name": "An Old Bridge at Hendon, Middlesex (deep)",
+  "colors": [
+   "#2d260c",
+   "#322b18",
+   "#4a3d1d",
+   "#90866b"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "An Old Bridge at Hendon, Middlesex",
+   "artist": "Frederick Waters Watts",
+   "url": "https://www.metmuseum.org/art/collection/search/437935",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437862-muted",
+  "name": "Piet\u00e0 (muted)",
+  "colors": [
+   "#302825",
+   "#5a4532",
+   "#73634a",
+   "#8d795e",
+   "#a69977"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Piet\u00e0",
+   "artist": "Juan de Vald\u00e9s Leal",
+   "url": "https://www.metmuseum.org/art/collection/search/437862",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437862-deep",
+  "name": "Piet\u00e0 (deep)",
+  "colors": [
+   "#39281e",
+   "#4b3925",
+   "#5a4532",
+   "#604e3a",
+   "#7f7053"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Piet\u00e0",
+   "artist": "Juan de Vald\u00e9s Leal",
+   "url": "https://www.metmuseum.org/art/collection/search/437862",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-816618-muted",
+  "name": "Judgment of Paris (muted)",
+  "colors": [
+   "#4b3520",
+   "#503723",
+   "#67553d",
+   "#91795d",
+   "#ac9173"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Judgment of Paris",
+   "artist": "Alessandro Turchi",
+   "url": "https://www.metmuseum.org/art/collection/search/816618",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-816618-deep",
+  "name": "Judgment of Paris (deep)",
+  "colors": [
+   "#3e2310",
+   "#393c33",
+   "#533922",
+   "#644e37",
+   "#8e6c49"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Judgment of Paris",
+   "artist": "Alessandro Turchi",
+   "url": "https://www.metmuseum.org/art/collection/search/816618",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437474-muted",
+  "name": "Bridge over a Cascade (muted)",
+  "colors": [
+   "#775937",
+   "#978766",
+   "#958866",
+   "#aea588",
+   "#bfb89c"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Bridge over a Cascade",
+   "artist": "Hubert Robert",
+   "url": "https://www.metmuseum.org/art/collection/search/437474",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437474-deep",
+  "name": "Bridge over a Cascade (deep)",
+  "colors": [
+   "#4b3f29",
+   "#4d4633",
+   "#594f36",
+   "#785832",
+   "#956f42"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Bridge over a Cascade",
+   "artist": "Hubert Robert",
+   "url": "https://www.metmuseum.org/art/collection/search/437474",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437286-muted",
+  "name": "The Death of Harmonia (muted)",
+  "colors": [
+   "#513b23",
+   "#70583c",
+   "#836b51",
+   "#9b7256",
+   "#9a8364"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Death of Harmonia",
+   "artist": "Jean-Baptiste Marie Pierre",
+   "url": "https://www.metmuseum.org/art/collection/search/437286",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437286-deep",
+  "name": "The Death of Harmonia (deep)",
+  "colors": [
+   "#483727",
+   "#653022",
+   "#603e32",
+   "#6d583d",
+   "#90593b"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Death of Harmonia",
+   "artist": "Jean-Baptiste Marie Pierre",
+   "url": "https://www.metmuseum.org/art/collection/search/437286",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436793-muted",
+  "name": "The Holy Family (muted)",
+  "colors": [
+   "#464c32",
+   "#957662",
+   "#a27862",
+   "#938680",
+   "#a28879"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Holy Family",
+   "artist": "Joos van Cleve",
+   "url": "https://www.metmuseum.org/art/collection/search/436793",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436793-deep",
+  "name": "The Holy Family (deep)",
+  "colors": [
+   "#2d2319",
+   "#4f2519",
+   "#804c41",
+   "#83544c"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Holy Family",
+   "artist": "Joos van Cleve",
+   "url": "https://www.metmuseum.org/art/collection/search/436793",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437471-muted",
+  "name": "Aqueduct in Ruins (muted)",
+  "colors": [
+   "#6f5c3b",
+   "#836742",
+   "#8e8775",
+   "#9d967c",
+   "#b8b290"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Aqueduct in Ruins",
+   "artist": "Hubert Robert",
+   "url": "https://www.metmuseum.org/art/collection/search/437471",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437471-deep",
+  "name": "Aqueduct in Ruins (deep)",
+  "colors": [
+   "#423218",
+   "#4a3a21",
+   "#5d4e2d",
+   "#6f5e40",
+   "#836742"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Aqueduct in Ruins",
+   "artist": "Hubert Robert",
+   "url": "https://www.metmuseum.org/art/collection/search/437471",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-438105-muted",
+  "name": "A Lock, a Column, and a Church beside a\u2026 (muted)",
+  "colors": [
+   "#6f6c4b",
+   "#879d91",
+   "#a5a38c",
+   "#b3ae8e",
+   "#a0d3cc"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "A Lock, a Column, and a Church beside a Lagoon",
+   "artist": "Canaletto (Giovanni Antonio Canal)",
+   "url": "https://www.metmuseum.org/art/collection/search/438105",
+   "license": "CC0"
+  },
+  "tags": [
+   "muted"
+  ]
+ },
+ {
+  "id": "met-438105-deep",
+  "name": "A Lock, a Column, and a Church beside a\u2026 (deep)",
+  "colors": [
+   "#32291a",
+   "#3e3b2c",
+   "#564f3c",
+   "#897b54",
+   "#8c8a71"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "A Lock, a Column, and a Church beside a Lagoon",
+   "artist": "Canaletto (Giovanni Antonio Canal)",
+   "url": "https://www.metmuseum.org/art/collection/search/438105",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436910-muted",
+  "name": "Portrait of a Young Woman (muted)",
+  "colors": [
+   "#332d1d",
+   "#547a87",
+   "#a69581"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Portrait of a Young Woman",
+   "artist": "Lorenzo di Credi (Lorenzo d'Andrea d'Oderigo)",
+   "url": "https://www.metmuseum.org/art/collection/search/436910",
+   "license": "CC0"
+  },
+  "tags": [
+   "cool",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436910-deep",
+  "name": "Portrait of a Young Woman (deep)",
+  "colors": [
+   "#412710",
+   "#3a3724",
+   "#926c47",
+   "#817b65",
+   "#5d8398"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Portrait of a Young Woman",
+   "artist": "Lorenzo di Credi (Lorenzo d'Andrea d'Oderigo)",
+   "url": "https://www.metmuseum.org/art/collection/search/436910",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437851-muted",
+  "name": "Portrait of a Young Man (muted)",
+  "colors": [
+   "#7f5859",
+   "#7a664e",
+   "#8f7964",
+   "#a4846b",
+   "#b29074"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Portrait of a Young Man",
+   "artist": "Cosm\u00e8 Tura (Cosimo di Domenico di Bonaventura)",
+   "url": "https://www.metmuseum.org/art/collection/search/437851",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437851-deep",
+  "name": "Portrait of a Young Man (deep)",
+  "colors": [
+   "#272d21",
+   "#643c3d",
+   "#55493b",
+   "#5f523f",
+   "#a28371"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Portrait of a Young Man",
+   "artist": "Cosm\u00e8 Tura (Cosimo di Domenico di Bonaventura)",
+   "url": "https://www.metmuseum.org/art/collection/search/437851",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-888924-muted",
+  "name": "Still Life with a Vase of Flowers, Melon\u2026 (muted)",
+  "colors": [
+   "#402e16",
+   "#5a543c",
+   "#7a4f2c",
+   "#766642",
+   "#a88855"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Still Life with a Vase of Flowers, Melon, Peaches, and Grape",
+   "artist": "Charlotte Eustache Sophie de Fuligny Damas, marquise de Grollier",
+   "url": "https://www.metmuseum.org/art/collection/search/888924",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-888924-deep",
+  "name": "Still Life with a Vase of Flowers, Melon\u2026 (deep)",
+  "colors": [
+   "#4f371d",
+   "#45472f",
+   "#754021",
+   "#8c592c",
+   "#79815a"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Still Life with a Vase of Flowers, Melon, Peaches, and Grape",
+   "artist": "Charlotte Eustache Sophie de Fuligny Damas, marquise de Grollier",
+   "url": "https://www.metmuseum.org/art/collection/search/888924",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-440727-muted",
+  "name": "German Landscape with View toward a Broad\u2026 (muted)",
+  "colors": [
+   "#593f1c",
+   "#625133",
+   "#80652e",
+   "#797164",
+   "#c8b89e"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "German Landscape with View toward a Broad Valley",
+   "artist": "Fritz Petzholdt",
+   "url": "https://www.metmuseum.org/art/collection/search/440727",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-440727-deep",
+  "name": "German Landscape with View toward a Broad\u2026 (deep)",
+  "colors": [
+   "#56452b",
+   "#55443a",
+   "#54482e",
+   "#655021",
+   "#6e5a39"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "German Landscape with View toward a Broad Valley",
+   "artist": "Fritz Petzholdt",
+   "url": "https://www.metmuseum.org/art/collection/search/440727",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437078-muted",
+  "name": "Waterfall at Mont-Dore (muted)",
+  "colors": [
+   "#4a3a20",
+   "#5b5340",
+   "#636152",
+   "#888c7d",
+   "#aeac97"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Waterfall at Mont-Dore",
+   "artist": "Achille-Etna Michallon",
+   "url": "https://www.metmuseum.org/art/collection/search/437078",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437078-deep",
+  "name": "Waterfall at Mont-Dore (deep)",
+  "colors": [
+   "#302917",
+   "#4a3c22",
+   "#554b32",
+   "#675b35",
+   "#635d39"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Waterfall at Mont-Dore",
+   "artist": "Achille-Etna Michallon",
+   "url": "https://www.metmuseum.org/art/collection/search/437078",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436607-muted",
+  "name": "An Allegory (muted)",
+  "colors": [
+   "#3e2b24",
+   "#443031",
+   "#7d6855",
+   "#c7b9ac"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "An Allegory",
+   "artist": "Domenico Guidobono",
+   "url": "https://www.metmuseum.org/art/collection/search/436607",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436607-deep",
+  "name": "An Allegory (deep)",
+  "colors": [
+   "#302923",
+   "#4c3430",
+   "#69473d",
+   "#7e4241",
+   "#5d564e"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "An Allegory",
+   "artist": "Domenico Guidobono",
+   "url": "https://www.metmuseum.org/art/collection/search/436607",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435898-muted",
+  "name": "The Lamentation (muted)",
+  "colors": [
+   "#4e3612",
+   "#4f3806",
+   "#593d16",
+   "#725b49",
+   "#a9abaa"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Lamentation",
+   "artist": "Petrus Christus",
+   "url": "https://www.metmuseum.org/art/collection/search/435898",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435898-deep",
+  "name": "The Lamentation (deep)",
+  "colors": [
+   "#501b13",
+   "#5c4a1a",
+   "#6d490b",
+   "#92754b"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Lamentation",
+   "artist": "Petrus Christus",
+   "url": "https://www.metmuseum.org/art/collection/search/435898",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437674-muted",
+  "name": "Madonna and Child (muted)",
+  "colors": [
+   "#411107",
+   "#6a4f3a",
+   "#b38015",
+   "#ba8267",
+   "#ba906a"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Madonna and Child",
+   "artist": "Luca Signorelli (Luca d'Egidio di Luca di Ventura)",
+   "url": "https://www.metmuseum.org/art/collection/search/437674",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous"
+  ]
+ },
+ {
+  "id": "met-437674-deep",
+  "name": "Madonna and Child (deep)",
+  "colors": [
+   "#660d0f",
+   "#7a1913",
+   "#844a1a",
+   "#9b5609",
+   "#a15444"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Madonna and Child",
+   "artist": "Luca Signorelli (Luca d'Egidio di Luca di Ventura)",
+   "url": "https://www.metmuseum.org/art/collection/search/437674",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous"
+  ]
+ },
+ {
+  "id": "met-436244-muted",
+  "name": "Virgin and Child with Saint Anne (muted)",
+  "colors": [
+   "#5c412e",
+   "#65533b",
+   "#816148",
+   "#93785b",
+   "#9b9072"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Virgin and Child with Saint Anne",
+   "artist": "Albrecht D\u00fcrer",
+   "url": "https://www.metmuseum.org/art/collection/search/436244",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436244-deep",
+  "name": "Virgin and Child with Saint Anne (deep)",
+  "colors": [
+   "#592623",
+   "#634e39",
+   "#745842",
+   "#886547"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Virgin and Child with Saint Anne",
+   "artist": "Albrecht D\u00fcrer",
+   "url": "https://www.metmuseum.org/art/collection/search/436244",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437815-muted",
+  "name": "The Sacrifice of Isaac (muted)",
+  "colors": [
+   "#604c31",
+   "#78673b",
+   "#55725c",
+   "#67806a",
+   "#9b794c"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Sacrifice of Isaac",
+   "artist": "Giovanni Domenico Tiepolo",
+   "url": "https://www.metmuseum.org/art/collection/search/437815",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437815-deep",
+  "name": "The Sacrifice of Isaac (deep)",
+  "colors": [
+   "#381f18",
+   "#4c3d26",
+   "#665136",
+   "#80593a",
+   "#9d4537"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Sacrifice of Isaac",
+   "artist": "Giovanni Domenico Tiepolo",
+   "url": "https://www.metmuseum.org/art/collection/search/437815",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted",
+   "accent"
+  ]
+ },
+ {
+  "id": "met-435907-muted",
+  "name": "Sunrise (muted)",
+  "colors": [
+   "#59492f",
+   "#6f5b40",
+   "#54707c",
+   "#817358",
+   "#a28366"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Sunrise",
+   "artist": "Claude Lorrain (Claude Gell\u00e9e)",
+   "url": "https://www.metmuseum.org/art/collection/search/435907",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435907-deep",
+  "name": "Sunrise (deep)",
+  "colors": [
+   "#413622",
+   "#50412c",
+   "#625334",
+   "#4e697c",
+   "#776b5f"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Sunrise",
+   "artist": "Claude Lorrain (Claude Gell\u00e9e)",
+   "url": "https://www.metmuseum.org/art/collection/search/435907",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437659-muted",
+  "name": "View of the Seine (muted)",
+  "colors": [
+   "#2f5231",
+   "#736656",
+   "#7a725f",
+   "#98683a",
+   "#8b8468"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "View of the Seine",
+   "artist": "Georges Seurat",
+   "url": "https://www.metmuseum.org/art/collection/search/437659",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437659-deep",
+  "name": "View of the Seine (deep)",
+  "colors": [
+   "#3a465e",
+   "#335437",
+   "#5d473a",
+   "#60607a"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "View of the Seine",
+   "artist": "Georges Seurat",
+   "url": "https://www.metmuseum.org/art/collection/search/437659",
+   "license": "CC0"
+  },
+  "tags": [
+   "cool",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-441229-muted",
+  "name": "Hagar and the Angel (muted)",
+  "colors": [
+   "#442f1a",
+   "#634f37",
+   "#5c6d74",
+   "#866e52",
+   "#957657"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Hagar and the Angel",
+   "artist": "Francesco Maffei",
+   "url": "https://www.metmuseum.org/art/collection/search/441229",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-441229-deep",
+  "name": "Hagar and the Angel (deep)",
+  "colors": [
+   "#4c3628",
+   "#603127",
+   "#524131",
+   "#5e4d3b",
+   "#8f6743"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Hagar and the Angel",
+   "artist": "Francesco Maffei",
+   "url": "https://www.metmuseum.org/art/collection/search/441229",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435909-muted",
+  "name": "View of La Crescenza (muted)",
+  "colors": [
+   "#513d22",
+   "#70623f",
+   "#708fa3",
+   "#9a9582",
+   "#a0a496"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "View of La Crescenza",
+   "artist": "Claude Lorrain (Claude Gell\u00e9e)",
+   "url": "https://www.metmuseum.org/art/collection/search/435909",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435909-deep",
+  "name": "View of La Crescenza (deep)",
+  "colors": [
+   "#3b3622",
+   "#3d3624",
+   "#443520",
+   "#715432",
+   "#907f51"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "View of La Crescenza",
+   "artist": "Claude Lorrain (Claude Gell\u00e9e)",
+   "url": "https://www.metmuseum.org/art/collection/search/435909",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437973-muted",
+  "name": "Ponte San Rocco and Waterfalls, Tivoli (muted)",
+  "colors": [
+   "#59432b",
+   "#6c543c",
+   "#81694d",
+   "#866e4a",
+   "#7d99af"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Ponte San Rocco and Waterfalls, Tivoli",
+   "artist": "Fran\u00e7ois Marius Granet",
+   "url": "https://www.metmuseum.org/art/collection/search/437973",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436579-muted",
+  "name": "Broken Eggs (muted)",
+  "colors": [
+   "#4b3921",
+   "#614c31",
+   "#705f41",
+   "#8d8060",
+   "#a3976f"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Broken Eggs",
+   "artist": "Jean-Baptiste Greuze",
+   "url": "https://www.metmuseum.org/art/collection/search/436579",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436579-deep",
+  "name": "Broken Eggs (deep)",
+  "colors": [
+   "#361b08",
+   "#44331f",
+   "#423626",
+   "#723926",
+   "#655637"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Broken Eggs",
+   "artist": "Jean-Baptiste Greuze",
+   "url": "https://www.metmuseum.org/art/collection/search/436579",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-928091-muted",
+  "name": "Madonna and Child with Saint John the\u2026 (muted)",
+  "colors": [
+   "#3a1f14",
+   "#422513",
+   "#5d3826",
+   "#794b33"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Madonna and Child with Saint John the Evangelist",
+   "artist": "Rosso Fiorentino",
+   "url": "https://www.metmuseum.org/art/collection/search/928091",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-928091-deep",
+  "name": "Madonna and Child with Saint John the\u2026 (deep)",
+  "colors": [
+   "#472212",
+   "#52311e",
+   "#781a10",
+   "#794b33"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Madonna and Child with Saint John the Evangelist",
+   "artist": "Rosso Fiorentino",
+   "url": "https://www.metmuseum.org/art/collection/search/928091",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous"
+  ]
+ },
+ {
+  "id": "met-436001-muted",
+  "name": "Jo, La Belle Irlandaise (muted)",
+  "colors": [
+   "#462b18",
+   "#563d1e",
+   "#583c26",
+   "#786b49",
+   "#897250"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Jo, La Belle Irlandaise",
+   "artist": "Gustave Courbet",
+   "url": "https://www.metmuseum.org/art/collection/search/436001",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436001-deep",
+  "name": "Jo, La Belle Irlandaise (deep)",
+  "colors": [
+   "#422b1d",
+   "#493423",
+   "#584028",
+   "#6c5e44",
+   "#786443"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Jo, La Belle Irlandaise",
+   "artist": "Gustave Courbet",
+   "url": "https://www.metmuseum.org/art/collection/search/436001",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437437-muted",
+  "name": "Young Woman (La Servante) (muted)",
+  "colors": [
+   "#725a50",
+   "#6e6b5a",
+   "#8e7e6e",
+   "#838488",
+   "#8d8a7b"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Young Woman (La Servante)",
+   "artist": "Auguste Renoir",
+   "url": "https://www.metmuseum.org/art/collection/search/437437",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437437-deep",
+  "name": "Young Woman (La Servante) (deep)",
+  "colors": [
+   "#3b3c37",
+   "#464445",
+   "#5a554f",
+   "#685b53",
+   "#746d5a"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Young Woman (La Servante)",
+   "artist": "Auguste Renoir",
+   "url": "https://www.metmuseum.org/art/collection/search/437437",
+   "license": "CC0"
+  },
+  "tags": [
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437329-muted",
+  "name": "The Abduction of the Sabine Women (muted)",
+  "colors": [
+   "#533c2a",
+   "#716442",
+   "#576a7b",
+   "#7e694c",
+   "#9f8574"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Abduction of the Sabine Women",
+   "artist": "Nicolas Poussin",
+   "url": "https://www.metmuseum.org/art/collection/search/437329",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437329-deep",
+  "name": "The Abduction of the Sabine Women (deep)",
+  "colors": [
+   "#4b311a",
+   "#5e4936",
+   "#7b4224",
+   "#235c89",
+   "#87634d"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Abduction of the Sabine Women",
+   "artist": "Nicolas Poussin",
+   "url": "https://www.metmuseum.org/art/collection/search/437329",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437479-muted",
+  "name": "The Return of the Cattle (muted)",
+  "colors": [
+   "#4e2c13",
+   "#593e2b",
+   "#946a40",
+   "#9c8261",
+   "#b78c5f"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Return of the Cattle",
+   "artist": "Hubert Robert",
+   "url": "https://www.metmuseum.org/art/collection/search/437479",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437479-deep",
+  "name": "The Return of the Cattle (deep)",
+  "colors": [
+   "#462208",
+   "#472d1e",
+   "#523523",
+   "#754e31",
+   "#785a38"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Return of the Cattle",
+   "artist": "Hubert Robert",
+   "url": "https://www.metmuseum.org/art/collection/search/437479",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436052-muted",
+  "name": "Madonna and Child (muted)",
+  "colors": [
+   "#584934",
+   "#796042",
+   "#bba993",
+   "#bdb38f",
+   "#b3b796"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Madonna and Child",
+   "artist": "Carlo Crivelli",
+   "url": "https://www.metmuseum.org/art/collection/search/436052",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436052-deep",
+  "name": "Madonna and Child (deep)",
+  "colors": [
+   "#00244e",
+   "#684027",
+   "#71685f",
+   "#98a168"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Madonna and Child",
+   "artist": "Carlo Crivelli",
+   "url": "https://www.metmuseum.org/art/collection/search/436052",
+   "license": "CC0"
+  },
+  "tags": [
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436344-muted",
+  "name": "Holy Family with Saint Anne (muted)",
+  "colors": [
+   "#504321",
+   "#604528",
+   "#7e6443",
+   "#b1925c",
+   "#bda36a"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Holy Family with Saint Anne",
+   "artist": "French Painter",
+   "url": "https://www.metmuseum.org/art/collection/search/436344",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436344-deep",
+  "name": "Holy Family with Saint Anne (deep)",
+  "colors": [
+   "#422110",
+   "#654327",
+   "#6d4931",
+   "#a4804e"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Holy Family with Saint Anne",
+   "artist": "French Painter",
+   "url": "https://www.metmuseum.org/art/collection/search/436344",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-441358-muted",
+  "name": "Halt of Caravans at the Wells of Saba\u2026 (muted)",
+  "colors": [
+   "#5a4f33",
+   "#7b5f3a",
+   "#5b7586",
+   "#816f47",
+   "#8d9d9d"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Halt of Caravans at the Wells of Saba (Beersheba) in the Des",
+   "artist": "Charles de Coubertin",
+   "url": "https://www.metmuseum.org/art/collection/search/441358",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-441358-deep",
+  "name": "Halt of Caravans at the Wells of Saba\u2026 (deep)",
+  "colors": [
+   "#3c3421",
+   "#532b1f",
+   "#516876",
+   "#846139",
+   "#8e6d38"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Halt of Caravans at the Wells of Saba (Beersheba) in the Des",
+   "artist": "Charles de Coubertin",
+   "url": "https://www.metmuseum.org/art/collection/search/441358",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435750-muted",
+  "name": "Beaulieu: The Bay of Fourmis (muted)",
+  "colors": [
+   "#487271",
+   "#76704c",
+   "#897b60",
+   "#66959f",
+   "#709eab"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Beaulieu: The Bay of Fourmis",
+   "artist": "Eug\u00e8ne Boudin",
+   "url": "https://www.metmuseum.org/art/collection/search/435750",
+   "license": "CC0"
+  },
+  "tags": [
+   "cool",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435750-deep",
+  "name": "Beaulieu: The Bay of Fourmis (deep)",
+  "colors": [
+   "#43412a",
+   "#504623",
+   "#366076",
+   "#3a6665",
+   "#5b6334"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Beaulieu: The Bay of Fourmis",
+   "artist": "Eug\u00e8ne Boudin",
+   "url": "https://www.metmuseum.org/art/collection/search/435750",
+   "license": "CC0"
+  },
+  "tags": [
+   "cool",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437202-muted",
+  "name": "Christ Bearing the Cross (muted)",
+  "colors": [
+   "#3e6864",
+   "#8e765e",
+   "#9b8160",
+   "#9f8962",
+   "#aa996e"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Christ Bearing the Cross",
+   "artist": "North Netherlandish (Bruges) Painter",
+   "url": "https://www.metmuseum.org/art/collection/search/437202",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437202-deep",
+  "name": "Christ Bearing the Cross (deep)",
+  "colors": [
+   "#3f281a",
+   "#224e4d",
+   "#713e1f",
+   "#855934"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Christ Bearing the Cross",
+   "artist": "North Netherlandish (Bruges) Painter",
+   "url": "https://www.metmuseum.org/art/collection/search/437202",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-438024-deep",
+  "name": "The Ridotto Pubblico at Palazzo Dandolo (deep)",
+  "colors": [
+   "#663d27",
+   "#5c4c32",
+   "#6b462b",
+   "#5d4d34",
+   "#71432c"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Ridotto Pubblico at Palazzo Dandolo",
+   "artist": "Francesco Guardi",
+   "url": "https://www.metmuseum.org/art/collection/search/438024",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435861-muted",
+  "name": "Saint Catherine of Alexandria (muted)",
+  "colors": [
+   "#453424",
+   "#2d4549",
+   "#5f442f",
+   "#926f37",
+   "#a68e6c"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Saint Catherine of Alexandria",
+   "artist": "Bernardo Cavallino",
+   "url": "https://www.metmuseum.org/art/collection/search/435861",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435861-deep",
+  "name": "Saint Catherine of Alexandria (deep)",
+  "colors": [
+   "#492608",
+   "#403323",
+   "#2d4549",
+   "#6a4e36",
+   "#956c36"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Saint Catherine of Alexandria",
+   "artist": "Bernardo Cavallino",
+   "url": "https://www.metmuseum.org/art/collection/search/435861",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436089-muted",
+  "name": "The Hamlet of Optevoz (muted)",
+  "colors": [
+   "#594b58",
+   "#66635e",
+   "#c1c2bd",
+   "#cbcdc0"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Hamlet of Optevoz",
+   "artist": "Charles-Fran\u00e7ois Daubigny",
+   "url": "https://www.metmuseum.org/art/collection/search/436089",
+   "license": "CC0"
+  },
+  "tags": [
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435704-muted",
+  "name": "A Limier Briquet Hound (muted)",
+  "colors": [
+   "#5b432b",
+   "#685132",
+   "#7c5f41",
+   "#7b6653",
+   "#b9a187"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "A Limier Briquet Hound",
+   "artist": "Rosa Bonheur",
+   "url": "https://www.metmuseum.org/art/collection/search/435704",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437053-muted",
+  "name": "The Afternoon Meal (La Merienda) (muted)",
+  "colors": [
+   "#504728",
+   "#685c36",
+   "#40686a",
+   "#968b6b",
+   "#b3a77d"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Afternoon Meal (La Merienda)",
+   "artist": "Luis Mel\u00e9ndez",
+   "url": "https://www.metmuseum.org/art/collection/search/437053",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437053-deep",
+  "name": "The Afternoon Meal (La Merienda) (deep)",
+  "colors": [
+   "#402d00",
+   "#493e1e",
+   "#465349",
+   "#644d21",
+   "#476269"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Afternoon Meal (La Merienda)",
+   "artist": "Luis Mel\u00e9ndez",
+   "url": "https://www.metmuseum.org/art/collection/search/437053",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435604-muted",
+  "name": "A Bashi-Bazouk (muted)",
+  "colors": [
+   "#392d21",
+   "#4a3d2c",
+   "#695940",
+   "#827555"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "A Bashi-Bazouk",
+   "artist": "Charles Bargue",
+   "url": "https://www.metmuseum.org/art/collection/search/435604",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435604-deep",
+  "name": "A Bashi-Bazouk (deep)",
+  "colors": [
+   "#3f3222",
+   "#413a28",
+   "#5e523a",
+   "#7c6d4c"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "A Bashi-Bazouk",
+   "artist": "Charles Bargue",
+   "url": "https://www.metmuseum.org/art/collection/search/435604",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435733-muted",
+  "name": "Madonna and Child Enthroned with Saints and\u2026 (muted)",
+  "colors": [
+   "#5a4729",
+   "#6f5839",
+   "#a08768",
+   "#a8a697",
+   "#b1a688"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Madonna and Child Enthroned with Saints and Angels",
+   "artist": "Francesco Botticini (Francesco di Giovanni)",
+   "url": "https://www.metmuseum.org/art/collection/search/435733",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435733-deep",
+  "name": "Madonna and Child Enthroned with Saints and\u2026 (deep)",
+  "colors": [
+   "#423d29",
+   "#4d3f22",
+   "#614225",
+   "#905e3d"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Madonna and Child Enthroned with Saints and Angels",
+   "artist": "Francesco Botticini (Francesco di Giovanni)",
+   "url": "https://www.metmuseum.org/art/collection/search/435733",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437777-muted",
+  "name": "Guardroom with the Deliverance of Saint\u2026 (muted)",
+  "colors": [
+   "#49392c",
+   "#534737",
+   "#675843",
+   "#8d7863",
+   "#a68657"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Guardroom with the Deliverance of Saint Peter",
+   "artist": "David Teniers the Younger",
+   "url": "https://www.metmuseum.org/art/collection/search/437777",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437777-deep",
+  "name": "Guardroom with the Deliverance of Saint\u2026 (deep)",
+  "colors": [
+   "#4e4033",
+   "#51473d",
+   "#605543",
+   "#7b5e40",
+   "#94544b"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Guardroom with the Deliverance of Saint Peter",
+   "artist": "David Teniers the Younger",
+   "url": "https://www.metmuseum.org/art/collection/search/437777",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-438434-muted",
+  "name": "The Virgin Adoring the Host (muted)",
+  "colors": [
+   "#513c29",
+   "#534f43",
+   "#625d57",
+   "#928781",
+   "#b5a38d"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Virgin Adoring the Host",
+   "artist": "Jean Auguste Dominique Ingres",
+   "url": "https://www.metmuseum.org/art/collection/search/438434",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-438434-deep",
+  "name": "The Virgin Adoring the Host (deep)",
+  "colors": [
+   "#09425d",
+   "#513d32",
+   "#842b1d",
+   "#665a4c",
+   "#196585"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Virgin Adoring the Host",
+   "artist": "Jean Auguste Dominique Ingres",
+   "url": "https://www.metmuseum.org/art/collection/search/438434",
+   "license": "CC0"
+  },
+  "tags": [
+   "muted",
+   "blue_heavy"
+  ]
+ },
+ {
+  "id": "met-435793-muted",
+  "name": "Tottenham Church (muted)",
+  "colors": [
+   "#313011",
+   "#755c33",
+   "#87784f",
+   "#9e9983",
+   "#bbb497"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Tottenham Church",
+   "artist": "British Painter",
+   "url": "https://www.metmuseum.org/art/collection/search/435793",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435793-deep",
+  "name": "Tottenham Church (deep)",
+  "colors": [
+   "#4b331b",
+   "#463a24",
+   "#5e4a18",
+   "#775c27",
+   "#887650"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Tottenham Church",
+   "artist": "British Painter",
+   "url": "https://www.metmuseum.org/art/collection/search/435793",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436102-muted",
+  "name": "Virgin and Child with Four Angels (muted)",
+  "colors": [
+   "#523f31",
+   "#555f57",
+   "#a69c83"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Virgin and Child with Four Angels",
+   "artist": "Gerard David",
+   "url": "https://www.metmuseum.org/art/collection/search/436102",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436102-deep",
+  "name": "Virgin and Child with Four Angels (deep)",
+  "colors": [
+   "#4a150f",
+   "#353831",
+   "#771d12",
+   "#63371a",
+   "#645447"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Virgin and Child with Four Angels",
+   "artist": "Gerard David",
+   "url": "https://www.metmuseum.org/art/collection/search/436102",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437852-muted",
+  "name": "Saltash with the Water Ferry, Cornwall (muted)",
+  "colors": [
+   "#462c13",
+   "#755433",
+   "#a3885b",
+   "#b7a581",
+   "#cebf98"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Saltash with the Water Ferry, Cornwall",
+   "artist": "Joseph Mallord William Turner",
+   "url": "https://www.metmuseum.org/art/collection/search/437852",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437852-deep",
+  "name": "Saltash with the Water Ferry, Cornwall (deep)",
+  "colors": [
+   "#543e26",
+   "#795734",
+   "#865b30",
+   "#905932",
+   "#9c7355"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Saltash with the Water Ferry, Cornwall",
+   "artist": "Joseph Mallord William Turner",
+   "url": "https://www.metmuseum.org/art/collection/search/437852",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436621-muted",
+  "name": "Portrait of a Man, Possibly Nicolaes\u2026 (muted)",
+  "colors": [
+   "#5e4c34",
+   "#66523a",
+   "#786954",
+   "#b89174",
+   "#aca18b"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Portrait of a Man, Possibly Nicolaes Pietersz Duyst van Voor",
+   "artist": "Frans Hals",
+   "url": "https://www.metmuseum.org/art/collection/search/436621",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436621-deep",
+  "name": "Portrait of a Man, Possibly Nicolaes\u2026 (deep)",
+  "colors": [
+   "#4a3d2a",
+   "#4e3d2b",
+   "#544734",
+   "#5d4c38",
+   "#815940"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Portrait of a Man, Possibly Nicolaes Pietersz Duyst van Voor",
+   "artist": "Frans Hals",
+   "url": "https://www.metmuseum.org/art/collection/search/436621",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437337-muted",
+  "name": "Virgin and Child (muted)",
+  "colors": [
+   "#52491e",
+   "#7a5c2a",
+   "#786c46",
+   "#aaa57b",
+   "#cfc19a"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Virgin and Child",
+   "artist": "Netherlandish (Bruges) Painter",
+   "url": "https://www.metmuseum.org/art/collection/search/437337",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437337-deep",
+  "name": "Virgin and Child (deep)",
+  "colors": [
+   "#3f2800",
+   "#611807",
+   "#404b21",
+   "#8b2612",
+   "#8d2d07"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Virgin and Child",
+   "artist": "Netherlandish (Bruges) Painter",
+   "url": "https://www.metmuseum.org/art/collection/search/437337",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm"
+  ]
+ },
+ {
+  "id": "met-437937-deep",
+  "name": "Gamepiece with a Dead Heron (deep)",
+  "colors": [
+   "#35432a",
+   "#4f4029",
+   "#4b4431",
+   "#6e5737",
+   "#855932"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Gamepiece with a Dead Heron",
+   "artist": "Jan Weenix",
+   "url": "https://www.metmuseum.org/art/collection/search/437937",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436319-muted",
+  "name": "The Cascade (muted)",
+  "colors": [
+   "#4c361e",
+   "#655231",
+   "#89764c",
+   "#8a866d",
+   "#aea083"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Cascade",
+   "artist": "Jean Honor\u00e9 Fragonard",
+   "url": "https://www.metmuseum.org/art/collection/search/436319",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436319-deep",
+  "name": "The Cascade (deep)",
+  "colors": [
+   "#342309",
+   "#3b2405",
+   "#584122",
+   "#66523a",
+   "#866f39"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Cascade",
+   "artist": "Jean Honor\u00e9 Fragonard",
+   "url": "https://www.metmuseum.org/art/collection/search/436319",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-441354-muted",
+  "name": "Odalisque (muted)",
+  "colors": [
+   "#5f4a2d",
+   "#735c3a",
+   "#876945",
+   "#a18055",
+   "#ab9365"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Odalisque",
+   "artist": "Benjamin-Constant (Jean-Joseph-Benjamin Constant)",
+   "url": "https://www.metmuseum.org/art/collection/search/441354",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-441354-deep",
+  "name": "Odalisque (deep)",
+  "colors": [
+   "#592b14",
+   "#533125",
+   "#6b5a3c",
+   "#715b36",
+   "#a38263"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Odalisque",
+   "artist": "Benjamin-Constant (Jean-Joseph-Benjamin Constant)",
+   "url": "https://www.metmuseum.org/art/collection/search/441354",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435859-muted",
+  "name": "The Adoration of the Shepherds (muted)",
+  "colors": [
+   "#725f41",
+   "#607185",
+   "#896c4c",
+   "#6c819c",
+   "#d6b999"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Adoration of the Shepherds",
+   "artist": "Catena (Vincenzo di Biagio)",
+   "url": "https://www.metmuseum.org/art/collection/search/435859",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435859-deep",
+  "name": "The Adoration of the Shepherds (deep)",
+  "colors": [
+   "#05284e",
+   "#5e4325",
+   "#5d4e31",
+   "#684d30",
+   "#9c4c27"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Adoration of the Shepherds",
+   "artist": "Catena (Vincenzo di Biagio)",
+   "url": "https://www.metmuseum.org/art/collection/search/435859",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-438031-muted",
+  "name": "Summer Flowers (muted)",
+  "colors": [
+   "#6c5a32",
+   "#776237",
+   "#786441",
+   "#9e8662",
+   "#c2b392"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Summer Flowers",
+   "artist": "Henri Fantin-Latour",
+   "url": "https://www.metmuseum.org/art/collection/search/438031",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-438031-deep",
+  "name": "Summer Flowers (deep)",
+  "colors": [
+   "#4d1717",
+   "#503917",
+   "#554724",
+   "#87331b",
+   "#957a4b"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Summer Flowers",
+   "artist": "Henri Fantin-Latour",
+   "url": "https://www.metmuseum.org/art/collection/search/438031",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436949-muted",
+  "name": "Copy after Delacroix's \"Bark of Dante\" (muted)",
+  "colors": [
+   "#3e211d",
+   "#402e16",
+   "#705134"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Copy after Delacroix's \"Bark of Dante\"",
+   "artist": "Edouard Manet",
+   "url": "https://www.metmuseum.org/art/collection/search/436949",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436935-muted",
+  "name": "The Tame Magpie (muted)",
+  "colors": [
+   "#584932",
+   "#3f5b5f",
+   "#706248",
+   "#5d7170",
+   "#a99b76"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Tame Magpie",
+   "artist": "Alessandro Magnasco",
+   "url": "https://www.metmuseum.org/art/collection/search/436935",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436935-deep",
+  "name": "The Tame Magpie (deep)",
+  "colors": [
+   "#51422f",
+   "#44473e",
+   "#5e4e35",
+   "#495e63",
+   "#9d8f75"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Tame Magpie",
+   "artist": "Alessandro Magnasco",
+   "url": "https://www.metmuseum.org/art/collection/search/436935",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437276-muted",
+  "name": "Madonna and Child with Six Saints (muted)",
+  "colors": [
+   "#423d37",
+   "#5a7795",
+   "#a28a64",
+   "#a49078",
+   "#bb8c62"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Madonna and Child with Six Saints",
+   "artist": "Pesellino (Francesco di Stefano)",
+   "url": "https://www.metmuseum.org/art/collection/search/437276",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437276-deep",
+  "name": "Madonna and Child with Six Saints (deep)",
+  "colors": [
+   "#502d17",
+   "#613f24",
+   "#875137",
+   "#346c9b",
+   "#c04023"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Madonna and Child with Six Saints",
+   "artist": "Pesellino (Francesco di Stefano)",
+   "url": "https://www.metmuseum.org/art/collection/search/437276",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm"
+  ]
+ },
+ {
+  "id": "met-437926-muted",
+  "name": "Mezzetin (muted)",
+  "colors": [
+   "#3e3822",
+   "#5a5130",
+   "#736540",
+   "#8f7e60",
+   "#aba082"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Mezzetin",
+   "artist": "Antoine Watteau",
+   "url": "https://www.metmuseum.org/art/collection/search/437926",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437926-deep",
+  "name": "Mezzetin (deep)",
+  "colors": [
+   "#47412b",
+   "#5b4025",
+   "#4c5540",
+   "#6d5f3a",
+   "#ae5f1d"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Mezzetin",
+   "artist": "Antoine Watteau",
+   "url": "https://www.metmuseum.org/art/collection/search/437926",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted",
+   "accent"
+  ]
+ },
+ {
+  "id": "met-436772-muted",
+  "name": "The Sheepfold (muted)",
+  "colors": [
+   "#392617",
+   "#41250d",
+   "#412a1a",
+   "#885d3a",
+   "#846232"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Sheepfold",
+   "artist": "Charles Jacque",
+   "url": "https://www.metmuseum.org/art/collection/search/436772",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436772-deep",
+  "name": "The Sheepfold (deep)",
+  "colors": [
+   "#322213",
+   "#392617",
+   "#5c3a17",
+   "#765c2b",
+   "#966a2d"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Sheepfold",
+   "artist": "Charles Jacque",
+   "url": "https://www.metmuseum.org/art/collection/search/436772",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437877-muted",
+  "name": "Allegory of the Catholic Faith (muted)",
+  "colors": [
+   "#403523",
+   "#30465d",
+   "#4d4a37",
+   "#5f5949",
+   "#cfc9bb"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Allegory of the Catholic Faith",
+   "artist": "Johannes Vermeer",
+   "url": "https://www.metmuseum.org/art/collection/search/437877",
+   "license": "CC0"
+  },
+  "tags": [
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437877-deep",
+  "name": "Allegory of the Catholic Faith (deep)",
+  "colors": [
+   "#403322",
+   "#4b493c",
+   "#4d4a37",
+   "#564b39",
+   "#68696b"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Allegory of the Catholic Faith",
+   "artist": "Johannes Vermeer",
+   "url": "https://www.metmuseum.org/art/collection/search/437877",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435594-muted",
+  "name": "Leda and the Swan (muted)",
+  "colors": [
+   "#443d20",
+   "#645b3e",
+   "#7f7b60",
+   "#848575",
+   "#b4af92"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Leda and the Swan",
+   "artist": "Bachiacca (Francesco d'Ubertino Verdi)",
+   "url": "https://www.metmuseum.org/art/collection/search/435594",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435594-deep",
+  "name": "Leda and the Swan (deep)",
+  "colors": [
+   "#40391c",
+   "#4f3f1d",
+   "#4e4f3d",
+   "#6a592b",
+   "#826627"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Leda and the Swan",
+   "artist": "Bachiacca (Francesco d'Ubertino Verdi)",
+   "url": "https://www.metmuseum.org/art/collection/search/435594",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437892-muted",
+  "name": "Madonna and Child (muted)",
+  "colors": [
+   "#55402d",
+   "#785a26",
+   "#937747",
+   "#7f8c82",
+   "#aba281"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Madonna and Child",
+   "artist": "Andrea del Verrocchio",
+   "url": "https://www.metmuseum.org/art/collection/search/437892",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437892-deep",
+  "name": "Madonna and Child (deep)",
+  "colors": [
+   "#1e3338",
+   "#3e402b",
+   "#5f3915",
+   "#8c6733",
+   "#8d6937"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Madonna and Child",
+   "artist": "Andrea del Verrocchio",
+   "url": "https://www.metmuseum.org/art/collection/search/437892",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436346-muted",
+  "name": "The Restoration of the Catholic Religion in\u2026 (muted)",
+  "colors": [
+   "#503b1e",
+   "#5d3d24",
+   "#644c30",
+   "#786846",
+   "#a8955b"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Restoration of the Catholic Religion in Strasbourg",
+   "artist": "Claude Guy Hall\u00e9",
+   "url": "https://www.metmuseum.org/art/collection/search/436346",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436346-deep",
+  "name": "The Restoration of the Catholic Religion in\u2026 (deep)",
+  "colors": [
+   "#342716",
+   "#4d3c28",
+   "#5c4b37",
+   "#a12d1e",
+   "#74624a"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Restoration of the Catholic Religion in Strasbourg",
+   "artist": "Claude Guy Hall\u00e9",
+   "url": "https://www.metmuseum.org/art/collection/search/436346",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted",
+   "accent"
+  ]
+ },
+ {
+  "id": "met-436481-deep",
+  "name": "Cafe House, Cairo (Casting Bullets) (deep)",
+  "colors": [
+   "#3f2e1c",
+   "#52381d",
+   "#57492e",
+   "#6d5e3f",
+   "#3d7552"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Cafe House, Cairo (Casting Bullets)",
+   "artist": "Jean-L\u00e9on G\u00e9r\u00f4me",
+   "url": "https://www.metmuseum.org/art/collection/search/436481",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435595-muted",
+  "name": "Madonna and Child (muted)",
+  "colors": [
+   "#40341c",
+   "#564e3b",
+   "#736d5d",
+   "#a5826c",
+   "#d3b4a2"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Madonna and Child",
+   "artist": "Bachiacca (Francesco d'Ubertino Verdi)",
+   "url": "https://www.metmuseum.org/art/collection/search/435595",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435595-deep",
+  "name": "Madonna and Child (deep)",
+  "colors": [
+   "#5f0b0b",
+   "#3c301a",
+   "#53442d",
+   "#5a5341",
+   "#656253"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Madonna and Child",
+   "artist": "Bachiacca (Francesco d'Ubertino Verdi)",
+   "url": "https://www.metmuseum.org/art/collection/search/435595",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436534-muted",
+  "name": "Roses (muted)",
+  "colors": [
+   "#768774",
+   "#79956d",
+   "#829872",
+   "#8e9e77",
+   "#8c9f83"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Roses",
+   "artist": "Vincent van Gogh",
+   "url": "https://www.metmuseum.org/art/collection/search/436534",
+   "license": "CC0"
+  },
+  "tags": [
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436534-deep",
+  "name": "Roses (deep)",
+  "colors": [
+   "#12321d",
+   "#768b7c",
+   "#7c9868",
+   "#8aa584"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Roses",
+   "artist": "Vincent van Gogh",
+   "url": "https://www.metmuseum.org/art/collection/search/436534",
+   "license": "CC0"
+  },
+  "tags": [
+   "cool",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437520-muted",
+  "name": "Sunset near Arbonne (muted)",
+  "colors": [
+   "#3f2117",
+   "#553621",
+   "#5b3c28",
+   "#6c472d",
+   "#744823"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Sunset near Arbonne",
+   "artist": "Th\u00e9odore Rousseau",
+   "url": "https://www.metmuseum.org/art/collection/search/437520",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437520-deep",
+  "name": "Sunset near Arbonne (deep)",
+  "colors": [
+   "#5e391f",
+   "#6e4026",
+   "#704324",
+   "#704729",
+   "#8e5327"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Sunset near Arbonne",
+   "artist": "Th\u00e9odore Rousseau",
+   "url": "https://www.metmuseum.org/art/collection/search/437520",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-438018-muted",
+  "name": "Woman before a Mirror (muted)",
+  "colors": [
+   "#613e38",
+   "#796b5e",
+   "#906d59",
+   "#91877b",
+   "#99928a"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Woman before a Mirror",
+   "artist": "Henri de Toulouse-Lautrec",
+   "url": "https://www.metmuseum.org/art/collection/search/438018",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-438018-deep",
+  "name": "Woman before a Mirror (deep)",
+  "colors": [
+   "#4e382d",
+   "#47423e",
+   "#5d3e3b",
+   "#6a4743",
+   "#74543f"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Woman before a Mirror",
+   "artist": "Henri de Toulouse-Lautrec",
+   "url": "https://www.metmuseum.org/art/collection/search/438018",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436966-muted",
+  "name": "The Adoration of the Shepherds (muted)",
+  "colors": [
+   "#554025",
+   "#6d5533",
+   "#49708d",
+   "#8d6740",
+   "#adc1cc"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Adoration of the Shepherds",
+   "artist": "Andrea Mantegna",
+   "url": "https://www.metmuseum.org/art/collection/search/436966",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436966-deep",
+  "name": "The Adoration of the Shepherds (deep)",
+  "colors": [
+   "#633920",
+   "#64441e",
+   "#716a5a",
+   "#9f5935"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Adoration of the Shepherds",
+   "artist": "Andrea Mantegna",
+   "url": "https://www.metmuseum.org/art/collection/search/436966",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437514-muted",
+  "name": "The Edge of the Woods at Monts-Girard\u2026 (muted)",
+  "colors": [
+   "#443d23",
+   "#4e4323",
+   "#6a7263",
+   "#7c8888",
+   "#899098"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Edge of the Woods at Monts-Girard, Fontainebleau Forest",
+   "artist": "Th\u00e9odore Rousseau",
+   "url": "https://www.metmuseum.org/art/collection/search/437514",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437514-deep",
+  "name": "The Edge of the Woods at Monts-Girard\u2026 (deep)",
+  "colors": [
+   "#383524",
+   "#4d462c",
+   "#4c4729",
+   "#6a6047",
+   "#626457"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Edge of the Woods at Monts-Girard, Fontainebleau Forest",
+   "artist": "Th\u00e9odore Rousseau",
+   "url": "https://www.metmuseum.org/art/collection/search/437514",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437944-muted",
+  "name": "Florinda (muted)",
+  "colors": [
+   "#321c00",
+   "#4c381f",
+   "#6b4e2c",
+   "#bdab7d",
+   "#e8ce9b"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Florinda",
+   "artist": "Franz Xaver Winterhalter",
+   "url": "https://www.metmuseum.org/art/collection/search/437944",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437944-deep",
+  "name": "Florinda (deep)",
+  "colors": [
+   "#523827",
+   "#724121",
+   "#805729",
+   "#785c34",
+   "#81654d"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Florinda",
+   "artist": "Franz Xaver Winterhalter",
+   "url": "https://www.metmuseum.org/art/collection/search/437944",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435965-muted",
+  "name": "Bacchante in a Landscape (muted)",
+  "colors": [
+   "#6f5a3b",
+   "#6c5c3b",
+   "#8a7b5c",
+   "#a48a65"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Bacchante in a Landscape",
+   "artist": "Camille Corot",
+   "url": "https://www.metmuseum.org/art/collection/search/435965",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435965-deep",
+  "name": "Bacchante in a Landscape (deep)",
+  "colors": [
+   "#4b3923",
+   "#504228",
+   "#5e4e2c",
+   "#7c6a44",
+   "#7e6d51"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Bacchante in a Landscape",
+   "artist": "Camille Corot",
+   "url": "https://www.metmuseum.org/art/collection/search/435965",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435702-muted",
+  "name": "The Horse Fair (muted)",
+  "colors": [
+   "#73583a",
+   "#725a3e",
+   "#837558",
+   "#807b78",
+   "#a47d3a"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Horse Fair",
+   "artist": "Rosa Bonheur",
+   "url": "https://www.metmuseum.org/art/collection/search/435702",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435702-deep",
+  "name": "The Horse Fair (deep)",
+  "colors": [
+   "#4e4735",
+   "#5b4c2b",
+   "#604d2d",
+   "#585544",
+   "#705939"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Horse Fair",
+   "artist": "Rosa Bonheur",
+   "url": "https://www.metmuseum.org/art/collection/search/435702",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437916-muted",
+  "name": "Still Life with Cheese (muted)",
+  "colors": [
+   "#403320",
+   "#56482b",
+   "#99865c",
+   "#b8aa8f",
+   "#e7c691"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Still Life with Cheese",
+   "artist": "Antoine Vollon",
+   "url": "https://www.metmuseum.org/art/collection/search/437916",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437916-deep",
+  "name": "Still Life with Cheese (deep)",
+  "colors": [
+   "#362b19",
+   "#362c20",
+   "#524324",
+   "#645430",
+   "#826d3e"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Still Life with Cheese",
+   "artist": "Antoine Vollon",
+   "url": "https://www.metmuseum.org/art/collection/search/437916",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436296-muted",
+  "name": "The Palace of Aurora (muted)",
+  "colors": [
+   "#60412f",
+   "#725742",
+   "#836d55",
+   "#a38261",
+   "#ab9273"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Palace of Aurora",
+   "artist": "Henri Fantin-Latour",
+   "url": "https://www.metmuseum.org/art/collection/search/436296",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436296-deep",
+  "name": "The Palace of Aurora (deep)",
+  "colors": [
+   "#584439",
+   "#674633",
+   "#645341",
+   "#675241",
+   "#7e4f35"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Palace of Aurora",
+   "artist": "Henri Fantin-Latour",
+   "url": "https://www.metmuseum.org/art/collection/search/436296",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437060-muted",
+  "name": "Virgin and Child (muted)",
+  "colors": [
+   "#69481b",
+   "#4c5840",
+   "#735728",
+   "#8e583e",
+   "#a77c49"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Virgin and Child",
+   "artist": "Hans Memling",
+   "url": "https://www.metmuseum.org/art/collection/search/437060",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437060-deep",
+  "name": "Virgin and Child (deep)",
+  "colors": [
+   "#402e1a",
+   "#70251f",
+   "#43503e"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Virgin and Child",
+   "artist": "Hans Memling",
+   "url": "https://www.metmuseum.org/art/collection/search/437060",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436454-muted",
+  "name": "Alfred Dedreux (1810\u20131860) as a Child (muted)",
+  "colors": [
+   "#558086",
+   "#5d888f",
+   "#8b8f78",
+   "#87928a",
+   "#92a393"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Alfred Dedreux (1810\u20131860) as a Child",
+   "artist": "Th\u00e9odore G\u00e9ricault",
+   "url": "https://www.metmuseum.org/art/collection/search/436454",
+   "license": "CC0"
+  },
+  "tags": [
+   "cool",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436454-deep",
+  "name": "Alfred Dedreux (1810\u20131860) as a Child (deep)",
+  "colors": [
+   "#372d21",
+   "#5d5b4e",
+   "#76622d",
+   "#486f76"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Alfred Dedreux (1810\u20131860) as a Child",
+   "artist": "Th\u00e9odore G\u00e9ricault",
+   "url": "https://www.metmuseum.org/art/collection/search/436454",
+   "license": "CC0"
+  },
+  "tags": [
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437891-muted",
+  "name": "Mars and Venus United by Love (muted)",
+  "colors": [
+   "#45371c",
+   "#4a4531",
+   "#544d33",
+   "#786954",
+   "#af9a7d"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Mars and Venus United by Love",
+   "artist": "Paolo Veronese (Paolo Caliari)",
+   "url": "https://www.metmuseum.org/art/collection/search/437891",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437891-deep",
+  "name": "Mars and Venus United by Love (deep)",
+  "colors": [
+   "#463a24",
+   "#4d4328",
+   "#524229",
+   "#4b5c54",
+   "#ac9575"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Mars and Venus United by Love",
+   "artist": "Paolo Veronese (Paolo Caliari)",
+   "url": "https://www.metmuseum.org/art/collection/search/437891",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435985-muted",
+  "name": "Study for \"The Destruction of Sodom\" (muted)",
+  "colors": [
+   "#574a28",
+   "#385962",
+   "#7c6e47",
+   "#507c89",
+   "#6b8e90"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Study for \"The Destruction of Sodom\"",
+   "artist": "Camille Corot",
+   "url": "https://www.metmuseum.org/art/collection/search/435985",
+   "license": "CC0"
+  },
+  "tags": [
+   "cool",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435985-deep",
+  "name": "Study for \"The Destruction of Sodom\" (deep)",
+  "colors": [
+   "#4d4425",
+   "#51452b",
+   "#32535a",
+   "#44626c",
+   "#857754"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Study for \"The Destruction of Sodom\"",
+   "artist": "Camille Corot",
+   "url": "https://www.metmuseum.org/art/collection/search/435985",
+   "license": "CC0"
+  },
+  "tags": [
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436653-muted",
+  "name": "Woodland Road (muted)",
+  "colors": [
+   "#5a543e",
+   "#625a45",
+   "#54656d",
+   "#777976",
+   "#86867e"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Woodland Road",
+   "artist": "Meyndert Hobbema",
+   "url": "https://www.metmuseum.org/art/collection/search/436653",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436653-deep",
+  "name": "Woodland Road (deep)",
+  "colors": [
+   "#4e504d",
+   "#575445",
+   "#526164",
+   "#7d775d"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Woodland Road",
+   "artist": "Meyndert Hobbema",
+   "url": "https://www.metmuseum.org/art/collection/search/436653",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436936-muted",
+  "name": "Nuns at Work (muted)",
+  "colors": [
+   "#3a2303",
+   "#3e2d02",
+   "#614a1e",
+   "#796331",
+   "#ebd685"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Nuns at Work",
+   "artist": "Alessandro Magnasco",
+   "url": "https://www.metmuseum.org/art/collection/search/436936",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436936-deep",
+  "name": "Nuns at Work (deep)",
+  "colors": [
+   "#472f00",
+   "#4e3811",
+   "#583400",
+   "#523911",
+   "#7e571c"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Nuns at Work",
+   "artist": "Alessandro Magnasco",
+   "url": "https://www.metmuseum.org/art/collection/search/436936",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-438023-muted",
+  "name": "The Antechamber of the Sala del Maggior\u2026 (muted)",
+  "colors": [
+   "#5d5433",
+   "#6f6541",
+   "#807750",
+   "#8a7d53",
+   "#9b946a"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Antechamber of the Sala del Maggior Consiglio",
+   "artist": "Francesco Guardi",
+   "url": "https://www.metmuseum.org/art/collection/search/438023",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-438023-deep",
+  "name": "The Antechamber of the Sala del Maggior\u2026 (deep)",
+  "colors": [
+   "#504623",
+   "#52472b",
+   "#554627",
+   "#514934",
+   "#7a6538"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Antechamber of the Sala del Maggior Consiglio",
+   "artist": "Francesco Guardi",
+   "url": "https://www.metmuseum.org/art/collection/search/438023",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436987-muted",
+  "name": "The Rest on the Flight into Egypt (muted)",
+  "colors": [
+   "#806047",
+   "#5d6c69",
+   "#817955",
+   "#918674"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Rest on the Flight into Egypt",
+   "artist": "Jan Massys",
+   "url": "https://www.metmuseum.org/art/collection/search/436987",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436987-deep",
+  "name": "The Rest on the Flight into Egypt (deep)",
+  "colors": [
+   "#63241f",
+   "#763024",
+   "#61503e",
+   "#56644d"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Rest on the Flight into Egypt",
+   "artist": "Jan Massys",
+   "url": "https://www.metmuseum.org/art/collection/search/436987",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435707-muted",
+  "name": "Roadside Halt (muted)",
+  "colors": [
+   "#504227",
+   "#7e6b4a",
+   "#8b7b62",
+   "#8d7e61",
+   "#a7a79d"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Roadside Halt",
+   "artist": "Richard Parkes Bonington",
+   "url": "https://www.metmuseum.org/art/collection/search/435707",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435976-muted",
+  "name": "The Letter (muted)",
+  "colors": [
+   "#342005",
+   "#6f4d28",
+   "#9b6d31",
+   "#a7824e",
+   "#cbab78"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Letter",
+   "artist": "Camille Corot",
+   "url": "https://www.metmuseum.org/art/collection/search/435976",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-435976-deep",
+  "name": "The Letter (deep)",
+  "colors": [
+   "#342309",
+   "#452808",
+   "#6e4517",
+   "#916121",
+   "#98753f"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Letter",
+   "artist": "Camille Corot",
+   "url": "https://www.metmuseum.org/art/collection/search/435976",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436626-muted",
+  "name": "Boy with a Lute (muted)",
+  "colors": [
+   "#342a1e",
+   "#41311a",
+   "#674d36",
+   "#8f6841",
+   "#a18d72"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Boy with a Lute",
+   "artist": "Frans Hals",
+   "url": "https://www.metmuseum.org/art/collection/search/436626",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436626-deep",
+  "name": "Boy with a Lute (deep)",
+  "colors": [
+   "#34271e",
+   "#523e25",
+   "#764f28",
+   "#8a7250",
+   "#9e703c"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Boy with a Lute",
+   "artist": "Frans Hals",
+   "url": "https://www.metmuseum.org/art/collection/search/436626",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436002-muted",
+  "name": "Woman with a Parrot (muted)",
+  "colors": [
+   "#504228",
+   "#705e46",
+   "#80724f",
+   "#978a68"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Woman with a Parrot",
+   "artist": "Gustave Courbet",
+   "url": "https://www.metmuseum.org/art/collection/search/436002",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-436002-deep",
+  "name": "Woman with a Parrot (deep)",
+  "colors": [
+   "#463426",
+   "#76674a",
+   "#827352",
+   "#867750"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Woman with a Parrot",
+   "artist": "Gustave Courbet",
+   "url": "https://www.metmuseum.org/art/collection/search/436002",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437652-muted",
+  "name": "The Virgin Adoring the Child with the\u2026 (muted)",
+  "colors": [
+   "#6f571b",
+   "#527561",
+   "#8a8e69",
+   "#858f74"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Virgin Adoring the Child with the Infant Saint John the ",
+   "artist": "Jacopo di Arcangelo (called Jacopo del Sellaio)",
+   "url": "https://www.metmuseum.org/art/collection/search/437652",
+   "license": "CC0"
+  },
+  "tags": [
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437652-deep",
+  "name": "The Virgin Adoring the Child with the\u2026 (deep)",
+  "colors": [
+   "#282310",
+   "#4f371d",
+   "#7b4718",
+   "#5d735c",
+   "#b16b5f"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Virgin Adoring the Child with the Infant Saint John the ",
+   "artist": "Jacopo di Arcangelo (called Jacopo del Sellaio)",
+   "url": "https://www.metmuseum.org/art/collection/search/437652",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437956-muted",
+  "name": "Kitchen Scene (muted)",
+  "colors": [
+   "#3b2416",
+   "#543d2b",
+   "#654f37",
+   "#8a6650",
+   "#817662"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Kitchen Scene",
+   "artist": "Peter Wtewael",
+   "url": "https://www.metmuseum.org/art/collection/search/437956",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437956-deep",
+  "name": "Kitchen Scene (deep)",
+  "colors": [
+   "#503b28",
+   "#634d35",
+   "#866e52",
+   "#c58559"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Kitchen Scene",
+   "artist": "Peter Wtewael",
+   "url": "https://www.metmuseum.org/art/collection/search/437956",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437061-muted",
+  "name": "Salvator Mundi (muted)",
+  "colors": [
+   "#322423",
+   "#6b431f",
+   "#3e726e",
+   "#9b6245",
+   "#999683"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Salvator Mundi",
+   "artist": "Hans Memling",
+   "url": "https://www.metmuseum.org/art/collection/search/437061",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437061-deep",
+  "name": "Salvator Mundi (deep)",
+  "colors": [
+   "#51301d",
+   "#7c1f18",
+   "#0a5072",
+   "#704b14",
+   "#92483f"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Salvator Mundi",
+   "artist": "Hans Memling",
+   "url": "https://www.metmuseum.org/art/collection/search/437061",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm"
+  ]
+ },
+ {
+  "id": "met-437219-muted",
+  "name": "The Dispatch-Bearer (muted)",
+  "colors": [
+   "#77603e",
+   "#7c6c4a",
+   "#998b66",
+   "#a8956d",
+   "#b4ab84"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Dispatch-Bearer",
+   "artist": "Alphonse-Marie-Adolphe de Neuville",
+   "url": "https://www.metmuseum.org/art/collection/search/437219",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437219-deep",
+  "name": "The Dispatch-Bearer (deep)",
+  "colors": [
+   "#544130",
+   "#69553d",
+   "#695e4a",
+   "#806842"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "The Dispatch-Bearer",
+   "artist": "Alphonse-Marie-Adolphe de Neuville",
+   "url": "https://www.metmuseum.org/art/collection/search/437219",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437249-muted",
+  "name": "Madonna and Child Enthroned (muted)",
+  "colors": [
+   "#553c26",
+   "#906749",
+   "#967a6c",
+   "#ad9275",
+   "#d6b764"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Madonna and Child Enthroned",
+   "artist": "Paolo Veneziano",
+   "url": "https://www.metmuseum.org/art/collection/search/437249",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
+  "id": "met-437249-deep",
+  "name": "Madonna and Child Enthroned (deep)",
+  "colors": [
+   "#563a0a",
+   "#553c26",
+   "#875233",
+   "#705d57"
+  ],
+  "source": "met",
+  "credit": {
+   "title": "Madonna and Child Enthroned",
+   "artist": "Paolo Veneziano",
+   "url": "https://www.metmuseum.org/art/collection/search/437249",
+   "license": "CC0"
+  },
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ]
+ },
+ {
   "id": "gen-0-1",
   "name": "Rosewood Glow 1",
   "colors": [
@@ -157,23 +6695,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-10",
-  "name": "Dusk Analogous 10",
-  "colors": [
-   "#187d9d",
-   "#3f8bbd",
-   "#6897d6",
-   "#8ea4eb",
-   "#b4b1fd"
-  ],
-  "tags": [
-   "cool",
-   "blue_heavy"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-11",
   "name": "Dusk Glow 11",
   "colors": [
@@ -227,41 +6748,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-14",
-  "name": "Amber Split 14",
-  "colors": [
-   "#ae7663",
-   "#62aea8",
-   "#79a3cd",
-   "#cabab4",
-   "#705f59"
-  ],
-  "tags": [
-   "cool",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-15",
-  "name": "Dusk Analogous 15",
-  "colors": [
-   "#227d9a",
-   "#4a8bb5",
-   "#6d98ce",
-   "#90a5e3",
-   "#b3b3f4"
-  ],
-  "tags": [
-   "cool",
-   "analogous",
-   "blue_heavy"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-16",
   "name": "Iris Glow 16",
   "colors": [
@@ -276,23 +6762,6 @@
    "analogous",
    "vivid",
    "blue_heavy"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-17",
-  "name": "Ember Hearth 17",
-  "colors": [
-   "#98483c",
-   "#b0684b",
-   "#cd8554",
-   "#e0a86e",
-   "#f8c87c"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
   ],
   "source": "generated",
   "credit": {}
@@ -369,23 +6838,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-22",
-  "name": "Iris Hearth 22",
-  "colors": [
-   "#9d4434",
-   "#b16746",
-   "#ca8655",
-   "#dba973",
-   "#f0cb8c"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-23",
   "name": "Dusk Accent 23",
   "colors": [
@@ -453,23 +6905,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-27",
-  "name": "Rosewood Hearth 27",
-  "colors": [
-   "#9b4445",
-   "#aa6a5c",
-   "#c88669",
-   "#eea065",
-   "#fbc68b"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-28",
   "name": "Iris Accent 28",
   "colors": [
@@ -506,23 +6941,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-30",
-  "name": "Amber Analogous 30",
-  "colors": [
-   "#976064",
-   "#aa736a",
-   "#bb8871",
-   "#ca9d7a",
-   "#d6b587"
-  ],
-  "tags": [
-   "warm",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-31",
   "name": "Iris Glow 31",
   "colors": [
@@ -542,23 +6960,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-32",
-  "name": "Amber Hearth 32",
-  "colors": [
-   "#8d5040",
-   "#b2673f",
-   "#c18b5e",
-   "#e7a64e",
-   "#f5cb74"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-33",
   "name": "Sage Accent 33",
   "colors": [
@@ -573,23 +6974,6 @@
    "analogous",
    "muted",
    "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-34",
-  "name": "Ember Split 34",
-  "colors": [
-   "#a97873",
-   "#75ab9c",
-   "#78a5c0",
-   "#cab9b7",
-   "#715e5c"
-  ],
-  "tags": [
-   "cool",
-   "muted"
   ],
   "source": "generated",
   "credit": {}
@@ -624,23 +7008,6 @@
    "warm",
    "analogous",
    "vivid"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-37",
-  "name": "Lagoon Hearth 37",
-  "colors": [
-   "#934c3d",
-   "#ab6b4e",
-   "#d28244",
-   "#e0a869",
-   "#fbc86b"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
   ],
   "source": "generated",
   "credit": {}
@@ -714,41 +7081,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-42",
-  "name": "Sage Hearth 42",
-  "colors": [
-   "#96493f",
-   "#ad694f",
-   "#c8875d",
-   "#e9a35b",
-   "#f3ca8b"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-43",
-  "name": "Lagoon Accent 43",
-  "colors": [
-   "#4c5859",
-   "#5e7779",
-   "#809395",
-   "#a3b1b2",
-   "#c870d6"
-  ],
-  "tags": [
-   "analogous",
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-44",
   "name": "Iris Split 44",
   "colors": [
@@ -761,24 +7093,6 @@
   "tags": [
    "warm",
    "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-45",
-  "name": "Lagoon Analogous 45",
-  "colors": [
-   "#0e827d",
-   "#15949f",
-   "#3ea3c0",
-   "#63b2de",
-   "#88c0f9"
-  ],
-  "tags": [
-   "cool",
-   "analogous",
-   "blue_heavy"
   ],
   "source": "generated",
   "credit": {}
@@ -802,23 +7116,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-47",
-  "name": "Rosewood Hearth 47",
-  "colors": [
-   "#924b4e",
-   "#b96052",
-   "#d67d5a",
-   "#dfa681",
-   "#fec489"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-48",
   "name": "Dusk Accent 48",
   "colors": [
@@ -833,23 +7130,6 @@
    "analogous",
    "muted",
    "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-49",
-  "name": "Ember Split 49",
-  "colors": [
-   "#b47079",
-   "#6baf8d",
-   "#5cabc4",
-   "#cab9ba",
-   "#715e60"
-  ],
-  "tags": [
-   "cool",
-   "muted"
   ],
   "source": "generated",
   "credit": {}
@@ -958,59 +7238,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-56",
-  "name": "Iris Glow 56",
-  "colors": [
-   "#008ac4",
-   "#2093f0",
-   "#669cfe",
-   "#95a8fa",
-   "#b7b5fd"
-  ],
-  "tags": [
-   "cool",
-   "analogous",
-   "blue_heavy"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-57",
-  "name": "Sage Hearth 57",
-  "colors": [
-   "#924d40",
-   "#aa6b50",
-   "#ce844d",
-   "#d7ab7d",
-   "#fbc870"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-58",
-  "name": "Lagoon Accent 58",
-  "colors": [
-   "#4b5857",
-   "#677574",
-   "#7c9593",
-   "#97b5b2",
-   "#b976e6"
-  ],
-  "tags": [
-   "cool",
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-59",
   "name": "Amber Split 59",
   "colors": [
@@ -1059,23 +7286,6 @@
    "warm",
    "analogous",
    "vivid"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-62",
-  "name": "Iris Hearth 62",
-  "colors": [
-   "#8d503f",
-   "#b06941",
-   "#ca874b",
-   "#dbaa6c",
-   "#f7ca6c"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
   ],
   "source": "generated",
   "credit": {}
@@ -1152,41 +7362,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-67",
-  "name": "Rosewood Hearth 67",
-  "colors": [
-   "#934c3f",
-   "#b26747",
-   "#c48961",
-   "#e3a665",
-   "#eecb95"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-68",
-  "name": "Amber Accent 68",
-  "colors": [
-   "#5f524a",
-   "#806d61",
-   "#9e8b7f",
-   "#baaba1",
-   "#23b093"
-  ],
-  "tags": [
-   "cool",
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-69",
   "name": "Honey Split 69",
   "colors": [
@@ -1199,23 +7374,6 @@
   "tags": [
    "cool",
    "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-70",
-  "name": "Lagoon Analogous 70",
-  "colors": [
-   "#2f8173",
-   "#3d9292",
-   "#52a3b1",
-   "#6cb3cf",
-   "#8ac2ea"
-  ],
-  "tags": [
-   "cool",
-   "blue_heavy"
   ],
   "source": "generated",
   "credit": {}
@@ -1234,58 +7392,6 @@
    "warm",
    "analogous",
    "vivid"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-72",
-  "name": "Amber Hearth 72",
-  "colors": [
-   "#9e4330",
-   "#ac6a4c",
-   "#d18345",
-   "#e4a65d",
-   "#f1cb88"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-73",
-  "name": "Rosewood Accent 73",
-  "colors": [
-   "#57535f",
-   "#736f7a",
-   "#928c9d",
-   "#b0abbc",
-   "#8ba60e"
-  ],
-  "tags": [
-   "analogous",
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-74",
-  "name": "Amber Split 74",
-  "colors": [
-   "#a77a67",
-   "#6eabaa",
-   "#84a1c6",
-   "#cabab3",
-   "#705f58"
-  ],
-  "tags": [
-   "cool",
-   "muted"
   ],
   "source": "generated",
   "credit": {}
@@ -1326,23 +7432,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-77",
-  "name": "Amber Hearth 77",
-  "colors": [
-   "#97474a",
-   "#ba5f4f",
-   "#da7b53",
-   "#dfa680",
-   "#fec487"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-78",
   "name": "Honey Accent 78",
   "colors": [
@@ -1357,23 +7446,6 @@
    "analogous",
    "muted",
    "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-79",
-  "name": "Iris Split 79",
-  "colors": [
-   "#8080b6",
-   "#bd9764",
-   "#8aaa76",
-   "#bcbccb",
-   "#616271"
-  ],
-  "tags": [
-   "warm",
-   "muted"
   ],
   "source": "generated",
   "credit": {}
@@ -1415,57 +7487,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-82",
-  "name": "Lagoon Hearth 82",
-  "colors": [
-   "#8f4d4f",
-   "#aa6a5e",
-   "#d67e59",
-   "#f09e64",
-   "#f6c798"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-83",
-  "name": "Lagoon Accent 83",
-  "colors": [
-   "#425b59",
-   "#657574",
-   "#7f9492",
-   "#a0b2b0",
-   "#ba72ed"
-  ],
-  "tags": [
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-84",
-  "name": "Dusk Split 84",
-  "colors": [
-   "#5b8fa3",
-   "#c38f92",
-   "#b69972",
-   "#b1c1c7",
-   "#54676e"
-  ],
-  "tags": [
-   "warm",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-85",
   "name": "Sage Analogous 85",
   "colors": [
@@ -1477,42 +7498,6 @@
   ],
   "tags": [
    "cool"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-86",
-  "name": "Iris Glow 86",
-  "colors": [
-   "#6475dc",
-   "#887ee8",
-   "#aa87f2",
-   "#cc90f7",
-   "#ec9af9"
-  ],
-  "tags": [
-   "cool",
-   "analogous",
-   "vivid",
-   "blue_heavy"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-87",
-  "name": "Lagoon Hearth 87",
-  "colors": [
-   "#974840",
-   "#b56449",
-   "#ca865d",
-   "#e4a56a",
-   "#fdc679"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
   ],
   "source": "generated",
   "credit": {}
@@ -1572,74 +7557,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-91",
-  "name": "Olive Glow 91",
-  "colors": [
-   "#997d17",
-   "#9d9222",
-   "#9ba923",
-   "#8ec232",
-   "#7bd865"
-  ],
-  "tags": [
-   "analogous",
-   "vivid"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-92",
-  "name": "Rosewood Hearth 92",
-  "colors": [
-   "#8e4f45",
-   "#ae684d",
-   "#c6885f",
-   "#e6a560",
-   "#f6c981"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-93",
-  "name": "Iris Accent 93",
-  "colors": [
-   "#545363",
-   "#706f84",
-   "#8e8e99",
-   "#adacb9",
-   "#a29e05"
-  ],
-  "tags": [
-   "warm",
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-94",
-  "name": "Olive Split 94",
-  "colors": [
-   "#828c5f",
-   "#8e9dc8",
-   "#b690b2",
-   "#bcc0b2",
-   "#616556"
-  ],
-  "tags": [
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-95",
   "name": "Amber Analogous 95",
   "colors": [
@@ -1675,41 +7592,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-97",
-  "name": "Rosewood Hearth 97",
-  "colors": [
-   "#974840",
-   "#b66347",
-   "#d2814e",
-   "#e9a360",
-   "#fec673"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-98",
-  "name": "Iris Accent 98",
-  "colors": [
-   "#4e5568",
-   "#6d717d",
-   "#898f9f",
-   "#a7aec0",
-   "#bb9204"
-  ],
-  "tags": [
-   "warm",
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-99",
   "name": "Rosewood Split 99",
   "colors": [
@@ -1721,24 +7603,6 @@
   ],
   "tags": [
    "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-100",
-  "name": "Lagoon Analogous 100",
-  "colors": [
-   "#35807a",
-   "#469097",
-   "#5da0b4",
-   "#78b0cf",
-   "#96bfe9"
-  ],
-  "tags": [
-   "cool",
-   "muted",
-   "blue_heavy"
   ],
   "source": "generated",
   "credit": {}
@@ -1761,23 +7625,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-102",
-  "name": "Rosewood Hearth 102",
-  "colors": [
-   "#914d3e",
-   "#b26743",
-   "#c5895b",
-   "#dfa867",
-   "#f0cb8a"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-103",
   "name": "Iris Accent 103",
   "colors": [
@@ -1792,23 +7639,6 @@
    "analogous",
    "muted",
    "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-104",
-  "name": "Olive Split 104",
-  "colors": [
-   "#8f8949",
-   "#79a2d2",
-   "#b18fc4",
-   "#c0bfb0",
-   "#656454"
-  ],
-  "tags": [
-   "cool",
-   "muted"
   ],
   "source": "generated",
   "credit": {}
@@ -1849,23 +7679,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-107",
-  "name": "Rosewood Hearth 107",
-  "colors": [
-   "#994737",
-   "#a96c51",
-   "#d38240",
-   "#dea86b",
-   "#f6ca7a"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-108",
   "name": "Olive Accent 108",
   "colors": [
@@ -1880,42 +7693,6 @@
    "analogous",
    "muted",
    "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-109",
-  "name": "Olive Split 109",
-  "colors": [
-   "#838d53",
-   "#879dd2",
-   "#ba8db9",
-   "#bdc0b1",
-   "#626555"
-  ],
-  "tags": [
-   "cool",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-110",
-  "name": "Dusk Analogous 110",
-  "colors": [
-   "#367e85",
-   "#4d8ea0",
-   "#689dbb",
-   "#84acd3",
-   "#a3bbe9"
-  ],
-  "tags": [
-   "cool",
-   "analogous",
-   "muted",
-   "blue_heavy"
   ],
   "source": "generated",
   "credit": {}
@@ -1940,57 +7717,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-112",
-  "name": "Amber Hearth 112",
-  "colors": [
-   "#9a444c",
-   "#b66257",
-   "#d97b59",
-   "#ed9f6f",
-   "#fcc591"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-113",
-  "name": "Dusk Accent 113",
-  "colors": [
-   "#4e5661",
-   "#667385",
-   "#8290a4",
-   "#a5afbd",
-   "#61af39"
-  ],
-  "tags": [
-   "cool",
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-114",
-  "name": "Rosewood Split 114",
-  "colors": [
-   "#9878a8",
-   "#a6a165",
-   "#6daf91",
-   "#c2bac7",
-   "#695f6d"
-  ],
-  "tags": [
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-115",
   "name": "Iris Analogous 115",
   "colors": [
@@ -2004,77 +7730,6 @@
    "cool",
    "analogous",
    "blue_heavy"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-116",
-  "name": "Iris Glow 116",
-  "colors": [
-   "#3f7ede",
-   "#6c86ef",
-   "#928ffd",
-   "#b49cfa",
-   "#d2a8fc"
-  ],
-  "tags": [
-   "cool",
-   "analogous",
-   "vivid",
-   "blue_heavy"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-117",
-  "name": "Iris Hearth 117",
-  "colors": [
-   "#9b443e",
-   "#b1664f",
-   "#d38151",
-   "#dba97c",
-   "#f2ca95"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-118",
-  "name": "Rosewood Accent 118",
-  "colors": [
-   "#5f505a",
-   "#7f6b79",
-   "#9d8897",
-   "#baa7b5",
-   "#b09720"
-  ],
-  "tags": [
-   "warm",
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-119",
-  "name": "Honey Split 119",
-  "colors": [
-   "#9f8149",
-   "#67a8ca",
-   "#a095ce",
-   "#c4bdb0",
-   "#6a6253"
-  ],
-  "tags": [
-   "cool",
-   "muted"
   ],
   "source": "generated",
   "credit": {}
@@ -2094,74 +7749,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-121",
-  "name": "Lagoon Glow 121",
-  "colors": [
-   "#17985e",
-   "#16a782",
-   "#01b7a3",
-   "#14c7c4",
-   "#35d5e4"
-  ],
-  "tags": [
-   "cool",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-122",
-  "name": "Lagoon Hearth 122",
-  "colors": [
-   "#8d513d",
-   "#b76430",
-   "#c58a53",
-   "#d4ad77",
-   "#e9ce90"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-123",
-  "name": "Ember Accent 123",
-  "colors": [
-   "#62504f",
-   "#7c6e6d",
-   "#a38786",
-   "#c1a7a5",
-   "#28abb5"
-  ],
-  "tags": [
-   "cool",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-124",
-  "name": "Ember Split 124",
-  "colors": [
-   "#b47079",
-   "#6bb08d",
-   "#5aabc5",
-   "#cab9ba",
-   "#715e60"
-  ],
-  "tags": [
-   "cool",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-125",
   "name": "Ember Analogous 125",
   "colors": [
@@ -2173,24 +7760,6 @@
   ],
   "tags": [
    "warm"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-126",
-  "name": "Ember Glow 126",
-  "colors": [
-   "#c85275",
-   "#dc626e",
-   "#ef7466",
-   "#fe895e",
-   "#fba773"
-  ],
-  "tags": [
-   "warm",
-   "analogous",
-   "vivid"
   ],
   "source": "generated",
   "credit": {}
@@ -2213,41 +7782,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-128",
-  "name": "Rosewood Accent 128",
-  "colors": [
-   "#5a525c",
-   "#776e78",
-   "#988a9a",
-   "#b8a7bb",
-   "#c38e03"
-  ],
-  "tags": [
-   "warm",
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-129",
-  "name": "Olive Split 129",
-  "colors": [
-   "#8d894e",
-   "#7da1d0",
-   "#b28fc1",
-   "#bfbfb0",
-   "#656454"
-  ],
-  "tags": [
-   "cool",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-130",
   "name": "Rosewood Analogous 130",
   "colors": [
@@ -2256,76 +7790,6 @@
    "#b384a7",
    "#cc95ae",
    "#e5a7b3"
-  ],
-  "tags": [
-   "warm",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-131",
-  "name": "Amber Glow 131",
-  "colors": [
-   "#d44c43",
-   "#e36133",
-   "#f0791d",
-   "#f39428",
-   "#f8ad28"
-  ],
-  "tags": [
-   "warm",
-   "analogous",
-   "vivid"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-132",
-  "name": "Sage Hearth 132",
-  "colors": [
-   "#904e40",
-   "#a66d54",
-   "#c38a60",
-   "#dda96f",
-   "#fcc868"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-133",
-  "name": "Olive Accent 133",
-  "colors": [
-   "#575742",
-   "#737361",
-   "#909081",
-   "#b0af9c",
-   "#dd69ac"
-  ],
-  "tags": [
-   "warm",
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-134",
-  "name": "Lagoon Split 134",
-  "colors": [
-   "#54919b",
-   "#c18e9d",
-   "#bd9576",
-   "#b0c2c5",
-   "#53676b"
   ],
   "tags": [
    "warm",
@@ -2349,77 +7813,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-136",
-  "name": "Iris Glow 136",
-  "colors": [
-   "#5079e2",
-   "#7981f2",
-   "#9e89fd",
-   "#c095fe",
-   "#dea2fd"
-  ],
-  "tags": [
-   "cool",
-   "analogous",
-   "vivid",
-   "blue_heavy"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-137",
-  "name": "Honey Hearth 137",
-  "colors": [
-   "#914e3e",
-   "#ae6948",
-   "#bf8c65",
-   "#d8ab77",
-   "#eccc94"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-138",
-  "name": "Ember Accent 138",
-  "colors": [
-   "#5e5250",
-   "#7f6d6a",
-   "#9f8a86",
-   "#c0a7a4",
-   "#26abbb"
-  ],
-  "tags": [
-   "cool",
-   "analogous",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-139",
-  "name": "Olive Split 139",
-  "colors": [
-   "#8a8956",
-   "#83a0cb",
-   "#b191bc",
-   "#bfbfb0",
-   "#646454"
-  ],
-  "tags": [
-   "cool",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-140",
   "name": "Honey Analogous 140",
   "colors": [
@@ -2431,24 +7824,6 @@
   ],
   "tags": [
    "warm"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-141",
-  "name": "Dusk Glow 141",
-  "colors": [
-   "#16919c",
-   "#00a0bd",
-   "#08ade2",
-   "#51b8fc",
-   "#91c2fc"
-  ],
-  "tags": [
-   "cool",
-   "analogous",
-   "blue_heavy"
   ],
   "source": "generated",
   "credit": {}
@@ -2507,24 +7882,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-145",
-  "name": "Iris Analogous 145",
-  "colors": [
-   "#4576a1",
-   "#6683b7",
-   "#8791ca",
-   "#a89eda",
-   "#c8ade7"
-  ],
-  "tags": [
-   "cool",
-   "analogous",
-   "blue_heavy"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-146",
   "name": "Honey Glow 146",
   "colors": [
@@ -2538,145 +7895,6 @@
    "warm",
    "analogous",
    "vivid"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-147",
-  "name": "Rosewood Hearth 147",
-  "colors": [
-   "#95484c",
-   "#b66254",
-   "#ce8264",
-   "#e2a57d",
-   "#f5c799"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-148",
-  "name": "Dusk Accent 148",
-  "colors": [
-   "#4a5764",
-   "#6b727a",
-   "#86909c",
-   "#a0b0c1",
-   "#6cae0a"
-  ],
-  "tags": [
-   "cool",
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-149",
-  "name": "Lagoon Split 149",
-  "colors": [
-   "#4f91a4",
-   "#c78c95",
-   "#bc976d",
-   "#b0c1c7",
-   "#54676d"
-  ],
-  "tags": [
-   "warm",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-150",
-  "name": "Iris Analogous 150",
-  "colors": [
-   "#4d7794",
-   "#6985aa",
-   "#8694be",
-   "#a3a2d0",
-   "#c1b1df"
-  ],
-  "tags": [
-   "cool",
-   "muted",
-   "blue_heavy"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-151",
-  "name": "Sage Glow 151",
-  "colors": [
-   "#169859",
-   "#0fa87e",
-   "#26b6a0",
-   "#2ec6c0",
-   "#27d6e3"
-  ],
-  "tags": [
-   "cool",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-152",
-  "name": "Lagoon Hearth 152",
-  "colors": [
-   "#994642",
-   "#a76c5a",
-   "#c78764",
-   "#e9a366",
-   "#f1c997"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-153",
-  "name": "Sage Accent 153",
-  "colors": [
-   "#4b5a4a",
-   "#687667",
-   "#879386",
-   "#a3b3a2",
-   "#f16463"
-  ],
-  "tags": [
-   "warm",
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-154",
-  "name": "Rosewood Split 154",
-  "colors": [
-   "#a0769f",
-   "#9ba56d",
-   "#66af9e",
-   "#c5b9c4",
-   "#6b5e6b"
-  ],
-  "tags": [
-   "cool",
-   "muted"
   ],
   "source": "generated",
   "credit": {}
@@ -2715,113 +7933,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-157",
-  "name": "Lagoon Hearth 157",
-  "colors": [
-   "#9e4043",
-   "#ab695b",
-   "#cc8463",
-   "#e2a578",
-   "#fec583"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-158",
-  "name": "Lagoon Accent 158",
-  "colors": [
-   "#445a5d",
-   "#617679",
-   "#7f9396",
-   "#9bb3b7",
-   "#f1645b"
-  ],
-  "tags": [
-   "warm",
-   "analogous",
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-159",
-  "name": "Olive Split 159",
-  "colors": [
-   "#8c8955",
-   "#81a1cb",
-   "#b091bd",
-   "#bfbfb0",
-   "#656454"
-  ],
-  "tags": [
-   "cool",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-160",
-  "name": "Dusk Analogous 160",
-  "colors": [
-   "#397e7f",
-   "#4d8f9b",
-   "#659eb6",
-   "#80aed0",
-   "#9ebde7"
-  ],
-  "tags": [
-   "cool",
-   "analogous",
-   "muted",
-   "blue_heavy"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-161",
-  "name": "Dusk Glow 161",
-  "colors": [
-   "#158db3",
-   "#1099dc",
-   "#49a2fb",
-   "#85adfb",
-   "#acb9fb"
-  ],
-  "tags": [
-   "cool",
-   "analogous",
-   "blue_heavy"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-162",
-  "name": "Lagoon Hearth 162",
-  "colors": [
-   "#99454a",
-   "#b0665a",
-   "#ce8264",
-   "#e7a375",
-   "#fcc58d"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-163",
   "name": "Dusk Accent 163",
   "colors": [
@@ -2836,22 +7947,6 @@
    "analogous",
    "muted",
    "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-164",
-  "name": "Rosewood Split 164",
-  "colors": [
-   "#9879a0",
-   "#a1a272",
-   "#74ac98",
-   "#c4bac6",
-   "#6a5f6c"
-  ],
-  "tags": [
-   "muted"
   ],
   "source": "generated",
   "credit": {}
@@ -2889,23 +7984,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-167",
-  "name": "Ember Hearth 167",
-  "colors": [
-   "#8d5044",
-   "#ba6138",
-   "#d38244",
-   "#dea86d",
-   "#f3ca85"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-168",
   "name": "Amber Accent 168",
   "colors": [
@@ -2933,91 +8011,6 @@
    "#98a575",
    "#b9bdcb",
    "#5e6372"
-  ],
-  "tags": [
-   "warm",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-170",
-  "name": "Amber Analogous 170",
-  "colors": [
-   "#9d5b68",
-   "#b26e6a",
-   "#c4826e",
-   "#d49973",
-   "#e0b07d"
-  ],
-  "tags": [
-   "warm"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-171",
-  "name": "Olive Glow 171",
-  "colors": [
-   "#967f1d",
-   "#999415",
-   "#95ab18",
-   "#8ac24d",
-   "#7cd777"
-  ],
-  "tags": [
-   "analogous",
-   "vivid"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-172",
-  "name": "Sage Hearth 172",
-  "colors": [
-   "#944c37",
-   "#ae6a43",
-   "#cb8748",
-   "#ddaa64",
-   "#ebcd8f"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-173",
-  "name": "Rosewood Accent 173",
-  "colors": [
-   "#5d515c",
-   "#7c6b7b",
-   "#978b96",
-   "#b9a7b8",
-   "#bc920c"
-  ],
-  "tags": [
-   "warm",
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-174",
-  "name": "Iris Split 174",
-  "colors": [
-   "#8280b1",
-   "#b9996a",
-   "#8aa97c",
-   "#bcbcca",
-   "#626171"
   ],
   "tags": [
    "warm",
@@ -3060,74 +8053,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-177",
-  "name": "Dusk Hearth 177",
-  "colors": [
-   "#924d39",
-   "#b46639",
-   "#cb874a",
-   "#d8ab71",
-   "#eecd88"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-178",
-  "name": "Amber Accent 178",
-  "colors": [
-   "#664f4a",
-   "#826b67",
-   "#a18984",
-   "#c2a7a1",
-   "#18b55c"
-  ],
-  "tags": [
-   "warm",
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-179",
-  "name": "Dusk Split 179",
-  "colors": [
-   "#518faa",
-   "#c98c8d",
-   "#b99968",
-   "#b1c1c8",
-   "#55666f"
-  ],
-  "tags": [
-   "warm",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-180",
-  "name": "Ember Analogous 180",
-  "colors": [
-   "#8a5ba1",
-   "#aa68a5",
-   "#c877a7",
-   "#e387a5",
-   "#fc9aa3"
-  ],
-  "tags": [
-   "warm"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-181",
   "name": "Rosewood Glow 181",
   "colors": [
@@ -3146,41 +8071,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-182",
-  "name": "Lagoon Hearth 182",
-  "colors": [
-   "#9a453e",
-   "#ab6a54",
-   "#c78762",
-   "#daa97d",
-   "#f3c98f"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-183",
-  "name": "Ember Accent 183",
-  "colors": [
-   "#634f54",
-   "#7b6d71",
-   "#a0888e",
-   "#bea7ad",
-   "#0db09d"
-  ],
-  "tags": [
-   "cool",
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-184",
   "name": "Lagoon Split 184",
   "colors": [
@@ -3192,75 +8082,6 @@
   ],
   "tags": [
    "warm",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-185",
-  "name": "Honey Analogous 185",
-  "colors": [
-   "#a15d45",
-   "#b07349",
-   "#bc8a50",
-   "#c4a35e",
-   "#c9bc72"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-186",
-  "name": "Lagoon Glow 186",
-  "colors": [
-   "#059392",
-   "#06a2b0",
-   "#20b0d0",
-   "#27bdf6",
-   "#7bc6ff"
-  ],
-  "tags": [
-   "cool",
-   "analogous",
-   "blue_heavy"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-187",
-  "name": "Olive Hearth 187",
-  "colors": [
-   "#9e4238",
-   "#ac6a52",
-   "#cc8558",
-   "#dda877",
-   "#f1ca92"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-188",
-  "name": "Rosewood Accent 188",
-  "colors": [
-   "#5a525e",
-   "#786c7f",
-   "#938c98",
-   "#b5a9bc",
-   "#15aeac"
-  ],
-  "tags": [
-   "cool",
    "muted"
   ],
   "source": "generated",
@@ -3315,23 +8136,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-192",
-  "name": "Ember Hearth 192",
-  "colors": [
-   "#9b453e",
-   "#a86c59",
-   "#d38150",
-   "#eea157",
-   "#f9c783"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-193",
   "name": "Amber Accent 193",
   "colors": [
@@ -3367,23 +8171,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-195",
-  "name": "Lagoon Analogous 195",
-  "colors": [
-   "#0f856a",
-   "#11978d",
-   "#06a9b2",
-   "#3db9d5",
-   "#66c8f6"
-  ],
-  "tags": [
-   "cool",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-196",
   "name": "Sage Glow 196",
   "colors": [
@@ -3397,23 +8184,6 @@
    "cool",
    "analogous",
    "vivid"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-197",
-  "name": "Honey Hearth 197",
-  "colors": [
-   "#9d4245",
-   "#ae6759",
-   "#cb8465",
-   "#f29d5d",
-   "#f6c794"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
   ],
   "source": "generated",
   "credit": {}
@@ -3454,94 +8224,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-200",
-  "name": "Honey Analogous 200",
-  "colors": [
-   "#91674c",
-   "#9e7c57",
-   "#a99265",
-   "#b2a978",
-   "#bac08e"
-  ],
-  "tags": [
-   "warm",
-   "analogous",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-201",
-  "name": "Iris Glow 201",
-  "colors": [
-   "#407fdb",
-   "#6b87ed",
-   "#9190fb",
-   "#b39bff",
-   "#d1a9fb"
-  ],
-  "tags": [
-   "cool",
-   "analogous",
-   "vivid",
-   "blue_heavy"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-202",
-  "name": "Iris Hearth 202",
-  "colors": [
-   "#914c4b",
-   "#b8614e",
-   "#d2815b",
-   "#eda067",
-   "#fec583"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-203",
-  "name": "Rosewood Accent 203",
-  "colors": [
-   "#58535d",
-   "#766d7e",
-   "#928c97",
-   "#b3a9bd",
-   "#14afa7"
-  ],
-  "tags": [
-   "cool",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-204",
-  "name": "Dusk Split 204",
-  "colors": [
-   "#6988b4",
-   "#c69075",
-   "#a3a26a",
-   "#b6becb",
-   "#5b6472"
-  ],
-  "tags": [
-   "warm",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-205",
   "name": "Olive Analogous 205",
   "colors": [
@@ -3558,40 +8240,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-206",
-  "name": "Rosewood Glow 206",
-  "colors": [
-   "#9067cc",
-   "#af70d1",
-   "#cd7ad3",
-   "#ea85d2",
-   "#fb9acc"
-  ],
-  "tags": [
-   "analogous",
-   "vivid"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-207",
-  "name": "Olive Hearth 207",
-  "colors": [
-   "#934a48",
-   "#b26552",
-   "#cf825c",
-   "#dea77c",
-   "#f3c997"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-208",
   "name": "Lagoon Accent 208",
   "colors": [
@@ -3603,95 +8251,6 @@
   ],
   "tags": [
    "cool",
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-209",
-  "name": "Lagoon Split 209",
-  "colors": [
-   "#59938a",
-   "#b790af",
-   "#c29185",
-   "#b0c2bf",
-   "#546865"
-  ],
-  "tags": [
-   "warm",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-210",
-  "name": "Iris Analogous 210",
-  "colors": [
-   "#3477ac",
-   "#5d83c3",
-   "#838fd7",
-   "#a79ce6",
-   "#cba9f2"
-  ],
-  "tags": [
-   "cool",
-   "analogous",
-   "blue_heavy"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-211",
-  "name": "Iris Glow 211",
-  "colors": [
-   "#217fe7",
-   "#5e86fb",
-   "#8b92fa",
-   "#af9dff",
-   "#cdabfc"
-  ],
-  "tags": [
-   "cool",
-   "analogous",
-   "vivid",
-   "blue_heavy"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-212",
-  "name": "Dusk Hearth 212",
-  "colors": [
-   "#9b4446",
-   "#ba5f4e",
-   "#d47f59",
-   "#e4a476",
-   "#fdc588"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-213",
-  "name": "Dusk Accent 213",
-  "colors": [
-   "#425964",
-   "#677479",
-   "#7b949e",
-   "#9eb2bb",
-   "#ec6f24"
-  ],
-  "tags": [
-   "warm",
    "muted",
    "accent"
   ],
@@ -3751,109 +8310,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-217",
-  "name": "Iris Hearth 217",
-  "colors": [
-   "#9a463c",
-   "#a86c56",
-   "#c38965",
-   "#e1a76e",
-   "#f3ca8e"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-218",
-  "name": "Olive Accent 218",
-  "colors": [
-   "#55574a",
-   "#71745e",
-   "#8f9184",
-   "#adb0a1",
-   "#1da5df"
-  ],
-  "tags": [
-   "cool",
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-219",
-  "name": "Olive Split 219",
-  "colors": [
-   "#7d8e5c",
-   "#8f9ccd",
-   "#bb8eb2",
-   "#bbc0b2",
-   "#606656"
-  ],
-  "tags": [
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-220",
-  "name": "Iris Analogous 220",
-  "colors": [
-   "#227ba1",
-   "#4d88bb",
-   "#7395d3",
-   "#97a2e6",
-   "#bbaff6"
-  ],
-  "tags": [
-   "cool",
-   "blue_heavy"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-221",
-  "name": "Honey Glow 221",
-  "colors": [
-   "#ae711b",
-   "#b7850c",
-   "#bc9b03",
-   "#bcb316",
-   "#b5cc0d"
-  ],
-  "tags": [
-   "warm",
-   "analogous",
-   "vivid"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-222",
-  "name": "Olive Hearth 222",
-  "colors": [
-   "#974845",
-   "#b8624b",
-   "#c58868",
-   "#dba880",
-   "#ffc57d"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-223",
   "name": "Ember Accent 223",
   "colors": [
@@ -3868,39 +8324,6 @@
    "analogous",
    "muted",
    "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-224",
-  "name": "Sage Split 224",
-  "colors": [
-   "#5c956c",
-   "#a892cc",
-   "#cc889a",
-   "#b5c2b7",
-   "#59685c"
-  ],
-  "tags": [
-   "warm",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-225",
-  "name": "Honey Analogous 225",
-  "colors": [
-   "#9b6144",
-   "#a8774a",
-   "#b38f56",
-   "#baa767",
-   "#c0bf7e"
-  ],
-  "tags": [
-   "warm"
   ],
   "source": "generated",
   "credit": {}
@@ -3923,317 +8346,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-227",
-  "name": "Olive Hearth 227",
-  "colors": [
-   "#9a482b",
-   "#ac6b43",
-   "#c48a53",
-   "#d7ac6f",
-   "#eecd7d"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-228",
-  "name": "Iris Accent 228",
-  "colors": [
-   "#4d5566",
-   "#6b7280",
-   "#8a8f99",
-   "#a4aec4",
-   "#bf900b"
-  ],
-  "tags": [
-   "warm",
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-229",
-  "name": "Honey Split 229",
-  "colors": [
-   "#a77c56",
-   "#63abb9",
-   "#8e9cce",
-   "#c8bbb1",
-   "#6e6055"
-  ],
-  "tags": [
-   "cool",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-230",
-  "name": "Dusk Analogous 230",
-  "colors": [
-   "#0c8281",
-   "#1b93a3",
-   "#44a2c2",
-   "#69b0e0",
-   "#8dbefa"
-  ],
-  "tags": [
-   "cool",
-   "blue_heavy"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-231",
-  "name": "Rosewood Glow 231",
-  "colors": [
-   "#6b6eeb",
-   "#9175f6",
-   "#b57dfc",
-   "#d885fe",
-   "#fa8ffc"
-  ],
-  "tags": [
-   "analogous",
-   "vivid"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-232",
-  "name": "Ember Hearth 232",
-  "colors": [
-   "#9d4244",
-   "#ab695b",
-   "#d87d52",
-   "#f19e5e",
-   "#ffc583"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-233",
-  "name": "Iris Accent 233",
-  "colors": [
-   "#4d5567",
-   "#6b7181",
-   "#878fa2",
-   "#a7aebd",
-   "#f95c51"
-  ],
-  "tags": [
-   "warm",
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-234",
-  "name": "Dusk Split 234",
-  "colors": [
-   "#5190a7",
-   "#c88c91",
-   "#bb986b",
-   "#b1c1c7",
-   "#54676e"
-  ],
-  "tags": [
-   "warm",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-235",
-  "name": "Amber Analogous 235",
-  "colors": [
-   "#a25a56",
-   "#b46e57",
-   "#c3855b",
-   "#cf9d63",
-   "#d8b671"
-  ],
-  "tags": [
-   "warm"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-236",
-  "name": "Honey Glow 236",
-  "colors": [
-   "#b16f17",
-   "#b88520",
-   "#be9a1c",
-   "#c0b125",
-   "#bbca1d"
-  ],
-  "tags": [
-   "warm",
-   "analogous",
-   "vivid"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-237",
-  "name": "Iris Hearth 237",
-  "colors": [
-   "#9e3f4b",
-   "#a96a62",
-   "#c68671",
-   "#e5a37c",
-   "#fac595"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-238",
-  "name": "Honey Accent 238",
-  "colors": [
-   "#5b5548",
-   "#7a715e",
-   "#968e80",
-   "#b4ada0",
-   "#6593fd"
-  ],
-  "tags": [
-   "cool",
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-239",
-  "name": "Ember Split 239",
-  "colors": [
-   "#ae7380",
-   "#78ad8a",
-   "#63abbc",
-   "#cab9bc",
-   "#705e61"
-  ],
-  "tags": [
-   "cool",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-240",
-  "name": "Olive Analogous 240",
-  "colors": [
-   "#906931",
-   "#998041",
-   "#9e9856",
-   "#a2b06f",
-   "#a4c78d"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-241",
-  "name": "Ember Glow 241",
-  "colors": [
-   "#c84a91",
-   "#e1578a",
-   "#f76780",
-   "#ff857e",
-   "#ffa288"
-  ],
-  "tags": [
-   "warm",
-   "analogous",
-   "vivid"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-242",
-  "name": "Lagoon Hearth 242",
-  "colors": [
-   "#8b5240",
-   "#ac6b44",
-   "#bf8c60",
-   "#d9ab6c",
-   "#e9ce92"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-243",
-  "name": "Honey Accent 243",
-  "colors": [
-   "#5a563f",
-   "#747265",
-   "#93907c",
-   "#b2af9a",
-   "#e25ec1"
-  ],
-  "tags": [
-   "warm",
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-244",
-  "name": "Iris Split 244",
-  "colors": [
-   "#7782b8",
-   "#c39467",
-   "#93a86e",
-   "#b9bdcb",
-   "#5f6272"
-  ],
-  "tags": [
-   "warm",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-245",
   "name": "Lagoon Analogous 245",
   "colors": [
@@ -4245,41 +8357,6 @@
   ],
   "tags": [
    "cool"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-246",
-  "name": "Rosewood Glow 246",
-  "colors": [
-   "#6973df",
-   "#8d7beb",
-   "#af84f3",
-   "#d18df7",
-   "#f197f8"
-  ],
-  "tags": [
-   "analogous",
-   "vivid",
-   "blue_heavy"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-247",
-  "name": "Amber Hearth 247",
-  "colors": [
-   "#9b4729",
-   "#b7642c",
-   "#c18c5a",
-   "#deaa5c",
-   "#efcd7d"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
   ],
   "source": "generated",
   "credit": {}
@@ -4302,57 +8379,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-249",
-  "name": "Iris Split 249",
-  "colors": [
-   "#887db0",
-   "#b59b66",
-   "#81ab80",
-   "#bebcca",
-   "#646171"
-  ],
-  "tags": [
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-250",
-  "name": "Ember Analogous 250",
-  "colors": [
-   "#826394",
-   "#9e729c",
-   "#b981a3",
-   "#d292a8",
-   "#eaa5ac"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-251",
-  "name": "Dusk Glow 251",
-  "colors": [
-   "#089299",
-   "#19a0b7",
-   "#16aedb",
-   "#42bafb",
-   "#8ac3fc"
-  ],
-  "tags": [
-   "cool",
-   "analogous",
-   "blue_heavy"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-252",
   "name": "Iris Hearth 252",
   "colors": [
@@ -4365,128 +8391,6 @@
   "tags": [
    "warm",
    "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-253",
-  "name": "Rosewood Accent 253",
-  "colors": [
-   "#624e5d",
-   "#7b6c77",
-   "#9d8898",
-   "#bba7b6",
-   "#19aac4"
-  ],
-  "tags": [
-   "cool",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-254",
-  "name": "Dusk Split 254",
-  "colors": [
-   "#5a8fa0",
-   "#c28f95",
-   "#b89874",
-   "#b0c1c7",
-   "#54676d"
-  ],
-  "tags": [
-   "warm",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-255",
-  "name": "Rosewood Analogous 255",
-  "colors": [
-   "#7d6695",
-   "#99749f",
-   "#b483a7",
-   "#ce94ad",
-   "#e6a6b2"
-  ],
-  "tags": [
-   "warm",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-256",
-  "name": "Iris Glow 256",
-  "colors": [
-   "#6472e7",
-   "#8a79f4",
-   "#ae81fb",
-   "#ce8ef9",
-   "#f393ff"
-  ],
-  "tags": [
-   "cool",
-   "analogous",
-   "vivid",
-   "blue_heavy"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-257",
-  "name": "Ember Hearth 257",
-  "colors": [
-   "#97483b",
-   "#ba613a",
-   "#cd8551",
-   "#e2a767",
-   "#f4ca85"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-258",
-  "name": "Sage Accent 258",
-  "colors": [
-   "#4c5950",
-   "#6b746e",
-   "#819588",
-   "#9fb4a6",
-   "#d869bf"
-  ],
-  "tags": [
-   "warm",
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-259",
-  "name": "Lagoon Split 259",
-  "colors": [
-   "#479593",
-   "#c18caa",
-   "#c88f78",
-   "#b0c2c1",
-   "#536867"
-  ],
-  "tags": [
-   "warm",
-   "muted"
   ],
   "source": "generated",
   "credit": {}
@@ -4510,42 +8414,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-261",
-  "name": "Iris Glow 261",
-  "colors": [
-   "#287cee",
-   "#6685f8",
-   "#908ffe",
-   "#b39cfb",
-   "#d1a8fe"
-  ],
-  "tags": [
-   "cool",
-   "analogous",
-   "vivid",
-   "blue_heavy"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-262",
-  "name": "Rosewood Hearth 262",
-  "colors": [
-   "#8e4f41",
-   "#b46640",
-   "#d28342",
-   "#e1a864",
-   "#f1cb85"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-263",
   "name": "Ember Accent 263",
   "colors": [
@@ -4564,418 +8432,6 @@
   "credit": {}
  },
  {
-  "id": "gen-0-264",
-  "name": "Olive Split 264",
-  "colors": [
-   "#749157",
-   "#9498d5",
-   "#c588b0",
-   "#b9c1b3",
-   "#5e6658"
-  ],
-  "tags": [
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-265",
-  "name": "Amber Analogous 265",
-  "colors": [
-   "#97615b",
-   "#a87561",
-   "#b78a6a",
-   "#c4a176",
-   "#ceb885"
-  ],
-  "tags": [
-   "warm",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-266",
-  "name": "Olive Glow 266",
-  "colors": [
-   "#8d8311",
-   "#8c9910",
-   "#80b123",
-   "#68c94e",
-   "#47de7e"
-  ],
-  "tags": [
-   "analogous",
-   "vivid"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-267",
-  "name": "Ember Hearth 267",
-  "colors": [
-   "#974938",
-   "#ab6b4e",
-   "#c28a60",
-   "#e5a65b",
-   "#f3cb83"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-268",
-  "name": "Lagoon Accent 268",
-  "colors": [
-   "#49595b",
-   "#5e777a",
-   "#799599",
-   "#97b4b8",
-   "#d366d6"
-  ],
-  "tags": [
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-269",
-  "name": "Ember Split 269",
-  "colors": [
-   "#a3778f",
-   "#8da87f",
-   "#6cabab",
-   "#c8b9c1",
-   "#6e5e66"
-  ],
-  "tags": [
-   "cool",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-270",
-  "name": "Rosewood Analogous 270",
-  "colors": [
-   "#7f5fa9",
-   "#9f6cb0",
-   "#bf7ab4",
-   "#dd89b5",
-   "#f89ab4"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-271",
-  "name": "Dusk Glow 271",
-  "colors": [
-   "#08919c",
-   "#1e9fba",
-   "#23adde",
-   "#4ab8fe",
-   "#8ec2fd"
-  ],
-  "tags": [
-   "cool",
-   "analogous",
-   "blue_heavy"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-272",
-  "name": "Honey Hearth 272",
-  "colors": [
-   "#9b472e",
-   "#b1683e",
-   "#bf8c61",
-   "#d4ad7a",
-   "#e9ce94"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-273",
-  "name": "Honey Accent 273",
-  "colors": [
-   "#5c5542",
-   "#777163",
-   "#968f7a",
-   "#b5ae9b",
-   "#0fabc0"
-  ],
-  "tags": [
-   "cool",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-274",
-  "name": "Lagoon Split 274",
-  "colors": [
-   "#4e929e",
-   "#c48c9d",
-   "#c09472",
-   "#b0c2c5",
-   "#53676b"
-  ],
-  "tags": [
-   "warm",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-275",
-  "name": "Lagoon Analogous 275",
-  "colors": [
-   "#21836e",
-   "#2a958f",
-   "#40a6b0",
-   "#5cb6d0",
-   "#7cc5ee"
-  ],
-  "tags": [
-   "cool",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-276",
-  "name": "Olive Glow 276",
-  "colors": [
-   "#aa7400",
-   "#af8a1a",
-   "#b2a021",
-   "#b1b717",
-   "#a4d121"
-  ],
-  "tags": [
-   "warm",
-   "analogous",
-   "vivid"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-277",
-  "name": "Sage Hearth 277",
-  "colors": [
-   "#8d513e",
-   "#a66e4f",
-   "#ce853f",
-   "#daab6b",
-   "#e9ce91"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-278",
-  "name": "Dusk Accent 278",
-  "colors": [
-   "#4c5665",
-   "#697280",
-   "#87909c",
-   "#a2afc3",
-   "#fa5768"
-  ],
-  "tags": [
-   "warm",
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-279",
-  "name": "Olive Split 279",
-  "colors": [
-   "#868c4c",
-   "#829ed5",
-   "#b98cbe",
-   "#bdbfb1",
-   "#636555"
-  ],
-  "tags": [
-   "cool",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-280",
-  "name": "Ember Analogous 280",
-  "colors": [
-   "#905b94",
-   "#ad6998",
-   "#c87999",
-   "#e18b99",
-   "#f79f99"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-281",
-  "name": "Honey Glow 281",
-  "colors": [
-   "#aa7414",
-   "#b28907",
-   "#b59f0c",
-   "#b3b624",
-   "#a8d02c"
-  ],
-  "tags": [
-   "warm",
-   "analogous",
-   "vivid"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-282",
-  "name": "Lagoon Hearth 282",
-  "colors": [
-   "#924c47",
-   "#a86b5a",
-   "#c48868",
-   "#dda87b",
-   "#fbc783"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-283",
-  "name": "Dusk Accent 283",
-  "colors": [
-   "#445963",
-   "#697379",
-   "#7c939f",
-   "#a4b0b6",
-   "#9da01c"
-  ],
-  "tags": [
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-284",
-  "name": "Dusk Split 284",
-  "colors": [
-   "#6689b0",
-   "#c6907c",
-   "#a8a06c",
-   "#b5bfcb",
-   "#596571"
-  ],
-  "tags": [
-   "warm",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-285",
-  "name": "Honey Analogous 285",
-  "colors": [
-   "#a75845",
-   "#b76e44",
-   "#c38748",
-   "#cba053",
-   "#d0ba66"
-  ],
-  "tags": [
-   "warm"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-286",
-  "name": "Iris Glow 286",
-  "colors": [
-   "#5a79db",
-   "#8081ea",
-   "#a38af5",
-   "#c493fc",
-   "#e2a0fa"
-  ],
-  "tags": [
-   "cool",
-   "analogous",
-   "vivid",
-   "blue_heavy"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-287",
-  "name": "Honey Hearth 287",
-  "colors": [
-   "#9c4344",
-   "#af6757",
-   "#d38059",
-   "#eda064",
-   "#fec583"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
   "id": "gen-0-288",
   "name": "Sage Accent 288",
   "colors": [
@@ -4989,212 +8445,6 @@
    "cool",
    "muted",
    "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-289",
-  "name": "Dusk Split 289",
-  "colors": [
-   "#5f8da4",
-   "#c2908e",
-   "#b29b73",
-   "#b1c0c8",
-   "#55666f"
-  ],
-  "tags": [
-   "warm",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-290",
-  "name": "Iris Analogous 290",
-  "colors": [
-   "#2c78ac",
-   "#5884c4",
-   "#7f90d8",
-   "#a49de9",
-   "#c8aaf5"
-  ],
-  "tags": [
-   "cool",
-   "analogous",
-   "blue_heavy"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-291",
-  "name": "Ember Glow 291",
-  "colors": [
-   "#d24478",
-   "#e8546d",
-   "#fb6860",
-   "#ff8763",
-   "#fca676"
-  ],
-  "tags": [
-   "warm",
-   "analogous",
-   "vivid"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-292",
-  "name": "Sage Hearth 292",
-  "colors": [
-   "#954949",
-   "#ab695b",
-   "#ca8565",
-   "#eba16a",
-   "#fec585"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-293",
-  "name": "Lagoon Accent 293",
-  "colors": [
-   "#455a5b",
-   "#5c7779",
-   "#809394",
-   "#98b4b6",
-   "#ec686d"
-  ],
-  "tags": [
-   "warm",
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-294",
-  "name": "Lagoon Split 294",
-  "colors": [
-   "#4b91a6",
-   "#c98b95",
-   "#be9669",
-   "#b0c1c6",
-   "#54676d"
-  ],
-  "tags": [
-   "warm",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-295",
-  "name": "Olive Analogous 295",
-  "colors": [
-   "#847034",
-   "#8a8649",
-   "#8e9d63",
-   "#90b480",
-   "#94caa0"
-  ],
-  "tags": [
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-296",
-  "name": "Olive Glow 296",
-  "colors": [
-   "#8a8406",
-   "#879b0a",
-   "#78b323",
-   "#59cb51",
-   "#27e083"
-  ],
-  "tags": [
-   "analogous",
-   "vivid"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-297",
-  "name": "Dusk Hearth 297",
-  "colors": [
-   "#9e4047",
-   "#ac685d",
-   "#c6876e",
-   "#e5a478",
-   "#ffc488"
-  ],
-  "tags": [
-   "warm",
-   "analogous"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-298",
-  "name": "Ember Accent 298",
-  "colors": [
-   "#644f50",
-   "#826b6c",
-   "#a18889",
-   "#c2a6a7",
-   "#4998fe"
-  ],
-  "tags": [
-   "cool",
-   "muted",
-   "accent"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-299",
-  "name": "Honey Split 299",
-  "colors": [
-   "#ad794e",
-   "#55adbd",
-   "#8a9cd6",
-   "#c8bbb1",
-   "#6e6055"
-  ],
-  "tags": [
-   "cool",
-   "muted"
-  ],
-  "source": "generated",
-  "credit": {}
- },
- {
-  "id": "gen-0-300",
-  "name": "Rosewood Analogous 300",
-  "colors": [
-   "#7c659a",
-   "#9973a4",
-   "#b582ab",
-   "#d092b0",
-   "#eaa4b4"
-  ],
-  "tags": [
-   "warm"
   ],
   "source": "generated",
   "credit": {}
