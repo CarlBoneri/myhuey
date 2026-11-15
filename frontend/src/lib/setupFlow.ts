@@ -75,6 +75,8 @@ export function setupReducer(state: SetupState, event: SetupEvent): SetupState {
       // stand; a bridge that stopped answering may be the wrong one or have a new address.
       if (event.reason === 'timeout') return { ...state, step: 'press', error: event.message };
       if (event.reason === 'unreachable') return { ...state, step: 'find', bridge: null, error: event.message };
+      // Waiting on several bridges there is no one bridge to confirm: back to the list.
+      if (!state.bridge) return { ...state, step: 'find', candidates: [], error: event.message };
       return { ...state, step: 'confirm', error: event.message };
     case 'imported':
       return { ...state, step: 'done', imported: event.added };

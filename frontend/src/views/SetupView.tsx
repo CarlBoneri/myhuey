@@ -1,6 +1,6 @@
 // A guided first run: find the Hue bridge, confirm it is the right one, press its link
 // button, and bring its rooms in. Every step explains what happens and why.
-import { useEffect, useReducer, useState } from 'react';
+import { useEffect, useReducer, useRef, useState } from 'react';
 import { ArrowLeft, Check, Download, Map as MapIcon, Search, ShieldCheck, Wifi } from 'lucide-react';
 import { ApiError, api } from '../api';
 import { useStore } from '../store';
@@ -48,18 +48,20 @@ export function SetupView() {
   }, [state.step, found, finding]);
 
   // Each new attempt on the press step asks the bridge to pair while the person presses its button.
+  // Only one request waits at a time (the server refuses a second): coming back to this step while
+  // one is still waiting re-attaches to it, and its answer is never dropped, since a press that
+  // paired the bridge has already made the key.
+  const pairing = useRef(false);
   useEffect(() => {
-    if (state.step !== 'press' || state.error || (!state.bridge && !state.candidates.length)) return;
-    let cancelled = false;
+    if (state.step !== 'press' || state.error || (!state.bridge && !state.candidates.length) || pairing.current) return;
+    pairing.current = true;
     setDeadline(Date.now() + windowSeconds * 1000);
-    (state.bridge ? api.pair(state.bridge.bridge_ip) : api.pairAny(state.candidates)).then(
-      async () => {
-        await load();
-        if (!cancelled) dispatch({ type: 'paired', lights: Object.keys(useStore.getState().lights).length });
-      },
-      (error) => !cancelled && dispatch({ type: 'pairFailed', reason: failureOf(error), message: (error as Error).message }),
-    );
-    return () => { cancelled = true; };
+    (state.bridge ? api.pair(state.bridge.bridge_ip) : api.pairAny(state.candidates))
+      .then(async () => {
+        try { await load(); } catch { /* the lights show once the page refreshes */ }
+        dispatch({ type: 'paired', lights: Object.keys(useStore.getState().lights).length });
+      }, (error) => dispatch({ type: 'pairFailed', reason: failureOf(error), message: (error as Error).message }))
+      .finally(() => { pairing.current = false; });
   }, [state.attempts]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {

@@ -15,3 +15,11 @@ export function showRoomSlider(prefs: Pick<Preferences, 'room_sliders' | 'room_s
   if (!room.lights.some((p) => lights[p.light_id])) return false;
   return !prefs.room_sliders_when_on_only || roomBrightness(room, lights) !== null;
 }
+
+/** The level to send for a slider value, or null when it would not change the room
+ * (the same whole percent, e.g. a Tab keyup, or every light is off). */
+export function brightnessToSend(value: number, live: number | null): number | null {
+  if (live === null) return null;
+  const level = Math.round(value);
+  return level === live ? null : level;
+}

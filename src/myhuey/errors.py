@@ -50,3 +50,10 @@ class LinkButtonNotPressed(HueError):
 class SceneNotFound(HueError, LookupError):
     def __init__(self, key: str) -> None:
         super().__init__(f"Scene '{key}' not found")
+
+
+class PairingInProgress(HueError):
+    """A pairing is already waiting for a link-button press; starting another would create a second key."""
+
+    def __init__(self) -> None:
+        super().__init__("MyHuey is already waiting for a link-button press. Press the button, or wait for that to time out.")

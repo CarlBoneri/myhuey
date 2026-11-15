@@ -11,12 +11,11 @@ from typing import Any
 from fastapi import FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictInt
 
-from .errors import BridgeNotConfigured, HueError, LinkButtonNotPressed, RoomNotFound, SceneNotFound
+from .errors import BridgeNotConfigured, HueError, LinkButtonNotPressed, PairingInProgress, RoomNotFound, SceneNotFound
 from .hue import COLLECTIONS, PAIRING_WINDOW, HueBridgeClient
 from .images import MAX_UPLOAD_BYTES, media_type
-from .migrations import CURRENT_VERSION
 from .palette import MOODS
 from .service import HueRoomService
 from .discovery import discover
@@ -27,6 +26,9 @@ from .shapes import BY_ARCHETYPE, BY_MODEL, BY_PRODUCT, DEFAULT_PROFILE
 BASE_DIR = Path(__file__).resolve().parents[2]
 APP_DIR = BASE_DIR / "static" / "app"
 CM = Field(None, ge=-10000, le=10000)
+# What the web app expects of this server. Raise it when routes are added, so a page
+# served from a newer build tells a person to restart an older running server.
+API_REVISION = 4
 
 _NOT_BUILT = """<!doctype html><meta charset="utf-8"><title>MyHuey</title>
 <body style="font-family:system-ui;background:#0f0e17;color:#e8e6f0;padding:3rem">
@@ -114,7 +116,7 @@ class LightPlacement(Body):
 
 
 class RoomBrightness(Body):
-    brightness: int = Field(..., ge=1, le=100, description="percent")
+    brightness: StrictInt = Field(..., ge=1, le=100, description="percent")
 
 
 class RoomPower(Body):
@@ -145,7 +147,7 @@ class EffectChange(BaseModel):
 def _status_for(exc: Exception) -> int:
     if isinstance(exc, (RoomNotFound, SceneNotFound)):
         return 404
-    if isinstance(exc, LinkButtonNotPressed):
+    if isinstance(exc, (LinkButtonNotPressed, PairingInProgress)):
         return 409
     if isinstance(exc, (BridgeNotConfigured, ValueError)):
         return 400
@@ -183,7 +185,7 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
     @app.get("/api/health")
     def health() -> dict[str, Any]:
         # `api` lets the web page notice a server started before an update.
-        return {"status": "ok", "api": CURRENT_VERSION}
+        return {"status": "ok", "api": API_REVISION}
 
     # Bridge setup
 

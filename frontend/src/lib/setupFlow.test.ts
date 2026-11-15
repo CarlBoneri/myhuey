@@ -56,6 +56,12 @@ describe('setup wizard steps', () => {
     expect(setupReducer(waiting, { type: 'checked', bridge }).candidates).toEqual([]);
   });
 
+  it('sends a refusal while waiting on several bridges back to the list, not to an empty confirm step', () => {
+    const waiting = setupReducer(at('find'), { type: 'pressAny', addresses: ['10.0.0.77', '10.0.0.93'] });
+    expect(setupReducer(waiting, { type: 'pairFailed', reason: 'rejected', message: 'certificate changed' }))
+      .toMatchObject({ step: 'find', candidates: [], error: 'certificate changed' });
+  });
+
   it('goes back one step at a time', () => {
     expect(setupReducer(at('find'), { type: 'back' }).step).toBe('welcome');
     expect(setupReducer(at('confirm', { bridge }), { type: 'back' }).step).toBe('find');

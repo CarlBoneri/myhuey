@@ -34,7 +34,7 @@ async function call<T>(path: string, init: RequestInit & { json?: unknown } = {}
 }
 
 /** The document version this page was built for. A server reporting less was started before an update. */
-export const API_VERSION = 3;
+export const API_VERSION = 4;
 
 const room = (name: string) => `/api/rooms/${encodeURIComponent(name)}`;
 

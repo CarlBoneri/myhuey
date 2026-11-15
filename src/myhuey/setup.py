@@ -10,13 +10,15 @@ import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Callable, Iterable
 
-from .errors import BridgeUnreachable, HueApiError, HueError, LinkButtonNotPressed
+from .errors import BridgeCertificateError, BridgeUnreachable, HueApiError, HueError, LinkButtonNotPressed, PairingInProgress
 from .hue import PAIRING_WINDOW, HueBridgeClient
 from .discovery import discover
 from .service import HueRoomService
-from .tls import pinned_bridge_id
+from .tls import pin_certificate, pinned_bridge_id
 
 _MAX_RANGE_SIZE = 1024
+# One pairing at a time: a second request while one waits would make a second key on the bridge.
+_pairing = threading.Lock()
 
 
 def expand_ip_ranges(ranges: Iterable[str] | None) -> list[str]:
@@ -66,6 +68,16 @@ def instance_name() -> str:
     return cleaned or "computer"
 
 
+def _fresh_pin(address: str, service: HueRoomService) -> None:
+    """Verify the certificate at an address that is not the paired bridge, replacing any
+    old pin for it. Addresses change hands (DHCP), so a pin made while browsing bridges in
+    the wizard must not block pairing the bridge that has that address now. The paired
+    bridge keeps its pin; a renewal there is handled by bridge ID."""
+    if address != service.get_bridge().get("ip"):
+        host, port = HueBridgeClient.normalize_bridge_endpoint(address)
+        pin_certificate(host, port, cert_dir=service.cert_dir, replace=True)
+
+
 def _save_pairing(address: str, username: str, service: HueRoomService) -> None:
     """Save the bridge with the ID its verified certificate carries, so it can be found
     again by ID if its address changes."""
@@ -77,12 +89,20 @@ def check_bridge(bridge_ip: str, *, service: HueRoomService) -> dict[str, Any]:
     """What the bridge at an address says about itself, before pairing: proof that it is a
     Hue bridge, which one, and whether it is the one already paired."""
     address = bridge_address(bridge_ip)
+    _fresh_pin(address, service)
     config = HueBridgeClient.probe(address, cert_dir=service.cert_dir)
+    host, port = HueBridgeClient.normalize_bridge_endpoint(address)
+    proven = pinned_bridge_id(host, port, service.cert_dir)
+    claimed = str(config.get("bridgeid") or "")
+    if proven and claimed and claimed.lower() != proven:
+        raise BridgeCertificateError(
+            f"The bridge at {address} says it is {claimed.upper()}, which does not match its certificate ({proven.upper()})."
+        )
     return {
         "bridge_ip": address,
         "name": str(config.get("name") or "Hue bridge"),
         "model": str(config.get("modelid") or ""),
-        "bridge_id": str(config.get("bridgeid") or ""),
+        "bridge_id": proven or claimed,
         "software": str(config.get("swversion") or ""),
         "api_version": str(config.get("apiversion") or ""),
         "paired": service.get_bridge().get("ip") == address,
@@ -99,10 +119,16 @@ def pair_bridge(
 ) -> dict[str, Any]:
     """Wait for the link button, register, and save the bridge. The result never holds the username."""
     address = bridge_address(bridge_ip)
-    username = HueBridgeClient.register_user(
-        address, app_name, window=window, on_wait=on_wait, cert_dir=service.cert_dir, instance=instance_name()
-    )
-    _save_pairing(address, username, service)
+    if not _pairing.acquire(blocking=False):
+        raise PairingInProgress()
+    try:
+        _fresh_pin(address, service)
+        username = HueBridgeClient.register_user(
+            address, app_name, window=window, on_wait=on_wait, cert_dir=service.cert_dir, instance=instance_name()
+        )
+        _save_pairing(address, username, service)
+    finally:
+        _pairing.release()
     return {"bridge_ip": address, "app_name": app_name, "status": "ready"}
 
 
@@ -116,34 +142,51 @@ def pair_any(
     """Wait for the link button on several bridges at once and pair whichever is pressed.
 
     Signify's discovery guide suggests this for homes with more than one bridge: the
-    person picks a bridge by pressing its button. The others stop asking at once.
+    person picks a bridge by pressing its button. The others stop asking at once, and all
+    stop if any fails unexpectedly.
+
+    Known limit: if two buttons are pressed within the same second, both bridges may
+    grant a key before either sees the other; only the first is saved.
     """
     addresses = list(dict.fromkeys(bridge_address(ip) for ip in bridge_ips))
     if not addresses:
         raise ValueError("Give at least one bridge address")
-    paired = threading.Event()
+    if not _pairing.acquire(blocking=False):
+        raise PairingInProgress()
+    stop = threading.Event()
     instance = instance_name()
 
     def attempt(address: str) -> tuple[str, str]:
-        username = HueBridgeClient.register_user(
-            address, app_name, window=window, cert_dir=service.cert_dir, instance=instance, should_stop=paired.is_set
-        )
-        paired.set()
+        try:
+            _fresh_pin(address, service)
+            username = HueBridgeClient.register_user(
+                address, app_name, window=window, cert_dir=service.cert_dir, instance=instance, should_stop=stop.is_set
+            )
+        except LinkButtonNotPressed:
+            raise
+        except Exception:
+            stop.set()  # something is wrong; do not leave the others waiting for 30 seconds
+            raise
+        stop.set()
         return address, username
 
     winner: tuple[str, str] | None = None
-    errors: list[HueError] = []
-    with ThreadPoolExecutor(max_workers=len(addresses)) as pool:
-        for future in as_completed([pool.submit(attempt, address) for address in addresses]):
-            try:
-                result = future.result()
-            except HueError as exc:
-                errors.append(exc)
-                continue
-            winner = winner or result
+    errors: list[Exception] = []
+    try:
+        with ThreadPoolExecutor(max_workers=len(addresses)) as pool:
+            for future in as_completed([pool.submit(attempt, address) for address in addresses]):
+                try:
+                    result = future.result()
+                except Exception as exc:  # noqa: BLE001 - reported below
+                    errors.append(exc)
+                    continue
+                winner = winner or result
+    finally:
+        stop.set()
+        _pairing.release()
     if winner is None:
-        # Nobody pressed a button is the likeliest story; report that over an unreachable bridge.
-        raise next((e for e in errors if isinstance(e, LinkButtonNotPressed)), errors[0] if errors else LinkButtonNotPressed(addresses[0], window))
+        # "No button was pressed" only when that is all that happened; a real fault is reported over it.
+        raise next((e for e in errors if not isinstance(e, LinkButtonNotPressed)), errors[0] if errors else LinkButtonNotPressed(addresses[0], window))
     _save_pairing(winner[0], winner[1], service)
     return {"bridge_ip": winner[0], "app_name": app_name, "status": "ready"}
 

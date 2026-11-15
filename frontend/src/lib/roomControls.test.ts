@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { roomBrightness, showRoomSlider } from './roomControls';
+import { brightnessToSend, roomBrightness, showRoomSlider } from './roomControls';
 import type { BridgeLight, Preferences, Room } from '../types';
 
 const light = (id: string, on: boolean, brightness: number | null) => ({ id, on, brightness }) as BridgeLight;
@@ -12,6 +12,11 @@ describe('room brightness slider', () => {
     expect(roomBrightness(room, lights)).toBe(75);
     expect(roomBrightness(room, { 3: light('3', false, 254) })).toBeNull();
     expect(roomBrightness(room, { 1: light('1', true, null) })).toBe(100);
+  });
+  it('sends a level only when it changes the room', () => {
+    expect(brightnessToSend(40, 75)).toBe(40);
+    expect(brightnessToSend(74.6, 75)).toBeNull(); // a Tab or Shift keyup on the slider
+    expect(brightnessToSend(40, null)).toBeNull(); // every light is off
   });
   it('appears per the preferences', () => {
     expect(showRoomSlider(prefs, room, lights)).toBe(true);

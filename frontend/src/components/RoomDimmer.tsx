@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Sun } from 'lucide-react';
 import { setRoomBrightness, useStore } from '../store';
-import { roomBrightness, showRoomSlider } from '../lib/roomControls';
+import { brightnessToSend, roomBrightness, showRoomSlider } from '../lib/roomControls';
 import type { Room } from '../types';
 import { Slider } from './ui';
 
@@ -29,7 +29,9 @@ export function RoomDimmer({ room, compact = false }: { room: Room; compact?: bo
         onChange={(v) => { setDragging(true); setValue(v); }}
         onCommit={async (v) => {
           setDragging(false);
-          if (!off) await setRoomBrightness(room, v);
+          const level = brightnessToSend(v, live);
+          if (level !== null) await setRoomBrightness(room, level);
+          else if (live !== null) setValue(live);
         }}
       />
     </div>

@@ -5,7 +5,7 @@ import io
 from fastapi.testclient import TestClient
 from PIL import Image
 
-from myhuey.api import create_app
+from myhuey.api import API_REVISION, create_app
 from myhuey.migrations import CURRENT_VERSION, migrate
 from myhuey.models import Room
 from myhuey.service import HueRoomService
@@ -78,4 +78,4 @@ def test_replacing_plan_image_keeps_real_scale(db_path):
 
 
 def test_health_reports_api_version(db_path):
-    assert TestClient(create_app(db_path)).get("/api/health").json() == {"status": "ok", "api": CURRENT_VERSION}
+    assert TestClient(create_app(db_path)).get("/api/health").json() == {"status": "ok", "api": API_REVISION}

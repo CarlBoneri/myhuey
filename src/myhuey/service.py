@@ -6,6 +6,8 @@ The CLI and the web API both go through this class; neither talks to the bridge 
 
 from __future__ import annotations
 
+import functools
+import threading
 import time
 from pathlib import Path
 from typing import Any, Callable
@@ -21,13 +23,13 @@ from .preferences import merged as merged_preferences, validate as validate_pref
 from .scenes import Scene, evaluate
 from .shapes import profile_for
 from .storage import DEFAULT_STORAGE_PATH, load_config, save_config, uploads_dir
-from .tls import pin_certificate
+from .tls import pin_certificate, pinned_bridge_id
 from .units import UNIT_SYSTEMS
 
 _GRID_COLUMNS = 3
 _GRID_CELL_CM = (500.0, 350.0)
-_V2_CACHE_SECONDS = 4.0
-_RELOCATE_EVERY_SECONDS = 60.0  # gradient state is shown live, so refresh about once per poll
+_V2_CACHE_SECONDS = 4.0  # gradient state is shown live, so refresh about once per poll
+_RELOCATE_EVERY_SECONDS = 60.0  # how often to look for a bridge whose address stopped answering
 PRODUCT_KEYS = ("archetype", "productname", "modelid")
 
 
@@ -107,6 +109,19 @@ def _clean_name(name: str) -> str:
     return normalized[:80]
 
 
+def _one_bridge_write(method: Callable[..., Any]) -> Callable[..., Any]:
+    """Run batches of light commands one at a time. Each batch paces itself, but two at
+    once (two rooms dimmed together, a scene during a dim) would double the rate the
+    bridge sees; Signify advises about 10 commands a second."""
+
+    @functools.wraps(method)
+    def serialized(self: "HueRoomService", *args: Any, **kwargs: Any) -> Any:
+        with self._bridge_writes:
+            return method(self, *args, **kwargs)
+
+    return serialized
+
+
 class HueRoomService:
     def __init__(self, storage_path: str | Path | None = None) -> None:
         self.storage_path = str(storage_path or DEFAULT_STORAGE_PATH)
@@ -118,6 +133,7 @@ class HueRoomService:
         self._v2_loaded = 0.0
         self.sleep: Callable[[float], None] = time.sleep
         self._relocate_after = 0.0
+        self._bridge_writes = threading.Lock()
 
     def _load(self) -> dict[str, Any]:
         return load_config(self.storage_path)
@@ -153,18 +169,30 @@ class HueRoomService:
         same bridge ID before it is saved.
         """
         bridge = self.get_bridge()
+        if not bridge:
+            return None
         wanted = str(bridge.get("bridge_id") or "").lower()
+        if not wanted:
+            # Paired by an older version: the verified pin for the old address knows the ID.
+            host, port = HueBridgeClient.normalize_bridge_endpoint(bridge["ip"])
+            wanted = pinned_bridge_id(host, port, self.cert_dir) or ""
+            if wanted:
+                self.set_bridge(bridge["ip"], bridge["username"], wanted)
         now = time.monotonic()
         if not wanted or now < self._relocate_after:
             return None
         self._relocate_after = now + _RELOCATE_EVERY_SECONDS
         for found in discover(mdns_timeout=1.0):
             address = str(found.get("internalipaddress") or "")
-            if str(found.get("id") or "").lower() == wanted and address and address != bridge["ip"]:
-                host, port = HueBridgeClient.normalize_bridge_endpoint(address)
+            if str(found.get("id") or "").lower() != wanted or not address or address == bridge["ip"]:
+                continue
+            host, port = HueBridgeClient.normalize_bridge_endpoint(address)
+            try:
                 pin_certificate(host, port, cert_dir=self.cert_dir, replace=True, expected_id=wanted)
-                self.set_bridge(address, bridge["username"], wanted)
-                return address
+            except HueError:
+                continue  # not that bridge after all (or a spoofed answer); try the next
+            self.set_bridge(address, bridge["username"], wanted)
+            return address
         return None
 
     def client(self) -> HueBridgeClient:
@@ -462,6 +490,7 @@ class HueRoomService:
         self._save(config)
         return light
 
+    @_one_bridge_write
     def set_room_brightness(self, room_name: str, percent: float, *, pause: float | None = None) -> list[dict[str, Any]]:
         """Set every light in a room that is on to `percent` (1 to 100) brightness.
 
@@ -492,6 +521,7 @@ class HueRoomService:
                 self.sleep(pause)
         return results
 
+    @_one_bridge_write
     def set_room_power(self, room_name: str, on: bool, *, pause: float | None = None) -> list[dict[str, Any]]:
         """Turn every light placed in a room on or off. A light that fails does not stop
         the rest; each result says whether it took the change."""
@@ -735,6 +765,7 @@ class HueRoomService:
         room = self.get_room(scene.room)
         return evaluate(scene, room, image_lookup=self._image_lookup(scene), gradient_points=gradient_points)
 
+    @_one_bridge_write
     def apply_scene(self, key: str, *, pause: float | None = None) -> list[dict[str, Any]]:
         """Send a scene to the lights. Gradient lights get their colors along their length
         through the v2 API; everything else uses v1. Returns what each light was sent,
