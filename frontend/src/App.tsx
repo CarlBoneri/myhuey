@@ -4,6 +4,8 @@ import { useStore } from './store';
 import { href, useRoute, type Route } from './lib/router';
 import { HomeView } from './views/HomeView';
 import { PlanView } from './views/PlanView';
+import { SETUP_SKIPPED_KEY, SetupView } from './views/SetupView';
+import { go } from './lib/router';
 import { RoomView } from './views/RoomView';
 import { ScenesView } from './views/ScenesView';
 import { SceneEditor } from './views/SceneEditor';
@@ -15,7 +17,7 @@ const NAV: { route: Route; label: string; icon: typeof House; match: Route['view
   { route: { view: 'plan' }, label: 'Plan', icon: MapIcon, match: ['plan'] },
   { route: { view: 'scenes' }, label: 'Scenes', icon: Palette, match: ['scenes', 'scene'] },
   { route: { view: 'lights' }, label: 'Lights', icon: Lightbulb, match: ['lights'] },
-  { route: { view: 'settings' }, label: 'Bridge', icon: Settings, match: ['settings'] },
+  { route: { view: 'settings' }, label: 'Bridge', icon: Settings, match: ['settings', 'setup'] },
 ];
 
 export function App() {
@@ -25,6 +27,14 @@ export function App() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // First run: with no bridge paired, open the setup wizard once (unless it was skipped).
+  useEffect(() => {
+    if (!ready || setup?.configured || route.view === 'setup') return;
+    let skipped = false;
+    try { skipped = localStorage.getItem(SETUP_SKIPPED_KEY) === '1'; } catch { /* storage blocked */ }
+    if (!skipped) go({ view: 'setup' });
+  }, [ready]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Poll the bridge every 5 seconds while the page is visible.
   useEffect(() => {
@@ -47,6 +57,8 @@ export function App() {
         return <LightsView />;
       case 'plan':
         return <PlanView />;
+      case 'setup':
+        return <SetupView />;
       case 'settings':
         return <SettingsView />;
       default:

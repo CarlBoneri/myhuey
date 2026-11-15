@@ -70,6 +70,7 @@ export function SettingsView() {
               {error && <p className="error-text" role="alert">{error}</p>}
             </>
           )}
+          <p><a className="button subtle" href="#/setup">Run the setup guide</a></p>
           <p className="hint">The bridge certificate is pinned on first contact. The pairing key stays on this computer and is never sent to the browser.</p>
         </Panel>
         <Panel title="Command line">
