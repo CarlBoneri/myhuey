@@ -2,15 +2,17 @@
 
 Version 1 (no `schema_version`) measured rooms in abstract units, 900 x 600 by default, with
 lights as center points. Version 2 measures everything in centimeters, gives rooms an outline
-polygon, and adds furniture, rotation, room photos, and scenes.
+polygon, and adds furniture, rotation, room photos, and scenes. Version 3 adds doors and windows
+as openings on a room's edges, a ceiling height, furniture heights, and a home plan image.
 """
 
 from __future__ import annotations
 
 import copy
+import math
 from typing import Any
 
-CURRENT_VERSION = 2
+CURRENT_VERSION = 3
 
 # A default v1 room (900 x 600 units) becomes 4.5 m x 3 m, about 14'9" x 9'10".
 V1_CM_PER_UNIT = 0.5
@@ -62,7 +64,60 @@ def _v1_to_v2(config: dict[str, Any]) -> dict[str, Any]:
     return upgraded
 
 
-_STEPS = {1: _v1_to_v2}
+OPENING_SNAP_CM = 15.0  # a door or window this close to a wall becomes an opening in it
+_OPENING_DEFAULTS = {"door": {"sill": None, "top": 203.0}, "window": {"sill": 90.0, "top": 210.0}}
+
+
+def _as_opening(item: dict[str, Any], outline: list[list[float]]) -> dict[str, Any] | None:
+    """The opening a door or window furniture item stands for, if it sits on an edge."""
+    from .geometry import distance_to_segment  # local: migrations stay free of model imports
+
+    center = (_scaled(item.get("x"), 1), _scaled(item.get("y"), 1))
+    width = _scaled(item.get("width", 80), 1)
+    best = None
+    for index, a in enumerate(outline):
+        b = outline[(index + 1) % len(outline)]
+        distance = distance_to_segment(center, (a[0], a[1]), (b[0], b[1]))
+        if distance <= OPENING_SNAP_CM and (best is None or distance < best[0]):
+            best = (distance, index, a, b)
+    if best is None:
+        return None
+    _, index, a, b = best
+    length = math.hypot(b[0] - a[0], b[1] - a[1])
+    if length < 1:
+        return None
+    width = min(width, length)
+    along = ((center[0] - a[0]) * (b[0] - a[0]) + (center[1] - a[1]) * (b[1] - a[1])) / length
+    offset = min(max(along - width / 2, 0.0), length - width)
+    return {"id": str(item.get("id") or ""), "kind": item["kind"], "edge": index,
+            "offset": round(offset, 2), "width": round(width, 2), **_OPENING_DEFAULTS[item["kind"]]}
+
+
+def _v2_to_v3(config: dict[str, Any]) -> dict[str, Any]:
+    from .models import DEFAULT_FURNITURE_HEIGHT, FURNITURE_HEIGHTS
+
+    upgraded = copy.deepcopy(config)
+    for room in upgraded.get("rooms", []):
+        outline = room.get("outline") or []
+        openings, furniture = list(room.get("openings") or []), []
+        for item in room.get("furniture", []):
+            opening = _as_opening(item, outline) if item.get("kind") in _OPENING_DEFAULTS and len(outline) >= 3 else None
+            if opening:
+                openings.append(opening)
+                continue
+            elevation, height = FURNITURE_HEIGHTS.get(str(item.get("kind")), DEFAULT_FURNITURE_HEIGHT)
+            item.setdefault("elevation", elevation)
+            item.setdefault("height", height)
+            furniture.append(item)
+        room["furniture"] = furniture
+        room["openings"] = openings
+        room.setdefault("ceiling", 244.0)
+    upgraded.setdefault("home", {"plan": None})
+    upgraded["schema_version"] = 3
+    return upgraded
+
+
+_STEPS = {1: _v1_to_v2, 2: _v2_to_v3}
 
 
 def migrate(config: dict[str, Any]) -> tuple[dict[str, Any], int]:

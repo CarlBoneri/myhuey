@@ -29,6 +29,8 @@ def _normalize(data: Any) -> dict[str, Any]:
         config["rooms"] = []
     if not isinstance(config.get("scenes"), list):
         config["scenes"] = []
+    if not isinstance(config.get("home"), dict):
+        config["home"] = {"plan": None}
     if not config["rooms"] and not config["scenes"] and "schema_version" not in config:
         config["schema_version"] = CURRENT_VERSION  # nothing to migrate
     return config
