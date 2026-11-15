@@ -15,7 +15,7 @@ class Mode:
     brightness: float = 1.0  # multiplies the time-of-day brightness
     kelvin_offset: int = 0
     task_brightness: float = 1.0  # extra multiplier at the task light
-    task_min_kelvin: int = 0  # the task light is never warmer than this
+    task_min_kelvin: int = 0  # the task light is never warmer than this, outside the night window
     color_strength: float = 0.5  # 0 = all white, 1 = full palette color on ambient lights
     bias: bool = False  # light the bias light behind the screen
     ambient_only: bool = False  # only ambient lights carry palette color

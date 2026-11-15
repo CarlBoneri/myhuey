@@ -147,10 +147,14 @@ def test_study_puts_color_only_on_ambient_lights():
         assert ("colors" in item["scene"].overrides[light_id]) == (role == "ambient")
 
 
-def test_read_task_light_at_least_4000k_even_at_night():
-    room = _office()
-    overrides = _one(room, "read", dt(0, 30))["scene"].overrides
+def test_read_task_light_at_least_4000k_during_the_day():
+    overrides = _one(_office(), "read", dt(12))["scene"].overrides
     assert overrides[DESK_LAMP]["white"] >= 4000
+
+
+def test_read_task_light_drops_the_4000k_floor_after_bedtime():
+    overrides = _one(_office(), "read", dt(0, 30))["scene"].overrides
+    assert overrides[DESK_LAMP]["white"] == 2700
 
 
 def test_relax_keeps_the_tv_bias_light_dim_and_white():

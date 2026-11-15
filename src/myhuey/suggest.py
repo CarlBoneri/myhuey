@@ -22,6 +22,7 @@ from .roles import Focus, find_focus, resolve_roles
 from .scenes import MAX_GRADIENT_POINTS, WHITE_RANGE, Scene, placed_profile
 
 NIGHT_WINDOW_MIN = 180  # no blue-heavy palettes from this long before bed until wake
+NIGHT_TASK_KELVIN = 2700  # in the night window the task light drops the mode's floor to this
 BIAS_RANGE = (10.0, 20.0)
 BIAS_SHARE = 0.2
 VIEW_COLOR, VIEW_LEVEL = 0.25, 0.5
@@ -34,10 +35,15 @@ def _clamp(value: float, low: float, high: float) -> float:
     return max(low, min(high, value))
 
 
+def _night(at: datetime, wake: str, bed: str) -> bool:
+    """From NIGHT_WINDOW_MIN before bedtime until wake time."""
+    return (minutes_until_bed(at.time(), wake, bed) or 0) <= NIGHT_WINDOW_MIN
+
+
 def _choose(mode: Mode, at: datetime, wake: str, bed: str, palette_id: str | None, count: int, seed: int) -> list[Palette]:
     if palette_id:
         return [by_id(palette_id)] * count
-    night = (minutes_until_bed(at.time(), wake, bed) or 0) <= NIGHT_WINDOW_MIN
+    night = _night(at, wake, bed)
     pool = [palette for palette in load() if not (night and "blue_heavy" in palette.tags)]
     # Every palette that shares a tag with the mode can come up, weighted by how many it
     # shares (a seeded weighted draw without replacement), so Shuffle reaches the whole library.
@@ -90,11 +96,16 @@ def suggest(
     roles = resolve_roles(room, focus)
     center = _center(room, focus)
     stamp = at.strftime("%H:%M")
+    # The task floor (read's 4000 K) holds only outside the night window; near bed it stays warm.
+    floor = chosen_mode.task_min_kelvin
+    if floor and _night(at, wake, bed):
+        floor = min(floor, NIGHT_TASK_KELVIN)
+    task_kelvin = max(kelvin, floor)
 
     results = []
     for index, palette in enumerate(_choose(chosen_mode, at, wake, bed, palette_id, count, seed)):
         colors = _order(palette.colors, seed if palette_id else seed + index)
-        overrides = _overrides(room, chosen_mode, roles, focus, center, colors, kelvin, level, white)
+        overrides = _overrides(room, chosen_mode, roles, focus, center, colors, kelvin, task_kelvin, level, white)
         scene = Scene(
             id=new_id(), name=f"{chosen_mode.title} · {palette.name}", room=room.name, overrides=overrides,
             origin={"mode": chosen_mode.name, "palette_id": palette.id, "palette_name": palette.name, "at": stamp},
@@ -105,7 +116,7 @@ def suggest(
 
 def _overrides(
     room: Room, mode: Mode, roles: dict[str, str], focus: Focus | None, center: tuple[float, float],
-    colors: list[str], kelvin: int, level: float, white: str,
+    colors: list[str], kelvin: int, task_kelvin: int, level: float, white: str,
 ) -> dict[str, dict[str, Any]]:
     overrides: dict[str, dict[str, Any]] = {}
     strength = mode.color_strength
@@ -115,7 +126,7 @@ def _overrides(
         role = roles[light.light_id]
         if role == "task":
             overrides[light.light_id] = {
-                "white": max(kelvin, mode.task_min_kelvin), "brightness": round(_clamp(level * mode.task_brightness, 1, 100), 1),
+                "white": task_kelvin, "brightness": round(_clamp(level * mode.task_brightness, 1, 100), 1),
             }
             continue
         if role == "bias":
