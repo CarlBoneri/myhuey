@@ -19,7 +19,8 @@ from .errors import BridgeNotConfigured, BridgeUnreachable, HueError, RoomNotFou
 from .geometry import rectangle
 from .hue import HueBridgeClient
 from .images import ImageSampler, extract_palette, image_path, prune_unreferenced, store_image
-from .models import Furniture, HomePlan, LayoutLight, Opening, Room, RoomPhoto, opening_fits, reanchor_openings, validate_outline
+from .catalog import catalog_item
+from .models import Furniture, HomePlan, LayoutLight, Opening, Room, RoomPhoto, new_id, opening_fits, reanchor_openings, validate_outline
 from .preferences import chosen as chosen_preferences, merged as merged_preferences, validate as validate_preferences
 from .scenes import Scene, evaluate
 from .suggest import suggest as suggest_scenes
@@ -511,7 +512,7 @@ class HueRoomService:
         if not 1 <= float(percent) <= 100:
             raise ValueError("Room brightness must be between 1 and 100 percent")
         pause = self._command_gap() if pause is None else pause
-        lights = self.get_room(room_name).lights
+        lights = [light for light in self.get_room(room_name).lights if not light.planned]
         if not lights:
             return []
         client = self.client()
@@ -537,7 +538,7 @@ class HueRoomService:
         """Turn every light placed in a room on or off. A light that fails does not stop
         the rest; each result says whether it took the change."""
         pause = self._command_gap() if pause is None else pause
-        lights = self.get_room(room_name).lights
+        lights = [light for light in self.get_room(room_name).lights if not light.planned]
         if not lights:
             return []
         client = self.client()
@@ -573,6 +574,44 @@ class HueRoomService:
                 if pause:
                     self.sleep(pause)
         return results
+
+    def add_planned_light(
+        self, room_name: str, catalog_id: str, *, x: float, y: float, label: str | None = None,
+        rotation: float | None = None, elevation: float | str | None = None, role: str | None = None,
+    ) -> LayoutLight:
+        """Place a catalog light that isn't installed yet. It gets roles and suggestions,
+        and is skipped whenever something is sent to the bridge."""
+        item = catalog_item(catalog_id)
+        light_id = f"planned-{new_id()}"
+        self.assign_light(room_name, light_id, x=x, y=y, label=label or item.label, rotation=rotation,
+                          product=item.product(), elevation=elevation, role=role)
+        config = self._load()
+        for placed in self._room_data(config, room_name)["lights"]:
+            if placed["light_id"] == light_id:
+                placed["planned"] = True
+        self._save(config)
+        return next(light for light in self.get_room(room_name).lights if light.light_id == light_id)
+
+    def swap_planned_light(self, room_name: str, planned_id: str, real_id: str) -> LayoutLight:
+        """Replace a planned light with a real one once it's paired, keeping where it sits,
+        its height, role, label, and photo tag."""
+        real_id = str(real_id).strip()
+        config = self._load()
+        room_data = self._room_data(config, room_name)
+        lights = room_data.get("lights", [])
+        planned = next((item for item in lights if item.get("light_id") == planned_id), None)
+        if not planned or not planned.get("planned"):
+            raise ValueError(f"'{planned_id}' is not a planned light in '{room_name}'")
+        if not real_id or real_id.startswith("planned-"):
+            raise ValueError("Swap a planned light for a real light ID from the bridge")
+        if any(str(item.get("light_id")) == real_id for item in lights):
+            raise ValueError(f"Light {real_id} is already placed in '{room_name}'")
+        planned.update(light_id=real_id, planned=False, product={})
+        tags = (room_data.get("photo") or {}).get("tags")
+        if tags and f"light:{planned_id}" in tags:
+            tags[f"light:{real_id}"] = tags.pop(f"light:{planned_id}")
+        self._save(config)
+        return next(light for light in self.get_room(room_name).lights if light.light_id == real_id)
 
     def remove_light(self, room_name: str, light_id: str) -> None:
         config = self._load()
@@ -831,9 +870,13 @@ class HueRoomService:
         points = {light_id: max(1, info["gradient_points"]) for light_id, info in index.items()}
         results = self.preview_scene(scene, points)
 
+        planned = {light.light_id for light in self.get_room(scene.room).lights if light.planned}
         for result in results:
             light_id = result["light_id"]
             result["applied"] = False
+            if light_id in planned:
+                result["planned"] = True  # not installed yet: nothing to send
+                continue
             if result["keep"]:
                 continue
             state = (raw.get(light_id) or {}).get("state") or {}

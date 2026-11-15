@@ -63,7 +63,7 @@ def build_parser() -> argparse.ArgumentParser:
     room.add_argument(
         "action",
         choices=["list", "show", "create", "update", "assign", "remove-light", "delete", "import", "photo", "remove-photo", "on", "off", "dim",
-                 "tags", "tag", "untag"],
+                 "tags", "tag", "untag", "plan-light", "swap"],
     )
     room.add_argument("--name", help="Room name")
     room.add_argument("--new-name", help="Rename the room (update)")
@@ -72,6 +72,8 @@ def build_parser() -> argparse.ArgumentParser:
     room.add_argument("--y", type=float, default=0, help="cm")
     room.add_argument("--rotation", type=float, help="Degrees, for assign")
     room.add_argument("--length", help="Lightstrip or string length, for assign (for example 2m or 6ft)")
+    room.add_argument("--catalog", help="Catalog product for plan-light (see `myhuey catalog`)")
+    room.add_argument("--real", help="Real light ID from the bridge, for swap")
     room.add_argument("--item", help="Photo tag, for tag and untag: light:<id>, furniture:<id>, or opening:<id>")
     room.add_argument("--elevation", help="Height of the light, for assign (for example 120cm or 4ft), or auto")
     room.add_argument("--role", choices=["auto", "bias", "task", "view"],
@@ -136,6 +138,9 @@ def build_parser() -> argparse.ArgumentParser:
     suggest.add_argument("--save", metavar="NAME", help="Save the first suggestion as a scene with this name")
     suggest.add_argument("--apply", action="store_true", help="Send the first suggestion to the lights")
     suggest.set_defaults(handler=handle_suggest)
+
+    catalog = subparsers.add_parser("catalog", help="List the Hue products you can plan with")
+    catalog.set_defaults(handler=handle_catalog)
 
     palettes = subparsers.add_parser("palettes", help="Browse the palette library suggestions choose from")
     palettes.add_argument("--tag", help="warm, cool, muted, vivid, analogous, accent, blue_heavy")
@@ -325,6 +330,17 @@ def handle_room(args: argparse.Namespace) -> int:
         with open(args.file, "rb") as handle:
             room = service.set_room_photo(args.name, handle.read())
         print(f"Saved a {room.photo.width}x{room.photo.height} photo for '{room.name}'.")
+    elif args.action == "plan-light":
+        if not args.catalog:
+            raise ValueError("--catalog is required for `room plan-light`")
+        light = service.add_planned_light(args.name, args.catalog, x=args.x, y=args.y, label=args.label,
+                                          rotation=args.rotation, elevation=_elevation_arg(args.elevation, units))
+        print(json.dumps(light.to_dict(), indent=2))
+    elif args.action == "swap":
+        if not args.light_id or not args.real:
+            raise ValueError("--light-id (the planned light) and --real are required for `room swap`")
+        light = service.swap_planned_light(args.name, args.light_id, args.real)
+        print(f"Light {light.light_id} now stands where '{light.label}' was planned.")
     elif args.action in ("tags", "tag", "untag"):
         return _photo_tags(service, args)
     elif args.action == "remove-photo":
@@ -494,6 +510,14 @@ def handle_suggest(args: argparse.Namespace) -> int:
         _print_results(results)
         if any(item.get("error") for item in results):
             return 1
+    return 0
+
+
+def handle_catalog(args: argparse.Namespace) -> int:
+    from .catalog import CATALOG
+
+    for item in CATALOG.values():
+        print(f"{item.id:<18} {item.label:<38} {item.color:<9} good for: {item.kind}")
     return 0
 
 

@@ -108,6 +108,9 @@ class LayoutLight:
     elevation: float | None = None
     # "auto" lets suggestions work the role out from where the light sits; the rest pin it.
     role: str = "auto"
+    # A light planned from the catalog that isn't installed yet: it takes part in roles and
+    # suggestions, but nothing is ever sent to the bridge for it.
+    planned: bool = False
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> LayoutLight:
@@ -138,6 +141,7 @@ class LayoutLight:
             metadata=dict(data.get("metadata") or {}),
             elevation=elevation,
             role=role,
+            planned=bool(data.get("planned", False)),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -156,6 +160,7 @@ class LayoutLight:
             "metadata": self.metadata,
             "elevation": self.elevation,
             "role": self.role,
+            "planned": self.planned,
         }
 
 

@@ -16,6 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictInt
 from .errors import BridgeNotConfigured, HueError, LinkButtonNotPressed, PairingInProgress, RoomNotFound, SceneNotFound
 from .hue import COLLECTIONS, PAIRING_WINDOW, HueBridgeClient
 from .images import MAX_UPLOAD_BYTES, media_type
+from .catalog import CATALOG
 from .models import Room
 from .palette import MOODS
 from .palettes import search as search_palettes
@@ -120,6 +121,19 @@ class LightPlacement(Body):
     length: float | None = Field(None, ge=5, le=5000)
     elevation: float | Literal["auto"] | None = None  # cm; "auto" goes back to the product's guess
     role: Literal["auto", "bias", "task", "view"] | None = None
+
+
+class PlannedLightRequest(Body):
+    catalog: str = Field(..., max_length=40)
+    x: float = 0
+    y: float = 0
+    label: str | None = Field(None, max_length=80)
+    rotation: float | None = None
+    elevation: float | Literal["auto"] | None = None
+
+
+class SwapRequest(Body):
+    light_id: str = Field(..., min_length=1, max_length=40)
 
 
 class SuggestRequest(Body):
@@ -307,6 +321,19 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
     def room_brightness(room_name: str, body: RoomBrightness) -> dict[str, Any]:
         results = service.set_room_brightness(room_name, body.brightness)
         return {"results": results, "failed": sum(1 for item in results if not item["ok"])}
+
+    @app.get("/api/catalog")
+    def catalog() -> list[dict[str, Any]]:
+        return [item.to_dict() for item in CATALOG.values()]
+
+    @app.post("/api/rooms/{room_name}/planned-lights")
+    def add_planned_light(room_name: str, body: PlannedLightRequest) -> dict[str, Any]:
+        return service.add_planned_light(room_name, body.catalog, x=body.x, y=body.y, label=body.label,
+                                         rotation=body.rotation, elevation=body.elevation).to_dict()
+
+    @app.post("/api/rooms/{room_name}/planned-lights/{light_id}/swap")
+    def swap_planned_light(room_name: str, light_id: str, body: SwapRequest) -> dict[str, Any]:
+        return service.swap_planned_light(room_name, light_id, body.light_id).to_dict()
 
     @app.post("/api/rooms/{room_name}/suggest")
     def suggest(room_name: str, body: SuggestRequest) -> list[dict[str, Any]]:
