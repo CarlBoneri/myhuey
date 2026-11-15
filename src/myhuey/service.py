@@ -15,7 +15,7 @@ from .errors import BridgeNotConfigured, HueError, RoomNotFound, SceneNotFound
 from .geometry import rectangle
 from .hue import HueBridgeClient
 from .images import ImageSampler, extract_palette, image_path, prune_unreferenced, store_image
-from .models import Furniture, LayoutLight, Room, RoomPhoto, validate_outline
+from .models import Furniture, HomePlan, LayoutLight, Opening, Room, RoomPhoto, opening_fits, validate_outline
 from .scenes import Scene, evaluate
 from .shapes import profile_for
 from .storage import DEFAULT_STORAGE_PATH, load_config, save_config, uploads_dir
@@ -245,7 +245,15 @@ class HueRoomService:
 
     # Rooms
 
-    def add_room(self, name: str, width: float = 450, height: float = 300, outline: list | None = None) -> Room:
+    def add_room(
+        self,
+        name: str,
+        width: float = 450,
+        height: float = 300,
+        outline: list | None = None,
+        x: float | None = None,
+        y: float | None = None,
+    ) -> Room:
         normalized = _clean_name(name)
         config = self._load()
         if any(room.get("name") == normalized for room in config["rooms"]):
@@ -255,8 +263,8 @@ class HueRoomService:
         room = Room(
             name=normalized,
             outline=validate_outline(outline or [list(p) for p in rectangle(width, height)]),
-            x=(index % _GRID_COLUMNS) * _GRID_CELL_CM[0],
-            y=(index // _GRID_COLUMNS) * _GRID_CELL_CM[1],
+            x=round(float(x), 2) if x is not None else (index % _GRID_COLUMNS) * _GRID_CELL_CM[0],
+            y=round(float(y), 2) if y is not None else (index // _GRID_COLUMNS) * _GRID_CELL_CM[1],
         )
         config["rooms"].append(room.to_dict())
         self._save(config)
@@ -283,11 +291,15 @@ class HueRoomService:
         units: str | None = None,
         furniture: list[dict[str, Any]] | None = None,
         new_name: str | None = None,
+        openings: list[dict[str, Any]] | None = None,
+        ceiling: float | None = None,
     ) -> Room:
-        """Move, reshape, or rename a room, or replace its furniture.
+        """Move, reshape, or rename a room, or replace its furniture or openings.
 
         `width` and `height` stretch the outline to that bounding box (in cm), so a drawn
-        shape keeps its proportions. `outline` replaces it outright.
+        shape keeps its proportions. `outline` replaces it outright. A new shape keeps the
+        doors and windows that still fit on their edge and drops the rest; openings sent
+        with it must all fit.
         """
         config = self._load()
         room_data = self._room_data(config, name)
@@ -300,6 +312,15 @@ class HueRoomService:
             room.outline = validate_outline(outline)
         if width is not None or height is not None:
             room.outline = _stretch(room.outline, width, height)
+        if openings is not None:
+            room.openings = [Opening.from_dict(item) for item in openings][:100]
+            for opening in room.openings:
+                if not opening_fits(room.outline, opening):
+                    raise ValueError(f"The {opening.kind} on edge {opening.edge} does not fit on that wall")
+        else:
+            room.openings = [opening for opening in room.openings if opening_fits(room.outline, opening)]
+        if ceiling is not None:
+            room.ceiling = float(ceiling)
         if units is not None:
             if units not in UNIT_SYSTEMS:
                 raise ValueError(f"units must be one of {', '.join(UNIT_SYSTEMS)}")
@@ -314,6 +335,7 @@ class HueRoomService:
                 if scene.get("room") == room.name:
                     scene["room"] = renamed
             room.name = renamed
+        room = Room.from_dict(room.to_dict())  # validates the ceiling and everything together
         room_data.clear()
         room_data.update(room.to_dict())
         self._save(config)
@@ -507,6 +529,42 @@ class HueRoomService:
         self._save(config)
         return Room.from_dict(room_data)
 
+    # Home plan image
+
+    def get_plan(self) -> dict[str, Any] | None:
+        plan = HomePlan.from_dict((self._load().get("home") or {}).get("plan"))
+        return plan.to_dict() if plan else None
+
+    def set_plan_image(self, data: bytes) -> dict[str, Any]:
+        """Store a floor-plan image under the home. Its scale and placement are kept if a
+        plan was already there, so a cleaner scan of the same plan drops in place."""
+        stored = store_image(data, self.uploads)
+        config = self._load()
+        home = config.setdefault("home", {})
+        previous = home.get("plan") or {}
+        plan = HomePlan.from_dict({**previous, **stored})
+        home["plan"] = plan.to_dict()
+        self._save(config)
+        self.prune_uploads(min_age_seconds=0)
+        return home["plan"]
+
+    def update_plan(self, **changes: Any) -> dict[str, Any]:
+        """Change the plan's scale (cm_per_px), offset, rotation, or opacity."""
+        config = self._load()
+        home = config.setdefault("home", {})
+        if not home.get("plan"):
+            raise ValueError("Upload a floor-plan image first")
+        allowed = {key: value for key, value in changes.items() if key in ("cm_per_px", "offset", "rotation", "opacity")}
+        home["plan"] = HomePlan.from_dict({**home["plan"], **allowed}).to_dict()
+        self._save(config)
+        return home["plan"]
+
+    def remove_plan(self) -> None:
+        config = self._load()
+        config.setdefault("home", {})["plan"] = None
+        self._save(config)
+        self.prune_uploads(min_age_seconds=0)
+
     # Images
 
     def upload_image(self, data: bytes, count: int = 5, mood: str = "colorful") -> dict[str, Any]:
@@ -525,6 +583,7 @@ class HueRoomService:
         config = self._load()
         names = {(room.get("photo") or {}).get("file") for room in config["rooms"]}
         names |= {(scene.get("image") or {}).get("file") for scene in config["scenes"]}
+        names.add(((config.get("home") or {}).get("plan") or {}).get("file"))
         return {name for name in names if name}
 
     def prune_uploads(self, min_age_seconds: float = 3600) -> list[str]:

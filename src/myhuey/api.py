@@ -42,6 +42,25 @@ class RoomCreate(BaseModel):
     width: float = Field(450, ge=30, le=10000, description="cm")
     height: float = Field(300, ge=30, le=10000, description="cm")
     outline: list[list[float]] | None = None
+    x: float | None = CM
+    y: float | None = CM
+
+
+class OpeningItem(BaseModel):
+    id: str | None = None
+    kind: str
+    edge: int = Field(..., ge=0)
+    offset: float = Field(0, ge=0, le=10000)
+    width: float = Field(..., ge=1, le=2000)
+    sill: float | None = Field(None, ge=0, le=1000)
+    top: float | None = Field(None, ge=0, le=1000)
+
+
+class PlanUpdate(BaseModel):
+    cm_per_px: float | None = Field(None, gt=0, le=100)
+    offset: list[float] | None = Field(None, min_length=2, max_length=2)
+    rotation: float | None = None
+    opacity: float | None = Field(None, ge=0, le=1)
 
 
 class FurnitureItem(BaseModel):
@@ -54,6 +73,8 @@ class FurnitureItem(BaseModel):
     depth: float = Field(60, ge=1, le=2000)
     rotation: float = 0
     shape: str = "rect"
+    elevation: float | None = Field(None, ge=0, le=1000)
+    height: float | None = Field(None, gt=0, le=1000)
 
 
 class RoomUpdate(BaseModel):
@@ -65,6 +86,8 @@ class RoomUpdate(BaseModel):
     units: str | None = None
     furniture: list[FurnitureItem] | None = None
     name: str | None = None
+    openings: list[OpeningItem] | None = None
+    ceiling: float | None = Field(None, ge=150, le=1000)
 
 
 class LightPlacement(BaseModel):
@@ -173,7 +196,7 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
 
     @app.post("/api/rooms")
     def create_room(body: RoomCreate) -> dict[str, Any]:
-        return service.add_room(body.name, body.width, body.height, body.outline).to_dict()
+        return service.add_room(body.name, body.width, body.height, body.outline, body.x, body.y).to_dict()
 
     @app.post("/api/rooms/import")
     def import_rooms() -> dict[str, Any]:
@@ -187,7 +210,9 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
     def update_room(room_name: str, body: RoomUpdate) -> dict[str, Any]:
         changes = body.model_dump(exclude_none=True)
         if "furniture" in changes:
-            changes["furniture"] = [item.model_dump() for item in body.furniture or []]
+            changes["furniture"] = [item.model_dump(exclude_none=True) for item in body.furniture or []]
+        if "openings" in changes:
+            changes["openings"] = [item.model_dump() for item in body.openings or []]
         if "name" in changes:
             changes["new_name"] = changes.pop("name")
         return service.update_room(room_name, **changes).to_dict()
@@ -218,6 +243,25 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
     @app.delete("/api/rooms/{room_name}/lights/{light_id}")
     def remove_light(room_name: str, light_id: str) -> dict[str, str]:
         service.remove_light(room_name, light_id)
+        return {"status": "removed"}
+
+    # Home plan image
+
+    @app.get("/api/plan")
+    def get_plan() -> dict[str, Any] | None:
+        return service.get_plan()
+
+    @app.post("/api/plan/image")
+    async def upload_plan(file: UploadFile = File(...)) -> dict[str, Any]:
+        return service.set_plan_image(await _read_upload(file))
+
+    @app.patch("/api/plan")
+    def update_plan(body: PlanUpdate) -> dict[str, Any]:
+        return service.update_plan(**body.model_dump(exclude_none=True))
+
+    @app.delete("/api/plan")
+    def delete_plan() -> dict[str, str]:
+        service.remove_plan()
         return {"status": "removed"}
 
     # Room photos
