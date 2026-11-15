@@ -48,6 +48,8 @@ export const api = {
   setup: () => call<SetupStatus>('/api/setup/status'),
   discover: () => call<{ id: string; ip: string }[]>('/api/bridges/discover'),
   checkBridge: (ip: string) => call<BridgeInfo>(`/api/bridges/check?ip=${encodeURIComponent(ip)}`),
+  pairAny: (bridge_ips: string[]) =>
+    call<{ bridge_ip: string }>('/api/bridge/register-any', { method: 'POST', json: { bridge_ips } }),
   pair: (bridge_ip: string) => call<{ bridge_ip: string }>('/api/bridge/register', { method: 'POST', json: { bridge_ip } }),
 
   lights: () => call<BridgeLight[]>('/api/lights'),

@@ -49,10 +49,10 @@ export function SetupView() {
 
   // Each new attempt on the press step asks the bridge to pair while the person presses its button.
   useEffect(() => {
-    if (state.step !== 'press' || state.error || !state.bridge) return;
+    if (state.step !== 'press' || state.error || (!state.bridge && !state.candidates.length)) return;
     let cancelled = false;
     setDeadline(Date.now() + windowSeconds * 1000);
-    api.pair(state.bridge.bridge_ip).then(
+    (state.bridge ? api.pair(state.bridge.bridge_ip) : api.pairAny(state.candidates)).then(
       async () => {
         await load();
         if (!cancelled) dispatch({ type: 'paired', lights: Object.keys(useStore.getState().lights).length });
@@ -133,6 +133,15 @@ export function SetupView() {
                     <p className="hint">Menu names shift a little between app versions. The bridge's name and ID are on the same screen and match the list below.</p>
                   </div>
                 )}
+                {found.filter((b) => b.info).length > 1 && (
+                  <p className="pick-by-button">
+                    Not sure which?{' '}
+                    <button type="button" className="button small" onClick={() => dispatch({ type: 'pressAny', addresses: found.filter((b) => b.info).map((b) => b.ip) })}>
+                      Pick by pressing its button
+                    </button>
+                    {' '}MyHuey waits on every bridge and pairs the one you press.
+                  </p>
+                )}
                 <ul className="found bridges">
                   {found.map((b) => (
                     <li key={b.ip}>
@@ -153,7 +162,12 @@ export function SetupView() {
             <Field label="Bridge address" hint="In the Hue app: Settings → Bridges → your bridge → Network settings → IP address. Your router's device list shows it too.">
               <TextInput value={manual} placeholder="192.168.1.50" onChange={(e) => setManual(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && check(manual)} />
             </Field>
-            {state.error && <p className="error-text" role="alert">{state.error}</p>}
+            {state.error && (
+              <div role="alert">
+                <p className="error-text">{state.error}</p>
+                <p className="hint">Check the address in your router's list of devices or in the Hue app, and check that the bridge's second light (network) is on. If it is off, the bridge has lost its network cable or Wi-Fi.</p>
+              </div>
+            )}
             <div className="button-row">
               <button type="button" className="button subtle" onClick={() => dispatch({ type: 'back' })}><ArrowLeft size={14} /> Back</button>
               <button type="button" className="button" disabled={finding} onClick={() => setFound(null)}><Search size={14} /> Search again</button>
@@ -195,7 +209,11 @@ export function SetupView() {
             ) : (
               <div className="press">
                 <Countdown seconds={seconds} total={windowSeconds} />
-                <p>Press the round button on top of the bridge at <span className="mono">{state.bridge?.bridge_ip}</span>. This page notices on its own.</p>
+                {state.bridge ? (
+                  <p>Press the round button on top of the bridge at <span className="mono">{state.bridge.bridge_ip}</span>. This page notices on its own.</p>
+                ) : (
+                  <p>Press the round button on the bridge your lights are on. MyHuey is waiting on all {state.candidates.length} bridges and pairs whichever you press.</p>
+                )}
               </div>
             )}
           </>

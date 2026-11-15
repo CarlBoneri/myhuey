@@ -18,6 +18,8 @@ export interface SetupState {
   step: SetupStep;
   address: string;
   bridge: BridgeInfo | null;
+  /** Bridges waited on together when the person picks one by pressing its button. */
+  candidates: string[];
   error: string;
   /** Pairing attempts started; the press step starts a new one whenever this changes. */
   attempts: number;
@@ -33,6 +35,7 @@ export type SetupEvent =
   | { type: 'checked'; bridge: BridgeInfo }
   | { type: 'checkFailed'; message: string }
   | { type: 'pressNow' }
+  | { type: 'pressAny'; addresses: string[] }
   | { type: 'paired'; lights: number }
   | { type: 'pairFailed'; reason: PairFailure; message: string }
   | { type: 'imported'; added: string[] }
@@ -48,7 +51,7 @@ export const SETUP_STEPS: { step: SetupStep; label: string }[] = [
 ];
 
 export function initialSetup(): SetupState {
-  return { step: 'welcome', address: '', bridge: null, error: '', attempts: 0, lights: 0, imported: null };
+  return { step: 'welcome', address: '', bridge: null, candidates: [], error: '', attempts: 0, lights: 0, imported: null };
 }
 
 const BACK: Partial<Record<SetupStep, SetupStep>> = { find: 'welcome', confirm: 'find', press: 'confirm' };
@@ -58,9 +61,11 @@ export function setupReducer(state: SetupState, event: SetupEvent): SetupState {
     case 'start':
       return { ...state, step: 'find', error: '' };
     case 'checked':
-      return { ...state, step: 'confirm', bridge: event.bridge, address: event.bridge.bridge_ip, error: '' };
+      return { ...state, step: 'confirm', bridge: event.bridge, candidates: [], address: event.bridge.bridge_ip, error: '' };
     case 'checkFailed':
       return { ...state, step: 'find', bridge: null, error: event.message };
+    case 'pressAny':
+      return { ...state, step: 'press', bridge: null, candidates: event.addresses, error: '', attempts: state.attempts + 1 };
     case 'pressNow':
       return { ...state, step: 'press', error: '', attempts: state.attempts + 1 };
     case 'paired':
@@ -76,6 +81,7 @@ export function setupReducer(state: SetupState, event: SetupEvent): SetupState {
     case 'finish':
       return { ...state, step: 'done', imported: null };
     case 'back':
+      if (state.step === 'press' && state.candidates.length) return { ...state, step: 'find', candidates: [], error: '' };
       return BACK[state.step] ? { ...state, step: BACK[state.step]!, error: '' } : state;
   }
 }

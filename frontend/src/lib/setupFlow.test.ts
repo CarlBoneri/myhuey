@@ -48,6 +48,14 @@ describe('setup wizard steps', () => {
       .toMatchObject({ step: 'confirm', bridge, error: 'no' });
   });
 
+  it('can wait on every bridge and pair the one whose button is pressed', () => {
+    const waiting = setupReducer(at('find', { error: 'x' }), { type: 'pressAny', addresses: ['10.0.0.77', '10.0.0.93'] });
+    expect(waiting).toMatchObject({ step: 'press', bridge: null, candidates: ['10.0.0.77', '10.0.0.93'], attempts: 1, error: '' });
+    expect(setupReducer(waiting, { type: 'back' })).toMatchObject({ step: 'find', candidates: [] });
+    // Choosing one bridge later clears the list.
+    expect(setupReducer(waiting, { type: 'checked', bridge }).candidates).toEqual([]);
+  });
+
   it('goes back one step at a time', () => {
     expect(setupReducer(at('find'), { type: 'back' }).step).toBe('welcome');
     expect(setupReducer(at('confirm', { bridge }), { type: 'back' }).step).toBe('find');
