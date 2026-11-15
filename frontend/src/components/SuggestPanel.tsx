@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Lightbulb, Palette as PaletteIcon, Save, Shuffle, Sparkles, X } from 'lucide-react';
 import { api } from '../api';
 import { useStore } from '../store';
 import { bounds } from '../lib/geometry';
-import { MODE_LABELS, cardTitle, creditText, lightFill, quarterHours } from '../lib/suggest';
+import { MODE_LABELS, cardTitle, creditText, latestOnly, lightFill, quarterHours } from '../lib/suggest';
 import { Field, IconButton, Panel, Segmented, TextInput } from './ui';
 import type { PaletteEntry, Room, Suggestion } from '../types';
 
@@ -22,15 +22,18 @@ export function SuggestPanel({ room, onClose }: { room: Room; onClose: () => voi
   const [error, setError] = useState('');
   const [browsing, setBrowsing] = useState(false);
 
+  const requests = useRef(latestOnly());
   const load = useCallback(async () => {
+    const token = requests.current.next();
     setLoading(true);
     setError('');
     try {
-      setItems(await api.suggest(room.name, { mode, at: at || undefined, palette_id: paletteId, count: paletteId ? 1 : 4, seed }));
+      const found = await api.suggest(room.name, { mode, at: at || undefined, palette_id: paletteId, count: paletteId ? 1 : 4, seed });
+      if (requests.current.isLatest(token)) setItems(found);
     } catch (e) {
-      setError((e as Error).message);
+      if (requests.current.isLatest(token)) setError((e as Error).message);
     }
-    setLoading(false);
+    if (requests.current.isLatest(token)) setLoading(false);
   }, [room.name, mode, at, paletteId, seed]);
 
   // Layout changes (lights moved, heights set) change the suggestions too.

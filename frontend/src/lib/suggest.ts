@@ -47,3 +47,17 @@ export function lightFill(result: { on: boolean; color: string | null; brightnes
   if (!result.on || !result.color) return { fill: '#2a2a2a', opacity: 1 };
   return { fill: result.color, opacity: Math.round((0.2 + (0.8 * result.brightness) / 100) * 100) / 100 };
 }
+
+type HeightAndRole = { elevation?: number | null; role?: string };
+
+/** Whether a light's save changed what the server works out (its height or role). Moves don't. */
+export function placementNeedsRefresh<T extends HeightAndRole>(previous: T | undefined, next: T): boolean {
+  if (!previous) return false;
+  return (previous.elevation ?? null) !== (next.elevation ?? null) || (previous.role ?? 'auto') !== (next.role ?? 'auto');
+}
+
+/** Tags requests so only the newest answer is used when several are in flight. */
+export function latestOnly(): { next: () => number; isLatest: (token: number) => boolean } {
+  let latest = 0;
+  return { next: () => ++latest, isLatest: (token) => token === latest };
+}

@@ -22,7 +22,6 @@ from .roles import Focus, find_focus, resolve_roles
 from .scenes import MAX_GRADIENT_POINTS, WHITE_RANGE, Scene, placed_profile
 
 NIGHT_WINDOW_MIN = 180  # no blue-heavy palettes from this long before bed until wake
-CANDIDATES = 40
 BIAS_RANGE = (10.0, 20.0)
 BIAS_SHARE = 0.2
 VIEW_COLOR, VIEW_LEVEL = 0.25, 0.5
@@ -40,9 +39,16 @@ def _choose(mode: Mode, at: datetime, wake: str, bed: str, palette_id: str | Non
         return [by_id(palette_id)] * count
     night = (minutes_until_bed(at.time(), wake, bed) or 0) <= NIGHT_WINDOW_MIN
     pool = [palette for palette in load() if not (night and "blue_heavy" in palette.tags)]
-    pool.sort(key=lambda palette: (-len(set(mode.prefers) & set(palette.tags)), palette.id))
-    candidates = pool[: max(CANDIDATES, count)]
-    return random.Random(seed).sample(candidates, min(count, len(candidates)))
+    # Every palette that shares a tag with the mode can come up, weighted by how many it
+    # shares (a seeded weighted draw without replacement), so Shuffle reaches the whole library.
+    rng = random.Random(seed)
+    fits = [(len(set(mode.prefers) & set(palette.tags)), palette) for palette in pool]
+    keyed = [(rng.random() ** (1 / overlap), palette) for overlap, palette in fits if overlap]
+    picked = [palette for _, palette in sorted(keyed, key=lambda item: item[0], reverse=True)[:count]]
+    if len(picked) < count:  # too few fitting palettes: fill from the rest
+        rest = [palette for overlap, palette in fits if not overlap]
+        picked += rng.sample(rest, min(count - len(picked), len(rest)))
+    return picked
 
 
 def _order(colors: list[str], seed: int) -> list[str]:

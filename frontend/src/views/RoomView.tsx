@@ -16,6 +16,7 @@ import { Empty, Field, HueIcon, IconButton, LengthInput, Panel, Segmented, Slide
 import { PhotoView } from './PhotoView';
 import { RoomDimmer } from '../components/RoomDimmer';
 import { SuggestPanel } from '../components/SuggestPanel';
+import { placementNeedsRefresh } from '../lib/suggest';
 
 type Selection = { type: 'light'; id: string } | { type: 'furniture'; id: string } | { type: 'opening'; id: string } | null;
 type Tool = 'select' | 'outline' | 'openings';
@@ -295,13 +296,15 @@ export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' })
   const saveLight = useCallback(async (placement: Placement) => {
     const current = draftRef.current;
     if (!current) return;
+    const saved = useStore.getState().rooms.find((r) => r.name === current.name)?.lights.find((l) => l.light_id === placement.light_id);
     const ok = await attempt(() => api.placeLight(current.name, {
       light_id: placement.light_id, x: placement.x, y: placement.y, rotation: placement.rotation, length: placement.length, label: placement.label,
       elevation: placement.elevation === null ? 'auto' : placement.elevation, role: placement.role,
     }));
     if (ok) replaceRoom(current.name, { ...current, lights: current.lights.map((l) => (l.light_id === placement.light_id ? placement : l)) });
     // The worked-out height and role depend on the whole room, so read them back.
-    if (ok && (placement.elevation !== undefined || placement.role)) await refreshRooms();
+    // Only a height or role change needs that; moves and nudges don't.
+    if (ok && placementNeedsRefresh(saved, placement)) await refreshRooms();
   }, [draftRef, replaceRoom, refreshRooms]);
 
   const updateLocalLight = (placement: Placement) => {
@@ -514,7 +517,8 @@ export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' })
           </div>
 
           <aside className="inspector">
-            {suggesting && <SuggestPanel room={draft} onClose={() => setSuggesting(false)} />}
+            {/* The saved room, so suggestions reload when a change is committed, not on every drag step. */}
+            {suggesting && <SuggestPanel room={source ?? draft} onClose={() => setSuggesting(false)} />}
             {selectedLight && (
               <Panel title="Light" actions={<IconButton label="Remove from room" danger onClick={removeSelected}><Trash2 size={16} /></IconButton>}>
                 {lights[selectedLight.light_id] ? <LightControls light={lights[selectedLight.light_id]} /> : <p className="hint">{selectedLight.label} is not on the bridge right now.</p>}

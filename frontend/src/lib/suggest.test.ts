@@ -29,3 +29,25 @@ describe('suggest helpers', () => {
     expect(lightFill({ on: true, color: '#ff8800', brightness: 50 })).toEqual({ fill: '#ff8800', opacity: 0.6 });
   });
 });
+
+import { latestOnly, placementNeedsRefresh } from './suggest';
+
+describe('request hygiene', () => {
+  const base: { light_id: string; x: number; y: number; elevation: number | null; role: string } = { light_id: '1', x: 0, y: 0, elevation: null, role: 'auto' };
+
+  it('refreshes rooms only when height or role changed', () => {
+    expect(placementNeedsRefresh(base, { ...base, x: 10 })).toBe(false);
+    expect(placementNeedsRefresh(base, { ...base, elevation: 90 })).toBe(true);
+    expect(placementNeedsRefresh({ ...base, elevation: 90 }, { ...base, elevation: null })).toBe(true);
+    expect(placementNeedsRefresh(base, { ...base, role: 'bias' })).toBe(true);
+    expect(placementNeedsRefresh(undefined, base)).toBe(false);
+  });
+
+  it('keeps only the latest answer', () => {
+    const guard = latestOnly();
+    const first = guard.next();
+    const second = guard.next();
+    expect(guard.isLatest(first)).toBe(false);
+    expect(guard.isLatest(second)).toBe(true);
+  });
+});

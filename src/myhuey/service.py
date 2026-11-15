@@ -13,7 +13,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
 
-from .color import hex_to_rgb, light_state_to_hex, mired_to_color_temperature, rgb_to_xy, xy_to_hex
+from .color import hex_to_rgb, light_state_to_hex, mired_to_color_temperature, rgb_to_xy, xy_to_hex, xy_to_kelvin
 from .discovery import discover
 from .errors import BridgeNotConfigured, BridgeUnreachable, HueError, RoomNotFound, SceneNotFound
 from .geometry import rectangle
@@ -847,6 +847,9 @@ class HueRoomService:
                         changes["color_temp"] = _mirek_for(result["color_temp"], raw.get(light_id) or {})
                     elif "xy" in state:
                         changes["xy"] = result["xy"]
+                    elif "ct" in state and result.get("xy"):
+                        # A white-only bulb can't show the color; give it the nearest white.
+                        changes["color_temp"] = _mirek_for(xy_to_kelvin(result["xy"]), raw.get(light_id) or {})
                     client.set_light_color(light_id, **changes)
                 # On the bridge an effect clears the gradient and a gradient cancels the effect,
                 # so a real effect goes last and "no_effect" is never sent: the light command

@@ -72,3 +72,17 @@ def test_origin_round_trips():
     scene = Scene.from_dict({"name": "x", "room": "Den", "origin": origin})
     assert scene.to_dict()["origin"] == origin
     assert Scene.from_dict({"name": "x", "room": "Den"}).to_dict()["origin"] is None
+
+
+def test_a_white_only_bulb_given_a_color_gets_the_nearest_white(service, fake_bridge):
+    raw = {"1": {"name": "A", "state": {"on": True, "bri": 10, "ct": 153},
+                 "capabilities": {"control": {"ct": {"min": 153, "max": 454}}}},
+           "5": {"name": "B", "state": {"on": True, "bri": 10, "xy": [0.3, 0.3]}}}
+    session = fake_bridge(raw, [{"success": {}}], [{"success": {}}])
+    scene = _white_scene(**{"1": {"colors": ["#ffb070"]}, "5": {"colors": ["#ffb070"]}})
+
+    service.apply_scene_object(scene)
+
+    puts = {call["url"].split("/")[-2]: call["json"] for call in session.calls if call["method"] == "PUT"}
+    assert 333 <= puts["1"]["ct"] <= 454  # a warm amber lands as warm white (≤ 3000 K), not the old 6500 K
+    assert "xy" in puts["5"]

@@ -181,3 +181,11 @@ def test_explicit_blue_palette_is_still_honored_at_night():
     blue = next(p for p in load() if "blue_heavy" in p.tags)
     assert _one(_office(), "relax", dt(23, 30), palette_id=blue.id)["palette"]["id"] == blue.id
     assert by_id(blue.id) == blue
+
+
+@pytest.mark.parametrize("mode", ["code", "study", "relax"])
+def test_shuffling_reaches_far_into_the_library(mode):
+    seen = {item["palette"]["id"] for seed in range(40)
+            for item in suggest(_office(), mode, at=dt(12), wake="07:00", bed="23:00", count=4, seed=seed)}
+    assert len(seen) > 60
+    assert any(palette_id.startswith("met-") for palette_id in seen)
