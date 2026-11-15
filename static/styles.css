@@ -1,0 +1,387 @@
+:root {
+  --bg: #10151d;
+  --panel: #171e29;
+  --panel-raised: #1f2836;
+  --line: #2c3748;
+  --text: #e8eef7;
+  --muted: #9aa8bc;
+  --accent: #6ea8ff;
+  --danger: #ff8a80;
+  --floor: #1a2230;
+  --bulb-off: #3b4556;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 15px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 0.7rem 1.25rem;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.crumbs a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.crumbs a:hover {
+  text-decoration: underline;
+}
+
+.crumb-room:not(:empty)::before {
+  content: "/";
+  margin-right: 0.5rem;
+  color: var(--muted);
+}
+
+.status {
+  margin-left: auto;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.status.error {
+  color: var(--danger);
+}
+
+.layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  min-height: 0;
+}
+
+.sidebar {
+  padding: 1rem;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  overflow-y: auto;
+  max-height: calc(100vh - 52px);
+}
+
+.panel {
+  padding: 0.9rem;
+  margin-bottom: 0.9rem;
+  background: var(--panel-raised);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.panel h2 {
+  margin: 0 0 0.6rem;
+  font-size: 0.95rem;
+}
+
+.panel p {
+  margin: 0 0 0.6rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.panel p.notice {
+  color: var(--text);
+}
+
+.panel p.error {
+  color: var(--danger);
+}
+
+label {
+  display: block;
+  margin: 0.7rem 0 0.3rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.row > input[type="text"] {
+  flex: 1;
+  min-width: 0;
+}
+
+input[type="text"],
+select {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+input[type="color"] {
+  width: 100%;
+  height: 40px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--bg);
+  cursor: pointer;
+}
+
+button {
+  padding: 0.5rem 0.8rem;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: var(--accent);
+  color: #0b1220;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button.quiet {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--text);
+  font-weight: 500;
+}
+
+button.danger {
+  background: transparent;
+  border-color: var(--danger);
+  color: var(--danger);
+  font-weight: 500;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.list .name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.list .meta {
+  color: var(--muted);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.list button {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+.list button.room-link {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.6rem;
+  text-align: left;
+}
+
+.countdown {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.stage {
+  position: relative;
+  min-height: 0;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.stage .hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.empty {
+  margin: auto;
+  max-width: 28rem;
+  text-align: center;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.empty h2 {
+  color: var(--text);
+  font-size: 1.1rem;
+}
+
+.plan {
+  flex: 1;
+  width: 100%;
+  min-height: 320px;
+  max-height: calc(100vh - 130px);
+  touch-action: none;
+  user-select: none;
+}
+
+.room-floor {
+  fill: var(--floor);
+  stroke: var(--line);
+  stroke-width: 3;
+}
+
+.grid-line {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.05);
+  stroke-width: 1;
+}
+
+.room {
+  cursor: pointer;
+  outline: none;
+}
+
+.room:hover .room-floor,
+.room:focus-visible .room-floor {
+  stroke: var(--accent);
+  stroke-width: 6;
+}
+
+.room-name {
+  fill: var(--text);
+  font-size: 46px;
+  font-weight: 600;
+}
+
+.room-count {
+  fill: var(--muted);
+  font-size: 32px;
+}
+
+.light {
+  outline: none;
+}
+
+.light .glow {
+  fill: var(--light, transparent);
+  opacity: var(--glow, 0);
+  pointer-events: none;
+}
+
+.light .bulb {
+  fill: var(--light, var(--bulb-off));
+  stroke: rgba(255, 255, 255, 0.35);
+  stroke-width: 2;
+}
+
+.light.unreachable .bulb,
+.light.unknown .bulb {
+  stroke: var(--danger);
+  stroke-dasharray: 6 5;
+}
+
+.room-plan .light {
+  cursor: grab;
+}
+
+.room-plan .light:focus-visible .bulb,
+.room-plan .light.selected .bulb {
+  stroke: var(--accent);
+  stroke-width: 5;
+}
+
+.light-label {
+  fill: var(--text);
+  font-size: 18px;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.plan-hint {
+  fill: var(--muted);
+  font-size: 22px;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.5rem;
+  transform: translateX(-50%);
+  max-width: min(36rem, 90vw);
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  background: var(--panel-raised);
+  color: var(--text);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 800px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    max-height: none;
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+  }
+}
