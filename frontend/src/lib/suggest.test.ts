@@ -86,3 +86,24 @@ describe('scheduleWarning', () => {
     expect(scheduleWarning('07:00', '07:30')).toBe('Only 30 min between waking and bedtime; suggestions will be dim most of the day.');
   });
 });
+
+import { oneAtATime } from './suggest';
+
+describe('one save at a time', () => {
+  it('folds calls made during a save into one follow-up, and tells the last run it is last', async () => {
+    const runs: boolean[] = [];
+    let release: () => void = () => {};
+    const save = oneAtATime(async (isLast) => {
+      await new Promise<void>((resolve) => { release = resolve; });
+      runs.push(isLast());
+    });
+    const first = save();
+    void save(); void save(); void save();
+    release();
+    await new Promise((r) => setTimeout(r, 0));
+    release();
+    await first;
+    await new Promise((r) => setTimeout(r, 0));
+    expect(runs).toEqual([false, true]);
+  });
+});

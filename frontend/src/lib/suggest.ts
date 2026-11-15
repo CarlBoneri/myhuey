@@ -91,3 +91,30 @@ export function autoRoleLabel(resolved: Record<string, string> | undefined): str
   if (new Set(found.map(([, role]) => role)).size === 1) return `Auto (${found[0][1]})`;
   return `Auto (${found.map(([label, role]) => `${label}: ${role}`).join(' · ')})`;
 }
+
+/**
+ * Runs `run` one call at a time. Calls made while it runs fold into one more run afterwards,
+ * so the last state always reaches the server last. `isLast()` tells a run whether another
+ * is queued behind it (only the last one should overwrite local state with the answer).
+ */
+export function oneAtATime(run: (isLast: () => boolean) => Promise<void>): () => Promise<void> {
+  let running: Promise<void> | null = null;
+  let again = false;
+  return () => {
+    if (running) {
+      again = true;
+      return running;
+    }
+    running = (async () => {
+      try {
+        do {
+          again = false;
+          await run(() => !again);
+        } while (again);
+      } finally {
+        running = null;
+      }
+    })();
+    return running;
+  };
+}
