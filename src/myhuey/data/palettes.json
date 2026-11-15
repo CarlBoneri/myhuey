@@ -1,0 +1,5202 @@
+[
+ {
+  "id": "gen-0-1",
+  "name": "Rosewood Glow 1",
+  "colors": [
+   "#6e6cec",
+   "#9473f6",
+   "#b87bfc",
+   "#db84fd",
+   "#fd8dfa"
+  ],
+  "tags": [
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-2",
+  "name": "Sage Hearth 2",
+  "colors": [
+   "#964848",
+   "#b16655",
+   "#d47f57",
+   "#e3a577",
+   "#fdc584"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-3",
+  "name": "Lagoon Accent 3",
+  "colors": [
+   "#405b5f",
+   "#61767a",
+   "#819396",
+   "#99b4b8",
+   "#f5624e"
+  ],
+  "tags": [
+   "warm",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-4",
+  "name": "Ember Split 4",
+  "colors": [
+   "#ab7388",
+   "#80ab82",
+   "#61acb5",
+   "#c9b9be",
+   "#705e64"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-5",
+  "name": "Dusk Analogous 5",
+  "colors": [
+   "#1a7d9b",
+   "#468bb6",
+   "#6b98cf",
+   "#8fa5e5",
+   "#b2b3f7"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-6",
+  "name": "Amber Glow 6",
+  "colors": [
+   "#cc5547",
+   "#db693d",
+   "#e77f32",
+   "#f0962b",
+   "#f5af2e"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-7",
+  "name": "Ember Hearth 7",
+  "colors": [
+   "#924d3b",
+   "#b16840",
+   "#c58a58",
+   "#daaa6e",
+   "#f3cb78"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-8",
+  "name": "Honey Accent 8",
+  "colors": [
+   "#5e5346",
+   "#7a7063",
+   "#998d7f",
+   "#b4ada3",
+   "#23adac"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-9",
+  "name": "Amber Split 9",
+  "colors": [
+   "#b37364",
+   "#5bb0a4",
+   "#6fa5d0",
+   "#cab9b5",
+   "#715e5a"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-10",
+  "name": "Dusk Analogous 10",
+  "colors": [
+   "#187d9d",
+   "#3f8bbd",
+   "#6897d6",
+   "#8ea4eb",
+   "#b4b1fd"
+  ],
+  "tags": [
+   "cool",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-11",
+  "name": "Dusk Glow 11",
+  "colors": [
+   "#089299",
+   "#19a0b7",
+   "#16aedb",
+   "#41bafb",
+   "#8ac3fc"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-12",
+  "name": "Iris Hearth 12",
+  "colors": [
+   "#9b4442",
+   "#b7624c",
+   "#c3896b",
+   "#efa05d",
+   "#f7c78e"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-13",
+  "name": "Iris Accent 13",
+  "colors": [
+   "#55545f",
+   "#716f80",
+   "#8e8e99",
+   "#adabc3",
+   "#9f9e1d"
+  ],
+  "tags": [
+   "warm",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-14",
+  "name": "Amber Split 14",
+  "colors": [
+   "#ae7663",
+   "#62aea8",
+   "#79a3cd",
+   "#cabab4",
+   "#705f59"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-15",
+  "name": "Dusk Analogous 15",
+  "colors": [
+   "#227d9a",
+   "#4a8bb5",
+   "#6d98ce",
+   "#90a5e3",
+   "#b3b3f4"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-16",
+  "name": "Iris Glow 16",
+  "colors": [
+   "#5675e8",
+   "#7f7df7",
+   "#a488f9",
+   "#c494f9",
+   "#e59efd"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "vivid",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-17",
+  "name": "Ember Hearth 17",
+  "colors": [
+   "#98483c",
+   "#b0684b",
+   "#cd8554",
+   "#e0a86e",
+   "#f8c87c"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-18",
+  "name": "Olive Accent 18",
+  "colors": [
+   "#57564a",
+   "#737266",
+   "#91907d",
+   "#b0af9b",
+   "#00a8d3"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-19",
+  "name": "Dusk Split 19",
+  "colors": [
+   "#658baa",
+   "#c39184",
+   "#ab9e71",
+   "#b3bfca",
+   "#586571"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-20",
+  "name": "Amber Analogous 20",
+  "colors": [
+   "#936360",
+   "#a47768",
+   "#b48b71",
+   "#c2a17d",
+   "#ceb88d"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-21",
+  "name": "Ember Glow 21",
+  "colors": [
+   "#d44272",
+   "#ea5366",
+   "#fc6857",
+   "#ff885b",
+   "#fba771"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-22",
+  "name": "Iris Hearth 22",
+  "colors": [
+   "#9d4434",
+   "#b16746",
+   "#ca8655",
+   "#dba973",
+   "#f0cb8c"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-23",
+  "name": "Dusk Accent 23",
+  "colors": [
+   "#475766",
+   "#66737f",
+   "#85919b",
+   "#a1b0bd",
+   "#83a824"
+  ],
+  "tags": [
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-24",
+  "name": "Rosewood Split 24",
+  "colors": [
+   "#a3749e",
+   "#97a66a",
+   "#5eb0a0",
+   "#c6b9c4",
+   "#6c5e6a"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-25",
+  "name": "Ember Analogous 25",
+  "colors": [
+   "#9f5870",
+   "#b66a71",
+   "#ca7e72",
+   "#db9475",
+   "#e9ac7a"
+  ],
+  "tags": [
+   "warm"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-26",
+  "name": "Sage Glow 26",
+  "colors": [
+   "#18994d",
+   "#26a778",
+   "#0eb89a",
+   "#09c8bc",
+   "#28d7dd"
+  ],
+  "tags": [
+   "cool",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-27",
+  "name": "Rosewood Hearth 27",
+  "colors": [
+   "#9b4445",
+   "#aa6a5c",
+   "#c88669",
+   "#eea065",
+   "#fbc68b"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-28",
+  "name": "Iris Accent 28",
+  "colors": [
+   "#55545e",
+   "#72707b",
+   "#908ca0",
+   "#aeacb7",
+   "#28b092"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-29",
+  "name": "Lagoon Split 29",
+  "colors": [
+   "#59909f",
+   "#c18f98",
+   "#b99775",
+   "#b0c1c6",
+   "#54676d"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-30",
+  "name": "Amber Analogous 30",
+  "colors": [
+   "#976064",
+   "#aa736a",
+   "#bb8871",
+   "#ca9d7a",
+   "#d6b587"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-31",
+  "name": "Iris Glow 31",
+  "colors": [
+   "#6775dc",
+   "#8a7de8",
+   "#ac86f1",
+   "#cd8ff6",
+   "#ed99f8"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "vivid",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-32",
+  "name": "Amber Hearth 32",
+  "colors": [
+   "#8d5040",
+   "#b2673f",
+   "#c18b5e",
+   "#e7a64e",
+   "#f5cb74"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-33",
+  "name": "Sage Accent 33",
+  "colors": [
+   "#455b53",
+   "#687570",
+   "#7e958d",
+   "#9eb4ac",
+   "#ea5fa3"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-34",
+  "name": "Ember Split 34",
+  "colors": [
+   "#a97873",
+   "#75ab9c",
+   "#78a5c0",
+   "#cab9b7",
+   "#715e5c"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-35",
+  "name": "Olive Analogous 35",
+  "colors": [
+   "#8d6b32",
+   "#958243",
+   "#9a9a59",
+   "#9db174",
+   "#9fc892"
+  ],
+  "tags": [
+   "warm"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-36",
+  "name": "Ember Glow 36",
+  "colors": [
+   "#cd4980",
+   "#e35977",
+   "#f76a6c",
+   "#fc886e",
+   "#fba67e"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-37",
+  "name": "Lagoon Hearth 37",
+  "colors": [
+   "#934c3d",
+   "#ab6b4e",
+   "#d28244",
+   "#e0a869",
+   "#fbc86b"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-38",
+  "name": "Lagoon Accent 38",
+  "colors": [
+   "#425a5d",
+   "#657577",
+   "#7a9598",
+   "#98b4b7",
+   "#ca70d0"
+  ],
+  "tags": [
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-39",
+  "name": "Olive Split 39",
+  "colors": [
+   "#7e8d60",
+   "#909cc9",
+   "#b98fb0",
+   "#bbc0b2",
+   "#606656"
+  ],
+  "tags": [
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-40",
+  "name": "Lagoon Analogous 40",
+  "colors": [
+   "#238278",
+   "#359397",
+   "#4ea3b6",
+   "#6bb2d4",
+   "#8bc1ef"
+  ],
+  "tags": [
+   "cool",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-41",
+  "name": "Honey Glow 41",
+  "colors": [
+   "#d25121",
+   "#d96d1b",
+   "#e28400",
+   "#e39e29",
+   "#eab517"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-42",
+  "name": "Sage Hearth 42",
+  "colors": [
+   "#96493f",
+   "#ad694f",
+   "#c8875d",
+   "#e9a35b",
+   "#f3ca8b"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-43",
+  "name": "Lagoon Accent 43",
+  "colors": [
+   "#4c5859",
+   "#5e7779",
+   "#809395",
+   "#a3b1b2",
+   "#c870d6"
+  ],
+  "tags": [
+   "analogous",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-44",
+  "name": "Iris Split 44",
+  "colors": [
+   "#7883b3",
+   "#bf956d",
+   "#94a773",
+   "#b9bdcb",
+   "#5f6272"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-45",
+  "name": "Lagoon Analogous 45",
+  "colors": [
+   "#0e827d",
+   "#15949f",
+   "#3ea3c0",
+   "#63b2de",
+   "#88c0f9"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-46",
+  "name": "Lagoon Glow 46",
+  "colors": [
+   "#17938c",
+   "#0ea3aa",
+   "#1bb1c9",
+   "#11bfef",
+   "#74c8fb"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-47",
+  "name": "Rosewood Hearth 47",
+  "colors": [
+   "#924b4e",
+   "#b96052",
+   "#d67d5a",
+   "#dfa681",
+   "#fec489"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-48",
+  "name": "Dusk Accent 48",
+  "colors": [
+   "#4e565f",
+   "#69737d",
+   "#85919e",
+   "#a1b0c0",
+   "#cf8702"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-49",
+  "name": "Ember Split 49",
+  "colors": [
+   "#b47079",
+   "#6baf8d",
+   "#5cabc4",
+   "#cab9ba",
+   "#715e60"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-50",
+  "name": "Lagoon Analogous 50",
+  "colors": [
+   "#19846d",
+   "#22968f",
+   "#26a8b3",
+   "#4bb7d5",
+   "#70c6f5"
+  ],
+  "tags": [
+   "cool"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-51",
+  "name": "Dusk Glow 51",
+  "colors": [
+   "#1d8bb7",
+   "#2597e0",
+   "#54a0fe",
+   "#8babfc",
+   "#b0b8fb"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-52",
+  "name": "Ember Hearth 52",
+  "colors": [
+   "#944b3c",
+   "#b9623a",
+   "#d28244",
+   "#e2a763",
+   "#eccc95"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-53",
+  "name": "Ember Accent 53",
+  "colors": [
+   "#615152",
+   "#836a6c",
+   "#998b8c",
+   "#c1a6a8",
+   "#1eadac"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-54",
+  "name": "Honey Split 54",
+  "colors": [
+   "#aa7b48",
+   "#55acc3",
+   "#9199d6",
+   "#c7bcb0",
+   "#6d6154"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-55",
+  "name": "Dusk Analogous 55",
+  "colors": [
+   "#3e7d7f",
+   "#528e9a",
+   "#6a9eb5",
+   "#84adce",
+   "#a1bce5"
+  ],
+  "tags": [
+   "cool",
+   "muted",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-56",
+  "name": "Iris Glow 56",
+  "colors": [
+   "#008ac4",
+   "#2093f0",
+   "#669cfe",
+   "#95a8fa",
+   "#b7b5fd"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-57",
+  "name": "Sage Hearth 57",
+  "colors": [
+   "#924d40",
+   "#aa6b50",
+   "#ce844d",
+   "#d7ab7d",
+   "#fbc870"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-58",
+  "name": "Lagoon Accent 58",
+  "colors": [
+   "#4b5857",
+   "#677574",
+   "#7c9593",
+   "#97b5b2",
+   "#b976e6"
+  ],
+  "tags": [
+   "cool",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-59",
+  "name": "Amber Split 59",
+  "colors": [
+   "#b37362",
+   "#59b0a6",
+   "#71a4d1",
+   "#cabab5",
+   "#715f59"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-60",
+  "name": "Sage Analogous 60",
+  "colors": [
+   "#727649",
+   "#788b61",
+   "#7ea07b",
+   "#86b598",
+   "#8fc9b6"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-61",
+  "name": "Honey Glow 61",
+  "colors": [
+   "#ab740c",
+   "#b0891f",
+   "#b49f25",
+   "#b3b61b",
+   "#a9cf3d"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-62",
+  "name": "Iris Hearth 62",
+  "colors": [
+   "#8d503f",
+   "#b06941",
+   "#ca874b",
+   "#dbaa6c",
+   "#f7ca6c"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-63",
+  "name": "Olive Accent 63",
+  "colors": [
+   "#57564c",
+   "#737268",
+   "#93907c",
+   "#b1af9c",
+   "#e45dbd"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-64",
+  "name": "Rosewood Split 64",
+  "colors": [
+   "#9b7999",
+   "#9ba479",
+   "#74ab9e",
+   "#c5b9c4",
+   "#6b5e6b"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-65",
+  "name": "Iris Analogous 65",
+  "colors": [
+   "#2e79a7",
+   "#5785bf",
+   "#7c92d4",
+   "#a09fe6",
+   "#c4acf3"
+  ],
+  "tags": [
+   "cool",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-66",
+  "name": "Dusk Glow 66",
+  "colors": [
+   "#0690a4",
+   "#269dc2",
+   "#1caaeb",
+   "#63b4fe",
+   "#9abffb"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-67",
+  "name": "Rosewood Hearth 67",
+  "colors": [
+   "#934c3f",
+   "#b26747",
+   "#c48961",
+   "#e3a665",
+   "#eecb95"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-68",
+  "name": "Amber Accent 68",
+  "colors": [
+   "#5f524a",
+   "#806d61",
+   "#9e8b7f",
+   "#baaba1",
+   "#23b093"
+  ],
+  "tags": [
+   "cool",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-69",
+  "name": "Honey Split 69",
+  "colors": [
+   "#918759",
+   "#7ea3c5",
+   "#a994be",
+   "#c1beb0",
+   "#676453"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-70",
+  "name": "Lagoon Analogous 70",
+  "colors": [
+   "#2f8173",
+   "#3d9292",
+   "#52a3b1",
+   "#6cb3cf",
+   "#8ac2ea"
+  ],
+  "tags": [
+   "cool",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-71",
+  "name": "Ember Glow 71",
+  "colors": [
+   "#b458a9",
+   "#cf63a6",
+   "#e870a1",
+   "#ff809b",
+   "#fea0a0"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-72",
+  "name": "Amber Hearth 72",
+  "colors": [
+   "#9e4330",
+   "#ac6a4c",
+   "#d18345",
+   "#e4a65d",
+   "#f1cb88"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-73",
+  "name": "Rosewood Accent 73",
+  "colors": [
+   "#57535f",
+   "#736f7a",
+   "#928c9d",
+   "#b0abbc",
+   "#8ba60e"
+  ],
+  "tags": [
+   "analogous",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-74",
+  "name": "Amber Split 74",
+  "colors": [
+   "#a77a67",
+   "#6eabaa",
+   "#84a1c6",
+   "#cabab3",
+   "#705f58"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-75",
+  "name": "Sage Analogous 75",
+  "colors": [
+   "#587c5e",
+   "#5f8f79",
+   "#6aa296",
+   "#78b4b3",
+   "#8bc6d0"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-76",
+  "name": "Olive Glow 76",
+  "colors": [
+   "#957f09",
+   "#97951d",
+   "#91ac23",
+   "#7ec538",
+   "#66dc6d"
+  ],
+  "tags": [
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-77",
+  "name": "Amber Hearth 77",
+  "colors": [
+   "#97474a",
+   "#ba5f4f",
+   "#da7b53",
+   "#dfa680",
+   "#fec487"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-78",
+  "name": "Honey Accent 78",
+  "colors": [
+   "#5c544a",
+   "#7a7063",
+   "#968e84",
+   "#b9ac9c",
+   "#359bfd"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-79",
+  "name": "Iris Split 79",
+  "colors": [
+   "#8080b6",
+   "#bd9764",
+   "#8aaa76",
+   "#bcbccb",
+   "#616271"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-80",
+  "name": "Honey Analogous 80",
+  "colors": [
+   "#916650",
+   "#9f7b5a",
+   "#ab9167",
+   "#b5a779",
+   "#bebe8e"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-81",
+  "name": "Honey Glow 81",
+  "colors": [
+   "#bf650f",
+   "#c87b01",
+   "#cd920b",
+   "#cfaa27",
+   "#d0c12f"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-82",
+  "name": "Lagoon Hearth 82",
+  "colors": [
+   "#8f4d4f",
+   "#aa6a5e",
+   "#d67e59",
+   "#f09e64",
+   "#f6c798"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-83",
+  "name": "Lagoon Accent 83",
+  "colors": [
+   "#425b59",
+   "#657574",
+   "#7f9492",
+   "#a0b2b0",
+   "#ba72ed"
+  ],
+  "tags": [
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-84",
+  "name": "Dusk Split 84",
+  "colors": [
+   "#5b8fa3",
+   "#c38f92",
+   "#b69972",
+   "#b1c1c7",
+   "#54676e"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-85",
+  "name": "Sage Analogous 85",
+  "colors": [
+   "#5d7c4b",
+   "#5e9169",
+   "#62a589",
+   "#6ab9aa",
+   "#78cbcb"
+  ],
+  "tags": [
+   "cool"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-86",
+  "name": "Iris Glow 86",
+  "colors": [
+   "#6475dc",
+   "#887ee8",
+   "#aa87f2",
+   "#cc90f7",
+   "#ec9af9"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "vivid",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-87",
+  "name": "Lagoon Hearth 87",
+  "colors": [
+   "#974840",
+   "#b56449",
+   "#ca865d",
+   "#e4a56a",
+   "#fdc679"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-88",
+  "name": "Rosewood Accent 88",
+  "colors": [
+   "#5d5061",
+   "#7b6b7f",
+   "#978a9a",
+   "#b7a8bb",
+   "#c28e24"
+  ],
+  "tags": [
+   "warm",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-89",
+  "name": "Ember Split 89",
+  "colors": [
+   "#b07181",
+   "#76ae87",
+   "#5dacbd",
+   "#cab9bc",
+   "#705e62"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-90",
+  "name": "Iris Analogous 90",
+  "colors": [
+   "#42789b",
+   "#6286b2",
+   "#8194c7",
+   "#a1a1d8",
+   "#c1b0e7"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "muted",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-91",
+  "name": "Olive Glow 91",
+  "colors": [
+   "#997d17",
+   "#9d9222",
+   "#9ba923",
+   "#8ec232",
+   "#7bd865"
+  ],
+  "tags": [
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-92",
+  "name": "Rosewood Hearth 92",
+  "colors": [
+   "#8e4f45",
+   "#ae684d",
+   "#c6885f",
+   "#e6a560",
+   "#f6c981"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-93",
+  "name": "Iris Accent 93",
+  "colors": [
+   "#545363",
+   "#706f84",
+   "#8e8e99",
+   "#adacb9",
+   "#a29e05"
+  ],
+  "tags": [
+   "warm",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-94",
+  "name": "Olive Split 94",
+  "colors": [
+   "#828c5f",
+   "#8e9dc8",
+   "#b690b2",
+   "#bcc0b2",
+   "#616556"
+  ],
+  "tags": [
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-95",
+  "name": "Amber Analogous 95",
+  "colors": [
+   "#a45955",
+   "#b66d56",
+   "#c58459",
+   "#d19c60",
+   "#d9b56e"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-96",
+  "name": "Ember Glow 96",
+  "colors": [
+   "#b254b9",
+   "#cf5eb6",
+   "#ea6ab0",
+   "#fe7ea8",
+   "#ff9ea9"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-97",
+  "name": "Rosewood Hearth 97",
+  "colors": [
+   "#974840",
+   "#b66347",
+   "#d2814e",
+   "#e9a360",
+   "#fec673"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-98",
+  "name": "Iris Accent 98",
+  "colors": [
+   "#4e5568",
+   "#6d717d",
+   "#898f9f",
+   "#a7aec0",
+   "#bb9204"
+  ],
+  "tags": [
+   "warm",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-99",
+  "name": "Rosewood Split 99",
+  "colors": [
+   "#9278b2",
+   "#b09e5b",
+   "#70af85",
+   "#c0bbc8",
+   "#66606f"
+  ],
+  "tags": [
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-100",
+  "name": "Lagoon Analogous 100",
+  "colors": [
+   "#35807a",
+   "#469097",
+   "#5da0b4",
+   "#78b0cf",
+   "#96bfe9"
+  ],
+  "tags": [
+   "cool",
+   "muted",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-101",
+  "name": "Rosewood Glow 101",
+  "colors": [
+   "#7d6ed4",
+   "#9d77dd",
+   "#bd81e2",
+   "#db8be4",
+   "#f996e4"
+  ],
+  "tags": [
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-102",
+  "name": "Rosewood Hearth 102",
+  "colors": [
+   "#914d3e",
+   "#b26743",
+   "#c5895b",
+   "#dfa867",
+   "#f0cb8a"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-103",
+  "name": "Iris Accent 103",
+  "colors": [
+   "#575264",
+   "#736f7e",
+   "#908d9c",
+   "#afacb8",
+   "#dd7c20"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-104",
+  "name": "Olive Split 104",
+  "colors": [
+   "#8f8949",
+   "#79a2d2",
+   "#b18fc4",
+   "#c0bfb0",
+   "#656454"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-105",
+  "name": "Ember Analogous 105",
+  "colors": [
+   "#8e6377",
+   "#a4747e",
+   "#b98685",
+   "#cb9a8e",
+   "#dcb097"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-106",
+  "name": "Sage Glow 106",
+  "colors": [
+   "#698f12",
+   "#51a730",
+   "#2ebb61",
+   "#14cd8f",
+   "#1ddcb7"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-107",
+  "name": "Rosewood Hearth 107",
+  "colors": [
+   "#994737",
+   "#a96c51",
+   "#d38240",
+   "#dea86b",
+   "#f6ca7a"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-108",
+  "name": "Olive Accent 108",
+  "colors": [
+   "#51584f",
+   "#6a7568",
+   "#8a9288",
+   "#a9b0a7",
+   "#f55e69"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-109",
+  "name": "Olive Split 109",
+  "colors": [
+   "#838d53",
+   "#879dd2",
+   "#ba8db9",
+   "#bdc0b1",
+   "#626555"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-110",
+  "name": "Dusk Analogous 110",
+  "colors": [
+   "#367e85",
+   "#4d8ea0",
+   "#689dbb",
+   "#84acd3",
+   "#a3bbe9"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "muted",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-111",
+  "name": "Iris Glow 111",
+  "colors": [
+   "#2a7cee",
+   "#6785f8",
+   "#908ffe",
+   "#b39cfb",
+   "#d2a8fd"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "vivid",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-112",
+  "name": "Amber Hearth 112",
+  "colors": [
+   "#9a444c",
+   "#b66257",
+   "#d97b59",
+   "#ed9f6f",
+   "#fcc591"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-113",
+  "name": "Dusk Accent 113",
+  "colors": [
+   "#4e5661",
+   "#667385",
+   "#8290a4",
+   "#a5afbd",
+   "#61af39"
+  ],
+  "tags": [
+   "cool",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-114",
+  "name": "Rosewood Split 114",
+  "colors": [
+   "#9878a8",
+   "#a6a165",
+   "#6daf91",
+   "#c2bac7",
+   "#695f6d"
+  ],
+  "tags": [
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-115",
+  "name": "Iris Analogous 115",
+  "colors": [
+   "#5471a7",
+   "#757eba",
+   "#968bc9",
+   "#b699d5",
+   "#d6a7de"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-116",
+  "name": "Iris Glow 116",
+  "colors": [
+   "#3f7ede",
+   "#6c86ef",
+   "#928ffd",
+   "#b49cfa",
+   "#d2a8fc"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "vivid",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-117",
+  "name": "Iris Hearth 117",
+  "colors": [
+   "#9b443e",
+   "#b1664f",
+   "#d38151",
+   "#dba97c",
+   "#f2ca95"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-118",
+  "name": "Rosewood Accent 118",
+  "colors": [
+   "#5f505a",
+   "#7f6b79",
+   "#9d8897",
+   "#baa7b5",
+   "#b09720"
+  ],
+  "tags": [
+   "warm",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-119",
+  "name": "Honey Split 119",
+  "colors": [
+   "#9f8149",
+   "#67a8ca",
+   "#a095ce",
+   "#c4bdb0",
+   "#6a6253"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-120",
+  "name": "Rosewood Analogous 120",
+  "colors": [
+   "#6f67a7",
+   "#8f74b3",
+   "#af82bc",
+   "#cd91c2",
+   "#eaa1c5"
+  ],
+  "tags": [],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-121",
+  "name": "Lagoon Glow 121",
+  "colors": [
+   "#17985e",
+   "#16a782",
+   "#01b7a3",
+   "#14c7c4",
+   "#35d5e4"
+  ],
+  "tags": [
+   "cool",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-122",
+  "name": "Lagoon Hearth 122",
+  "colors": [
+   "#8d513d",
+   "#b76430",
+   "#c58a53",
+   "#d4ad77",
+   "#e9ce90"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-123",
+  "name": "Ember Accent 123",
+  "colors": [
+   "#62504f",
+   "#7c6e6d",
+   "#a38786",
+   "#c1a7a5",
+   "#28abb5"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-124",
+  "name": "Ember Split 124",
+  "colors": [
+   "#b47079",
+   "#6bb08d",
+   "#5aabc5",
+   "#cab9ba",
+   "#715e60"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-125",
+  "name": "Ember Analogous 125",
+  "colors": [
+   "#895e9a",
+   "#a76b9f",
+   "#c37ba2",
+   "#de8ca3",
+   "#f69fa3"
+  ],
+  "tags": [
+   "warm"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-126",
+  "name": "Ember Glow 126",
+  "colors": [
+   "#c85275",
+   "#dc626e",
+   "#ef7466",
+   "#fe895e",
+   "#fba773"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-127",
+  "name": "Olive Hearth 127",
+  "colors": [
+   "#924a50",
+   "#a86a63",
+   "#da7a59",
+   "#f19d6a",
+   "#f8c698"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-128",
+  "name": "Rosewood Accent 128",
+  "colors": [
+   "#5a525c",
+   "#776e78",
+   "#988a9a",
+   "#b8a7bb",
+   "#c38e03"
+  ],
+  "tags": [
+   "warm",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-129",
+  "name": "Olive Split 129",
+  "colors": [
+   "#8d894e",
+   "#7da1d0",
+   "#b28fc1",
+   "#bfbfb0",
+   "#656454"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-130",
+  "name": "Rosewood Analogous 130",
+  "colors": [
+   "#7c6694",
+   "#98759f",
+   "#b384a7",
+   "#cc95ae",
+   "#e5a7b3"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-131",
+  "name": "Amber Glow 131",
+  "colors": [
+   "#d44c43",
+   "#e36133",
+   "#f0791d",
+   "#f39428",
+   "#f8ad28"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-132",
+  "name": "Sage Hearth 132",
+  "colors": [
+   "#904e40",
+   "#a66d54",
+   "#c38a60",
+   "#dda96f",
+   "#fcc868"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-133",
+  "name": "Olive Accent 133",
+  "colors": [
+   "#575742",
+   "#737361",
+   "#909081",
+   "#b0af9c",
+   "#dd69ac"
+  ],
+  "tags": [
+   "warm",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-134",
+  "name": "Lagoon Split 134",
+  "colors": [
+   "#54919b",
+   "#c18e9d",
+   "#bd9576",
+   "#b0c2c5",
+   "#53676b"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-135",
+  "name": "Rosewood Analogous 135",
+  "colors": [
+   "#7563af",
+   "#976fb9",
+   "#b87cbf",
+   "#d78ac1",
+   "#f59bc1"
+  ],
+  "tags": [],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-136",
+  "name": "Iris Glow 136",
+  "colors": [
+   "#5079e2",
+   "#7981f2",
+   "#9e89fd",
+   "#c095fe",
+   "#dea2fd"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "vivid",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-137",
+  "name": "Honey Hearth 137",
+  "colors": [
+   "#914e3e",
+   "#ae6948",
+   "#bf8c65",
+   "#d8ab77",
+   "#eccc94"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-138",
+  "name": "Ember Accent 138",
+  "colors": [
+   "#5e5250",
+   "#7f6d6a",
+   "#9f8a86",
+   "#c0a7a4",
+   "#26abbb"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-139",
+  "name": "Olive Split 139",
+  "colors": [
+   "#8a8956",
+   "#83a0cb",
+   "#b191bc",
+   "#bfbfb0",
+   "#646454"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-140",
+  "name": "Honey Analogous 140",
+  "colors": [
+   "#9b6231",
+   "#a67a3a",
+   "#ad9249",
+   "#b1ab5f",
+   "#b3c47b"
+  ],
+  "tags": [
+   "warm"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-141",
+  "name": "Dusk Glow 141",
+  "colors": [
+   "#16919c",
+   "#00a0bd",
+   "#08ade2",
+   "#51b8fc",
+   "#91c2fc"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-142",
+  "name": "Olive Hearth 142",
+  "colors": [
+   "#9f3e4b",
+   "#bc5c53",
+   "#ce8268",
+   "#e7a27a",
+   "#fcc492"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-143",
+  "name": "Amber Accent 143",
+  "colors": [
+   "#5f524f",
+   "#7b6e6b",
+   "#998c88",
+   "#bea8a3",
+   "#778efd"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-144",
+  "name": "Sage Split 144",
+  "colors": [
+   "#5e9478",
+   "#ad92c0",
+   "#c78c94",
+   "#b3c2b9",
+   "#57685e"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-145",
+  "name": "Iris Analogous 145",
+  "colors": [
+   "#4576a1",
+   "#6683b7",
+   "#8791ca",
+   "#a89eda",
+   "#c8ade7"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-146",
+  "name": "Honey Glow 146",
+  "colors": [
+   "#b26f1d",
+   "#bc8307",
+   "#c09921",
+   "#c2b027",
+   "#bfc81e"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-147",
+  "name": "Rosewood Hearth 147",
+  "colors": [
+   "#95484c",
+   "#b66254",
+   "#ce8264",
+   "#e2a57d",
+   "#f5c799"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-148",
+  "name": "Dusk Accent 148",
+  "colors": [
+   "#4a5764",
+   "#6b727a",
+   "#86909c",
+   "#a0b0c1",
+   "#6cae0a"
+  ],
+  "tags": [
+   "cool",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-149",
+  "name": "Lagoon Split 149",
+  "colors": [
+   "#4f91a4",
+   "#c78c95",
+   "#bc976d",
+   "#b0c1c7",
+   "#54676d"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-150",
+  "name": "Iris Analogous 150",
+  "colors": [
+   "#4d7794",
+   "#6985aa",
+   "#8694be",
+   "#a3a2d0",
+   "#c1b1df"
+  ],
+  "tags": [
+   "cool",
+   "muted",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-151",
+  "name": "Sage Glow 151",
+  "colors": [
+   "#169859",
+   "#0fa87e",
+   "#26b6a0",
+   "#2ec6c0",
+   "#27d6e3"
+  ],
+  "tags": [
+   "cool",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-152",
+  "name": "Lagoon Hearth 152",
+  "colors": [
+   "#994642",
+   "#a76c5a",
+   "#c78764",
+   "#e9a366",
+   "#f1c997"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-153",
+  "name": "Sage Accent 153",
+  "colors": [
+   "#4b5a4a",
+   "#687667",
+   "#879386",
+   "#a3b3a2",
+   "#f16463"
+  ],
+  "tags": [
+   "warm",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-154",
+  "name": "Rosewood Split 154",
+  "colors": [
+   "#a0769f",
+   "#9ba56d",
+   "#66af9e",
+   "#c5b9c4",
+   "#6b5e6b"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-155",
+  "name": "Ember Analogous 155",
+  "colors": [
+   "#9c5682",
+   "#b66683",
+   "#ce7883",
+   "#e38d82",
+   "#f5a483"
+  ],
+  "tags": [
+   "warm"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-156",
+  "name": "Olive Glow 156",
+  "colors": [
+   "#a07a0d",
+   "#a48f13",
+   "#a4a526",
+   "#9dbe2d",
+   "#8fd45e"
+  ],
+  "tags": [
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-157",
+  "name": "Lagoon Hearth 157",
+  "colors": [
+   "#9e4043",
+   "#ab695b",
+   "#cc8463",
+   "#e2a578",
+   "#fec583"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-158",
+  "name": "Lagoon Accent 158",
+  "colors": [
+   "#445a5d",
+   "#617679",
+   "#7f9396",
+   "#9bb3b7",
+   "#f1645b"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-159",
+  "name": "Olive Split 159",
+  "colors": [
+   "#8c8955",
+   "#81a1cb",
+   "#b091bd",
+   "#bfbfb0",
+   "#656454"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-160",
+  "name": "Dusk Analogous 160",
+  "colors": [
+   "#397e7f",
+   "#4d8f9b",
+   "#659eb6",
+   "#80aed0",
+   "#9ebde7"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "muted",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-161",
+  "name": "Dusk Glow 161",
+  "colors": [
+   "#158db3",
+   "#1099dc",
+   "#49a2fb",
+   "#85adfb",
+   "#acb9fb"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-162",
+  "name": "Lagoon Hearth 162",
+  "colors": [
+   "#99454a",
+   "#b0665a",
+   "#ce8264",
+   "#e7a375",
+   "#fcc58d"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-163",
+  "name": "Dusk Accent 163",
+  "colors": [
+   "#4d5661",
+   "#667382",
+   "#889099",
+   "#a4afbb",
+   "#f55a7d"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-164",
+  "name": "Rosewood Split 164",
+  "colors": [
+   "#9879a0",
+   "#a1a272",
+   "#74ac98",
+   "#c4bac6",
+   "#6a5f6c"
+  ],
+  "tags": [
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-165",
+  "name": "Olive Analogous 165",
+  "colors": [
+   "#7f7234",
+   "#83894c",
+   "#869f67",
+   "#89b685",
+   "#8ccba6"
+  ],
+  "tags": [],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-166",
+  "name": "Ember Glow 166",
+  "colors": [
+   "#c049af",
+   "#dc54a9",
+   "#f7619f",
+   "#fc8299",
+   "#fba29f"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-167",
+  "name": "Ember Hearth 167",
+  "colors": [
+   "#8d5044",
+   "#ba6138",
+   "#d38244",
+   "#dea86d",
+   "#f3ca85"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-168",
+  "name": "Amber Accent 168",
+  "colors": [
+   "#5d534f",
+   "#7d6e68",
+   "#9f8a82",
+   "#baaaa4",
+   "#25b27d"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-169",
+  "name": "Iris Split 169",
+  "colors": [
+   "#7684b0",
+   "#be9573",
+   "#98a575",
+   "#b9bdcb",
+   "#5e6372"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-170",
+  "name": "Amber Analogous 170",
+  "colors": [
+   "#9d5b68",
+   "#b26e6a",
+   "#c4826e",
+   "#d49973",
+   "#e0b07d"
+  ],
+  "tags": [
+   "warm"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-171",
+  "name": "Olive Glow 171",
+  "colors": [
+   "#967f1d",
+   "#999415",
+   "#95ab18",
+   "#8ac24d",
+   "#7cd777"
+  ],
+  "tags": [
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-172",
+  "name": "Sage Hearth 172",
+  "colors": [
+   "#944c37",
+   "#ae6a43",
+   "#cb8748",
+   "#ddaa64",
+   "#ebcd8f"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-173",
+  "name": "Rosewood Accent 173",
+  "colors": [
+   "#5d515c",
+   "#7c6b7b",
+   "#978b96",
+   "#b9a7b8",
+   "#bc920c"
+  ],
+  "tags": [
+   "warm",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-174",
+  "name": "Iris Split 174",
+  "colors": [
+   "#8280b1",
+   "#b9996a",
+   "#8aa97c",
+   "#bcbcca",
+   "#626171"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-175",
+  "name": "Honey Analogous 175",
+  "colors": [
+   "#a35c3e",
+   "#b17340",
+   "#bb8b48",
+   "#c2a457",
+   "#c6be6e"
+  ],
+  "tags": [
+   "warm"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-176",
+  "name": "Rosewood Glow 176",
+  "colors": [
+   "#9266ca",
+   "#b070cf",
+   "#ce7ad0",
+   "#ea86cf",
+   "#fc9ac9"
+  ],
+  "tags": [
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-177",
+  "name": "Dusk Hearth 177",
+  "colors": [
+   "#924d39",
+   "#b46639",
+   "#cb874a",
+   "#d8ab71",
+   "#eecd88"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-178",
+  "name": "Amber Accent 178",
+  "colors": [
+   "#664f4a",
+   "#826b67",
+   "#a18984",
+   "#c2a7a1",
+   "#18b55c"
+  ],
+  "tags": [
+   "warm",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-179",
+  "name": "Dusk Split 179",
+  "colors": [
+   "#518faa",
+   "#c98c8d",
+   "#b99968",
+   "#b1c1c8",
+   "#55666f"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-180",
+  "name": "Ember Analogous 180",
+  "colors": [
+   "#8a5ba1",
+   "#aa68a5",
+   "#c877a7",
+   "#e387a5",
+   "#fc9aa3"
+  ],
+  "tags": [
+   "warm"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-181",
+  "name": "Rosewood Glow 181",
+  "colors": [
+   "#a554d5",
+   "#c55dd3",
+   "#e567cf",
+   "#fc78c4",
+   "#fc9dbc"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-182",
+  "name": "Lagoon Hearth 182",
+  "colors": [
+   "#9a453e",
+   "#ab6a54",
+   "#c78762",
+   "#daa97d",
+   "#f3c98f"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-183",
+  "name": "Ember Accent 183",
+  "colors": [
+   "#634f54",
+   "#7b6d71",
+   "#a0888e",
+   "#bea7ad",
+   "#0db09d"
+  ],
+  "tags": [
+   "cool",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-184",
+  "name": "Lagoon Split 184",
+  "colors": [
+   "#529296",
+   "#bf8ea4",
+   "#c19379",
+   "#b0c2c3",
+   "#536869"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-185",
+  "name": "Honey Analogous 185",
+  "colors": [
+   "#a15d45",
+   "#b07349",
+   "#bc8a50",
+   "#c4a35e",
+   "#c9bc72"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-186",
+  "name": "Lagoon Glow 186",
+  "colors": [
+   "#059392",
+   "#06a2b0",
+   "#20b0d0",
+   "#27bdf6",
+   "#7bc6ff"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-187",
+  "name": "Olive Hearth 187",
+  "colors": [
+   "#9e4238",
+   "#ac6a52",
+   "#cc8558",
+   "#dda877",
+   "#f1ca92"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-188",
+  "name": "Rosewood Accent 188",
+  "colors": [
+   "#5a525e",
+   "#786c7f",
+   "#938c98",
+   "#b5a9bc",
+   "#15aeac"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-189",
+  "name": "Rosewood Split 189",
+  "colors": [
+   "#927ba5",
+   "#a8a06e",
+   "#79ac90",
+   "#c1bac8",
+   "#67606e"
+  ],
+  "tags": [
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-190",
+  "name": "Olive Analogous 190",
+  "colors": [
+   "#86701b",
+   "#888838",
+   "#88a057",
+   "#86b778",
+   "#84ce9c"
+  ],
+  "tags": [],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-191",
+  "name": "Ember Glow 191",
+  "colors": [
+   "#d13e8c",
+   "#ea4d81",
+   "#fa6677",
+   "#fa887b",
+   "#fba587"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-192",
+  "name": "Ember Hearth 192",
+  "colors": [
+   "#9b453e",
+   "#a86c59",
+   "#d38150",
+   "#eea157",
+   "#f9c783"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-193",
+  "name": "Amber Accent 193",
+  "colors": [
+   "#5e524e",
+   "#7b6f6a",
+   "#a08a81",
+   "#bcaaa3",
+   "#21a8cd"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-194",
+  "name": "Dusk Split 194",
+  "colors": [
+   "#4392aa",
+   "#cd8892",
+   "#c09663",
+   "#b0c1c7",
+   "#54676d"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-195",
+  "name": "Lagoon Analogous 195",
+  "colors": [
+   "#0f856a",
+   "#11978d",
+   "#06a9b2",
+   "#3db9d5",
+   "#66c8f6"
+  ],
+  "tags": [
+   "cool",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-196",
+  "name": "Sage Glow 196",
+  "colors": [
+   "#7a8a1a",
+   "#6ca217",
+   "#44bb3a",
+   "#20ce76",
+   "#34dca7"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-197",
+  "name": "Honey Hearth 197",
+  "colors": [
+   "#9d4245",
+   "#ae6759",
+   "#cb8465",
+   "#f29d5d",
+   "#f6c794"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-198",
+  "name": "Rosewood Accent 198",
+  "colors": [
+   "#5d505e",
+   "#7b6c7c",
+   "#988999",
+   "#b8a8b9",
+   "#42b346"
+  ],
+  "tags": [
+   "cool",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-199",
+  "name": "Lagoon Split 199",
+  "colors": [
+   "#519391",
+   "#bd8eaa",
+   "#c3917d",
+   "#b0c2c1",
+   "#536867"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-200",
+  "name": "Honey Analogous 200",
+  "colors": [
+   "#91674c",
+   "#9e7c57",
+   "#a99265",
+   "#b2a978",
+   "#bac08e"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-201",
+  "name": "Iris Glow 201",
+  "colors": [
+   "#407fdb",
+   "#6b87ed",
+   "#9190fb",
+   "#b39bff",
+   "#d1a9fb"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "vivid",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-202",
+  "name": "Iris Hearth 202",
+  "colors": [
+   "#914c4b",
+   "#b8614e",
+   "#d2815b",
+   "#eda067",
+   "#fec583"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-203",
+  "name": "Rosewood Accent 203",
+  "colors": [
+   "#58535d",
+   "#766d7e",
+   "#928c97",
+   "#b3a9bd",
+   "#14afa7"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-204",
+  "name": "Dusk Split 204",
+  "colors": [
+   "#6988b4",
+   "#c69075",
+   "#a3a26a",
+   "#b6becb",
+   "#5b6472"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-205",
+  "name": "Olive Analogous 205",
+  "colors": [
+   "#97661f",
+   "#9e7e2e",
+   "#a39745",
+   "#a3b061",
+   "#a2c982"
+  ],
+  "tags": [
+   "warm"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-206",
+  "name": "Rosewood Glow 206",
+  "colors": [
+   "#9067cc",
+   "#af70d1",
+   "#cd7ad3",
+   "#ea85d2",
+   "#fb9acc"
+  ],
+  "tags": [
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-207",
+  "name": "Olive Hearth 207",
+  "colors": [
+   "#934a48",
+   "#b26552",
+   "#cf825c",
+   "#dea77c",
+   "#f3c997"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-208",
+  "name": "Lagoon Accent 208",
+  "colors": [
+   "#485a56",
+   "#607773",
+   "#7b9690",
+   "#98b5af",
+   "#ac7ced"
+  ],
+  "tags": [
+   "cool",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-209",
+  "name": "Lagoon Split 209",
+  "colors": [
+   "#59938a",
+   "#b790af",
+   "#c29185",
+   "#b0c2bf",
+   "#546865"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-210",
+  "name": "Iris Analogous 210",
+  "colors": [
+   "#3477ac",
+   "#5d83c3",
+   "#838fd7",
+   "#a79ce6",
+   "#cba9f2"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-211",
+  "name": "Iris Glow 211",
+  "colors": [
+   "#217fe7",
+   "#5e86fb",
+   "#8b92fa",
+   "#af9dff",
+   "#cdabfc"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "vivid",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-212",
+  "name": "Dusk Hearth 212",
+  "colors": [
+   "#9b4446",
+   "#ba5f4e",
+   "#d47f59",
+   "#e4a476",
+   "#fdc588"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-213",
+  "name": "Dusk Accent 213",
+  "colors": [
+   "#425964",
+   "#677479",
+   "#7b949e",
+   "#9eb2bb",
+   "#ec6f24"
+  ],
+  "tags": [
+   "warm",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-214",
+  "name": "Olive Split 214",
+  "colors": [
+   "#888b49",
+   "#7f9fd6",
+   "#b88cc0",
+   "#bebfb1",
+   "#636555"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-215",
+  "name": "Lagoon Analogous 215",
+  "colors": [
+   "#447f6b",
+   "#4e9189",
+   "#5ea3a6",
+   "#73b3c3",
+   "#8cc4df"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-216",
+  "name": "Rosewood Glow 216",
+  "colors": [
+   "#8762e6",
+   "#aa6aeb",
+   "#cc73ec",
+   "#ed7ce9",
+   "#fd96db"
+  ],
+  "tags": [
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-217",
+  "name": "Iris Hearth 217",
+  "colors": [
+   "#9a463c",
+   "#a86c56",
+   "#c38965",
+   "#e1a76e",
+   "#f3ca8e"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-218",
+  "name": "Olive Accent 218",
+  "colors": [
+   "#55574a",
+   "#71745e",
+   "#8f9184",
+   "#adb0a1",
+   "#1da5df"
+  ],
+  "tags": [
+   "cool",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-219",
+  "name": "Olive Split 219",
+  "colors": [
+   "#7d8e5c",
+   "#8f9ccd",
+   "#bb8eb2",
+   "#bbc0b2",
+   "#606656"
+  ],
+  "tags": [
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-220",
+  "name": "Iris Analogous 220",
+  "colors": [
+   "#227ba1",
+   "#4d88bb",
+   "#7395d3",
+   "#97a2e6",
+   "#bbaff6"
+  ],
+  "tags": [
+   "cool",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-221",
+  "name": "Honey Glow 221",
+  "colors": [
+   "#ae711b",
+   "#b7850c",
+   "#bc9b03",
+   "#bcb316",
+   "#b5cc0d"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-222",
+  "name": "Olive Hearth 222",
+  "colors": [
+   "#974845",
+   "#b8624b",
+   "#c58868",
+   "#dba880",
+   "#ffc57d"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-223",
+  "name": "Ember Accent 223",
+  "colors": [
+   "#5e5253",
+   "#7c6d6f",
+   "#9f888b",
+   "#b8aaac",
+   "#349df7"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-224",
+  "name": "Sage Split 224",
+  "colors": [
+   "#5c956c",
+   "#a892cc",
+   "#cc889a",
+   "#b5c2b7",
+   "#59685c"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-225",
+  "name": "Honey Analogous 225",
+  "colors": [
+   "#9b6144",
+   "#a8774a",
+   "#b38f56",
+   "#baa767",
+   "#c0bf7e"
+  ],
+  "tags": [
+   "warm"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-226",
+  "name": "Olive Glow 226",
+  "colors": [
+   "#8c830e",
+   "#8a9a0f",
+   "#7fb137",
+   "#71c663",
+   "#5edb8b"
+  ],
+  "tags": [
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-227",
+  "name": "Olive Hearth 227",
+  "colors": [
+   "#9a482b",
+   "#ac6b43",
+   "#c48a53",
+   "#d7ac6f",
+   "#eecd7d"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-228",
+  "name": "Iris Accent 228",
+  "colors": [
+   "#4d5566",
+   "#6b7280",
+   "#8a8f99",
+   "#a4aec4",
+   "#bf900b"
+  ],
+  "tags": [
+   "warm",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-229",
+  "name": "Honey Split 229",
+  "colors": [
+   "#a77c56",
+   "#63abb9",
+   "#8e9cce",
+   "#c8bbb1",
+   "#6e6055"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-230",
+  "name": "Dusk Analogous 230",
+  "colors": [
+   "#0c8281",
+   "#1b93a3",
+   "#44a2c2",
+   "#69b0e0",
+   "#8dbefa"
+  ],
+  "tags": [
+   "cool",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-231",
+  "name": "Rosewood Glow 231",
+  "colors": [
+   "#6b6eeb",
+   "#9175f6",
+   "#b57dfc",
+   "#d885fe",
+   "#fa8ffc"
+  ],
+  "tags": [
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-232",
+  "name": "Ember Hearth 232",
+  "colors": [
+   "#9d4244",
+   "#ab695b",
+   "#d87d52",
+   "#f19e5e",
+   "#ffc583"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-233",
+  "name": "Iris Accent 233",
+  "colors": [
+   "#4d5567",
+   "#6b7181",
+   "#878fa2",
+   "#a7aebd",
+   "#f95c51"
+  ],
+  "tags": [
+   "warm",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-234",
+  "name": "Dusk Split 234",
+  "colors": [
+   "#5190a7",
+   "#c88c91",
+   "#bb986b",
+   "#b1c1c7",
+   "#54676e"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-235",
+  "name": "Amber Analogous 235",
+  "colors": [
+   "#a25a56",
+   "#b46e57",
+   "#c3855b",
+   "#cf9d63",
+   "#d8b671"
+  ],
+  "tags": [
+   "warm"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-236",
+  "name": "Honey Glow 236",
+  "colors": [
+   "#b16f17",
+   "#b88520",
+   "#be9a1c",
+   "#c0b125",
+   "#bbca1d"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-237",
+  "name": "Iris Hearth 237",
+  "colors": [
+   "#9e3f4b",
+   "#a96a62",
+   "#c68671",
+   "#e5a37c",
+   "#fac595"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-238",
+  "name": "Honey Accent 238",
+  "colors": [
+   "#5b5548",
+   "#7a715e",
+   "#968e80",
+   "#b4ada0",
+   "#6593fd"
+  ],
+  "tags": [
+   "cool",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-239",
+  "name": "Ember Split 239",
+  "colors": [
+   "#ae7380",
+   "#78ad8a",
+   "#63abbc",
+   "#cab9bc",
+   "#705e61"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-240",
+  "name": "Olive Analogous 240",
+  "colors": [
+   "#906931",
+   "#998041",
+   "#9e9856",
+   "#a2b06f",
+   "#a4c78d"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-241",
+  "name": "Ember Glow 241",
+  "colors": [
+   "#c84a91",
+   "#e1578a",
+   "#f76780",
+   "#ff857e",
+   "#ffa288"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-242",
+  "name": "Lagoon Hearth 242",
+  "colors": [
+   "#8b5240",
+   "#ac6b44",
+   "#bf8c60",
+   "#d9ab6c",
+   "#e9ce92"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-243",
+  "name": "Honey Accent 243",
+  "colors": [
+   "#5a563f",
+   "#747265",
+   "#93907c",
+   "#b2af9a",
+   "#e25ec1"
+  ],
+  "tags": [
+   "warm",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-244",
+  "name": "Iris Split 244",
+  "colors": [
+   "#7782b8",
+   "#c39467",
+   "#93a86e",
+   "#b9bdcb",
+   "#5f6272"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-245",
+  "name": "Lagoon Analogous 245",
+  "colors": [
+   "#46805d",
+   "#49937c",
+   "#52a69d",
+   "#62b8bd",
+   "#79c8dd"
+  ],
+  "tags": [
+   "cool"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-246",
+  "name": "Rosewood Glow 246",
+  "colors": [
+   "#6973df",
+   "#8d7beb",
+   "#af84f3",
+   "#d18df7",
+   "#f197f8"
+  ],
+  "tags": [
+   "analogous",
+   "vivid",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-247",
+  "name": "Amber Hearth 247",
+  "colors": [
+   "#9b4729",
+   "#b7642c",
+   "#c18c5a",
+   "#deaa5c",
+   "#efcd7d"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-248",
+  "name": "Rosewood Accent 248",
+  "colors": [
+   "#59525c",
+   "#796c7f",
+   "#938c97",
+   "#b6a8bc",
+   "#28adad"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-249",
+  "name": "Iris Split 249",
+  "colors": [
+   "#887db0",
+   "#b59b66",
+   "#81ab80",
+   "#bebcca",
+   "#646171"
+  ],
+  "tags": [
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-250",
+  "name": "Ember Analogous 250",
+  "colors": [
+   "#826394",
+   "#9e729c",
+   "#b981a3",
+   "#d292a8",
+   "#eaa5ac"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-251",
+  "name": "Dusk Glow 251",
+  "colors": [
+   "#089299",
+   "#19a0b7",
+   "#16aedb",
+   "#42bafb",
+   "#8ac3fc"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-252",
+  "name": "Iris Hearth 252",
+  "colors": [
+   "#a04134",
+   "#a66d57",
+   "#c38a64",
+   "#d9aa7c",
+   "#f0cb90"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-253",
+  "name": "Rosewood Accent 253",
+  "colors": [
+   "#624e5d",
+   "#7b6c77",
+   "#9d8898",
+   "#bba7b6",
+   "#19aac4"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-254",
+  "name": "Dusk Split 254",
+  "colors": [
+   "#5a8fa0",
+   "#c28f95",
+   "#b89874",
+   "#b0c1c7",
+   "#54676d"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-255",
+  "name": "Rosewood Analogous 255",
+  "colors": [
+   "#7d6695",
+   "#99749f",
+   "#b483a7",
+   "#ce94ad",
+   "#e6a6b2"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-256",
+  "name": "Iris Glow 256",
+  "colors": [
+   "#6472e7",
+   "#8a79f4",
+   "#ae81fb",
+   "#ce8ef9",
+   "#f393ff"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "vivid",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-257",
+  "name": "Ember Hearth 257",
+  "colors": [
+   "#97483b",
+   "#ba613a",
+   "#cd8551",
+   "#e2a767",
+   "#f4ca85"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-258",
+  "name": "Sage Accent 258",
+  "colors": [
+   "#4c5950",
+   "#6b746e",
+   "#819588",
+   "#9fb4a6",
+   "#d869bf"
+  ],
+  "tags": [
+   "warm",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-259",
+  "name": "Lagoon Split 259",
+  "colors": [
+   "#479593",
+   "#c18caa",
+   "#c88f78",
+   "#b0c2c1",
+   "#536867"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-260",
+  "name": "Ember Analogous 260",
+  "colors": [
+   "#886388",
+   "#a17290",
+   "#ba8396",
+   "#d0959c",
+   "#e5a9a2"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-261",
+  "name": "Iris Glow 261",
+  "colors": [
+   "#287cee",
+   "#6685f8",
+   "#908ffe",
+   "#b39cfb",
+   "#d1a8fe"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "vivid",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-262",
+  "name": "Rosewood Hearth 262",
+  "colors": [
+   "#8e4f41",
+   "#b46640",
+   "#d28342",
+   "#e1a864",
+   "#f1cb85"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-263",
+  "name": "Ember Accent 263",
+  "colors": [
+   "#605059",
+   "#7c6c75",
+   "#9c8994",
+   "#bda7b4",
+   "#a99a23"
+  ],
+  "tags": [
+   "warm",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-264",
+  "name": "Olive Split 264",
+  "colors": [
+   "#749157",
+   "#9498d5",
+   "#c588b0",
+   "#b9c1b3",
+   "#5e6658"
+  ],
+  "tags": [
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-265",
+  "name": "Amber Analogous 265",
+  "colors": [
+   "#97615b",
+   "#a87561",
+   "#b78a6a",
+   "#c4a176",
+   "#ceb885"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-266",
+  "name": "Olive Glow 266",
+  "colors": [
+   "#8d8311",
+   "#8c9910",
+   "#80b123",
+   "#68c94e",
+   "#47de7e"
+  ],
+  "tags": [
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-267",
+  "name": "Ember Hearth 267",
+  "colors": [
+   "#974938",
+   "#ab6b4e",
+   "#c28a60",
+   "#e5a65b",
+   "#f3cb83"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-268",
+  "name": "Lagoon Accent 268",
+  "colors": [
+   "#49595b",
+   "#5e777a",
+   "#799599",
+   "#97b4b8",
+   "#d366d6"
+  ],
+  "tags": [
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-269",
+  "name": "Ember Split 269",
+  "colors": [
+   "#a3778f",
+   "#8da87f",
+   "#6cabab",
+   "#c8b9c1",
+   "#6e5e66"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-270",
+  "name": "Rosewood Analogous 270",
+  "colors": [
+   "#7f5fa9",
+   "#9f6cb0",
+   "#bf7ab4",
+   "#dd89b5",
+   "#f89ab4"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-271",
+  "name": "Dusk Glow 271",
+  "colors": [
+   "#08919c",
+   "#1e9fba",
+   "#23adde",
+   "#4ab8fe",
+   "#8ec2fd"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-272",
+  "name": "Honey Hearth 272",
+  "colors": [
+   "#9b472e",
+   "#b1683e",
+   "#bf8c61",
+   "#d4ad7a",
+   "#e9ce94"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-273",
+  "name": "Honey Accent 273",
+  "colors": [
+   "#5c5542",
+   "#777163",
+   "#968f7a",
+   "#b5ae9b",
+   "#0fabc0"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-274",
+  "name": "Lagoon Split 274",
+  "colors": [
+   "#4e929e",
+   "#c48c9d",
+   "#c09472",
+   "#b0c2c5",
+   "#53676b"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-275",
+  "name": "Lagoon Analogous 275",
+  "colors": [
+   "#21836e",
+   "#2a958f",
+   "#40a6b0",
+   "#5cb6d0",
+   "#7cc5ee"
+  ],
+  "tags": [
+   "cool",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-276",
+  "name": "Olive Glow 276",
+  "colors": [
+   "#aa7400",
+   "#af8a1a",
+   "#b2a021",
+   "#b1b717",
+   "#a4d121"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-277",
+  "name": "Sage Hearth 277",
+  "colors": [
+   "#8d513e",
+   "#a66e4f",
+   "#ce853f",
+   "#daab6b",
+   "#e9ce91"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-278",
+  "name": "Dusk Accent 278",
+  "colors": [
+   "#4c5665",
+   "#697280",
+   "#87909c",
+   "#a2afc3",
+   "#fa5768"
+  ],
+  "tags": [
+   "warm",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-279",
+  "name": "Olive Split 279",
+  "colors": [
+   "#868c4c",
+   "#829ed5",
+   "#b98cbe",
+   "#bdbfb1",
+   "#636555"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-280",
+  "name": "Ember Analogous 280",
+  "colors": [
+   "#905b94",
+   "#ad6998",
+   "#c87999",
+   "#e18b99",
+   "#f79f99"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-281",
+  "name": "Honey Glow 281",
+  "colors": [
+   "#aa7414",
+   "#b28907",
+   "#b59f0c",
+   "#b3b624",
+   "#a8d02c"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-282",
+  "name": "Lagoon Hearth 282",
+  "colors": [
+   "#924c47",
+   "#a86b5a",
+   "#c48868",
+   "#dda87b",
+   "#fbc783"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-283",
+  "name": "Dusk Accent 283",
+  "colors": [
+   "#445963",
+   "#697379",
+   "#7c939f",
+   "#a4b0b6",
+   "#9da01c"
+  ],
+  "tags": [
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-284",
+  "name": "Dusk Split 284",
+  "colors": [
+   "#6689b0",
+   "#c6907c",
+   "#a8a06c",
+   "#b5bfcb",
+   "#596571"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-285",
+  "name": "Honey Analogous 285",
+  "colors": [
+   "#a75845",
+   "#b76e44",
+   "#c38748",
+   "#cba053",
+   "#d0ba66"
+  ],
+  "tags": [
+   "warm"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-286",
+  "name": "Iris Glow 286",
+  "colors": [
+   "#5a79db",
+   "#8081ea",
+   "#a38af5",
+   "#c493fc",
+   "#e2a0fa"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "vivid",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-287",
+  "name": "Honey Hearth 287",
+  "colors": [
+   "#9c4344",
+   "#af6757",
+   "#d38059",
+   "#eda064",
+   "#fec583"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-288",
+  "name": "Sage Accent 288",
+  "colors": [
+   "#445b50",
+   "#62776d",
+   "#82948b",
+   "#a4b2ab",
+   "#8e85fc"
+  ],
+  "tags": [
+   "cool",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-289",
+  "name": "Dusk Split 289",
+  "colors": [
+   "#5f8da4",
+   "#c2908e",
+   "#b29b73",
+   "#b1c0c8",
+   "#55666f"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-290",
+  "name": "Iris Analogous 290",
+  "colors": [
+   "#2c78ac",
+   "#5884c4",
+   "#7f90d8",
+   "#a49de9",
+   "#c8aaf5"
+  ],
+  "tags": [
+   "cool",
+   "analogous",
+   "blue_heavy"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-291",
+  "name": "Ember Glow 291",
+  "colors": [
+   "#d24478",
+   "#e8546d",
+   "#fb6860",
+   "#ff8763",
+   "#fca676"
+  ],
+  "tags": [
+   "warm",
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-292",
+  "name": "Sage Hearth 292",
+  "colors": [
+   "#954949",
+   "#ab695b",
+   "#ca8565",
+   "#eba16a",
+   "#fec585"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-293",
+  "name": "Lagoon Accent 293",
+  "colors": [
+   "#455a5b",
+   "#5c7779",
+   "#809394",
+   "#98b4b6",
+   "#ec686d"
+  ],
+  "tags": [
+   "warm",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-294",
+  "name": "Lagoon Split 294",
+  "colors": [
+   "#4b91a6",
+   "#c98b95",
+   "#be9669",
+   "#b0c1c6",
+   "#54676d"
+  ],
+  "tags": [
+   "warm",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-295",
+  "name": "Olive Analogous 295",
+  "colors": [
+   "#847034",
+   "#8a8649",
+   "#8e9d63",
+   "#90b480",
+   "#94caa0"
+  ],
+  "tags": [
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-296",
+  "name": "Olive Glow 296",
+  "colors": [
+   "#8a8406",
+   "#879b0a",
+   "#78b323",
+   "#59cb51",
+   "#27e083"
+  ],
+  "tags": [
+   "analogous",
+   "vivid"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-297",
+  "name": "Dusk Hearth 297",
+  "colors": [
+   "#9e4047",
+   "#ac685d",
+   "#c6876e",
+   "#e5a478",
+   "#ffc488"
+  ],
+  "tags": [
+   "warm",
+   "analogous"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-298",
+  "name": "Ember Accent 298",
+  "colors": [
+   "#644f50",
+   "#826b6c",
+   "#a18889",
+   "#c2a6a7",
+   "#4998fe"
+  ],
+  "tags": [
+   "cool",
+   "muted",
+   "accent"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-299",
+  "name": "Honey Split 299",
+  "colors": [
+   "#ad794e",
+   "#55adbd",
+   "#8a9cd6",
+   "#c8bbb1",
+   "#6e6055"
+  ],
+  "tags": [
+   "cool",
+   "muted"
+  ],
+  "source": "generated",
+  "credit": {}
+ },
+ {
+  "id": "gen-0-300",
+  "name": "Rosewood Analogous 300",
+  "colors": [
+   "#7c659a",
+   "#9973a4",
+   "#b582ab",
+   "#d092b0",
+   "#eaa4b4"
+  ],
+  "tags": [
+   "warm"
+  ],
+  "source": "generated",
+  "credit": {}
+ }
+]
