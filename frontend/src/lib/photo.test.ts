@@ -91,3 +91,16 @@ describe('safe photo saves and keyboard moves', () => {
     expect(nudge(spot, 'Enter', false)).toBeNull();
   });
 });
+
+import { roomCenter } from './photo';
+import { pointInPolygon } from './geometry';
+
+describe('room center', () => {
+  it('is inside even an L-shaped room', () => {
+    const L: [number, number][] = [[0, 0], [100, 0], [100, 20], [20, 20], [20, 100], [0, 100]];
+    expect(pointInPolygon(roomCenter(L), L)).toBe(true);
+  });
+  it('is the middle of a rectangle', () => {
+    expect(roomCenter([[0, 0], [400, 0], [400, 300], [0, 300]])).toEqual([200, 150]);
+  });
+});

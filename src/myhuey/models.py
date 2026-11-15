@@ -108,6 +108,9 @@ class LayoutLight:
     elevation: float | None = None
     # "auto" lets suggestions work the role out from where the light sits; the rest pin it.
     role: str = "auto"
+    # A light planned from the catalog that isn't installed yet: it takes part in roles and
+    # suggestions, but nothing is ever sent to the bridge for it.
+    planned: bool = False
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> LayoutLight:
@@ -138,6 +141,7 @@ class LayoutLight:
             metadata=dict(data.get("metadata") or {}),
             elevation=elevation,
             role=role,
+            planned=bool(data.get("planned", False)),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -156,6 +160,7 @@ class LayoutLight:
             "metadata": self.metadata,
             "elevation": self.elevation,
             "role": self.role,
+            "planned": self.planned,
         }
 
 
@@ -221,6 +226,42 @@ def split_tag(key: str) -> tuple[str, str]:
     return kind, item_id
 
 
+MIN_FLOOR_PHOTO_AREA = 0.01  # of the photo
+MIN_FLOOR_PLAN_AREA = 2500.0  # cm², half a metre square
+
+
+def floor_transform(photo: Any, plan: Any) -> dict[str, list[list[float]]]:
+    """Four floor points on the photo (0-1 fractions) and the plan points (cm) they are."""
+    try:
+        photo_points = [[float(x), float(y)] for x, y in photo]
+        plan_points = [[float(x), float(y)] for x, y in plan]
+    except (TypeError, ValueError):
+        raise ValueError("A floor mapping is four [x, y] points on the photo and four on the plan") from None
+    if len(photo_points) != 4 or len(plan_points) != 4:
+        raise ValueError("A floor mapping needs exactly four points on the photo and four on the plan")
+    if not all(0 <= value <= 1 for point in photo_points for value in point):
+        raise ValueError("Floor points on the photo are fractions of its width and height, 0 to 1")
+    def turns(points: list[list[float]]) -> list[float]:
+        return [
+            (points[(i + 1) % 4][0] - points[i][0]) * (points[(i + 2) % 4][1] - points[(i + 1) % 4][1])
+            - (points[(i + 1) % 4][1] - points[i][1]) * (points[(i + 2) % 4][0] - points[(i + 1) % 4][0])
+            for i in range(4)
+        ]
+
+    def area(points: list[list[float]]) -> float:
+        return abs(sum(points[i][0] * points[(i + 1) % 4][1] - points[(i + 1) % 4][0] * points[i][1] for i in range(4))) / 2
+
+    photo_turns, plan_turns = turns(photo_points), turns(plan_points)
+    for values in (photo_turns, plan_turns):
+        if not (all(value > 0 for value in values) or all(value < 0 for value in values)):
+            raise ValueError("Pick the four floor points in order around the floor (no crossing, no three in a line)")
+    if (photo_turns[0] > 0) != (plan_turns[0] > 0):
+        raise ValueError("The plan corners are in the opposite order to the photo points; match them going the same way around")
+    if area(photo_points) < MIN_FLOOR_PHOTO_AREA or area(plan_points) < MIN_FLOOR_PLAN_AREA:
+        raise ValueError("Spread the four floor points out: use corners far apart, such as the room's corners")
+    return {"photo": [[round(x, 4), round(y, 4)] for x, y in photo_points], "plan": [[round(x, 1), round(y, 1)] for x, y in plan_points]}
+
+
 @dataclass
 class RoomPhoto:
     """A photo of the real room, stored under ~/.myhuey/uploads.
@@ -228,7 +269,7 @@ class RoomPhoto:
     Tags pin plan items where they appear in the photo: keys are "light:<id>",
     "furniture:<id>", or "opening:<id>", and positions are fractions of the photo's width and
     height (0 to 1), so they survive any display size. The photo never moves anything on the
-    plan. `floor_transform` is reserved for a photo-to-floor mapping (not used yet).
+    plan. `floor_transform` holds four floor points on the photo and the plan points they are.
     """
 
     file: str

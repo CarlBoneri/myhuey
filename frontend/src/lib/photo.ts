@@ -1,5 +1,6 @@
 /** Photo helpers: tag keys, height presets, and the glow drawn over a room photo. */
-import type { Furniture, Placement, Room } from '../types';
+import type { Furniture, Placement, Pt, Room } from '../types';
+import { bounds, pointInPolygon } from './geometry';
 
 export type TagKind = 'light' | 'furniture' | 'opening';
 export type HeightPreset = 'floor' | 'desk' | 'eye' | 'ceiling' | 'auto';
@@ -104,4 +105,25 @@ export function nudge<T extends Spot>(spot: T, key: string, shift: boolean): T |
   const amount = shift ? 0.05 : 0.01;
   const clamp = (value: number) => Math.round(Math.min(1, Math.max(0, value)) * 1000) / 1000;
   return { ...spot, x: clamp(spot.x + step[0] * amount), y: clamp(spot.y + step[1] * amount) };
+}
+
+/** A point well inside the room: its area centroid, or the inside point nearest to it (L-shaped rooms). */
+export function roomCenter(outline: Pt[]): Pt {
+  let area = 0, cx = 0, cy = 0;
+  outline.forEach(([x0, y0], i) => {
+    const [x1, y1] = outline[(i + 1) % outline.length];
+    const cross = x0 * y1 - x1 * y0;
+    area += cross; cx += (x0 + x1) * cross; cy += (y0 + y1) * cross;
+  });
+  const center: Pt = area ? [cx / (3 * area), cy / (3 * area)] : outline[0] ?? [0, 0];
+  if (pointInPolygon(center, outline)) return center;
+  const box = bounds(outline);
+  let best: Pt | null = null;
+  for (let i = 1; i < 20; i++) {
+    for (let j = 1; j < 20; j++) {
+      const p: Pt = [box.minX + ((box.maxX - box.minX) * i) / 20, box.minY + ((box.maxY - box.minY) * j) / 20];
+      if (pointInPolygon(p, outline) && (!best || Math.hypot(p[0] - center[0], p[1] - center[1]) < Math.hypot(best[0] - center[0], best[1] - center[1]))) best = p;
+    }
+  }
+  return best ?? center;
 }

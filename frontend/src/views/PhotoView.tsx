@@ -1,14 +1,17 @@
 // A photo of the real room with plan items tagged on it: lights, furniture, windows and doors.
 // The plan stays the source of truth; the photo is where you tag things and see suggestions.
 import { useEffect, useRef, useState } from 'react';
-import { ImagePlus, MapPin, Plus, Sparkles, Trash2, Upload } from 'lucide-react';
+import { Crosshair, ImagePlus, MapPin, Plus, ShoppingBag, Sparkles, Trash2, Upload } from 'lucide-react';
 import { api } from '../api';
 import { attempt, useStore } from '../store';
 import { liveColor, placedProfile } from '../lib/lights';
 import { darkness, glowLayout, heightPreset, nudge, parseTag, resolvableTags, tagKey, type HeightPreset, type TagKind } from '../lib/photo';
 import { oneAtATime } from '../lib/suggest';
+import { floorMapper, type Pt2 } from '../lib/homography';
+import { bounds, pointInPolygon } from '../lib/geometry';
+import { roomCenter } from '../lib/photo';
 import { formatLength } from '../lib/units';
-import type { PhotoSpot, Room, Suggestion } from '../types';
+import type { CatalogItem, PhotoSpot, Pt, Room, Suggestion } from '../types';
 import { LightControls } from '../components/LightControls';
 import { SuggestPanel } from '../components/SuggestPanel';
 import { Empty, HueIcon, IconButton, Panel, Slider } from '../components/ui';
@@ -30,6 +33,10 @@ export function PhotoView({ room }: { room: Room }) {
   const [uploading, setUploading] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
   const [shown, setShown] = useState<Suggestion | null>(null);
+  const [catalog, setCatalog] = useState<CatalogItem[]>([]);
+  // Mapping the floor: four clicks on the photo, each matched to a corner of the plan outline.
+  const [mapping, setMapping] = useState<{ photo: Pt2[]; corners: (number | null)[] } | null>(null);
+  useEffect(() => { api.catalog().then(setCatalog).catch(() => setCatalog([])); }, []);
   const frame = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
 
@@ -48,7 +55,8 @@ export function PhotoView({ room }: { room: Room }) {
   const roomRef = useRef(room);
   roomRef.current = room;
   const save = useRef(oneAtATime(async (isLast) => {
-    const current = roomRef.current;
+    // The store's copy is the freshest (a light planned a moment ago is already there).
+    const current = useStore.getState().rooms.find((r) => r.name === roomRef.current.name) ?? roomRef.current;
     const updated = await attempt(() => api.savePhotoTags(current.name, resolvableTags(spotsRef.current, current)));
     if (!isLast()) return;
     if (updated) {
@@ -95,6 +103,30 @@ export function PhotoView({ room }: { room: Room }) {
     if (ok) await refreshRooms();
   };
 
+  const floor = room.photo?.floor_transform ?? null;
+  const mapper = floor ? floorMapper(floor.photo as Pt2[], floor.plan as Pt2[]) : null;
+
+  /** A catalog light dropped on the photo becomes a planned light where that floor point is on the plan. */
+  const planFromPhoto = async (catalogId: string, at: { x: number; y: number }) => {
+    let point: Pt2 = roomCenter(room.outline);
+    if (mapper) {
+      const mapped = mapper.toPlan([at.x, at.y]);
+      if (!mapped || !pointInPolygon(mapped, room.outline)) {
+        useStore.getState().toast("That spot isn't on this room's floor. Drop a light where its base meets the floor.");
+        return;
+      }
+      point = mapped;
+    }
+    const created = await attempt(() => api.addPlannedLight(room.name, { catalog: catalogId, x: Math.round(point[0] * 10) / 10, y: Math.round(point[1] * 10) / 10 }),
+      mapper ? undefined : 'Planned. Map the floor so lights dropped on the photo land in the right spot on the plan.');
+    if (!created) return;
+    await refreshRooms();
+    const key = tagKey('light', created.light_id);
+    update({ ...spotsRef.current, [key]: { x: at.x, y: at.y, rotation: 0, scale: 1 } });
+    setSelected(key);
+    void save();
+  };
+
   if (!room.photo) {
     return (
       <div
@@ -126,7 +158,18 @@ export function PhotoView({ room }: { room: Room }) {
   const selectedTag = selected ? parseTag(selected) : null;
   const selectedLight = selectedTag?.kind === 'light' ? room.lights.find((l) => l.light_id === selectedTag.id) : undefined;
   const size = { width: room.photo.width, height: room.photo.height };
-  const blobs = shown ? glowLayout(shown.preview, spots, size) : [];
+  // Planned lights placed on the plan show up on the photo by themselves once the floor is mapped.
+  const autoSpots: Record<string, PhotoSpot> = {};
+  if (mapper) {
+    for (const light of room.lights) {
+      const key = tagKey('light', light.light_id);
+      if (!light.planned || spots[key]) continue;
+      const seen = mapper.toPhoto([light.x, light.y]);  // null when it is behind the camera
+      if (seen && seen[0] >= 0 && seen[0] <= 1 && seen[1] >= 0 && seen[1] <= 1) autoSpots[key] = { x: seen[0], y: seen[1], rotation: 0, scale: 1 };
+    }
+  }
+  const allSpots = { ...autoSpots, ...spots };
+  const blobs = shown ? glowLayout(shown.preview, allSpots, size) : [];
 
   return (
     <div className="split">
@@ -136,8 +179,15 @@ export function PhotoView({ room }: { room: Room }) {
           ref={frame}
           style={{ aspectRatio: `${room.photo.width} / ${room.photo.height}` }}
           onDragOver={(e) => e.preventDefault()}
+          onClick={(e) => {
+            if (!mapping || mapping.photo.length >= 4 || e.target !== e.currentTarget.querySelector('img')) return;
+            const at = position(e.clientX, e.clientY);
+            setMapping({ ...mapping, photo: [...mapping.photo, [at.x, at.y]], corners: [...mapping.corners, null] });
+          }}
           onDrop={(e) => {
             e.preventDefault();
+            const catalogId = e.dataTransfer.getData('application/x-myhuey-catalog');
+            if (catalogId) { void planFromPhoto(catalogId, position(e.clientX, e.clientY)); return; }
             const lightId = e.dataTransfer.getData('application/x-myhuey-light');
             const key = e.dataTransfer.getData('application/x-myhuey-tag')
               || (lightId && room.lights.some((l) => l.light_id === lightId) ? tagKey('light', lightId) : '');
@@ -167,7 +217,10 @@ export function PhotoView({ room }: { room: Room }) {
               {blobs.map((blob) => <circle key={blob.key} cx={blob.cx} cy={blob.cy} r={blob.r * 2.4} fill={`url(#glow-${blob.key})`} />)}
             </svg>
           )}
-          {Object.entries(spots).map(([key, spot]) => {
+          {mapping?.photo.map(([u, v], i) => (
+            <span key={`floor-${i}`} className="floor-point" style={{ left: `${u * 100}%`, top: `${v * 100}%` }}>{i + 1}</span>
+          ))}
+          {Object.entries(allSpots).map(([key, spot]) => {
             const tag = parseTag(key);
             if (!tag) return null;
             const label = labelFor(key);
@@ -177,7 +230,7 @@ export function PhotoView({ room }: { room: Room }) {
               let moved = false;
               const move = (e: PointerEvent) => {
                 moved = true;
-                update({ ...spotsRef.current, [key]: { ...spotsRef.current[key], ...position(e.clientX, e.clientY) } });
+                update({ ...spotsRef.current, [key]: { ...(spotsRef.current[key] ?? allSpots[key]), ...position(e.clientX, e.clientY) } });
               };
               const up = () => {
                 window.removeEventListener('pointermove', move);
@@ -188,7 +241,7 @@ export function PhotoView({ room }: { room: Room }) {
               window.addEventListener('pointerup', up);
             };
             const keys = (event: React.KeyboardEvent) => {
-              const moved = nudge(spotsRef.current[key], event.key, event.shiftKey);
+              const moved = nudge(spotsRef.current[key] ?? allSpots[key], event.key, event.shiftKey);
               if (!moved) return;
               event.preventDefault();
               update({ ...spotsRef.current, [key]: moved });
@@ -215,7 +268,7 @@ export function PhotoView({ room }: { room: Room }) {
               <button
                 key={key}
                 type="button"
-                className={`photo-marker${selected === key ? ' active' : ''}${color && !shown ? ' lit' : ''}${shown ? ' quiet' : ''}`}
+                className={`photo-marker${selected === key ? ' active' : ''}${color && !shown ? ' lit' : ''}${shown ? ' quiet' : ''}${placement.planned ? ' planned' : ''}`}
                 style={{
                   left: `${spot.x * 100}%`, top: `${spot.y * 100}%`,
                   transform: `translate(-50%, -50%) rotate(${spot.rotation}deg) scale(${spot.scale})`,
@@ -282,6 +335,18 @@ export function PhotoView({ room }: { room: Room }) {
             )}
           </Panel>
         )}
+        <FloorPanel room={room} mapping={mapping} setMapping={setMapping} />
+        <Panel title={<><ShoppingBag size={16} /> Plan a light</>}>
+          <p className="hint">Drag a product onto the photo where it would stand{floor ? '' : ' (map the floor first so it lands in the right spot on the plan)'}.</p>
+          <ul className="tray catalog-tray">
+            {catalog.map((item) => (
+              <li key={item.id} draggable onDragStart={(e) => e.dataTransfer.setData('application/x-myhuey-catalog', item.id)}>
+                <span>{item.label}<small>{item.color === 'white' ? 'white only' : item.color} · good for {item.kind}</small></span>
+                <IconButton label={`Plan a ${item.label} in the middle`} onClick={() => void planFromPhoto(item.id, { x: 0.5, y: 0.7 })}><Plus size={16} /></IconButton>
+              </li>
+            ))}
+          </ul>
+        </Panel>
         <Panel title="On the plan, not on the photo">
           {(['light', 'furniture', 'opening'] as TagKind[]).map((kind) => {
             const left = untagged(kind);
@@ -319,5 +384,65 @@ export function PhotoView({ room }: { room: Room }) {
         </Panel>
       </aside>
     </div>
+  );
+}
+
+/** Map the floor: four points on the photo, each matched to a numbered corner of the plan. */
+function FloorPanel({ room, mapping, setMapping }: {
+  room: Room; mapping: { photo: Pt2[]; corners: (number | null)[] } | null;
+  setMapping: (next: { photo: Pt2[]; corners: (number | null)[] } | null) => void;
+}) {
+  const { replaceRoom } = useStore();
+  const mapped = !!room.photo?.floor_transform;
+  if (!mapping) {
+    return (
+      <Panel title={<><Crosshair size={16} /> Floor</>}>
+        <p className="hint">{mapped ? 'The floor is mapped: lights dropped on the photo land in the right spot on the plan.' : 'Map the floor so lights dropped on the photo land where they belong on the plan.'}</p>
+        <div className="button-row">
+          <button type="button" className="button" onClick={() => setMapping({ photo: [], corners: [] })}>{mapped ? 'Map again' : 'Map the floor'}</button>
+          {mapped && <button type="button" className="button subtle" onClick={async () => {
+            const updated = await attempt(() => api.clearFloor(room.name));
+            if (updated) replaceRoom(room.name, updated);
+          }}>Clear</button>}
+        </div>
+      </Panel>
+    );
+  }
+  const box = bounds(room.outline);
+  const span = Math.max(box.maxX - box.minX, box.maxY - box.minY, 1);
+  const ready = mapping.photo.length === 4 && mapping.corners.every((c) => c !== null) && new Set(mapping.corners).size === 4;
+  return (
+    <Panel title={<><Crosshair size={16} /> Map the floor</>}>
+      <p className="hint">Click four points on the floor in the photo, ideally the room's corners where walls meet the floor. For each, pick the matching numbered corner of the plan.</p>
+      <svg className="mini-room corner-map" viewBox={`${box.minX - span * 0.08} ${box.minY - span * 0.08} ${box.maxX - box.minX + span * 0.16} ${box.maxY - box.minY + span * 0.16}`} role="img" aria-label="Plan corners, numbered">
+        <polygon points={room.outline.map((p) => p.join(',')).join(' ')} className="mini-outline" strokeWidth={span / 150} />
+        {room.outline.map(([x, y], i) => (
+          <g key={i}><circle cx={x} cy={y} r={span / 30} className="corner-dot" /><text x={x} y={y} fontSize={span / 22} textAnchor="middle" dominantBaseline="central">{i + 1}</text></g>
+        ))}
+      </svg>
+      <ol className="floor-points">
+        {[0, 1, 2, 3].map((i) => (
+          <li key={i}>
+            {mapping.photo[i] ? `Point ${i + 1} on the photo is plan corner` : `Click point ${i + 1} on the photo`}
+            {mapping.photo[i] && (
+              <select className="input" aria-label={`Plan corner for point ${i + 1}`} value={mapping.corners[i] ?? ''}
+                onChange={(e) => setMapping({ ...mapping, corners: mapping.corners.map((c, j) => (j === i ? (e.target.value === '' ? null : Number(e.target.value)) : c)) })}>
+                <option value="">…</option>
+                {room.outline.map((_, c) => <option key={c} value={c}>{c + 1}</option>)}
+              </select>
+            )}
+          </li>
+        ))}
+      </ol>
+      <div className="button-row">
+        <button type="button" className="button primary" disabled={!ready} onClick={async () => {
+          const plan = mapping.corners.map((c) => room.outline[c as number]) as Pt[];
+          const updated = await attempt(() => api.setFloor(room.name, mapping.photo as Pt[], plan), 'Floor mapped.');
+          if (updated) { replaceRoom(room.name, updated); setMapping(null); }
+        }}>Save</button>
+        <button type="button" className="button subtle" onClick={() => setMapping({ photo: [], corners: [] })}>Start over</button>
+        <button type="button" className="button subtle" onClick={() => setMapping(null)}>Cancel</button>
+      </div>
+    </Panel>
   );
 }

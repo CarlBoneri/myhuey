@@ -14,6 +14,7 @@ from datetime import datetime
 from typing import Any
 
 from .color import color_temperature_to_rgb, rgb_to_hex
+from .catalog import color_of
 from .curve import baseline, minutes_until_bed
 from .models import LayoutLight, Room, new_id
 from .modes import Mode, get_mode
@@ -148,7 +149,7 @@ def _overrides(
             distance = math.hypot(light.x - center[0], light.y - center[1])
             share, brightness = strength * _clamp(distance / FAR_CM, 0.5, 1.0), level
         brightness = round(_clamp(brightness, 1, 100), 1)
-        if share <= 0:
+        if share <= 0 or color_of(light.product) == "white":  # white-only planned lights can't show color
             overrides[light.light_id] = {"white": kelvin, "brightness": brightness}
             continue
         profile = placed_profile(light)
