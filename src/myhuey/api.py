@@ -113,7 +113,11 @@ class LightPlacement(Body):
     length: float | None = Field(None, ge=5, le=5000)
 
 
-class RoomPower(BaseModel):
+class RoomBrightness(Body):
+    brightness: int = Field(..., ge=1, le=100, description="percent")
+
+
+class RoomPower(Body):
     on: bool
 
 
@@ -264,6 +268,19 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
     def room_power(room_name: str, body: RoomPower) -> dict[str, Any]:
         results = service.set_room_power(room_name, body.on)
         return {"results": results, "failed": sum(1 for item in results if not item["ok"])}
+
+    @app.post("/api/rooms/{room_name}/brightness")
+    def room_brightness(room_name: str, body: RoomBrightness) -> dict[str, Any]:
+        results = service.set_room_brightness(room_name, body.brightness)
+        return {"results": results, "failed": sum(1 for item in results if not item["ok"])}
+
+    @app.get("/api/preferences")
+    def get_preferences() -> dict[str, Any]:
+        return service.preferences()
+
+    @app.patch("/api/preferences")
+    def update_preferences(body: dict[str, Any]) -> dict[str, Any]:
+        return service.update_preferences(body)
 
     @app.delete("/api/rooms/{room_name}/lights/{light_id}")
     def remove_light(room_name: str, light_id: str) -> dict[str, str]:

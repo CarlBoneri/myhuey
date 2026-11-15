@@ -140,7 +140,8 @@ def test_applying_sends_gradients_through_v2_and_the_rest_through_v1(service, fa
     assert all(r["applied"] for r in results)
     v1 = [call for call in session.calls if call["method"] == "PUT"]
     assert v1[0]["url"].endswith("/lights/1/state")
-    assert v1[0]["json"]["on"] is True and v1[0]["json"]["bri"] == round(80 * 2.54)
+    # The lamp is already on, so "on" is left out (one ZigBee message fewer).
+    assert "on" not in v1[0]["json"] and v1[0]["json"]["bri"] == round(80 * 2.54)
     put = [call for call in session.clip_calls if call["method"] == "PUT"]
     assert put[0]["url"].endswith("/clip/v2/resource/light/rid-strip")
     assert len(put[0]["json"]["gradient"]["points"]) == 5

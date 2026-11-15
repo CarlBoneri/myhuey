@@ -17,6 +17,7 @@ from .geometry import rectangle
 from .hue import HueBridgeClient
 from .images import ImageSampler, extract_palette, image_path, prune_unreferenced, store_image
 from .models import Furniture, HomePlan, LayoutLight, Opening, Room, RoomPhoto, opening_fits, reanchor_openings, validate_outline
+from .preferences import merged as merged_preferences, validate as validate_preferences
 from .scenes import Scene, evaluate
 from .shapes import profile_for
 from .storage import DEFAULT_STORAGE_PATH, load_config, save_config, uploads_dir
@@ -204,6 +205,22 @@ class HueRoomService:
         self._v2_index, self._v2_loaded = index, time.monotonic()
         return index
 
+    # Preferences
+
+    def preferences(self) -> dict[str, Any]:
+        return merged_preferences(self._load().get("preferences"))
+
+    def update_preferences(self, changes: dict[str, Any]) -> dict[str, Any]:
+        validate_preferences(changes)
+        config = self._load()
+        config["preferences"] = {**merged_preferences(config.get("preferences")), **changes}
+        self._save(config)
+        return self.preferences()
+
+    def _command_gap(self) -> float:
+        """Seconds between light commands, from the preferences (Signify advises ~100 ms)."""
+        return self.preferences()["command_gap_ms"] / 1000
+
     # Lights on the bridge
 
     def lights(self) -> list[dict[str, Any]]:
@@ -295,6 +312,7 @@ class HueRoomService:
         index = len(config["rooms"])
         room = Room(
             name=normalized,
+            units=self.preferences()["default_units"],
             outline=validate_outline(outline or [list(p) for p in rectangle(width, height)]),
             x=round(float(x), 2) if x is not None else (index % _GRID_COLUMNS) * _GRID_CELL_CM[0],
             y=round(float(y), 2) if y is not None else (index // _GRID_COLUMNS) * _GRID_CELL_CM[1],
@@ -444,9 +462,40 @@ class HueRoomService:
         self._save(config)
         return light
 
-    def set_room_power(self, room_name: str, on: bool, *, pause: float = 0.1) -> list[dict[str, Any]]:
+    def set_room_brightness(self, room_name: str, percent: float, *, pause: float | None = None) -> list[dict[str, Any]]:
+        """Set every light in a room that is on to `percent` (1 to 100) brightness.
+
+        Lights that are off stay off: this is the room's dimmer, not its switch. Only the
+        brightness is sent (one ZigBee message per light), paced like other commands.
+        """
+        if not 1 <= float(percent) <= 100:
+            raise ValueError("Room brightness must be between 1 and 100 percent")
+        pause = self._command_gap() if pause is None else pause
+        lights = self.get_room(room_name).lights
+        if not lights:
+            return []
+        client = self.client()
+        current = client.get_lights()
+        bri = max(1, min(254, round(float(percent) * 2.54)))
+        results = []
+        for light in lights:
+            state = ((current.get(light.light_id) or {}).get("state")) or {}
+            if not state.get("on"):
+                continue
+            result: dict[str, Any] = {"light_id": light.light_id, "label": light.label, "ok": True}
+            try:
+                client.set_light_state(light.light_id, {"bri": bri})
+            except HueError as exc:
+                result.update(ok=False, error=str(exc))
+            results.append(result)
+            if pause:
+                self.sleep(pause)
+        return results
+
+    def set_room_power(self, room_name: str, on: bool, *, pause: float | None = None) -> list[dict[str, Any]]:
         """Turn every light placed in a room on or off. A light that fails does not stop
         the rest; each result says whether it took the change."""
+        pause = self._command_gap() if pause is None else pause
         lights = self.get_room(room_name).lights
         if not lights:
             return []
@@ -686,10 +735,11 @@ class HueRoomService:
         room = self.get_room(scene.room)
         return evaluate(scene, room, image_lookup=self._image_lookup(scene), gradient_points=gradient_points)
 
-    def apply_scene(self, key: str, *, pause: float = 0.1) -> list[dict[str, Any]]:
+    def apply_scene(self, key: str, *, pause: float | None = None) -> list[dict[str, Any]]:
         """Send a scene to the lights. Gradient lights get their colors along their length
         through the v2 API; everything else uses v1. Returns what each light was sent,
         with an `error` for lights that refused."""
+        pause = self._command_gap() if pause is None else pause
         scene = self.get_scene(key)
         client = self.client()
         raw = client.get_lights()
@@ -721,7 +771,10 @@ class HueRoomService:
                 elif result["gradient"] and v2.get("gradient"):
                     client.set_v2_light(v2["rid"], _gradient_body(result))
                 else:
-                    changes: dict[str, Any] = {"on": True, "brightness": max(1, round(result["brightness"] * 2.54))}
+                    # Each field is one ZigBee message: leave out "on" for a light that already is.
+                    changes: dict[str, Any] = {"brightness": max(1, round(result["brightness"] * 2.54))}
+                    if not state.get("on"):
+                        changes["on"] = True
                     if "xy" in state:
                         changes["xy"] = result["xy"]
                     client.set_light_color(light_id, **changes)

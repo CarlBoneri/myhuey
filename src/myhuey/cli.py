@@ -61,7 +61,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     room.add_argument(
         "action",
-        choices=["list", "show", "create", "update", "assign", "remove-light", "delete", "import", "photo", "remove-photo", "on", "off"],
+        choices=["list", "show", "create", "update", "assign", "remove-light", "delete", "import", "photo", "remove-photo", "on", "off", "dim"],
     )
     room.add_argument("--name", help="Room name")
     room.add_argument("--new-name", help="Rename the room (update)")
@@ -76,7 +76,14 @@ def build_parser() -> argparse.ArgumentParser:
     room.add_argument("--outline", help='Corners as "x,y x,y x,y ..." in the room\'s units, for example "0,0 14,0 14,10 0,10"')
     room.add_argument("--units", choices=["imperial", "metric"])
     room.add_argument("--file", help="Photo of the room, for photo")
+    room.add_argument("--level", type=float, help="Brightness 1 to 100 percent, for dim (lights that are off stay off)")
     room.set_defaults(handler=handle_room)
+
+    prefs = subparsers.add_parser("prefs", help="Show or change app preferences (shared with the web app)")
+    prefs.add_argument("action", choices=["show", "set"])
+    prefs.add_argument("--key", help="Preference name, for set")
+    prefs.add_argument("--value", help="New value, for set (true/false, a number, or a word)")
+    prefs.set_defaults(handler=handle_prefs)
 
     furniture = subparsers.add_parser("furniture", help="Add or remove furniture in a room")
     furniture.add_argument("action", choices=["list", "add", "remove"])
@@ -222,6 +229,21 @@ def _describe_room(room) -> str:
     return f"{room.name}: {size}, {len(room.outline)} corners, {len(room.lights)} lights, {len(room.furniture)} furniture"
 
 
+def handle_prefs(args: argparse.Namespace) -> int:
+    from .preferences import PREFERENCES, parse_value
+
+    service = HueRoomService(args.db)
+    if args.action == "set":
+        if not args.key or args.value is None:
+            raise ValueError("`prefs set` needs --key and --value")
+        service.update_preferences({args.key: parse_value(args.value)})
+    for key, value in service.preferences().items():
+        _, allowed = PREFERENCES[key]
+        options = "true/false" if allowed is bool else "/".join(str(item) for item in allowed)
+        print(f"{key}: {str(value).lower() if isinstance(value, bool) else value}  ({options})")
+    return 0
+
+
 def handle_room(args: argparse.Namespace) -> int:
     service = HueRoomService(args.db)
     if args.action == "list":
@@ -259,6 +281,15 @@ def handle_room(args: argparse.Namespace) -> int:
         results = service.set_room_power(args.name, args.action == "on")
         failed = [item for item in results if not item["ok"]]
         print(f"Turned {args.action} {len(results) - len(failed)} lights in {args.name}.")
+        for item in failed:
+            print(f"  {item['label']}: {item['error']}")
+        return 1 if failed else 0
+    elif args.action == "dim":
+        if args.level is None:
+            raise ValueError("--level is required for `room dim` (1 to 100)")
+        results = service.set_room_brightness(args.name, args.level)
+        failed = [item for item in results if not item["ok"]]
+        print(f"Set {len(results) - len(failed)} lights in {args.name} to {args.level:g}%.")
         for item in failed:
             print(f"  {item['label']}: {item['error']}")
         return 1 if failed else 0
