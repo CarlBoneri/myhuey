@@ -223,3 +223,17 @@ def test_pinned_task_or_view_without_a_focus_is_dim_and_low_color(pinned):
     assert "white" not in override and len(override["colors"]) == 1
     assert override["brightness"] <= level * 0.3 + 0.1
     assert room.lights[-1].role == pinned  # the pin stays
+
+
+def test_palette_id_with_count_gives_different_rotations():
+    chosen = next(p for p in load() if len(set(p.colors)) >= 4)
+    items = suggest(_office(furniture=False), "relax", at=dt(12), wake="07:00", bed="23:00", palette_id=chosen.id, count=3)
+    assert len(items) == 3 and all(item["palette"]["id"] == chosen.id for item in items)
+    sets = [repr(sorted(item["scene"].overrides.items())) for item in items]
+    assert len(set(sets)) == 3
+
+
+def test_palette_id_count_is_capped_at_its_colors():
+    chosen = next(p for p in load() if len(set(p.colors)) >= 3)
+    items = suggest(_office(), "code", at=dt(12), wake="07:00", bed="23:00", palette_id=chosen.id, count=20)
+    assert len(items) == len(chosen.colors)

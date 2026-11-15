@@ -41,8 +41,9 @@ def _night(at: datetime, wake: str, bed: str) -> bool:
 
 
 def _choose(mode: Mode, at: datetime, wake: str, bed: str, palette_id: str | None, count: int, seed: int) -> list[Palette]:
-    if palette_id:
-        return [by_id(palette_id)] * count
+    if palette_id:  # one palette, shown in up to as many rotations as it has colors
+        palette = by_id(palette_id)
+        return [palette] * min(count, len(palette.colors))
     night = _night(at, wake, bed)
     pool = [palette for palette in load() if not (night and "blue_heavy" in palette.tags)]
     # Every palette that shares a tag with the mode can come up, weighted by how many it
@@ -104,7 +105,7 @@ def suggest(
 
     results = []
     for index, palette in enumerate(_choose(chosen_mode, at, wake, bed, palette_id, count, seed)):
-        colors = _order(palette.colors, seed if palette_id else seed + index)
+        colors = _order(palette.colors, seed + index)
         overrides = _overrides(room, chosen_mode, roles, focus, center, colors, kelvin, task_kelvin, level, white)
         scene = Scene(
             id=new_id(), name=f"{chosen_mode.title} · {palette.name}", room=room.name, overrides=overrides,
