@@ -136,6 +136,16 @@ class SwapRequest(Body):
     light_id: str = Field(..., min_length=1, max_length=40)
 
 
+class SetupRequest(Body):
+    index: StrictInt = Field(..., ge=0, le=20)
+    at: str | None = Field(None, pattern=r"^([01]\d|2[0-3]):[0-5]\d$")
+
+
+class FloorRequest(Body):
+    photo: list[list[float]]
+    plan: list[list[float]]
+
+
 class SuggestRequest(Body):
     mode: str = Field(..., max_length=20)
     at: str | None = Field(None, pattern=r"^([01]\d|2[0-3]):[0-5]\d$", description="HH:MM; default now")
@@ -334,6 +344,22 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
     @app.post("/api/rooms/{room_name}/planned-lights/{light_id}/swap")
     def swap_planned_light(room_name: str, light_id: str, body: SwapRequest) -> dict[str, Any]:
         return service.swap_planned_light(room_name, light_id, body.light_id).to_dict()
+
+    @app.get("/api/rooms/{room_name}/setups")
+    def setups(room_name: str, at: str | None = Query(None, pattern=r"^([01]\d|2[0-3]):[0-5]\d$")) -> list[dict[str, Any]]:
+        return service.setups(room_name, at=at)
+
+    @app.post("/api/rooms/{room_name}/setups/apply")
+    def add_setup(room_name: str, body: SetupRequest) -> list[dict[str, Any]]:
+        return [light.to_dict() for light in service.add_setup(room_name, body.index, at=body.at)]
+
+    @app.put("/api/rooms/{room_name}/photo/floor")
+    def set_floor(room_name: str, body: FloorRequest) -> dict[str, Any]:
+        return room_json(service.set_floor_transform(room_name, body.photo, body.plan))
+
+    @app.delete("/api/rooms/{room_name}/photo/floor")
+    def clear_floor(room_name: str) -> dict[str, Any]:
+        return room_json(service.set_floor_transform(room_name, None, None))
 
     @app.post("/api/rooms/{room_name}/suggest")
     def suggest(room_name: str, body: SuggestRequest) -> list[dict[str, Any]]:

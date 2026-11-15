@@ -226,6 +226,25 @@ def split_tag(key: str) -> tuple[str, str]:
     return kind, item_id
 
 
+def floor_transform(photo: Any, plan: Any) -> dict[str, list[list[float]]]:
+    """Four floor points on the photo (0-1 fractions) and the plan points (cm) they are."""
+    try:
+        photo_points = [[float(x), float(y)] for x, y in photo]
+        plan_points = [[float(x), float(y)] for x, y in plan]
+    except (TypeError, ValueError):
+        raise ValueError("A floor mapping is four [x, y] points on the photo and four on the plan") from None
+    if len(photo_points) != 4 or len(plan_points) != 4:
+        raise ValueError("A floor mapping needs exactly four points on the photo and four on the plan")
+    if not all(0 <= value <= 1 for point in photo_points for value in point):
+        raise ValueError("Floor points on the photo are fractions of its width and height, 0 to 1")
+    for points in (photo_points, plan_points):
+        for i in range(4):
+            a, b, c = points[i], points[(i + 1) % 4], points[(i + 2) % 4]
+            if abs((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])) < 1e-6 * (1 if points is photo_points else 100):
+                raise ValueError("Pick four floor points where no three are in a line, such as the room's corners")
+    return {"photo": [[round(x, 4), round(y, 4)] for x, y in photo_points], "plan": [[round(x, 1), round(y, 1)] for x, y in plan_points]}
+
+
 @dataclass
 class RoomPhoto:
     """A photo of the real room, stored under ~/.myhuey/uploads.

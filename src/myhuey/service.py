@@ -20,7 +20,8 @@ from .geometry import rectangle
 from .hue import HueBridgeClient
 from .images import ImageSampler, extract_palette, image_path, prune_unreferenced, store_image
 from .catalog import catalog_item
-from .models import Furniture, HomePlan, LayoutLight, Opening, Room, RoomPhoto, new_id, opening_fits, reanchor_openings, validate_outline
+from .setups import generate_setups
+from .models import Furniture, HomePlan, LayoutLight, Opening, Room, RoomPhoto, floor_transform, new_id, opening_fits, reanchor_openings, validate_outline
 from .preferences import chosen as chosen_preferences, merged as merged_preferences, validate as validate_preferences
 from .scenes import Scene, evaluate
 from .suggest import suggest as suggest_scenes
@@ -613,6 +614,32 @@ class HueRoomService:
         self._save(config)
         return next(light for light in self.get_room(room_name).lights if light.light_id == real_id)
 
+    def setups(self, room_name: str, *, at: str | None = None) -> list[dict[str, Any]]:
+        """Proposed lighting setups for a room, with what each mode would make of them."""
+        prefs = self.preferences()
+        return generate_setups(self.get_room(room_name), at=_clock(at), wake=prefs["wake_time"], bed=prefs["bed_time"])
+
+    def add_setup(self, room_name: str, index: int, *, at: str | None = None) -> list[LayoutLight]:
+        """Add one proposed setup's lights to the room as planned lights."""
+        proposals = self.setups(room_name, at=at)
+        if not 0 <= index < len(proposals):
+            raise ValueError(f"There are {len(proposals)} setups for '{room_name}'; pick 0 to {len(proposals) - 1}")
+        return [
+            self.add_planned_light(room_name, light["catalog"], x=light["x"], y=light["y"], rotation=light["rotation"],
+                                   elevation=light["fixed_elevation"])
+            for light in proposals[index]["lights"]
+        ]
+
+    def set_floor_transform(self, room_name: str, photo: list[list[float]] | None, plan: list[list[float]] | None) -> Room:
+        """Store four floor points on the photo and the plan points they are (None clears it)."""
+        config = self._load()
+        room_data = self._room_data(config, room_name)
+        if not room_data.get("photo"):
+            raise ValueError(f"Room '{room_name}' has no photo yet")
+        room_data["photo"]["floor_transform"] = None if photo is None and plan is None else floor_transform(photo, plan)
+        self._save(config)
+        return Room.from_dict(room_data)
+
     def remove_light(self, room_name: str, light_id: str) -> None:
         config = self._load()
         room_data = self._room_data(config, room_name)
@@ -832,8 +859,7 @@ class HueRoomService:
         """
         room = self.get_room(room_name)
         prefs = self.preferences()
-        now = datetime.now()
-        when = now.replace(hour=int(at[:2]), minute=int(at[3:5]), second=0, microsecond=0) if at else now
+        when = _clock(at)
         items = suggest_scenes(room, mode, at=when, wake=prefs["wake_time"], bed=prefs["bed_time"],
                                palette_id=palette_id, count=count, seed=seed)
         return [
@@ -923,6 +949,12 @@ class HueRoomService:
                 self.sleep(pause)  # the bridge handles about ten light commands a second
         self._v2_loaded = 0.0  # gradients and effects just changed
         return results
+
+
+def _clock(at: str | None) -> datetime:
+    """Today at "HH:MM", or now."""
+    now = datetime.now()
+    return now.replace(hour=int(at[:2]), minute=int(at[3:5]), second=0, microsecond=0) if at else now
 
 
 def _tag_resolves(room: Room, key: str) -> bool:

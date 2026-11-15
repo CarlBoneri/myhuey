@@ -139,6 +139,12 @@ def build_parser() -> argparse.ArgumentParser:
     suggest.add_argument("--apply", action="store_true", help="Send the first suggestion to the lights")
     suggest.set_defaults(handler=handle_suggest)
 
+    setups = subparsers.add_parser("setups", help="Propose lighting setups for a room's desk, before buying anything")
+    setups.add_argument("--room", required=True)
+    setups.add_argument("--at", help="Time of day HH:MM for the scene summaries (default now)")
+    setups.add_argument("--add", type=int, metavar="N", help="Add setup N (from the list) to the room as planned lights")
+    setups.set_defaults(handler=handle_setups)
+
     catalog = subparsers.add_parser("catalog", help="List the Hue products you can plan with")
     catalog.set_defaults(handler=handle_catalog)
 
@@ -510,6 +516,23 @@ def handle_suggest(args: argparse.Namespace) -> int:
         _print_results(results)
         if any(item.get("error") for item in results):
             return 1
+    return 0
+
+
+def handle_setups(args: argparse.Namespace) -> int:
+    service = HueRoomService(args.db)
+    if args.add is not None:
+        added = service.add_setup(args.room, args.add, at=args.at)
+        print(f"Added {len(added)} planned lights to '{args.room}': {', '.join(light.label for light in added)}")
+        return 0
+    for number, setup in enumerate(service.setups(args.room, at=args.at)):
+        print(f"{number}. {setup['name']}")
+        if setup["hint"]:
+            print(f"   {setup['hint']}")
+        for light in setup["lights"]:
+            print(f"   - {light['label']} ({light['role']}): {light['why']}")
+        for mode, info in setup["modes"].items():
+            print(f"   {mode:<6} {info['summary']} · palette {info['palette']}")
     return 0
 
 
