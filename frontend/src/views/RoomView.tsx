@@ -16,6 +16,7 @@ import { Empty, Field, HueIcon, IconButton, LengthInput, Panel, Segmented, Slide
 import { PhotoView } from './PhotoView';
 import { RoomDimmer } from '../components/RoomDimmer';
 import { SuggestPanel } from '../components/SuggestPanel';
+import { PlanLightsPanel } from '../components/PlanLightsPanel';
 import { autoRoleLabel, placementNeedsRefresh } from '../lib/suggest';
 
 type Selection = { type: 'light'; id: string } | { type: 'furniture'; id: string } | { type: 'opening'; id: string } | null;
@@ -184,7 +185,7 @@ function PlacedLight({ placement, selected, onSelect, onChange, onCommit, units 
 
   return (
     <g
-      className={`placed-light${selected ? ' selected' : ''}`}
+      className={`placed-light${selected ? ' selected' : ''}${placement.planned ? ' planned' : ''}`}
       transform={`translate(${placement.x},${placement.y})`}
       onPointerDown={(event) => {
         onSelect();
@@ -479,6 +480,11 @@ export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' })
               onDropData={(point, data) => {
                 const id = data.getData('application/x-myhuey-light');
                 if (id) void addLight(id, point);
+                const catalogId = data.getData('application/x-myhuey-catalog');
+                if (catalogId) {
+                  void attempt(() => api.addPlannedLight(draft.name, { catalog: catalogId, x: round1(point[0]), y: round1(point[1]) }))
+                    .then((ok) => ok && refreshRooms());
+                }
               }}
             >
               <path d={pathOf(draft.outline)} className={`room-floor big${tool === 'outline' ? ' editing' : ''}`} />
@@ -520,8 +526,10 @@ export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' })
             {/* The saved room, so suggestions reload when a change is committed, not on every drag step. */}
             {suggesting && <SuggestPanel room={source ?? draft} onClose={() => setSuggesting(false)} />}
             {selectedLight && (
-              <Panel title="Light" actions={<IconButton label="Remove from room" danger onClick={removeSelected}><Trash2 size={16} /></IconButton>}>
-                {lights[selectedLight.light_id] ? <LightControls light={lights[selectedLight.light_id]} /> : <p className="hint">{selectedLight.label} is not on the bridge right now.</p>}
+              <Panel title={selectedLight.planned ? 'Planned light' : 'Light'} actions={<IconButton label="Remove from room" danger onClick={removeSelected}><Trash2 size={16} /></IconButton>}>
+                {selectedLight.planned ? (
+                  <SwapPlanned room={draft} placement={selectedLight} unplaced={tray.map((light) => ({ id: light.id, name: light.name }))} />
+                ) : lights[selectedLight.light_id] ? <LightControls light={lights[selectedLight.light_id]} /> : <p className="hint">{selectedLight.label} is not on the bridge right now.</p>}
                 <LightPlacementFields placement={selectedLight} units={draft.units} onChange={(next) => { updateLocalLight(next); void saveLight(next); }} />
               </Panel>
             )}
@@ -584,6 +592,8 @@ export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' })
                 ))}
               </div>
             </Panel>
+
+            <PlanLightsPanel room={source ?? draft} />
 
             <Panel title="Lights to place">
               {tray.length ? (
@@ -704,5 +714,28 @@ function OpeningsLayer({ room, selectedId, onSelect }: { room: Room; selectedId?
         </g>
       ))}
     </g>
+  );
+}
+
+/** A planned light: what it is, and the swap for a real one once it's paired. */
+function SwapPlanned({ room, placement, unplaced }: { room: Room; placement: Placement; unplaced: { id: string; name: string }[] }) {
+  const { refreshRooms } = useStore();
+  const [choice, setChoice] = useState('');
+  return (
+    <div className="planned-info">
+      <p className="hint">Not installed yet: it takes part in roles and suggestions, and nothing is sent to the bridge for it.</p>
+      <Field label="Swap for a real light" hint="Keeps its position, height, role, and photo tag.">
+        <div className="button-row">
+          <select className="input" value={choice} onChange={(e) => setChoice(e.target.value)} aria-label="Real light to swap in">
+            <option value="">{unplaced.length ? 'Choose a paired light…' : 'No unplaced lights on the bridge'}</option>
+            {unplaced.map((light) => <option key={light.id} value={light.id}>{light.name}</option>)}
+          </select>
+          <button type="button" className="button small primary" disabled={!choice} onClick={async () => {
+            const ok = await attempt(() => api.swapPlannedLight(room.name, placement.light_id, choice), 'Swapped in the real light.');
+            if (ok) { setChoice(''); await refreshRooms(); }
+          }}>Swap</button>
+        </div>
+      </Field>
+    </div>
   );
 }

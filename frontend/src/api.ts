@@ -1,6 +1,6 @@
 import type { BridgeInfo } from './lib/setupFlow';
 import type { Preferences } from './types';
-import type { HomePlan, Opening, ImageLayer, Mood, PaletteEntry, PinnableRole, ProfileTable, Room, Scene, SceneResult, SetupStatus, Suggestion, Swatch, BridgeLight, Furniture, PhotoSpot, Pt } from './types';
+import type { CatalogItem, HomePlan, Placement, Opening, ImageLayer, Mood, PaletteEntry, Setup, PinnableRole, ProfileTable, Room, Scene, SceneResult, SetupStatus, Suggestion, Swatch, BridgeLight, Furniture, PhotoSpot, Pt } from './types';
 
 export class ApiError extends Error {
   constructor(message: string, readonly status: number) {
@@ -107,6 +107,15 @@ export const api = {
   deleteScene: (id: string) => call(`/api/scenes/${id}`, { method: 'DELETE' }),
   preview: (scene: Partial<Scene> & { image: ImageLayer | null }) =>
     call<SceneResult[]>('/api/scenes/preview', { method: 'POST', json: scene }),
+  catalog: () => call<CatalogItem[]>('/api/catalog'),
+  addPlannedLight: (name: string, body: { catalog: string; x: number; y: number; label?: string; rotation?: number; elevation?: number | 'auto' }) =>
+    call<Placement>(`${room(name)}/planned-lights`, { method: 'POST', json: body }),
+  swapPlannedLight: (name: string, plannedId: string, lightId: string) =>
+    call<Placement>(`${room(name)}/planned-lights/${encodeURIComponent(plannedId)}/swap`, { method: 'POST', json: { light_id: lightId } }),
+  setups: (name: string) => call<Setup[]>(`${room(name)}/setups`),
+  addSetup: (name: string, index: number) => call<Placement[]>(`${room(name)}/setups/apply`, { method: 'POST', json: { index } }),
+  setFloor: (name: string, photo: Pt[], plan: Pt[]) => call<Room>(`${room(name)}/photo/floor`, { method: 'PUT', json: { photo, plan } }),
+  clearFloor: (name: string) => call<Room>(`${room(name)}/photo/floor`, { method: 'DELETE' }),
   suggest: (name: string, body: { mode: string; at?: string; palette_id?: string; count?: number; seed?: number }) =>
     call<Suggestion[]>(`${room(name)}/suggest`, { method: 'POST', json: body }),
   applySuggestion: (name: string, scene: Scene) =>

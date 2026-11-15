@@ -58,8 +58,10 @@ export interface Placement {
   y: number;
   rotation: number;
   length: number | null;
-  product: { archetype?: string; productname?: string; modelid?: string };
+  product: { archetype?: string; productname?: string; modelid?: string; catalog?: string };
   metadata: Record<string, unknown>;
+  /** A catalog light that isn't installed yet: in roles and suggestions, never sent to the bridge. */
+  planned?: boolean;
   elevation?: number | null; // cm; null = worked out from the product
   role?: PinnableRole;
   resolved_elevation?: number;
@@ -118,7 +120,36 @@ export interface RoomPhoto {
   height: number;
   /** "light:<id>", "furniture:<id>", or "opening:<id>" → where it appears in the photo. */
   tags: Record<string, PhotoSpot>;
-  floor_transform?: unknown;
+  /** Four floor points on the photo (0-1) and the plan points (cm) they are. */
+  floor_transform?: { photo: Pt[]; plan: Pt[] } | null;
+}
+
+export interface CatalogItem {
+  id: string;
+  label: string;
+  archetype: string;
+  productname: string;
+  color: 'gradient' | 'color' | 'white';
+  kind: 'bias' | 'task' | 'side' | 'ambient';
+}
+
+export interface SetupLight {
+  catalog: string;
+  label: string;
+  x: number;
+  y: number;
+  rotation: number;
+  elevation: number;
+  fixed_elevation: number | null;
+  role: string;
+  why: string;
+}
+
+export interface Setup {
+  name: string;
+  hint: string;
+  lights: SetupLight[];
+  modes: Record<string, { palette: string; kelvin: number; summary: string; roles: Record<string, string>; preview: SceneResult[] }>;
 }
 
 export interface Room {
