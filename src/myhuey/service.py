@@ -422,6 +422,7 @@ class HueRoomService:
                     scene["room"] = renamed
             room.name = renamed
         room = Room.from_dict(room.to_dict())  # validates the ceiling and everything together
+        room.prune_photo_tags()
         room_data.clear()
         room_data.update(room.to_dict())
         self._save(config)
@@ -580,7 +581,7 @@ class HueRoomService:
             item for item in room_data.get("lights", []) if str(item.get("light_id")) != str(light_id)
         ]
         photo = room_data.get("photo") or {}
-        (photo.get("placements") or {}).pop(str(light_id), None)
+        (photo.get("tags") or {}).pop(f"light:{light_id}", None)
         self._save(config)
 
     def import_rooms(self) -> list[str]:
@@ -629,8 +630,8 @@ class HueRoomService:
         stored = store_image(data, self.uploads)
         config = self._load()
         room_data = self._room_data(config, room_name)
-        placements = (room_data.get("photo") or {}).get("placements") or {}
-        room_data["photo"] = {**stored, "placements": placements}
+        previous = room_data.get("photo") or {}
+        room_data["photo"] = {**stored, "tags": previous.get("tags") or {}, "floor_transform": previous.get("floor_transform")}
         self._save(config)
         self.prune_uploads(min_age_seconds=0)
         return Room.from_dict(room_data)
@@ -641,19 +642,29 @@ class HueRoomService:
         self._save(config)
         self.prune_uploads(min_age_seconds=0)
 
-    def set_photo_placements(self, room_name: str, placements: dict[str, dict[str, float]]) -> Room:
+    def set_photo_tags(self, room_name: str, tags: dict[str, dict[str, float]]) -> Room:
+        """Replace the photo's tags. Each must name a light, furniture piece, or opening in the room."""
         config = self._load()
         room_data = self._room_data(config, room_name)
         if not room_data.get("photo"):
             raise ValueError(f"Room '{room_name}' has no photo yet")
-        placed_ids = {str(light.get("light_id")) for light in room_data.get("lights", [])}
-        unknown = set(placements) - placed_ids
-        if unknown:
-            raise ValueError(f"Place lights on the plan before the photo: {', '.join(sorted(unknown))}")
-        photo = RoomPhoto.from_dict({**room_data["photo"], "placements": placements})
+        room = Room.from_dict(room_data)
+        missing = sorted(key for key in tags if not room.has_tag_target(key))
+        if missing:
+            raise ValueError(f"Put these on the plan before tagging them on the photo: {', '.join(missing)}")
+        photo = RoomPhoto.from_dict({**room_data["photo"], "tags": tags})
         room_data["photo"] = photo.to_dict() if photo else None
         self._save(config)
         return Room.from_dict(room_data)
+
+    def set_photo_placements(self, room_name: str, placements: dict[str, dict[str, float]]) -> Room:
+        """The older call: replace only the light tags, keyed by light ID."""
+        photo = self.get_room(room_name).photo
+        if not photo:
+            raise ValueError(f"Room '{room_name}' has no photo yet")
+        tags = {key: spot for key, spot in photo.tags.items() if not key.startswith("light:")}
+        tags.update({f"light:{light_id}": spot for light_id, spot in placements.items()})
+        return self.set_photo_tags(room_name, tags)
 
     # Home plan image
 

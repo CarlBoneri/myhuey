@@ -135,11 +135,11 @@ def test_room_photo_upload_and_light_positions_persist(web, db_path):
     assert (photo["width"], photo["height"]) == (300, 200)
 
     saved = web.put("/api/rooms/Den/photo/placements", json={"placements": {"1": {"x": 0.25, "y": 0.75, "scale": 2}}})
-    assert saved.json()["photo"]["placements"]["1"] == {"x": 0.25, "y": 0.75, "rotation": 0, "scale": 2}
+    assert saved.json()["photo"]["tags"]["light:1"] == {"x": 0.25, "y": 0.75, "rotation": 0, "scale": 2}
 
     # A fresh service (as after a restart) reads the same thing back.
     room = HueRoomService(db_path).get_room("Den")
-    assert room.photo.placements["1"]["x"] == 0.25
+    assert room.photo.tags["light:1"]["x"] == 0.25
     assert web.get(f"/api/images/{room.photo.file}").status_code == 200
 
     unknown = web.put("/api/rooms/Den/photo/placements", json={"placements": {"99": {"x": 0.1, "y": 0.1}}})
@@ -149,7 +149,7 @@ def test_room_photo_upload_and_light_positions_persist(web, db_path):
     old_file = room.photo.file
     web.post("/api/rooms/Den/photo", files={"file": ("room.jpg", _jpeg((200, 100)), "image/jpeg")})
     room = HueRoomService(db_path).get_room("Den")
-    assert room.photo.placements["1"]["x"] == 0.25 and room.photo.file != old_file
+    assert room.photo.tags["light:1"]["x"] == 0.25 and room.photo.file != old_file
     assert web.get(f"/api/images/{old_file}").status_code == 400
 
     assert web.delete("/api/rooms/Den/photo").status_code == 200

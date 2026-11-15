@@ -142,6 +142,10 @@ class PhotoPlacements(BaseModel):
     placements: dict[str, dict[str, float]]
 
 
+class PhotoTags(BaseModel):
+    tags: dict[str, dict[str, float]] = Field(..., max_length=500)
+
+
 class LightState(BaseModel):
     on: bool | None = None
     brightness: int | None = Field(None, ge=0, le=254)
@@ -364,6 +368,10 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
     def delete_room_photo(room_name: str) -> dict[str, str]:
         service.remove_room_photo(room_name)
         return {"status": "removed"}
+
+    @app.put("/api/rooms/{room_name}/photo/tags")
+    def save_photo_tags(room_name: str, body: PhotoTags) -> dict[str, Any]:
+        return room_json(service.set_photo_tags(room_name, body.tags))
 
     @app.put("/api/rooms/{room_name}/photo/placements")
     def save_photo_placements(room_name: str, body: PhotoPlacements) -> dict[str, Any]:
