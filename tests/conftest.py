@@ -124,3 +124,7 @@ def no_real_network(monkeypatch):
     monkeypatch.setattr("myhuey.tls.fetch_certificate", refuse)
     monkeypatch.setattr("myhuey.hue.requests.get", refuse)
     monkeypatch.setattr("myhuey.hue.time.sleep", lambda seconds: None)
+    monkeypatch.setattr("myhuey.discovery.mdns_bridges", lambda timeout=1.5: [])  # no multicast from tests
+    from myhuey import discovery
+
+    discovery.reset_cloud_cache()

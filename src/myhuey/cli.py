@@ -160,12 +160,14 @@ class _Countdown:
 
 
 def handle_discover(_: argparse.Namespace) -> int:
-    bridges = HueBridgeClient.discover_bridges()
+    from .discovery import discover
+
+    bridges = discover(report=print)
     if not bridges:
         print("No Hue bridges were found on this network.")
         return 1
     for bridge in bridges:
-        print(f"{bridge.get('internalipaddress', '?')}  (id {bridge.get('id', '?')})")
+        print(f"{bridge.get('internalipaddress', '?')}  (id {bridge.get('id') or '?'}, found by {bridge.get('source', '?')})")
     return 0
 
 

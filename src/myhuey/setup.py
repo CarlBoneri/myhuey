@@ -8,6 +8,7 @@ from typing import Any, Callable, Iterable
 
 from .errors import BridgeUnreachable, HueApiError, HueError
 from .hue import PAIRING_WINDOW, HueBridgeClient
+from .discovery import discover
 from .service import HueRoomService
 
 _MAX_RANGE_SIZE = 1024
@@ -103,11 +104,7 @@ def _choose_bridge(
     print_func: Callable[[str], None],
     input_func: Callable[[str], str],
 ) -> str:
-    try:
-        discovered = HueBridgeClient.discover_bridges()
-    except BridgeUnreachable as exc:
-        print_func(str(exc))
-        discovered = []
+    discovered = discover(report=print_func)
 
     candidates = candidate_bridge_ips(preferred_ranges, discovered)
     if not candidates:

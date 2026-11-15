@@ -19,6 +19,7 @@ from .images import MAX_UPLOAD_BYTES, media_type
 from .migrations import CURRENT_VERSION
 from .palette import MOODS
 from .service import HueRoomService
+from .discovery import discover
 from .setup import check_bridge, pair_bridge
 from .shapes import BY_ARCHETYPE, BY_MODEL, BY_PRODUCT, DEFAULT_PROFILE
 
@@ -187,9 +188,10 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
 
     @app.get("/api/bridges/discover")
     def discover_bridges() -> list[dict[str, str]]:
+        # mDNS on the local network first, then the cloud service (cached 15 minutes).
         return [
-            {"id": str(item.get("id", "")), "ip": str(item.get("internalipaddress", ""))}
-            for item in HueBridgeClient.discover_bridges()
+            {"id": str(item.get("id", "")), "ip": str(item.get("internalipaddress", "")), "source": str(item.get("source", ""))}
+            for item in discover()
         ]
 
     @app.get("/api/bridges/check")
