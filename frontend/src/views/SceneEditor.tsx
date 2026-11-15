@@ -7,7 +7,8 @@ import { attempt, useStore } from '../store';
 import { go } from '../lib/router';
 import { bounds, ellipsePoints, fitImage, pathOf, rectPoints, round1, simplify } from '../lib/geometry';
 import { effectiveLength, placedProfile } from '../lib/lights';
-import type { ImageLayer, LightOverride, Mood, Pt, Room, Scene, SceneResult, Zone } from '../types';
+import type { ImageLayer, LightOverride, Mood, PaletteEntry, Pt, Room, Scene, SceneOrigin, SceneResult, Zone } from '../types';
+import { MODE_LABELS, creditText } from '../lib/suggest';
 import { PlanCanvas, useDrag, usePlan } from '../components/PlanCanvas';
 import { FurnitureShape, LightSilhouette } from '../components/Shapes';
 import { ColorPicker } from '../components/ColorPicker';
@@ -311,6 +312,7 @@ export function SceneEditor({ id }: { id: string }) {
         <div>
           <p className="eyebrow"><a href="#/scenes">Scenes</a> / {draft.room}</p>
           <input className="title-input" value={draft.name} aria-label="Scene name" onChange={(e) => change({ ...draft, name: e.target.value || draft.name })} />
+          {draft.origin?.mode && <OriginLabel origin={draft.origin} />}
         </div>
         <div className="head-tools">
           <span className={`save-state ${status}`}>{status === 'saved' ? 'Saved' : status === 'saving' ? 'Saving…' : 'Unsaved'}</span>
@@ -613,5 +615,23 @@ function ImagePlacement({ layer, room, onChange }: {
         </button>
       </div>
     </div>
+  );
+}
+
+/** Where a suggested scene came from, with the palette's credit. */
+function OriginLabel({ origin }: { origin: SceneOrigin }) {
+  const [palette, setPalette] = useState<PaletteEntry | null>(null);
+  useEffect(() => {
+    if (!origin.palette_name) return;
+    api.palettes({ q: origin.palette_name, limit: 20 })
+      .then((found) => setPalette(found.find((p) => p.id === origin.palette_id) ?? null))
+      .catch(() => setPalette(null));
+  }, [origin.palette_id, origin.palette_name]);
+  const credit = palette ? creditText(palette) : '';
+  return (
+    <p className="hint origin-label">
+      Suggested: {MODE_LABELS[origin.mode ?? ''] ?? origin.mode} · {origin.palette_name} · {origin.at}
+      {credit && (palette?.credit.url ? <a href={palette.credit.url} target="_blank" rel="noreferrer">{credit}</a> : <span>{credit}</span>)}
+    </p>
   );
 }

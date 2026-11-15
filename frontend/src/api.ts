@@ -1,6 +1,6 @@
 import type { BridgeInfo } from './lib/setupFlow';
 import type { Preferences } from './types';
-import type { HomePlan, Opening, ImageLayer, Mood, ProfileTable, Room, Scene, SceneResult, SetupStatus, Swatch, BridgeLight, Furniture, PhotoSpot, Pt } from './types';
+import type { HomePlan, Opening, ImageLayer, Mood, PaletteEntry, PinnableRole, ProfileTable, Room, Scene, SceneResult, SetupStatus, Suggestion, Swatch, BridgeLight, Furniture, PhotoSpot, Pt } from './types';
 
 export class ApiError extends Error {
   constructor(message: string, readonly status: number) {
@@ -77,7 +77,10 @@ export const api = {
   updatePreferences: (changes: Partial<Preferences>) => call<Preferences>('/api/preferences', { method: 'PATCH', json: changes }),
   roomPower: (name: string, on: boolean) =>
     call<{ results: { light_id: string; label: string; ok: boolean; error?: string }[]; failed: number }>(`${room(name)}/power`, { method: 'POST', json: { on } }),
-  placeLight: (name: string, body: { light_id: string; x: number; y: number; rotation?: number; length?: number | null; label?: string }) =>
+  placeLight: (name: string, body: {
+    light_id: string; x: number; y: number; rotation?: number; length?: number | null; label?: string;
+    elevation?: number | 'auto'; role?: PinnableRole;
+  }) =>
     call(`${room(name)}/lights`, { method: 'POST', json: body }),
   removeLight: (name: string, id: string) => call(`${room(name)}/lights/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 
@@ -104,5 +107,13 @@ export const api = {
   deleteScene: (id: string) => call(`/api/scenes/${id}`, { method: 'DELETE' }),
   preview: (scene: Partial<Scene> & { image: ImageLayer | null }) =>
     call<SceneResult[]>('/api/scenes/preview', { method: 'POST', json: scene }),
+  suggest: (name: string, body: { mode: string; at?: string; palette_id?: string; count?: number; seed?: number }) =>
+    call<Suggestion[]>(`${room(name)}/suggest`, { method: 'POST', json: body }),
+  applySuggestion: (name: string, scene: Scene) =>
+    call<{ scene: string; results: SceneResult[] }>(`${room(name)}/suggest/apply`, { method: 'POST', json: scene }),
+  palettes: (params: { tag?: string; q?: string; limit?: number } = {}) => {
+    const query = new URLSearchParams(Object.entries(params).filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => [k, String(v)]));
+    return call<PaletteEntry[]>(`/api/palettes?${query}`);
+  },
   applyScene: (id: string) => call<{ results: SceneResult[]; failed: number }>(`/api/scenes/${id}/apply`, { method: 'POST' }),
 };

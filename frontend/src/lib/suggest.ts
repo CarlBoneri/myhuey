@@ -1,0 +1,49 @@
+/** Pure helpers for the Suggest panel. */
+
+export interface PaletteCredit {
+  author?: string;
+  title?: string;
+  artist?: string;
+  url?: string;
+  license?: string;
+}
+
+export const MODE_LABELS: Record<string, string> = {
+  code: 'Code',
+  work: 'Work',
+  study: 'Study',
+  read: 'Read',
+  relax: 'Relax',
+};
+
+const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+
+export function cardTitle(mode: string, palette: { name: string }): string {
+  return `${MODE_LABELS[mode] ?? capitalize(mode)} · ${palette.name}`;
+}
+
+export function creditText(palette: { source: string; credit: PaletteCredit }): string {
+  const { credit } = palette;
+  if (palette.source === 'colourlovers' && credit.author) return `Palette by ${credit.author} on COLOURlovers (CC BY-NC-SA 3.0)`;
+  if (palette.source === 'met' && credit.title) {
+    return `Colors from “${credit.title}”${credit.artist ? ` by ${credit.artist}` : ''}, The Met (CC0)`;
+  }
+  return '';
+}
+
+const pad = (n: number) => String(n).padStart(2, '0');
+
+export function nowHHMM(date: Date = new Date()): string {
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+export function quarterHours(): string[] {
+  const times: string[] = [];
+  for (let hour = 0; hour < 24; hour++) for (const minute of [0, 15, 30, 45]) times.push(`${pad(hour)}:${pad(minute)}`);
+  return times;
+}
+
+export function lightFill(result: { on: boolean; color: string | null; brightness: number }): { fill: string; opacity: number } {
+  if (!result.on || !result.color) return { fill: '#2a2a2a', opacity: 1 };
+  return { fill: result.color, opacity: Math.round((0.2 + (0.8 * result.brightness) / 100) * 100) / 100 };
+}

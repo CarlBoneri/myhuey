@@ -48,6 +48,7 @@ export interface LightOverride {
   effect?: string;
   brightness?: number;
   on?: boolean;
+  white?: number;
 }
 
 export interface Placement {
@@ -59,7 +60,13 @@ export interface Placement {
   length: number | null;
   product: { archetype?: string; productname?: string; modelid?: string };
   metadata: Record<string, unknown>;
+  elevation?: number | null; // cm; null = worked out from the product
+  role?: PinnableRole;
+  resolved_elevation?: number;
+  resolved_role?: string;
 }
+
+export type PinnableRole = 'auto' | 'bias' | 'task' | 'view';
 
 export interface Furniture {
   id: string;
@@ -171,6 +178,32 @@ export interface Scene {
   palette: string[];
   updated_at: string;
   overrides: Record<string, LightOverride>;
+  origin?: SceneOrigin | null;
+}
+
+export interface SceneOrigin {
+  mode?: string;
+  palette_id?: string;
+  palette_name?: string;
+  at?: string;
+}
+
+export interface PaletteEntry {
+  id: string;
+  name: string;
+  colors: string[];
+  tags: string[];
+  source: 'colourlovers' | 'met' | 'generated' | string;
+  credit: { author?: string; title?: string; artist?: string; url?: string; license?: string };
+}
+
+export interface Suggestion {
+  scene: Scene;
+  palette: PaletteEntry;
+  roles: Record<string, string>;
+  preview: SceneResult[];
+  white: string;
+  kelvin: number;
 }
 
 export interface SceneResult {
@@ -185,6 +218,7 @@ export interface SceneResult {
   mode: string | null;
   effect: string | null;
   override: boolean;
+  color_temp?: number | null;
   applied?: boolean;
   error?: string;
   warning?: string;
@@ -197,6 +231,8 @@ export interface Preferences {
   poll_seconds: 0 | 2 | 5 | 10 | 30;
   command_gap_ms: 100 | 150 | 200 | 300;
   default_units: Units;
+  wake_time: string;
+  bed_time: string;
 }
 
 export interface SetupStatus {

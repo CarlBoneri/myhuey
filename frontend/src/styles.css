@@ -489,3 +489,31 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .pref-row > .pref-text { flex: 1 1 220px; }
 .pref-row .segmented { flex: none; flex-wrap: nowrap; }
 .pref-row .segmented button { padding: 6px 10px; white-space: nowrap; }
+
+/* Suggested scenes */
+.link-button { background: none; border: 0; padding: 0; color: var(--accent); cursor: pointer; text-decoration: underline; }
+.button.active { border-color: var(--accent); color: var(--text); }
+.suggest-panel .field-row { align-items: flex-end; flex-wrap: wrap; }
+.suggest-actions { margin-left: auto; }
+.suggest-cards { display: grid; gap: 10px; }
+.suggest-cards[aria-busy='true'] { opacity: 0.6; }
+.suggest-card { display: grid; grid-template-columns: 112px 1fr; gap: 12px; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius-m); background: var(--surface-2); }
+.suggest-card h3 { margin: 0 0 6px; font-size: 13.5px; font-weight: 600; }
+.suggest-body { display: grid; gap: 6px; min-width: 0; }
+.suggest-body form { flex-wrap: nowrap; }
+.suggest-body form .input { min-width: 0; flex: 1; }
+.mini-room { width: 112px; height: 112px; background: var(--bg-2); border-radius: var(--radius-s); }
+.mini-outline { fill: var(--floor); stroke: var(--floor-stroke); }
+.mini-furniture { fill: var(--furniture); stroke: none; opacity: 0.7; }
+.palette-strip { display: flex; height: 14px; border-radius: 4px; overflow: hidden; min-width: 80px; }
+.palette-strip > span { flex: 1; }
+.palette-browser { display: grid; gap: 8px; }
+.palette-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; max-height: 240px; overflow-y: auto; }
+.palette-row { display: grid; grid-template-columns: 96px 1fr; gap: 10px; align-items: center; width: 100%; padding: 6px 8px; background: none; border: 1px solid transparent; border-radius: var(--radius-s); cursor: pointer; text-align: left; }
+.palette-row:hover { border-color: var(--border-strong); background: var(--surface-2); }
+.palette-name { font-size: 12.5px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.origin-label { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+@media (max-width: 520px) {
+  .suggest-card { grid-template-columns: 1fr; }
+  .mini-room { width: 100%; height: 160px; }
+}
