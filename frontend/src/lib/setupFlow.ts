@@ -66,8 +66,11 @@ export function setupReducer(state: SetupState, event: SetupEvent): SetupState {
     case 'paired':
       return { ...state, step: 'connected', lights: event.lights, error: '' };
     case 'pairFailed':
-      // TODO(human): decide where each kind of pairing failure sends the person.
-      return state;
+      // Send the person where they can fix it: a missed button press is retried where they
+      // stand; a bridge that stopped answering may be the wrong one or have a new address.
+      if (event.reason === 'timeout') return { ...state, step: 'press', error: event.message };
+      if (event.reason === 'unreachable') return { ...state, step: 'find', bridge: null, error: event.message };
+      return { ...state, step: 'confirm', error: event.message };
     case 'imported':
       return { ...state, step: 'done', imported: event.added };
     case 'finish':

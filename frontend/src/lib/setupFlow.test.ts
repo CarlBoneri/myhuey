@@ -35,6 +35,19 @@ describe('setup wizard steps', () => {
     expect(setupReducer(connected, { type: 'finish' })).toMatchObject({ step: 'done', imported: null });
   });
 
+  it('sends each pairing failure where the person can fix it', () => {
+    const pressing = at('press', { bridge, attempts: 1 });
+    // Not pressed in time: they are at the bridge, so stay and offer another try.
+    expect(setupReducer(pressing, { type: 'pairFailed', reason: 'timeout', message: 'not pressed' }))
+      .toMatchObject({ step: 'press', bridge, error: 'not pressed', attempts: 1 });
+    // The bridge stopped answering: maybe the wrong one or a new address, so choose again.
+    expect(setupReducer(pressing, { type: 'pairFailed', reason: 'unreachable', message: 'gone' }))
+      .toMatchObject({ step: 'find', bridge: null, error: 'gone' });
+    // Refused for another reason: show which bridge was chosen, with the reason.
+    expect(setupReducer(pressing, { type: 'pairFailed', reason: 'rejected', message: 'no' }))
+      .toMatchObject({ step: 'confirm', bridge, error: 'no' });
+  });
+
   it('goes back one step at a time', () => {
     expect(setupReducer(at('find'), { type: 'back' }).step).toBe('welcome');
     expect(setupReducer(at('confirm', { bridge }), { type: 'back' }).step).toBe('find');
