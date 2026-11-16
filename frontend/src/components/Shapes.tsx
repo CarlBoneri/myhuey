@@ -16,7 +16,7 @@ export function LightSilhouette({
   const minPx = 4 * cmPerPx; // keep thin things visible when zoomed out
   const fill = on && colors?.length ? (colors.length > 1 ? `url(#g${id})` : colors[0]) : OFF;
   const glowColor = on && colors?.length ? colors[Math.floor(colors.length / 2)] : null;
-  const stroke = selected ? 'var(--accent)' : 'rgba(255,255,255,0.55)';
+  const stroke = selected ? 'var(--accent)' : 'var(--plan-line)';
   const strokeWidth = (selected ? 2.2 : 1) * cmPerPx;
   // Drawn as hard steps so every Hue mode (bands, mirrored, scattered) shows as it looks.
   const steps = colors && colors.length > 1 ? renderStops(colors, mode ?? 'interpolated_palette', 24) : [];
@@ -55,7 +55,7 @@ export function LightSilhouette({
       <g>
         {gradient}
         {glow}
-        <line x1={-half} x2={half} y1={0} y2={0} stroke="rgba(255,255,255,0.35)" strokeWidth={cmPerPx} />
+        <line x1={-half} x2={half} y1={0} y2={0} style={{ stroke: 'var(--plan-line)' }} strokeWidth={cmPerPx} />
         {Array.from({ length: count }, (_, i) => (
           <circle key={i} cx={-half + (length * i) / (count - 1)} cy={0} r={Math.max(1.4, minPx * 0.6)} fill={on ? (stops?.[i] ?? colors?.[0] ?? OFF) : OFF} />
         ))}
@@ -74,7 +74,7 @@ export function LightSilhouette({
         // A Signe's foot sits at its start.
         <circle cx={-half} cy={0} r={Math.max(w * 2.4, minPx * 1.2)} fill={OFF} stroke={stroke} strokeWidth={strokeWidth} />
       )}
-      {profile.kind === 'strip' && on && <rect x={-half} y={-w / 2} width={length} height={w} rx={radius} fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth={cmPerPx * 0.6} />}
+      {profile.kind === 'strip' && on && <rect x={-half} y={-w / 2} width={length} height={w} rx={radius} fill="none" style={{ stroke: 'var(--plan-line)' }} strokeWidth={cmPerPx * 0.6} />}
     </g>
   );
 }

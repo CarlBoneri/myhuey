@@ -25,6 +25,15 @@ beforeEach(() => {
 afterEach(() => { vi.clearAllTimers(); vi.useRealTimers(); });
 
 describe('StudioHead', () => {
+  it('shows the room name as typed', () => {
+    const { rerender } = render(<StudioHead view="3d" room="Office" />);
+    expect(screen.getByRole('heading', { level: 1 }).className).toContain('as-typed');
+    rerender(<StudioHead view="home" room={null} />);
+    const head = screen.getByRole('heading', { level: 1 });
+    expect(head.textContent).toBe('Whole home');
+    expect(head.className).not.toContain('as-typed');
+  });
+
   it('lists Whole home and every room, and shows the room on screen', () => {
     render(<StudioHead view="3d" room="Office" />);
     expect(within(picker()).getAllByRole('option').map((option) => option.textContent)).toEqual(['Whole home', 'Office', 'Den', 'Kitchen']);

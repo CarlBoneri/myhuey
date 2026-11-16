@@ -1,6 +1,6 @@
 import { useEffect, useRef, type CSSProperties } from 'react';
 import { Box, CircleHelp, Command, House, Lightbulb, Map as MapIcon, Palette, Settings, SlidersHorizontal, Sparkles, Terminal, X } from 'lucide-react';
-import { applyTheme, applyTransparency, followSystemTheme, normalizeTheme, themeGroups, type Theme } from './lib/theme';
+import { applyTheme, applyTransparency, followSystemTheme, followSystemTransparency, normalizeTheme, themeGroups, type Theme } from './lib/theme';
 import { useStore } from './store';
 import { href, useRoute, type Route } from './lib/router';
 import { HomeView } from './views/HomeView';
@@ -55,7 +55,10 @@ export function App() {
     applyTheme(prefs);
     return followSystemTheme(prefs);
   }, [theme, theme_dark, theme_light]);
-  useEffect(() => applyTransparency(preferences.reduce_transparency), [preferences.reduce_transparency]);
+  useEffect(() => {
+    applyTransparency(preferences.reduce_transparency);
+    return followSystemTransparency(preferences.reduce_transparency);
+  }, [preferences.reduce_transparency]);
 
   // The room tabs follow the room on screen; ⌘K opens the palette and Escape closes the overlays.
   const routeRoom = route.view === 'room' || route.view === 'design' ? route.room : null;

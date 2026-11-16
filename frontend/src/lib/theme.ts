@@ -61,16 +61,6 @@ export function resolveTheme(prefs: ThemePrefs, systemDark: boolean): ThemeId {
   return systemDark ? modeTheme(prefs.theme_dark, 'dark') : modeTheme(prefs.theme_light, 'light');
 }
 
-/** What the rail's sun/moon button saves: the other mode's theme, remembering the one on screen
- * as its mode's choice, so an explicit pick like Monokai is never lost. */
-export function themeToggle(prefs: ThemePrefs, systemDark: boolean): Partial<{ theme: Theme; theme_dark: ThemeId; theme_light: ThemeId }> {
-  const showing = resolveTheme(prefs, systemDark);
-  const dark = kindOf(showing) === 'dark';
-  const target = dark ? modeTheme(prefs.theme_light, 'light') : modeTheme(prefs.theme_dark, 'dark');
-  if (normalizeTheme(prefs.theme) === 'system') return { theme: target };
-  return dark ? { theme: target, theme_dark: showing } : { theme: target, theme_light: showing };
-}
-
 export function systemPrefersDark(): boolean {
   return typeof matchMedia === 'function' ? matchMedia('(prefers-color-scheme: dark)').matches : true;
 }
@@ -114,4 +104,13 @@ export function applyTransparency(setting: 'auto' | 'on' | 'off'): void {
   const reduce = setting === 'on' || (setting === 'auto' && system);
   if (reduce) document.documentElement.dataset.transparency = 'reduced';
   else delete document.documentElement.dataset.transparency;
+}
+
+/** Re-apply "auto" when the system's transparency setting changes. Returns a stop function. */
+export function followSystemTransparency(setting: 'auto' | 'on' | 'off'): () => void {
+  if (setting !== 'auto' || typeof matchMedia !== 'function') return () => {};
+  const query = matchMedia('(prefers-reduced-transparency: reduce)');
+  const update = () => applyTransparency('auto');
+  query.addEventListener('change', update);
+  return () => query.removeEventListener('change', update);
 }

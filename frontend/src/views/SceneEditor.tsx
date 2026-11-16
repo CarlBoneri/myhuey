@@ -53,7 +53,7 @@ function DrawLayer({ tool, onDone, color }: { tool: Tool; onDone: (points: Pt[])
           });
         }}
       />
-      {temp && <path d={pathOf(temp)} fill={color} fillOpacity={0.4} stroke="#fff" strokeDasharray={`${4 * cmPerPx}`} strokeWidth={cmPerPx} pointerEvents="none" />}
+      {temp && <path d={pathOf(temp)} fill={color} fillOpacity={0.4} style={{ stroke: 'var(--plan-line)' }} strokeDasharray={`${4 * cmPerPx}`} strokeWidth={cmPerPx} pointerEvents="none" />}
     </>
   );
 }
@@ -72,7 +72,7 @@ function ZoneShape({ zone, selected, interactive, onSelect, onChange, onCommit }
         className={`zone${selected ? ' selected' : ''}`}
         fill={zone.color}
         fillOpacity={0.3 + (zone.brightness / 100) * 0.45}
-        stroke={selected ? '#fff' : zone.color}
+        stroke={selected ? 'var(--handle-stroke)' : zone.color}
         strokeWidth={(selected ? 2 : 1) * cmPerPx}
         onPointerDown={(event) => {
           onSelect();
@@ -178,7 +178,7 @@ function PreviewLights({ room, results, selected, onPick }: {
             <LightSilhouette profile={profile} length={effectiveLength(placement, profile)} colors={colors} on={!!colors} cmPerPx={cmPerPx}
               mode={result?.mode} selected={selected === placement.light_id} />
             <rect x={-Math.max(effectiveLength(placement, profile), 20) / 2} y={-12 * cmPerPx} width={Math.max(effectiveLength(placement, profile), 20)} height={24 * cmPerPx} fill="transparent" />
-            {result?.override && <circle cx={0} cy={-14 * cmPerPx} r={4 * cmPerPx} fill="var(--accent)" stroke="#fff" strokeWidth={cmPerPx} />}
+            {result?.override && <circle cx={0} cy={-14 * cmPerPx} r={4 * cmPerPx} fill="var(--accent)" stroke="var(--handle-stroke)" strokeWidth={cmPerPx} />}
           </g>
         );
       })}
@@ -311,9 +311,10 @@ export function SceneEditor({ id }: { id: string }) {
     <div className="page scene-editor">
       <header className="page-head">
         <div>
-          <p className="eyebrow"><a href="#/scenes">Scenes</a> / {draft.room}</p>
-          <input className="title-input" value={draft.name} aria-label="Scene name" onChange={(e) => change({ ...draft, name: e.target.value || draft.name })} />
-          {draft.origin?.mode && <OriginLabel origin={draft.origin} />}
+          <p className="eyebrow"><a href="#/scenes">Scenes</a> / <span className="as-typed">{draft.room}</span></p>
+          <h1 className="as-typed">
+            <input className="title-input" size={Math.max(4, draft.name.length)} value={draft.name} aria-label="Scene name" onChange={(e) => change({ ...draft, name: e.target.value || draft.name })} />
+          </h1>
         </div>
         <div className="head-tools">
           <span className={`save-state ${status}`}>{status === 'saved' ? 'Saved' : status === 'saving' ? 'Saving…' : 'Unsaved'}</span>
@@ -324,6 +325,7 @@ export function SceneEditor({ id }: { id: string }) {
           <button type="button" className="button primary" onClick={apply}><Play size={16} /> Apply to lights</button>
         </div>
       </header>
+      {draft.origin?.mode && <OriginLabel origin={draft.origin} />}
 
       <div className="split">
         <div className="stage">
@@ -354,7 +356,7 @@ export function SceneEditor({ id }: { id: string }) {
                 onSelect={() => setPick({ type: 'zone', id: z.id })} onChange={(next) => updateZone(next, false)} onCommit={commit} />
             ))}
             </g>
-            {zone && <path d={pathOf(zone.points)} fill="none" stroke="#fff" strokeOpacity={0.35} strokeDasharray="6 6" className="zone-ghost" pointerEvents="none" />}
+            {zone && <path d={pathOf(zone.points)} fill="none" style={{ stroke: 'var(--plan-line)' }} strokeDasharray="6 6" className="zone-ghost" pointerEvents="none" />}
             {draft.image && pick?.type === 'image' && (
               <rect x={draft.image.x} y={draft.image.y} width={draft.image.width} height={draft.image.height} fill="none" stroke="var(--accent)" strokeOpacity={0.5} strokeDasharray="6 6" pointerEvents="none"
                 transform={`rotate(${draft.image.rotation ?? 0} ${draft.image.x + draft.image.width / 2} ${draft.image.y + draft.image.height / 2})`} />

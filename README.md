@@ -33,6 +33,8 @@ The web app and the command line share one service, and only that service touche
 
 You need Python 3.11 or newer, Node to build the web app once, and a Hue bridge on the same network.
 
+The [step-by-step guides](docs/vignettes/) cover [installing and running](docs/vignettes/install-and-run.md) and [designing a room layout](docs/vignettes/design-a-room-layout.md).
+
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -e '.[dev]'
