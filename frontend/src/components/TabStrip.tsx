@@ -7,6 +7,7 @@ import { PanelLeftClose, PanelLeftOpen, Plus, RotateCcw, X, type LucideIcon } fr
 import { href, go, type Route } from '../lib/router';
 import { DEFAULT_TABS, contextOrigin, dragWidth, focusAfterClose, refocusReady, RAIL_DEFAULT, RAIL_MAX, RAIL_MIN, RAIL_STEP, clampRail, closeTab, isVertical, moveTab, narrowRailNote, neighbour, reopenTab, settleRail, shiftTab, tabMenuItems, type TabId, type TabMenuItem, type TabPlacement, type TabState } from '../lib/tabs';
 import { moveMenuFocus } from '../lib/menuKeys';
+import { isMac, isResizePress } from '../lib/pointer';
 import { useUi } from '../uiStore';
 import { TabContextMenu } from './TabContextMenu';
 
@@ -155,6 +156,7 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
 
   // The rail's inner edge: dragged with the pointer (live, snapping to icons on release), or moved by keys.
   const dragRail = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!isResizePress(event, isMac())) return;
     const bar = event.currentTarget;
     // Claim the press: left alone, the browser starts a text selection and then a native drag of a tab, and cancels the resize.
     event.preventDefault();

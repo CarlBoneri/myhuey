@@ -16,6 +16,7 @@ import { CM_PER_INCH, formatLength } from '../lib/units';
 import { clamp } from '../lib/view3d';
 import type { Placement, Room } from '../types';
 import { Room3DStage, type Selection3D, type View3D } from './Room3DStage';
+import { isMac, isResizePress } from '../lib/pointer';
 import { Panel, Segmented, Sidebar, Slider } from './ui';
 
 const SIZES_KEY = 'myhuey.studio3d';
@@ -73,6 +74,7 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
   const fold = (key: keyof Sizes['collapsed']) => setSizes((s) => ({ ...s, collapsed: { ...s.collapsed, [key]: !s.collapsed[key] } }));
 
   const dragBar = (event: ReactPointerEvent<HTMLDivElement>, apply: (move: PointerEvent) => void) => {
+    if (!isResizePress(event, isMac())) return;
     const bar = event.currentTarget;
     // Claim the press: left alone, the browser starts a text selection and cancels the resize.
     event.preventDefault();

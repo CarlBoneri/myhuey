@@ -174,6 +174,18 @@ describe('TabStrip rail handle drag', () => {
     fireEvent.pointerUp(handle, { pointerId: 1, clientX: 245 });
     expect(useUi.getState().tabRail).toEqual({ width: 250, collapsed: false });
   });
+
+  it('ignores a right-button press on the handle', () => {
+    useUi.setState({ tabPlacement: 'left' });
+    strip({ placement: 'left' });
+    const handle = screen.getByRole('separator', { name: 'Resize the tab rail' });
+    handle.setPointerCapture = vi.fn();
+    const before = useUi.getState().tabRail.width;
+    expect(fireEvent.pointerDown(handle, { pointerId: 1, clientX: 205, button: 2 })).toBe(true);
+    fireEvent.pointerMove(handle, { pointerId: 1, clientX: 245 });
+    expect(useUi.getState().tabRail.width).toBe(before);
+    expect(handle.setPointerCapture).not.toHaveBeenCalled();
+  });
 });
 
 describe('TabStrip "+" menu keys', () => {
