@@ -1,3 +1,4 @@
+import type { Theme, ThemeId } from './lib/theme';
 // Shapes of what the MyHuey API returns. Every length is in centimeters.
 
 export type Pt = [number, number];
@@ -265,7 +266,10 @@ export interface SceneResult {
 }
 
 export interface Preferences {
-  theme: 'dark' | 'light' | 'system';
+  theme: Theme;
+  theme_dark: ThemeId;
+  theme_light: ThemeId;
+  reduce_transparency: 'auto' | 'on' | 'off';
   room_sliders: boolean;
   room_sliders_when_on_only: boolean;
   show_light_glow: boolean;

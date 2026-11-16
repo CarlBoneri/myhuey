@@ -4,6 +4,7 @@ import { api } from '../api';
 import { useStore } from '../store';
 import { Field, HueIcon, Panel, Segmented, TextInput, Toggle } from '../components/ui';
 import type { Preferences } from '../types';
+import { THEMES, type Theme, type ThemeId } from '../lib/theme';
 import { quarterHours, scheduleWarning } from '../lib/suggest';
 
 export function SettingsView() {
@@ -101,6 +102,26 @@ function PreferenceRow({ label, hint, children }: { label: string; hint?: string
   );
 }
 
+/** A theme picker; `kind` limits it to dark or light themes, `withSystem` adds System. */
+function ThemeSelect({ label, value, onChange, kind, withSystem = false }: {
+  label: string; value: string; onChange: (value: Theme) => void; kind?: 'dark' | 'light'; withSystem?: boolean;
+}) {
+  const shown = THEMES.find((t) => t.id === value);
+  return (
+    <span className="theme-pick">
+      <select className="input theme-select" aria-label={label} value={value} onChange={(e) => onChange(e.target.value as Theme)}>
+        {withSystem && <option value="system">System</option>}
+        {THEMES.filter((t) => !kind || t.kind === kind).map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+      </select>
+      {shown && (
+        <span className="theme-swatches" aria-hidden="true">
+          {shown.swatches.map((color) => <span key={color} style={{ background: color }} />)}
+        </span>
+      )}
+    </span>
+  );
+}
+
 function PreferencesPanel() {
   const { preferences: p, setPreferences } = useStore();
   const set = (changes: Partial<Preferences>) => void setPreferences(changes);
@@ -112,8 +133,21 @@ function PreferencesPanel() {
   return (
     <Panel title="Preferences">
       <h3 className="pref-group">Look</h3>
-      <PreferenceRow label="Theme" hint="System follows your computer's light or dark setting.">
-        {choice('theme', ['dark', 'light', 'system'], (v) => ({ dark: 'Dark', light: 'Light', system: 'System' })[v])}
+      <PreferenceRow label="Theme" hint="System follows your computer's light or dark setting, with a theme for each.">
+        <ThemeSelect label="Theme" value={p.theme} withSystem onChange={(theme) => set({ theme })} />
+      </PreferenceRow>
+      {p.theme === 'system' && (
+        <>
+          <PreferenceRow label="Dark theme">
+            <ThemeSelect label="Dark theme" value={p.theme_dark} kind="dark" onChange={(v) => set({ theme_dark: v as ThemeId })} />
+          </PreferenceRow>
+          <PreferenceRow label="Light theme">
+            <ThemeSelect label="Light theme" value={p.theme_light} kind="light" onChange={(v) => set({ theme_light: v as ThemeId })} />
+          </PreferenceRow>
+        </>
+      )}
+      <PreferenceRow label="Reduce transparency" hint="Solid panels instead of frosted glass, and no glow. Auto follows your computer's setting.">
+        {choice('reduce_transparency', ['auto', 'on', 'off'], (v) => ({ auto: 'Auto', on: 'On', off: 'Off' })[v])}
       </PreferenceRow>
       <h3 className="pref-group">Rooms</h3>
       <PreferenceRow label="Brightness slider on each room" hint="Dims or brightens every light that is on, in the room list and on the room page.">

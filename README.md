@@ -110,11 +110,13 @@ Save selection keeps a pick as a named group. Groups are stored by MyHuey (nothi
 
 ### Settings
 
-Settings holds the bridge pairing and the preferences, which the web app and `myhuey prefs` share. Pairing works by address or by discovery: local mDNS first, then Hue's discovery service, which allows one request per 15 minutes. The bridge certificate is pinned after pairing, and the dot at the bottom of the side rail tells you whether the bridge is answering.
+Settings holds the bridge pairing and the preferences, which the web app and `myhuey prefs` share. The look is an editor's: a flat background, frosted glass panels, JetBrains Mono, and seven themes. Neon is the default, a dark Monokai-style palette. Each theme only recolors the app; the colors of your lights always show as they really are. Every theme's text is checked to read at 4.5:1 contrast or better, so some themes use slightly lighter greys for text than their palettes do. The sun/moon button on the rail flips between your dark and light theme without losing the one you picked. Pairing works by address or by discovery: local mDNS first, then Hue's discovery service, which allows one request per 15 minutes. The bridge certificate is pinned after pairing, and the dot at the bottom of the side rail tells you whether the bridge is answering.
 
 | Preference | Choices | Default |
 | --- | --- | --- |
-| Theme | Dark, Light, System (or the sun/moon button on the rail) | Dark |
+| Theme | Neon, Monokai, Dracula, Nord, Graphite, Solarized Light, Light, or System | Neon |
+| Dark and light theme for System | any dark theme / any light theme | Neon / Light |
+| Reduce transparency | Auto (follows your computer), On, Off | Auto |
 | Room sliders on Home | on / off | on |
 | Sliders only while lights are on | on / off | on |
 | Glow around lit lights on plans | on / off | on |
@@ -252,4 +254,4 @@ MyHuey is free for non-commercial use.
 
 Light and room icons are path data from [hass-hue-icons](https://github.com/arallsopp/hass-hue-icons) by Andrew Allsopp, licensed [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/), which is non-commercial only (see `frontend/src/components/HUE_ICONS_LICENSE.txt`). Go check out his project, it's what makes the lights look like lights.
 
-Some suggestion palettes take their colors from public-domain paintings in [The Metropolitan Museum of Art's Open Access collection](https://www.metmuseum.org/hubs/open-access) (CC0), and each of those palettes names its painting. MyHuey generates the rest (see `src/myhuey/data/PALETTES_LICENSE.md`). The Inter font is bundled locally from `@fontsource-variable/inter`.
+Some suggestion palettes take their colors from public-domain paintings in [The Metropolitan Museum of Art's Open Access collection](https://www.metmuseum.org/hubs/open-access) (CC0), and each of those palettes names its painting. MyHuey generates the rest (see `src/myhuey/data/PALETTES_LICENSE.md`). The JetBrains Mono font (OFL) is bundled locally from `@fontsource-variable/jetbrains-mono`, so nothing loads from the internet.
