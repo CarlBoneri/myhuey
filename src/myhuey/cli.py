@@ -372,7 +372,7 @@ def handle_prefs(args: argparse.Namespace) -> int:
     if args.action == "set":
         if not args.key or args.value is None:
             raise ValueError("`prefs set` needs --key and --value")
-        service.update_preferences({args.key: parse_value(args.value)})
+        service.update_preferences({args.key: parse_value(args.value, args.key)})
     for key, value in service.preferences().items():
         _, allowed = PREFERENCES[key]
         options = "true/false" if allowed is bool else "/".join(str(item) for item in allowed)

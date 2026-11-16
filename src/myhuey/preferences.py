@@ -11,9 +11,17 @@ from typing import Any
 # Times of day in 15-minute steps, "00:00" to "23:45".
 QUARTER_HOURS = tuple(f"{hour:02d}:{minute:02d}" for hour in range(24) for minute in (0, 15, 30, 45))
 
+DARK_THEMES = ("neon", "monokai", "dracula", "nord", "graphite")
+LIGHT_THEMES = ("solarized-light", "light")
+
 PREFERENCES: dict[str, tuple[Any, Any]] = {
     # Look
-    "theme": ("dark", ("dark", "light", "system")),  # "system" follows the operating system
+    # Editor-style colour themes. "system" follows the operating system, with a theme for each mode.
+    "theme": ("neon", (*DARK_THEMES, *LIGHT_THEMES, "system")),
+    "theme_dark": ("neon", DARK_THEMES),
+    "theme_light": ("light", LIGHT_THEMES),
+    # Solid panels instead of frosted glass; "auto" follows the operating system's setting.
+    "reduce_transparency": ("auto", ("auto", "on", "off")),
     # Home screen
     "room_sliders": (True, bool),  # a brightness slider on each room
     "room_sliders_when_on_only": (True, bool),  # show it only while some of the room's lights are on
@@ -73,9 +81,14 @@ def validate(changes: dict[str, Any]) -> dict[str, Any]:
     return dict(changes)
 
 
-def parse_value(text: str) -> Any:
-    """A preference value typed on the command line."""
+def parse_value(text: str, key: str | None = None) -> Any:
+    """A preference value typed on the command line. Words stay words for a preference that takes
+    words, so `reduce_transparency on` means "on", not true."""
     lowered = text.strip().lower()
+    if key in PREFERENCES:
+        _, allowed = PREFERENCES[key]
+        if allowed is not bool and isinstance(allowed[0], str):
+            return text.strip()
     if lowered in ("true", "on", "yes"):
         return True
     if lowered in ("false", "off", "no"):
