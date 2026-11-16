@@ -36,6 +36,7 @@ describe('studio layout', () => {
     expect(bodiesIn(block, '.studio3d-main > .pane').join('\n')).toMatch(/flex:\s*none\s*!important/);
     expect(bodiesIn(block, '.studio3d .pane-body.stage').join('\n')).toMatch(/height:\s*clamp\(320px, 62vh, 620px\)/);
     expect(bodiesIn(block, '.studio3d .pane-body.audit').join('\n')).toMatch(/max-height:\s*50vh/);
+    expect(bodiesIn(block, '.studio3d .splitter.row').join('\n')).toMatch(/display:\s*none/);
   });
 
   it('keeps pane bars out of text selection', () => {
