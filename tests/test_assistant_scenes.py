@@ -1,12 +1,16 @@
 """The assistant's scene tools: preview and save send nothing; apply, power, and dim do."""
 
+import json
 import re
 
 import pytest
+import requests
 
 from myhuey.assistant import CHANGES_LIGHTS, apply_scene, preview_scene, room_dim, room_power, save_scene
-from myhuey.errors import BridgeNotConfigured
+from myhuey.errors import BridgeNotConfigured, HueError
 from myhuey.service import HueRoomService
+
+from conftest import USERNAME
 
 THEME = {"1": {"white": 2700, "brightness": 30}, "3": {"colors": ["#14b8a6"], "brightness": 15}}
 
@@ -114,3 +118,20 @@ def test_others_with_a_saved_scene_is_refused(service, session):
     with pytest.raises(ValueError, match="either"):
         apply_scene(service, scene="Calm", others="off")
     assert session.calls == []
+
+
+def test_a_silent_bridge_never_leaks_the_key(service, fake_bridge):
+    """requests puts the URL in its messages, and a v1 URL holds the key: none of it may come back."""
+    fake_bridge(requests.exceptions.ConnectTimeout(
+        f"HTTPSConnectionPool(host='10.0.0.77', port=443): Max retries exceeded with url: /api/{USERNAME}/lights"
+    ))
+    for call in (
+        lambda: apply_scene(service, room="Den", name="Calm", lights=THEME),
+        lambda: room_power(service, "Den", False),
+        lambda: room_dim(service, "Den", 30),
+    ):
+        try:
+            outcome = json.dumps(call())
+        except HueError as error:
+            outcome = str(error)
+        assert USERNAME not in outcome and "/api/" not in outcome, outcome

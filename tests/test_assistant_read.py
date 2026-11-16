@@ -137,3 +137,12 @@ def test_suggest_says_what_time_it_takes(service, at):
 
 def test_suggest_names_its_modes_and_time_format():
     assert all(word in suggest.__doc__ for word in ("code", "work", "study", "read", "relax", "HH:MM"))
+
+
+def test_a_silent_bridge_never_leaks_the_key_through_list_lights(service, fake_bridge):
+    fake_bridge(requests.exceptions.ConnectTimeout(
+        f"HTTPSConnectionPool(host='10.0.0.77', port=443): Max retries exceeded with url: /api/{USERNAME}/lights"
+    ))
+    result = list_lights(service)
+    assert result["bridge"] == "not answering" and result["detail"]
+    assert USERNAME not in result["detail"] and USERNAME not in json.dumps(result)
