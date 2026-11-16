@@ -7,7 +7,6 @@ from myhuey.assistant import (
     WRITES_LAYOUT, Refused, add_room, check_layout, create_sandbox, get_room, open_in_app, place_light,
     remove_light, remove_room, set_furniture, set_openings, update_room,
 )
-from myhuey.errors import LayoutChanged, LayoutNotFound
 from myhuey.layouts import using_layout
 from myhuey.service import HueRoomService
 
@@ -47,11 +46,27 @@ def test_layout_writers_refuse_anything_but_a_sandbox(service, layout):
              lambda: remove_room(service, layout, "Den"), lambda: set_furniture(service, layout, "Den", []),
              lambda: set_openings(service, layout, "Den", []), lambda: place_light(service, layout, "Den", 10, 10, catalog="go"),
              lambda: remove_light(service, layout, "Den", "1")]
+    needs = "Layouts are built in a sandbox, never in the active home. Call create_sandbox first, then pass its id as layout."
+    words = {
+        None: needs, "": needs, "nope": f'There is no layout "nope". {needs}',
+    }.get(layout, f'"{active["name"]}" is now the active home, so it cannot be edited here. '
+                  'Call create_sandbox with copy_from "active" and carry on in the copy.')
     before = service.get_room("Den").to_dict()
     for call in calls:
-        with pytest.raises((Refused, LayoutNotFound), match="create_sandbox|layout"):
+        with pytest.raises(Refused) as refused:
             call()
+        assert str(refused.value) == words
     assert service.get_room("Den").to_dict() == before
+
+
+def test_after_the_person_makes_the_sandbox_active_the_next_change_says_what_happened(service):
+    box = create_sandbox(service, "Office idea", copy_from="active")
+    service.activate_layout(box["id"])
+    for call in (lambda: place_light(service, box["id"], "Den", 10, 10, catalog="go"), lambda: open_in_app(service, box["id"], "Den")):
+        with pytest.raises(Refused) as refused:
+            call()
+        assert str(refused.value) == ('"Office idea" is now the active home, so it cannot be edited here. '
+                                      'Call create_sandbox with copy_from "active" and carry on in the copy.')
 
 
 def test_the_refusal_says_what_to_do(service):
@@ -88,7 +103,7 @@ def test_a_sandbox_made_active_after_the_guard_is_never_written(service, monkeyp
 
     monkeypatch.setattr(service, "sandbox_id", then_activate)
     before = service._load_active()["rooms"]
-    with pytest.raises(LayoutChanged):
+    with pytest.raises(Refused, match=f'^"{box["name"]}" is now the active home.*copy_from "active"'):
         call()
     assert service._load_active()["rooms"] == before
 
@@ -104,7 +119,7 @@ def test_the_second_write_is_guarded_too(service, monkeypatch, tool):
         return original(*args, **kwargs)
 
     monkeypatch.setattr(service, method, activating)
-    with pytest.raises(LayoutChanged):
+    with pytest.raises(Refused, match=f'^"{box["name"]}" is now the active home.*copy_from "active"'):
         _writers(service, box)[tool]()
     if tool == "add_room":
         assert service.get_room("New").ceiling != 260  # the follow-up write never reached the now-active home

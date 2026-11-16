@@ -98,9 +98,10 @@ These are enforced by the tools themselves, so a plan that relies on getting aro
   replacing the furniture or the doors and windows.
 - **You never make a sandbox active.** The person does that in the app after looking at it. Never
   tell them a layout is live, installed, or in use.
-- If a write fails with "The active layout just changed", the person made your sandbox active
-  while you were working. Do not retry it: call `create_sandbox` with `copy_from` "active" and
-  carry on in the new sandbox.
+- When a layout tool answers that your sandbox "is now the active home", the person made it
+  active, before or during your call; that is the usual end of a layout job, not a fault. It can
+  no longer be edited here, and a new empty sandbox would not have their rooms, so do not retry:
+  call `create_sandbox` with `copy_from` "active" and carry on in the copy.
 - **Planned lights** (ids starting "planned-") are catalog lights that are not installed. They
   take part in roles and previews and are never sent to the bridge.
 

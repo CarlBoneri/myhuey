@@ -16,7 +16,7 @@ from urllib.parse import quote
 import requests
 
 from .catalog import CATALOG, catalog_item
-from .errors import BridgeNotConfigured, HueError, LayoutNotFound, RoomNotFound, SceneNotFound
+from .errors import BridgeNotConfigured, HueError, LayoutChanged, LayoutNotFound, RoomNotFound, SceneNotFound
 from .layouts import using_layout
 from .models import DEFAULT_FURNITURE_HEIGHT, FURNITURE_HEIGHTS, FURNITURE_SIZES, new_id
 from .room_text import draw_room, layout_problems
@@ -352,13 +352,22 @@ def sandbox(service: HueRoomService, layout: str | None) -> Iterator[str]:
     if not layout or not str(layout).strip():
         raise Refused(_NEEDS_SANDBOX)
     try:
-        layout_id = service.sandbox_id(service.resolve_layout(str(layout)))
+        named = service.resolve_layout(str(layout))
+        title = next(entry["name"] for entry in service.layouts() if entry["id"] == named)
+        layout_id = service.sandbox_id(named)
     except LayoutNotFound:
         raise Refused(f'There is no layout "{layout}". {_NEEDS_SANDBOX}') from None
+    # Making the sandbox active is how the person ends a layout job, so the next request often
+    # names it. Say what happened and where to carry on, not just "use a sandbox".
+    now_active = Refused(f'"{title}" is now the active home, so it cannot be edited here. '
+                         'Call create_sandbox with copy_from "active" and carry on in the copy.')
     if layout_id is None:
-        raise Refused(_NEEDS_SANDBOX)
-    with using_layout(layout_id, strict=True):
-        yield layout_id
+        raise now_active
+    try:
+        with using_layout(layout_id, strict=True):
+            yield layout_id
+    except LayoutChanged:
+        raise now_active from None
 
 
 def _plan_cm(value: float | int | str, what: str) -> float:

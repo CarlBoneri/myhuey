@@ -69,7 +69,8 @@ def test_a_layout_swapped_mid_call_is_a_readable_error(service, monkeypatch):
     box = service.new_layout("Try")  # made first: only the tool's own save is swapped out
     monkeypatch.setattr(service, "_save", lambda config: (_ for _ in ()).throw(LayoutChanged()))
     result = _call(build_server(service), "add_room", {"layout": box["id"], "name": "X", "width": 300, "depth": 300})
-    assert result.is_error is True and str(LayoutChanged()) in result.content[0].text
+    assert result.is_error is True and '"Try" is now the active home' in result.content[0].text
+    assert "Reload" not in result.content[0].text
 
 
 def test_an_unexpected_error_names_the_tool_and_its_type_and_logs_the_rest(service, monkeypatch, caplog, capsys):
