@@ -227,7 +227,7 @@ export interface PaletteEntry {
   colors: string[];
   tags: string[];
   source: 'colourlovers' | 'met' | 'generated' | string;
-  credit: { author?: string; title?: string; artist?: string; url?: string; license?: string };
+  credit: { author?: string; title?: string; artist?: string; url?: string; license?: string; scheme?: string; by?: string };
 }
 
 export interface Suggestion {

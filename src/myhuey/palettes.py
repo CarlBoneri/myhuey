@@ -1,8 +1,9 @@
 """The palette library that suggested scenes choose from.
 
 Palettes ship in `data/palettes.json`, built once by `scripts/build_palettes.py`. The library
-holds colors from The Met's public-domain paintings (CC0, each crediting its painting) and
-harmonies generated here. COLOURlovers palettes (CC BY-NC-SA 3.0, credited per entry) are
+holds d3-scale-chromatic's 27 sequential schemes (ColorBrewer, viridis and friends, turbo...),
+colors from The Met's public-domain paintings (CC0, each crediting its painting; brown and
+beige ones capped at a fifth of the library), and harmonies generated here. COLOURlovers palettes (CC BY-NC-SA 3.0, credited per entry) are
 included only if its API answers the build script, which it currently doesn't. Everything is
 judged in OKLab, so "muted" and "vivid" mean what they look like. Nothing here touches the
 network.

@@ -11,6 +11,8 @@ describe('suggest helpers', () => {
     expect(creditText({ source: 'met', credit: { title: 'Wheat Field', artist: 'Vincent van Gogh', url: 'https://y' } })).toBe('Colors from “Wheat Field” by Vincent van Gogh, The Met (CC0)');
     expect(creditText({ source: 'met', credit: { title: 'Bowl', url: 'https://y' } })).toBe('Colors from “Bowl”, The Met (CC0)');
     expect(creditText({ source: 'generated', credit: {} })).toBe('');
+    expect(creditText({ source: 'd3', credit: { scheme: 'Plasma', by: 'van der Walt and Smith for matplotlib, via d3-scale-chromatic', license: 'CC0' } }))
+      .toBe('Plasma scheme by van der Walt and Smith for matplotlib, via d3-scale-chromatic (CC0)');
   });
 
   it('formats the time as HH:MM', () => {
