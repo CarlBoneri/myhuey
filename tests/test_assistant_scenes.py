@@ -8,14 +8,7 @@ from myhuey.assistant import CHANGES_LIGHTS, apply_scene, preview_scene, room_di
 from myhuey.errors import BridgeNotConfigured
 from myhuey.service import HueRoomService
 
-from conftest import LIGHTS
-
 THEME = {"1": {"white": 2700, "brightness": 30}, "3": {"colors": ["#14b8a6"], "brightness": 15}}
-
-
-@pytest.fixture
-def session(fake_bridge):
-    return fake_bridge(LIGHTS)
 
 
 def test_preview_shows_every_light_and_changes_nothing(service, session):

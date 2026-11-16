@@ -14,6 +14,12 @@ export function isMissingLayout(error: unknown): boolean {
   return error instanceof Error && (error as { status?: number }).status === 404 && error.message === MISSING_LAYOUT;
 }
 
+/** The sandbox a link asks to open (`?layout=<id>`), or null when there is none or it is not a plain ID. */
+export function layoutFromUrl(search: string): string | null {
+  const id = new URLSearchParams(search).get('layout');
+  return id && /^[A-Za-z0-9_-]{1,64}$/.test(id) ? id : null;
+}
+
 export function readStoredLayout(): string | null {
   try {
     return localStorage.getItem(LAYOUT_KEY) || null;

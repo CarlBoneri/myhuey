@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ApiError } from '../api';
-import { isMissingLayout, layoutHeaders } from './layout';
+import { isMissingLayout, layoutFromUrl, layoutHeaders } from './layout';
 
 describe('layoutHeaders', () => {
   it('sends nothing on Active', () => expect(layoutHeaders(null, false)).toEqual({}));
@@ -12,4 +12,12 @@ describe('isMissingLayout', () => {
   it('spots a deleted layout', () => expect(isMissingLayout(new ApiError('That layout no longer exists', 404))).toBe(true));
   it('ignores other 404s', () => expect(isMissingLayout(new ApiError("Room 'Den' not found", 404))).toBe(false));
   it('ignores non-errors', () => expect(isMissingLayout('nope')).toBe(false));
+});
+
+describe('layoutFromUrl', () => {
+  it('reads a sandbox to open from the address, and ignores junk', () => {
+    expect(layoutFromUrl('?layout=ab12cd34ef56')).toBe('ab12cd34ef56');
+    expect(layoutFromUrl('?v=3&layout=ab12')).toBe('ab12');
+    for (const search of ['', '?layout=', '?layout=../x', '?other=1']) expect(layoutFromUrl(search)).toBeNull();
+  });
 });

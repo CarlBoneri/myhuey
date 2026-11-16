@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { API_VERSION, api, onLayoutGone, setOpenLayout } from './api';
-import { isMissingLayout, readStoredLayout, storeLayout } from './lib/layout';
+import { isMissingLayout, layoutFromUrl, readStoredLayout, storeLayout } from './lib/layout';
 import { readCachedTheme } from './lib/theme';
 import type { Preferences } from './types';
 import type { BridgeLight, HomePlan, LayoutSummary, LightGroup, ProfileTable, Room, Scene, SetupStatus } from './types';
@@ -136,6 +136,14 @@ export const useStore = create<State>((set, get) => ({
       if (setup.configured) await get().refreshLights();
     } catch (error) {
       get().toast((error as Error).message);
+    }
+    // A link such as ?layout=<id> opens that sandbox once; a missing one falls through to "layout gone".
+    const requested = layoutFromUrl(location.search);
+    if (requested) {
+      const url = new URL(location.href);
+      url.searchParams.delete('layout');
+      history.replaceState(history.state, '', url.pathname + url.search + url.hash);
+      await get().openLayout(requested);
     }
     set({ ready: true });
   },

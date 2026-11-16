@@ -151,3 +151,9 @@ def service(db_path):
     service.assign_light("Den", "2", x=390, y=190, product=TABLE)
     service.assign_light("Den", "3", x=200, y=115, product=STRIP)
     return service
+
+
+@pytest.fixture
+def session(fake_bridge):
+    """The fake bridge's recording session: `.calls` and `.clip_calls` list what was sent."""
+    return fake_bridge(LIGHTS)
