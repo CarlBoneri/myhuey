@@ -19,6 +19,7 @@ function BlockView({ block }: { block: Block }) {
       </table>
     );
   }
+  if ('code' in block) return <pre className="code">{block.code}</pre>;
   if ('links' in block) return <p className="button-row">{block.links.map((link) => <a key={link.label} className="button small" href={href(link.route)}>{link.label}</a>)}</p>;
   const rows: [string, string][] = 'commands' in block ? HELP : block.try.map((command) => [command, '']);
   return (

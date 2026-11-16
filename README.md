@@ -207,6 +207,54 @@ Gradient lights take 2 to 5 colors, spaced evenly from start to end, and Hue fix
 
 `lights list` shows what each light supports. One bridge quirk to know: setting an effect replaces the gradient, and setting a gradient stops the effect.
 
+## Use it from your assistant
+
+MyHuey ships no AI of its own. `myhuey mcp` is a small tool server that the assistant you already use (Claude Code, Claude Desktop, Cursor, VS Code, or any other that speaks MCP) starts on your own machine, and the skills in `skills/` teach that assistant how to use it well. It runs locally, needs no account or API key, and makes no requests to the internet.
+
+In this repo, Claude Code needs nothing: `.mcp.json` starts the server and `.claude/skills/` holds the skills. Other agents are pointed at them by `AGENTS.md`. The same config goes into other tools. Where it says `/path/to/myhuey`, put the folder you cloned:
+
+```json
+{
+  "mcpServers": {
+    "myhuey": {
+      "command": "uv",
+      "args": ["run", "--directory", "/path/to/myhuey", "myhuey", "mcp"]
+    }
+  }
+}
+```
+
+- **Claude Code:** already set up by `.mcp.json` when you work inside this repo. Elsewhere, paste the snippet above into that project's `.mcp.json`.
+- **Claude Desktop:** paste it into `claude_desktop_config.json` (Settings, Developer, Edit Config), then restart the app.
+- **Cursor:** paste it into `.cursor/mcp.json` in your project, or `~/.cursor/mcp.json` for every project.
+- **VS Code:** put it in `.vscode/mcp.json`, but VS Code names the top key `servers` instead of `mcpServers`.
+
+`myhuey mcp --list` prints the 24 tools, one per line. A different database goes before the command (`myhuey --db PATH mcp`).
+
+If your editor runs on another machine and you reach it over ssh, the server runs there too, so the link `open_in_app` returns would point at the wrong address. Give it the address you use for the app in your browser:
+
+```bash
+uv run myhuey mcp --app-url http://localhost:8000
+```
+
+Put those arguments after `"mcp"` in the config's `args`, and forward the port with `ssh -L 8000:localhost:8000 you@host`.
+
+### What the assistant can and cannot do
+
+It can read your rooms, lights, and scenes, design a scene and preview it, save a scene, and build a room layout. It can also call `apply_scene`, `room_power`, and `room_dim`, the only tools that change real lights, and it is taught to do that only when you ask.
+
+- It builds layouts only in a sandbox, a private copy of your home. Every layout-writing tool refuses the active home.
+- It cannot delete a scene or a layout, and it cannot touch bridge pairing.
+- It cannot make a sandbox active. You look at it in the app and do that yourself.
+- Planned lights from the catalog take part in roles and previews and are never sent to the bridge.
+
+Two requests to start with:
+
+- *"Make the office easy on the eyes for coding tonight: warm and dim, a little teal behind the monitor. Show me before you apply anything."* The assistant reads the room, previews a scene, and applies or saves it when you say so.
+- *"Build my office in a sandbox: 12 by 14 feet, desk on the north wall under the window, door on the south wall."* It builds the room, checks it, and gives you a link that opens the sandbox in the 3D view.
+
+The server also offers two prompts, `design_light_theme` and `design_room_layout`, and a `guide` tool for assistants that do not read skill files. `skills/README.md` describes the skills.
+
 ## HTTP API
 
 The web app talks to a local JSON API on the same port, and anything else on your machine can too. Send `X-Myhuey-Layout: <id>` to work on a sandbox; leave it off and you get the active layout. Layouts and groups ignore the header. `GET /api/health` reports the API revision so the page can warn you when the server is older than it. In the table, `…` is short for `/api/rooms/{room}`.

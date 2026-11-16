@@ -2,6 +2,9 @@
 // all read the same pages. Commands shown under "Try" are checked by a test against the prompt.
 import type { Route } from './router';
 
+/** The config that starts the tool server from this repo's folder; the same as `.mcp.json`. */
+export const MCP_CONFIG = JSON.stringify({ mcpServers: { myhuey: { command: 'uv', args: ['run', 'myhuey', 'mcp'] } } }, null, 2);
+
 export type Block =
   | { p: string }
   | { list: string[] }
@@ -9,6 +12,8 @@ export type Block =
   | { keys: [string, string][] }
   /** Commands to put in the prompt. They are filled in, not run. */
   | { try: string[] }
+  /** A block of text to copy as written. */
+  | { code: string }
   /** The prompt's whole command table, generated from the commands themselves. */
   | { commands: true }
   | { links: { label: string; route: Route }[] };
@@ -160,6 +165,23 @@ export const TOPICS: Topic[] = [
     ],
   },
   {
+    id: 'assistant', title: 'Your assistant', summary: 'Let the AI assistant you already use read your home and design lights.',
+    blocks: [
+      { p: 'MyHuey has no AI of its own. `myhuey mcp` is a tool server that your own assistant (Claude Code, Claude Desktop, Cursor, VS Code, or any MCP client) starts on this computer, so it can read your rooms and lights and design scenes and layouts for you. There is no account or API key, and nothing leaves your computer.' },
+      { p: 'In the MyHuey folder, put this in the project’s `.mcp.json` (Claude Code finds it there already). Settings has the same text under Command line, with a Copy button. For another tool, add `"--directory", "/path/to/myhuey"` after `"run"`.' },
+      { code: MCP_CONFIG },
+      { p: 'If your editor runs on another machine over ssh, add `"--app-url", "http://localhost:8000"` after `"mcp"` so the link to the 3D view opens in your browser.' },
+      { list: [
+        'It builds layouts only in a sandbox, a private copy of your home. Every layout-writing tool refuses the active home.',
+        'Only three tools change your real lights: apply_scene, room_power, and room_dim. The assistant is taught to use them only when you ask.',
+        'It cannot delete a scene or a layout, and it cannot touch bridge pairing.',
+        'It cannot make a sandbox active. Look at it in the app, then use Make active yourself.',
+      ] },
+      { p: 'Try asking: “Make the office easy on the eyes for coding tonight, warm and dim, and show me before you apply it.” Or: “Build my office in a sandbox, 12 by 14 feet, desk on the north wall under the window.”' },
+      { links: [{ label: 'Open Settings', route: { view: 'settings' } }] },
+    ],
+  },
+  {
     id: 'data', title: 'Your data', summary: 'Where things are stored, and what leaves your computer.',
     blocks: [
       { p: 'Everything is stored on this computer under ~/.myhuey: one database, your uploaded images, and the bridge’s pinned certificate. The pairing key never reaches the browser. Fonts and code are bundled, so the app makes no requests to the internet while it runs. Bridge discovery can ask Hue’s discovery service once, when you ask it to find bridges.' },
@@ -187,7 +209,7 @@ export function topicFor(route: Route): string {
 
 const textIn = (block: Block): string =>
   'p' in block ? block.p : 'list' in block ? block.list.join(' ') : 'steps' in block ? block.steps.join(' ')
-    : 'keys' in block ? block.keys.flat().join(' ') : 'try' in block ? block.try.join(' ') : 'links' in block ? block.links.map((link) => link.label).join(' ') : '';
+    : 'keys' in block ? block.keys.flat().join(' ') : 'try' in block ? block.try.join(' ') : 'code' in block ? block.code : 'links' in block ? block.links.map((link) => link.label).join(' ') : '';
 
 /** Topics that mention every typed word, best match (title, then summary, then body) first. */
 export function searchHelp(query: string): Topic[] {

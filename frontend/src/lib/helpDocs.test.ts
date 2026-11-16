@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { plan, shortcuts, search, type Snapshot } from './commands';
-import { TOPICS, searchHelp, topic, topicFor } from './helpDocs';
+import { MCP_CONFIG, TOPICS, searchHelp, topic, topicFor } from './helpDocs';
 import { parseRoute, href } from './router';
 
 // The rooms, scene, and group the help pages use in their examples.
@@ -61,5 +61,16 @@ describe('finding help and design from the palette', () => {
     expect(plan('open help nope', snapshot)).toMatchObject({ kind: 'error' });
     expect(plan('tabs reset', snapshot)).toEqual({ kind: 'tabs-reset' });
     expect(plan('open setup', snapshot)).toMatchObject({ route: { view: 'setup' } });
+  });
+});
+
+describe('the assistant help page', () => {
+  it('exists and is found by mcp and assistant', () => {
+    expect(TOPICS.some((item) => item.id === 'assistant')).toBe(true);
+    expect(searchHelp('mcp')[0].id).toBe('assistant');
+    expect(searchHelp('assistant')[0].id).toBe('assistant');
+  });
+  it('shows a config that starts the tool server', () => {
+    expect(JSON.parse(MCP_CONFIG).mcpServers.myhuey.args).toEqual(['run', 'myhuey', 'mcp']);
   });
 });

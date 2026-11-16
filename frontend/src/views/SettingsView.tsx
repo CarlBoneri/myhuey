@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link2, Search } from 'lucide-react';
+import { Copy, Link2, Search } from 'lucide-react';
 import { api } from '../api';
 import { useStore } from '../store';
 import { Field, HueIcon, Panel, Segmented, TextInput, Toggle } from '../components/ui';
@@ -7,10 +7,11 @@ import type { Preferences } from '../types';
 import { THEMES, themeGroups, type Theme, type ThemeId } from '../lib/theme';
 import { useUi } from '../uiStore';
 import { TAB_PLACEMENTS, type TabPlacement } from '../lib/tabs';
+import { MCP_CONFIG } from '../lib/helpDocs';
 import { quarterHours, scheduleWarning } from '../lib/suggest';
 
 export function SettingsView() {
-  const { setup, lights, load, lightsError } = useStore();
+  const { setup, lights, load, lightsError, toast } = useStore();
   const [address, setAddress] = useState('');
   const [found, setFound] = useState<{ id: string; ip: string }[] | null>(null);
   const [finding, setFinding] = useState(false);
@@ -89,6 +90,13 @@ myhuey scene apply --scene "Sunset"
 myhuey palette --file photo.jpg --mood bright
 myhuey suggest --room Office --mode code --save "Late night"
 myhuey palettes --tag warm`}</pre>
+          <p className="hint">
+            Use it from your assistant. Add this to <code>.mcp.json</code> and your AI assistant can read your home and design scenes and layouts.
+            It builds only in a sandbox, and changes your lights only when you ask.{' '}
+            <button type="button" className="button subtle small" aria-label="Copy the assistant config"
+              onClick={() => navigator.clipboard?.writeText(MCP_CONFIG).then(() => toast('Copied.', false), () => toast('Could not copy.'))}><Copy size={12} /> Copy</button>
+          </p>
+          <pre className="code">{MCP_CONFIG}</pre>
         </Panel>
       </div>
     </div>
