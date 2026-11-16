@@ -1,5 +1,5 @@
 import type { BridgeInfo } from './lib/setupFlow';
-import { layoutHeaders } from './lib/layout';
+import { MISSING_LAYOUT, layoutHeaders } from './lib/layout';
 import type { Preferences } from './types';
 import type { LayoutSummary } from './types';
 import type { CatalogItem, HueSceneSet, HomePlan, Placement, Opening, ImageLayer, Mood, PaletteEntry, Setup, PinnableRole, ProfileTable, Room, Scene, SceneResult, SetupStatus, Suggestion, Swatch, BridgeLight, Furniture, PhotoSpot, Pt } from './types';
@@ -11,10 +11,18 @@ export class ApiError extends Error {
 }
 
 let openLayout: string | null = null;
+let layoutGone: (() => void) | null = null;
+let goneReported = false;
 
 /** The sandbox the app is working on (null = Active). Sent with every call not marked Active-only. */
 export function setOpenLayout(id: string | null) {
   openLayout = id;
+  goneReported = false;
+}
+
+/** Called once when the open sandbox turns out to be deleted (another tab, the CLI), whichever call finds out. */
+export function onLayoutGone(handler: (() => void) | null) {
+  layoutGone = handler;
 }
 
 async function call<T>(path: string, init: RequestInit & { json?: unknown; activeOnly?: boolean } = {}): Promise<T> {
@@ -39,6 +47,10 @@ async function call<T>(path: string, init: RequestInit & { json?: unknown; activ
     const message = Array.isArray(detail)
       ? detail.map((item: { msg?: string }) => item.msg).join('; ')
       : detail || `Request failed (${response.status})`;
+    if (response.status === 404 && message === MISSING_LAYOUT && openLayout && !activeOnly && !goneReported) {
+      goneReported = true;
+      layoutGone?.();
+    }
     throw new ApiError(message, response.status);
   }
   return body as T;

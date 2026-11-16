@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { API_VERSION, api, setOpenLayout } from './api';
+import { API_VERSION, api, onLayoutGone, setOpenLayout } from './api';
 import { isMissingLayout, readStoredLayout, storeLayout } from './lib/layout';
 import { readCachedTheme } from './lib/theme';
 import type { Preferences } from './types';
@@ -100,7 +100,7 @@ export const useStore = create<State>((set, get) => ({
       const list = await api.lights();
       set({ lights: Object.fromEntries(list.map((light) => [light.id, light])), lightsError: '' });
     } catch (error) {
-      set({ lightsError: (error as Error).message });
+      if (!isMissingLayout(error)) set({ lightsError: (error as Error).message }); // not a bridge problem
     }
   },
 
@@ -123,8 +123,7 @@ export const useStore = create<State>((set, get) => ({
       ]);
       set({ rooms, scenes, plan, layouts, activeRooms });
     } catch (error) {
-      if (id && isMissingLayout(error)) await get().layoutGone();
-      else get().toast((error as Error).message);
+      if (!isMissingLayout(error)) get().toast((error as Error).message); // a deleted sandbox is reported by the API client
     }
   },
 
@@ -176,6 +175,9 @@ export const useStore = create<State>((set, get) => ({
     set({ toasts: get().toasts.filter((toast) => toast.id !== id) });
   },
 }));
+
+// Any call that finds the open sandbox deleted brings the app back to the Active layout.
+onLayoutGone(() => void useStore.getState().layoutGone());
 
 // Light changes: one request per light at a time; changes made meanwhile merge into the next one.
 const pending = new Map<string, Record<string, unknown>>();
@@ -245,8 +247,7 @@ export async function attempt<T>(work: () => Promise<T>, success?: string): Prom
     if (success) useStore.getState().toast(success, false);
     return result;
   } catch (error) {
-    if (isMissingLayout(error) && useStore.getState().layout) await useStore.getState().layoutGone();
-    else useStore.getState().toast((error as Error).message);
+    if (!isMissingLayout(error)) useStore.getState().toast((error as Error).message); // reported by the API client
     return undefined;
   }
 }
