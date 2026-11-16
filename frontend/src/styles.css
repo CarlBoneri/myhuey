@@ -584,7 +584,7 @@ a.chrome-button { text-decoration: none; }
 .pill.warn { color: var(--warn-text); border-color: color-mix(in srgb, var(--warn) 45%, transparent); }
 .pill:disabled { opacity: 0.45; cursor: default; }
 .chip-list { display: flex; flex-wrap: wrap; gap: 6px; }
-.tag { margin-left: 6px; padding: 1px 7px; border-radius: 999px; font-size: 12px; background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+.tag { margin-left: 6px; padding: 1px 7px; border-radius: 999px; font-size: 12px; background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: middle; }
 .tag.warn { background: color-mix(in srgb, var(--warn) 15%, transparent); color: var(--warn-text); }
 
 .segmented { display: inline-flex; padding: 3px; border-radius: var(--radius-s); background: var(--inset); box-shadow: inset 0 0 0 1px var(--border); }
@@ -978,7 +978,7 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .photo-pin.opening { color: #7dd3fc; }
 .photo-pin.furniture { color: #fcd34d; }
 .photo-pin.active svg { color: var(--accent); }
-.role-badge { margin-left: 4px; padding: 0 5px; border-radius: 6px; font-style: normal; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; background: rgba(0, 0, 0, 0.6); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.role-badge { margin-left: 4px; padding: 0 5px; border-radius: 6px; font-style: normal; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; background: rgba(0, 0, 0, 0.6); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: middle; }
 .role-badge.view, .role-badge.behind { color: var(--warn-text); }
 .role-badge.bias { color: #93c5fd; }
 .role-badge.task { color: #fde68a; }
