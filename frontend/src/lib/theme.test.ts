@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { THEMES, normalizeTheme, readCachedTheme, resolveTheme, themeToggle } from './theme';
+import { THEMES, normalizeTheme, readCachedTheme, resolveTheme } from './theme';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -35,19 +35,6 @@ describe('resolving a theme', () => {
   });
 });
 
-describe('the rail toggle', () => {
-  it('keeps an explicit dark theme as the dark choice and shows the light one', () => {
-    expect(themeToggle({ theme: 'monokai', theme_dark: 'neon', theme_light: 'light' }, true)).toEqual({ theme: 'light', theme_dark: 'monokai' });
-  });
-  it('goes back to the remembered dark theme', () => {
-    expect(themeToggle({ theme: 'light', theme_dark: 'monokai', theme_light: 'light' }, true)).toEqual({ theme: 'monokai', theme_light: 'light' });
-  });
-  it('in system mode switches to the opposite of what is showing', () => {
-    expect(themeToggle({ theme: 'system', theme_dark: 'nord', theme_light: 'light' }, true)).toEqual({ theme: 'light' });
-    expect(themeToggle({ theme: 'system', theme_dark: 'nord', theme_light: 'light' }, false)).toEqual({ theme: 'nord' });
-  });
-});
-
 describe('the cached theme', () => {
   it('reads back what was cached, and defaults when storage is blocked', () => {
     const data = new Map<string, string>();
@@ -80,6 +67,36 @@ describe('reduce transparency', () => {
     vi.stubGlobal('matchMedia', () => ({ matches: false }));
     applyTransparency('auto');
     expect(attrs.transparency).toBeUndefined();
+  });
+  it('re-applies "auto" when the system setting changes, and stops when told', async () => {
+    const { followSystemTransparency } = await import('./theme');
+    const attrs = page();
+    const query = {
+      matches: false,
+      listener: undefined as undefined | (() => void),
+      addEventListener: vi.fn((_: string, fn: () => void) => { query.listener = fn; }),
+      removeEventListener: vi.fn(),
+    };
+    vi.stubGlobal('matchMedia', () => query);
+    const stop = followSystemTransparency('auto');
+    expect(query.addEventListener).toHaveBeenCalledWith('change', query.listener);
+    query.matches = true;
+    query.listener!();
+    expect(attrs.transparency).toBe('reduced');
+    query.matches = false;
+    query.listener!();
+    expect(attrs.transparency).toBeUndefined();
+    stop();
+    expect(query.removeEventListener).toHaveBeenCalledWith('change', query.listener);
+  });
+  it('listens to nothing for "on" and "off"', async () => {
+    const { followSystemTransparency } = await import('./theme');
+    page();
+    const addEventListener = vi.fn();
+    vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener, removeEventListener: vi.fn() }));
+    expect(followSystemTransparency('on')).toBeTypeOf('function');
+    expect(followSystemTransparency('off')).toBeTypeOf('function');
+    expect(addEventListener).not.toHaveBeenCalled();
   });
 });
 
