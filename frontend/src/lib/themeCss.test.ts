@@ -21,3 +21,11 @@ describe('light theme', () => {
     expect(css.match(/--glass: rgba\(255, 255, 255, 0\.7\)/g)?.length).toBe(1);
   });
 });
+
+describe('quick settings menu', () => {
+  it('sits above the other room tiles and hides what is behind it', () => {
+    // Each tile is its own stacking layer, so without this the next tiles paint over the open menu.
+    expect(rule('.room-tile:has(.quick-menu)')).toContain('z-index');
+    expect(rule('.quick-menu')).toContain('var(--bg-2)');
+  });
+});
