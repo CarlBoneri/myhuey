@@ -15,6 +15,12 @@ the hand-made ones. Run it again after installing or removing a theme:
     uv run python scripts/import_editor_themes.py            # everything found
     uv run python scripts/import_editor_themes.py --list     # only say what was found
     uv run python scripts/import_editor_themes.py --skip "monokai pro"   # leave some out
+
+To import a theme that is not installed in VS Code, put its extension folder (the one holding
+package.json and the theme's JSON file) in scripts/extra-themes/ and run the script. That folder
+is ignored by git, so a theme's own files are never copied into this repository. A theme added
+this way also lends its syntax colours: where its interface is plain, the colours it paints code
+with become the accent and the six hues.
 """
 
 from __future__ import annotations
@@ -33,11 +39,14 @@ CSS_OUT = REPO / "frontend/src/themes.generated.css"
 TS_OUT = REPO / "frontend/src/lib/themes.generated.ts"
 JSON_OUT = REPO / "src/myhuey/data/themes.json"
 
+EXTRA_THEMES = REPO / "scripts/extra-themes"
 VSCODE_ROOTS = [
     Path("/Applications/Visual Studio Code.app/Contents/Resources/app/extensions"),
     Path("/Applications/Visual Studio Code - Insiders.app/Contents/Resources/app/extensions"),
     Path.home() / ".vscode/extensions",
     Path.home() / ".vscode-insiders/extensions",
+    # Themes you want without installing them in VS Code: one unpacked extension per folder. Not committed.
+    EXTRA_THEMES,
 ]
 # VS Code's own terminal colours, used by themes that do not set theirs.
 DEFAULT_ANSI = {
@@ -46,6 +55,10 @@ DEFAULT_ANSI = {
 }
 ANSI = ("red", "green", "yellow", "blue", "magenta", "cyan")
 MIN_CONTRAST = 4.6  # the tests ask for 4.5; the margin covers rounding to hex
+# Where each terminal hue sits on the colour wheel, in degrees. Violet counts as blue, so a theme
+# with both a lavender and a pink keeps both.
+HUE_SLOTS = {"red": (345, 20), "yellow": (20, 70), "green": (70, 165), "cyan": (165, 200), "blue": (200, 290), "magenta": (290, 345)}
+VIVID = 0.3  # below this saturation a colour is a grey, not a hue
 
 
 # Colour arithmetic
@@ -85,6 +98,29 @@ def luminance(colour: str) -> float:
         return v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4
     r, g, b = rgb(colour)
     return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
+
+
+def hue_saturation(colour: str) -> tuple[float, float]:
+    """A colour's place on the wheel in degrees, and how far it is from grey (0 to 1)."""
+    r, g, b = (part / 255 for part in rgb(colour))
+    high, low = max(r, g, b), min(r, g, b)
+    spread = high - low
+    if spread == 0:
+        return 0.0, 0.0
+    lightness = (high + low) / 2
+    saturation = spread / (1 - abs(2 * lightness - 1))
+    if high == r:
+        hue = ((g - b) / spread) % 6
+    elif high == g:
+        hue = (b - r) / spread + 2
+    else:
+        hue = (r - g) / spread + 4
+    return hue * 60, min(saturation, 1.0)
+
+
+def hue_slot(colour: str) -> str:
+    hue = hue_saturation(colour)[0]
+    return next(name for name, (start, end) in HUE_SLOTS.items() if (start <= hue < end if start < end else hue >= start or hue < end))
 
 
 def contrast(a: str, b: str) -> float:
@@ -216,6 +252,26 @@ def theme_colours(path: Path, seen: frozenset[Path] = frozenset()) -> dict[str, 
     return colours
 
 
+def syntax_palette(data: dict[str, Any]) -> dict[str, Any]:
+    """The colours a theme paints code with: the most used one for each terminal hue, and the two
+    most used overall. Some themes keep a plain interface and put all their character here."""
+    used: dict[str, int] = {}
+    for rule in data.get("tokenColors") or []:
+        colour = (rule.get("settings") or {}).get("foreground") if isinstance(rule, dict) else None
+        if not isinstance(colour, str) or not re.fullmatch(r"#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?", colour):
+            continue
+        colour = colour[:7].lower()
+        if hue_saturation(colour)[1] < VIVID:
+            continue
+        scope = rule.get("scope")
+        used[colour] = used.get(colour, 0) + (len(scope) if isinstance(scope, list) else 1)
+    ranked = sorted(used, key=lambda colour: (-used[colour], colour))
+    ansi: dict[str, str] = {}
+    for colour in ranked:
+        ansi.setdefault(hue_slot(colour), colour)
+    return {"ansi": ansi, "accents": ranked[:2]}
+
+
 def vscode_themes() -> list[dict[str, Any]]:
     found: dict[str, dict[str, Any]] = {}
     for root in VSCODE_ROOTS:
@@ -254,11 +310,19 @@ def vscode_themes() -> list[dict[str, Any]]:
                 ansi = {name: colours.get(f"terminal.ansi{name.capitalize()}", DEFAULT_ANSI[kind][name]) for name in ANSI}
                 side = colours.get("sideBar.background")
                 accent = next((colours[key] for key in ("button.background", "focusBorder", "activityBarBadge.background") if key in colours and alpha(colours[key]) > 0.6), None)
+                accent2 = None
+                if root == EXTRA_THEMES:
+                    # A theme dropped in by hand was chosen for its look. Installed themes keep the rule
+                    # above, so running this again never repaints a theme already in use.
+                    syntax = syntax_palette(jsonc(path.read_text(encoding="utf-8")))
+                    ansi.update(syntax["ansi"])
+                    if syntax["accents"] and (accent is None or hue_saturation(flat(accent, bg[:7]))[1] < VIVID):
+                        accent, accent2 = syntax["accents"][0], (syntax["accents"][1:] or [None])[0]
                 found[label.lower()] = {
                     "label": label, "kind": kind, "source": "VS Code", "from": origin,
                     "tokens": tokens(kind, flat(bg, defaults[0]), flat(fg, bg[:7]), {k: flat(v, bg[:7]) for k, v in ansi.items()},
                                      bg2=flat(side, bg[:7]) if side and flat(side, bg[:7]) != bg[:7].lower() else None,
-                                     accent=flat(accent, bg[:7]) if accent else None, selection=colours.get("editor.selectionBackground")),
+                                     accent=flat(accent, bg[:7]) if accent else None, accent2=accent2, selection=colours.get("editor.selectionBackground")),
                 }
     return sorted(found.values(), key=lambda item: (item["kind"] != "dark", item["label"].lower()))
 

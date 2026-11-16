@@ -24,6 +24,7 @@ export const GENERATED_THEMES = [
   { id: "vscode-monokai-pro-filter-octagon", label: "Monokai Pro (Filter Octagon)", kind: "dark", source: "VS Code", swatches: ["#ff657a", "#bad761", "#ffd76d", "#ff9b5e", "#c39ac9", "#9cd1bb"] },
   { id: "vscode-monokai-pro-filter-ristretto", label: "Monokai Pro (Filter Ristretto)", kind: "dark", source: "VS Code", swatches: ["#fd6883", "#adda78", "#f9cc6c", "#f38d70", "#a8a9eb", "#85dacc"] },
   { id: "vscode-monokai-pro-filter-spectrum", label: "Monokai Pro (Filter Spectrum)", kind: "dark", source: "VS Code", swatches: ["#fc618d", "#7bd88f", "#fce566", "#fd9353", "#948ae3", "#5ad4e6"] },
+  { id: "vscode-one-candy", label: "One Candy", kind: "dark", source: "VS Code", swatches: ["#ffbeb8", "#79c3a4", "#fcdfad", "#c2adfc", "#fcade7", "#b0f4fd"] },
   { id: "vscode-one-dark-pro", label: "One Dark Pro", kind: "dark", source: "VS Code", swatches: ["#e05561", "#8cc265", "#d18f52", "#4aa5f0", "#c162de", "#42b3c2"] },
   { id: "vscode-one-dark-pro-darker", label: "One Dark Pro Darker", kind: "dark", source: "VS Code", swatches: ["#e05561", "#8cc265", "#d18f52", "#4aa5f0", "#c162de", "#42b3c2"] },
   { id: "vscode-one-dark-pro-flat", label: "One Dark Pro Flat", kind: "dark", source: "VS Code", swatches: ["#e05561", "#8cc265", "#d18f52", "#4aa5f0", "#c162de", "#42b3c2"] },

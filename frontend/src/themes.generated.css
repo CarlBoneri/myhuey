@@ -858,6 +858,45 @@
   --link: #fd9353;
 }
 
+/* One Candy: VS Code, One Candy Dark */
+:root[data-theme="vscode-one-candy"] {
+  --bg: #282c34;
+  --bg-2: #21252b;
+  --text: #c0c5cf;
+  --text-2: #a5a9b2;
+  --text-3: #a6aab0;
+  --accent: #c2adfc;
+  --accent-2: #fcade7;
+  --accent-strong: #c2adfc;
+  --accent-gradient: linear-gradient(135deg, #c2adfc 0%, #fcade7 100%);
+  --on-accent: #111118;
+  --danger: #ffbeb8;
+  --warn: #fcdfad;
+  --ok: #79c3a4;
+  --ansi-red: #ffbeb8;
+  --ansi-green: #79c3a4;
+  --ansi-yellow: #fcdfad;
+  --ansi-blue: #c2adfc;
+  --ansi-magenta: #fcade7;
+  --ansi-cyan: #b0f4fd;
+  --selection: #404859;
+  --floor: #30343c;
+  --floor-stroke: rgba(194, 173, 252, 0.6);
+  --floor-hover: #393d46;
+  --stage: #21252b;
+  --glass: rgba(49, 53, 62, 0.6);
+  --glass-bg: rgba(49, 53, 62, 0.6);
+  --glass-strong: rgba(37, 41, 47, 0.9);
+  --toast-bg: rgba(40, 44, 50, 0.95);
+  --halo: #282c34d9;
+  --halo-soft: #282c3473;
+  --glow-lit: #fcade72e;
+  --warn-text: #fcdfad;
+  --done-text: #79c3a4;
+  --danger-text: #ffbeb8;
+  --link: #c2adfc;
+}
+
 /* One Dark Pro: VS Code, One Dark Pro */
 :root[data-theme="vscode-one-dark-pro"] {
   --bg: #282c34;
