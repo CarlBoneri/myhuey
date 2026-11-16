@@ -197,3 +197,26 @@ def test_resolve_by_name_or_id(service):
     assert service.resolve_layout("my home") == service.layouts()[0]["id"]
     with pytest.raises(LayoutNotFound):
         service.resolve_layout("nope")
+
+
+def test_a_write_that_overlaps_make_active_is_refused(service):
+    from myhuey.errors import LayoutChanged
+    other = service.new_layout("Other")
+    stale = service._load()  # an Active-context request loaded before the swap
+    service.activate_layout(other["id"])
+    with pytest.raises(LayoutChanged):
+        service._save(stale)
+    listed = service.layouts()
+    assert sorted(item["name"] for item in listed) == ["My home", "Other"]
+    assert len({item["id"] for item in listed}) == 2
+
+
+def test_a_sandbox_write_after_that_sandbox_became_active_is_refused(service):
+    from myhuey.errors import LayoutChanged
+    other = service.new_layout("Other")
+    with using_layout(other["id"]):
+        stale = service._load()
+        service.activate_layout(other["id"])
+        with pytest.raises(LayoutChanged):
+            service._save(stale)
+    assert sorted(item["name"] for item in service.layouts()) == ["My home", "Other"]

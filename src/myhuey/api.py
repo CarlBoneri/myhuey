@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field, StrictInt
 
-from .errors import BridgeNotConfigured, HueError, LayoutNotFound, LinkButtonNotPressed, PairingInProgress, RoomNotFound, SceneNotFound
+from .errors import BridgeNotConfigured, HueError, LayoutChanged, LayoutNotFound, LinkButtonNotPressed, PairingInProgress, RoomNotFound, SceneNotFound
 from .layouts import MAX_NAME, using_layout
 from .hue import COLLECTIONS, PAIRING_WINDOW, HueBridgeClient
 from .images import MAX_UPLOAD_BYTES, media_type
@@ -237,7 +237,7 @@ class EffectChange(BaseModel):
 def _status_for(exc: Exception) -> int:
     if isinstance(exc, (RoomNotFound, SceneNotFound, LayoutNotFound)):
         return 404
-    if isinstance(exc, (LinkButtonNotPressed, PairingInProgress)):
+    if isinstance(exc, (LinkButtonNotPressed, PairingInProgress, LayoutChanged)):
         return 409
     if isinstance(exc, (BridgeNotConfigured, ValueError)):
         return 400

@@ -16,7 +16,7 @@ from typing import Any, Callable
 
 from .color import hex_to_rgb, light_state_to_hex, mired_to_color_temperature, rgb_to_xy, xy_to_hex, xy_to_kelvin
 from .discovery import discover
-from .errors import BridgeNotConfigured, BridgeUnreachable, HueError, LayoutNotFound, RoomNotFound, SceneNotFound
+from .errors import BridgeNotConfigured, BridgeUnreachable, HueError, LayoutChanged, LayoutNotFound, RoomNotFound, SceneNotFound
 from .geometry import rectangle
 from .hue import HueBridgeClient
 from .images import ImageSampler, extract_palette, image_path, prune_unreferenced, store_image
@@ -180,6 +180,12 @@ class HueRoomService:
 
     def _save(self, config: dict[str, Any]) -> None:
         stored = self._load_active()
+        # The document must still belong to the layout it was read from. Make active may have
+        # swapped layouts between this call's load and save; writing on would duplicate one layout
+        # and lose another.
+        read_from = (config.get("layout") or {}).get("id")
+        if read_from and read_from != stored["layout"]["id"]:
+            raise LayoutChanged()
         layout_id = self._open_sandbox(stored)
         if not layout_id:
             save_config(config, self.storage_path)

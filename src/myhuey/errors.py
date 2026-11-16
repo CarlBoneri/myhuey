@@ -63,3 +63,10 @@ class LayoutNotFound(HueError, LookupError):
     def __init__(self, layout_id: str = "") -> None:
         self.layout_id = layout_id
         super().__init__("That layout no longer exists")
+
+
+class LayoutChanged(HueError):
+    """A change was made to a layout that stopped being the one it was read from (Make active ran)."""
+
+    def __init__(self) -> None:
+        super().__init__("The active layout just changed. Reload and try again.")
