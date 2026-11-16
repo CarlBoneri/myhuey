@@ -8,7 +8,11 @@ import { href } from '../lib/router';
 import { MODE_LABELS, cardTitle, latestOnly, readQuickMode, storeQuickMode } from '../lib/suggest';
 import type { Room, Scene, Suggestion } from '../types';
 
-export function QuickSettings({ room }: { room: Room }) {
+export function QuickSettings({ room, onOpen }: {
+  room: Room;
+  /** Opens the room's workbench the way Home does (leaving a sandbox first). */
+  onOpen?: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState(readQuickMode);
   const [items, setItems] = useState<Suggestion[]>([]);
@@ -16,6 +20,7 @@ export function QuickSettings({ room }: { room: Room }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const box = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
   const requests = useRef(latestOnly());
   const hasLights = room.lights.length > 0;
 
@@ -75,8 +80,11 @@ export function QuickSettings({ room }: { room: Room }) {
   };
 
   return (
-    <div className="quick" ref={box} onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
-      <button type="button" className="quick-trigger" aria-haspopup="menu" aria-expanded={open}
+    // Clicks stay inside the tile's menu; keys are left to bubble (the tile only reacts to keys aimed at
+    // itself), so Escape reaches this handler even while focus is on the ⋮ button or inside the menu.
+    <div className="quick" ref={box} onClick={(event) => event.stopPropagation()}
+      onKeyDown={(event) => { if (open && event.key === 'Escape') { event.preventDefault(); setOpen(false); trigger.current?.focus(); } }}>
+      <button type="button" ref={trigger} className="quick-trigger" aria-haspopup="menu" aria-expanded={open}
         aria-label={`Quick settings for ${room.name}`} title="Quick settings" onClick={() => setOpen(!open)}>
         <EllipsisVertical size={16} />
       </button>
@@ -117,7 +125,12 @@ export function QuickSettings({ room }: { room: Room }) {
             </>
           )}
           <div className="quick-footer">
-            <a href={href({ view: 'room', room: room.name })}><Lightbulb size={14} /> Open workbench</a>
+            <a href={href({ view: 'room', room: room.name })} onClick={(event) => {
+              if (!onOpen || event.metaKey || event.ctrlKey || event.shiftKey) return;
+              event.preventDefault();
+              setOpen(false);
+              onOpen();
+            }}><Lightbulb size={14} /> Open workbench</a>
             <a href={href({ view: 'design', room: room.name, tab: 'plan' })}><MapIcon size={14} /> Design in Studio</a>
           </div>
         </div>

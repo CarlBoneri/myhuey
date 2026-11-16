@@ -104,7 +104,7 @@ function RoomTile({ room, onOpen }: { room: Room; onOpen: () => void }) {
       onKeyDown={(event) => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); onOpen(); } }}>
       <div className="room-tile-head">
         <strong>{room.name}</strong>
-        <QuickSettings room={room} />
+        <QuickSettings room={room} onOpen={onOpen} />
       </div>
       <div className="room-tile-state">
         <span className={`state-dot${lit ? ' on' : ''}`} aria-hidden="true" />

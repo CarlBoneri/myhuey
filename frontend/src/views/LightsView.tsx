@@ -1,6 +1,6 @@
 // Every light, grouped by room. Click a light to adjust it; Cmd/Ctrl/Shift-click or tick several
 // (or a whole room) to change them together.
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Power, PowerOff, X } from 'lucide-react';
 import { useStore, sendLight } from '../store';
 import type { BridgeLight } from '../types';
@@ -11,6 +11,7 @@ import { formatLength } from '../lib/units';
 import { groupLightsByRoom } from '../lib/lights';
 import { kelvinToHex } from '../lib/color';
 import { groupState, pick, pickAll } from '../lib/selection';
+import { throttleLatest } from '../lib/throttle';
 
 export function LightsView() {
   const { lights, rooms, setup, lightsError } = useStore();
@@ -102,6 +103,12 @@ function GroupControls({ lights }: { lights: BridgeLight[] }) {
   const [kelvin, setKelvin] = useState<number | null>(null);
   const each = (filter: (light: BridgeLight) => boolean, changes: Record<string, unknown>, optimistic: Partial<BridgeLight>) =>
     lights.filter(filter).forEach((light) => sendLight(light.id, changes, optimistic));
+  // A drag fans out to every picked light, so it is paced to about ten bridge commands a second.
+  const key = lights.map((light) => light.id).join(',');
+  const pace = Math.max(150, lights.length * 100);
+  const dim = useMemo(() => throttleLatest((v: number) => each((light) => light.brightness !== null, { brightness: v, on: true }, { brightness: v, on: true }), pace), [key]); // eslint-disable-line react-hooks/exhaustive-deps
+  const warmth = useMemo(() => throttleLatest((v: number) => each((light) => light.supports_color_temp, { color_temp: v, on: true }, { color_temp: v, color: kelvinToHex(v), on: true }), pace), [key]); // eslint-disable-line react-hooks/exhaustive-deps
+  const paint = useMemo(() => throttleLatest((hex: string) => each((light) => light.supports_color, { color: hex, on: true }, { color: hex, on: true }), pace), [key]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <Panel title={`${state.count} lights`}>
       <p className="hint">{state.on} of {state.count} on · {lights.map((light) => light.name).join(', ')}</p>
@@ -112,18 +119,18 @@ function GroupControls({ lights }: { lights: BridgeLight[] }) {
       {state.dimmable && (
         <Slider label="Brightness" value={brightness ?? state.brightness ?? 127} min={1} max={254}
           format={(v) => `${Math.round((v / 254) * 100)}%`} track="linear-gradient(90deg, #1b1a24, #fff4dc)"
-          onChange={(v) => { setBrightness(v); each((light) => light.brightness !== null, { brightness: v, on: true }, { brightness: v, on: true }); }}
-          onCommit={() => setBrightness(null)} />
+          onChange={(v) => { setBrightness(v); dim(v); }}
+          onCommit={(v) => { dim(v); dim.flush(); setBrightness(null); }} />
       )}
       {state.colorTemp && (
         <Slider label="White temperature" value={kelvin ?? 2700} min={2000} max={6500} step={100} format={(v) => `${v} K`}
           track={`linear-gradient(90deg, ${kelvinToHex(2000)}, ${kelvinToHex(4000)}, ${kelvinToHex(6500)})`}
-          onChange={(v) => { setKelvin(v); each((light) => light.supports_color_temp, { color_temp: v, on: true }, { color_temp: v, color: kelvinToHex(v), on: true }); }}
-          onCommit={() => setKelvin(null)} />
+          onChange={(v) => { setKelvin(v); warmth(v); }}
+          onCommit={(v) => { warmth(v); warmth.flush(); setKelvin(null); }} />
       )}
       {state.color && (
         <ColorPicker compact value={lights.find((light) => light.supports_color)?.color ?? '#ffffff'}
-          onChange={(hex) => each((light) => light.supports_color, { color: hex, on: true }, { color: hex, on: true })} />
+          onChange={paint} />
       )}
     </Panel>
   );
