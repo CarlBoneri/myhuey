@@ -12,7 +12,9 @@ const TAGS = ['', 'warm', 'cool', 'muted', 'vivid', 'analogous', 'accent'];
 
 /** Suggested scenes for a room: pick a mode and a time, preview cards, then save or try one. */
 export function SuggestPanel({ room, onClose, onShow, shownId }: {
-  room: Room; onClose: () => void;
+  room: Room;
+  /** Left out where the panel always shows (the workbench). */
+  onClose?: () => void;
   /** On the photo: show a card's colors there. */
   onShow?: (item: Suggestion) => void; shownId?: string;
 }) {
@@ -47,7 +49,7 @@ export function SuggestPanel({ room, onClose, onShow, shownId }: {
   const times = useMemo(quarterHours, []);
   return (
     <Panel className="suggest-panel" title={<><Sparkles size={16} /> Suggested scenes</>}
-      actions={<IconButton label="Close suggestions" onClick={onClose}><X size={16} /></IconButton>}>
+      actions={onClose && <IconButton label="Close suggestions" onClick={onClose}><X size={16} /></IconButton>}>
       <Segmented label="Mode" value={mode} onChange={(next) => { setMode(next); setSeed(0); }}
         options={MODES.map((value) => ({ value, label: MODE_LABELS[value] }))} />
       <div className="field-row">

@@ -8,6 +8,7 @@ import { PlanView } from './views/PlanView';
 import { SETUP_SKIPPED_KEY, SetupView } from './views/SetupView';
 import { go } from './lib/router';
 import { RoomDesigner } from './views/RoomDesigner';
+import { RoomWorkbench } from './views/RoomWorkbench';
 import { ScenesView } from './views/ScenesView';
 import { SceneEditor } from './views/SceneEditor';
 import { LightsView } from './views/LightsView';
@@ -56,7 +57,7 @@ export function App() {
     if (!ready) return <div className="loading">Loading your home…</div>;
     switch (route.view) {
       case 'room':
-        return <RoomDesigner name={route.room} tab="plan" />;
+        return <RoomWorkbench name={route.room} />;
       case 'design':
         return <RoomDesigner name={route.room} tab={route.tab} />;
       case 'scenes':
