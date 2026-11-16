@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { RAIL_DEFAULT, RAIL_MAX, RAIL_MIN, RAIL_SNAP, tabMenuItems, clampRail, normalizeRail, settleRail, ALL_TABS, DEFAULT_TABS, TAB_PLACEMENTS, closeTab, isVertical, normalizePlacement, moveTab, neighbour, normalizeTabs, openTabs, reopenTab, shiftTab, tabForRoute, type TabState } from './tabs';
+import { contextOrigin, focusAfterClose, RAIL_DEFAULT, RAIL_MAX, RAIL_MIN, RAIL_SNAP, tabMenuItems, clampRail, normalizeRail, settleRail, ALL_TABS, DEFAULT_TABS, TAB_PLACEMENTS, closeTab, isVertical, normalizePlacement, moveTab, neighbour, normalizeTabs, openTabs, reopenTab, shiftTab, tabForRoute, type TabState } from './tabs';
 
 const state = (order: string, closed = ''): TabState => normalizeTabs({ order: order.split(' ').filter(Boolean), closed: closed.split(' ').filter(Boolean) });
 
@@ -99,6 +99,27 @@ describe('the tab rail', () => {
     expect(settleRail(130, { width: 260, collapsed: false })).toEqual({ width: RAIL_MIN, collapsed: false });
     expect(settleRail(300, { width: 260, collapsed: false })).toEqual({ width: 300, collapsed: false });
     expect(settleRail(999, { width: 260, collapsed: false })).toEqual({ width: RAIL_MAX, collapsed: false });
+  });
+});
+
+describe('where focus goes when the tab menu closes', () => {
+  const all = { restore: true, active: true, any: true, toggle: true };
+  it('goes back to where it was while that is still on the page', () => {
+    expect(focusAfterClose(all)).toBe('restore');
+  });
+  it('falls back to the active tab, then any tab, then the rail toggle', () => {
+    expect(focusAfterClose({ ...all, restore: false })).toBe('active');
+    expect(focusAfterClose({ ...all, restore: false, active: false })).toBe('any');
+    expect(focusAfterClose({ restore: false, active: false, any: false, toggle: true })).toBe('toggle');
+    expect(focusAfterClose({ restore: false, active: false, any: false, toggle: false })).toBe('none');
+  });
+});
+
+describe('what opened the context menu', () => {
+  it('is the keyboard when a menu key went down a moment ago, else the pointer', () => {
+    expect(contextOrigin(1000, 1200)).toBe('keyboard');
+    expect(contextOrigin(1000, 5000)).toBe('pointer');
+    expect(contextOrigin(null, 1000)).toBe('pointer');
   });
 });
 

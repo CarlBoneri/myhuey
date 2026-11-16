@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseRoute, href } from './router';
-import { pickRoom, resolveStudioRoute, studioRoom, studioViewOf, switchView } from './studio';
+import { nextDesignerKey, pickRoom, resolveStudioRoute, studioRoom, studioViewOf, switchView } from './studio';
 
 const rooms = [{ name: 'Loft' }, { name: 'Office' }, { name: 'Den' }];
 
@@ -74,5 +74,20 @@ describe('room-less Studio addresses', () => {
     expect(resolveStudioRoute(route, rooms, null)).toEqual({ view: 'design', room: 'Loft', tab: '3d' });
     expect(resolveStudioRoute(route, [], 'Office')).toEqual({ view: 'studio' });
     expect(resolveStudioRoute({ view: 'home' }, rooms, 'Office')).toEqual({ view: 'home' });
+  });
+});
+
+describe('the designer survives a rename but not a room switch', () => {
+  const start = { n: 3, room: 'Office' };
+  it('keeps the key when the room did not change', () => {
+    expect(nextDesignerKey(start, 'Office', null)).toBe(start);
+  });
+  it('keeps the key for a rename the designer made', () => {
+    expect(nextDesignerKey(start, 'Study', { from: 'Office', to: 'Study' })).toEqual({ n: 3, room: 'Study' });
+  });
+  it('gives a fresh key for any other change of room', () => {
+    expect(nextDesignerKey(start, 'Den', null)).toEqual({ n: 4, room: 'Den' });
+    expect(nextDesignerKey(start, 'Den', { from: 'Office', to: 'Study' })).toEqual({ n: 4, room: 'Den' });
+    expect(nextDesignerKey(start, 'Study', { from: 'Loft', to: 'Study' })).toEqual({ n: 4, room: 'Study' });
   });
 });

@@ -1,7 +1,8 @@
 // The right-click menu on the tab bar: close a tab, choose where the tabs sit, fold or reset the
 // rail. It opens at the pointer (or beside a focused tab), stays inside the window, takes focus,
 // and hands it back when it closes. What it offers is decided by tabMenuItems in lib/tabs.ts.
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { PanelLeftClose, PanelLeftOpen, RotateCcw, X } from 'lucide-react';
 import type { TabMenuItem, TabPlacement } from '../lib/tabs';
 
@@ -13,33 +14,35 @@ export function TabContextMenu({ items, at, onChoose, onClose }: {
   /** Where to open: the pointer, or the corner of the tab it was asked for from. */
   at: { x: number; y: number };
   onChoose: (item: TabMenuItem) => void;
-  onClose: () => void;
+  /** `restoreFocus` is true when the person chose to leave (Escape, an item), false when focus already went elsewhere. */
+  onClose: (restoreFocus: boolean) => void;
 }) {
   const menu = useRef<HTMLDivElement>(null);
-  const [style, setStyle] = useState<CSSProperties>({ left: at.x, top: at.y, visibility: 'hidden' });
 
-  // Measured before it is painted, then moved so the whole menu is inside the window.
+  // Measured before it is painted, then moved through the element (so it stays visible and can take
+  // focus) until the whole menu is inside the window.
   useLayoutEffect(() => {
-    const box = menu.current!.getBoundingClientRect();
-    setStyle({
-      left: Math.max(EDGE, Math.min(at.x, window.innerWidth - box.width - EDGE)),
-      top: Math.max(EDGE, Math.min(at.y, window.innerHeight - box.height - EDGE)),
-      maxHeight: `calc(100vh - ${EDGE * 2}px)`, overflowY: 'auto',
-    });
-    menu.current!.querySelector<HTMLElement>('button')?.focus();
+    const node = menu.current!;
+    const box = node.getBoundingClientRect();
+    node.style.left = `${Math.max(EDGE, Math.min(at.x, window.innerWidth - box.width - EDGE))}px`;
+    node.style.top = `${Math.max(EDGE, Math.min(at.y, window.innerHeight - box.height - EDGE))}px`;
+    node.querySelector<HTMLElement>('button')?.focus();
   }, [at.x, at.y]);
 
   useEffect(() => {
-    const outside = (event: Event) => { if (!menu.current?.contains(event.target as Node)) onClose(); };
-    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') { event.preventDefault(); onClose(); } };
+    const outside = (event: Event) => { if (!menu.current?.contains(event.target as Node)) onClose(false); };
+    // The menu's own scrolling (when it is taller than the window) is not a reason to close it.
+    const scrolled = (event: Event) => { if (!menu.current?.contains(event.target as Node)) onClose(false); };
+    const leave = () => onClose(false);
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') { event.preventDefault(); onClose(true); } };
     window.addEventListener('pointerdown', outside, true);
-    window.addEventListener('scroll', onClose, true);
-    window.addEventListener('blur', onClose);
+    window.addEventListener('scroll', scrolled, true);
+    window.addEventListener('blur', leave);
     window.addEventListener('keydown', onKey);
     return () => {
       window.removeEventListener('pointerdown', outside, true);
-      window.removeEventListener('scroll', onClose, true);
-      window.removeEventListener('blur', onClose);
+      window.removeEventListener('scroll', scrolled, true);
+      window.removeEventListener('blur', leave);
       window.removeEventListener('keydown', onKey);
     };
   }, [onClose]);
@@ -74,8 +77,11 @@ export function TabContextMenu({ items, at, onChoose, onClose }: {
   const rail = after.filter((item) => item.kind !== 'reset-tabs');
   const reset = after.filter((item) => item.kind === 'reset-tabs');
 
-  return (
-    <div ref={menu} className="tab-menu context" role="menu" aria-label="Tabs" style={style} onKeyDown={move}
+  // Drawn on the body: inside the nav, its stacking context would trap it under the rail's resize handle and the Workflows drawer.
+  return createPortal(
+    <div ref={menu} className="tab-menu context" role="menu" aria-label="Tabs" onKeyDown={move}
+      style={{ left: at.x, top: at.y, maxHeight: `calc(100vh - ${EDGE * 2}px)`, overflowY: 'auto' }}
+      onBlur={(event) => { const to = event.relatedTarget as Node | null; if (to && !menu.current?.contains(to)) onClose(false); }}
       onContextMenu={(event) => { event.preventDefault(); event.stopPropagation(); }}>
       {before.map((item) => <span key={item.kind} role="none">{row(item)}</span>)}
       <div role="group" aria-label="Tab position" className="tab-menu-group">
@@ -88,6 +94,7 @@ export function TabContextMenu({ items, at, onChoose, onClose }: {
       </div>
       {rail.length > 0 && <div role="group" aria-label="Tab rail" className="tab-menu-group">{rail.map((item) => <span key={item.kind} role="none">{row(item)}</span>)}</div>}
       <div className="tab-menu-group" role="none">{reset.map((item) => <span key={item.kind} role="none">{row(item)}</span>)}</div>
-    </div>
+    </div>,
+    document.body,
   );
 }

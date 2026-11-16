@@ -108,6 +108,17 @@ export function settleRail(dragged: number, before: TabRail): TabRail {
   return dragged < RAIL_SNAP ? { width: before.width, collapsed: true } : { width: clampRail(dragged), collapsed: false };
 }
 
+/** After the tab menu closes: back where focus was, else the active tab, any tab, or the rail toggle. */
+export function focusAfterClose(has: { restore: boolean; active: boolean; any: boolean; toggle: boolean }): 'restore' | 'active' | 'any' | 'toggle' | 'none' {
+  return has.restore ? 'restore' : has.active ? 'active' : has.any ? 'any' : has.toggle ? 'toggle' : 'none';
+}
+
+/** How long after a menu key goes down a `contextmenu` event still counts as coming from it. */
+export const MENU_KEY_WINDOW = 1500;
+/** A `contextmenu` event has no reliable sign of where it came from, so the key press that came before it says. */
+export const contextOrigin = (keyDownAt: number | null, now: number): 'keyboard' | 'pointer' =>
+  keyDownAt !== null && now - keyDownAt <= MENU_KEY_WINDOW ? 'keyboard' : 'pointer';
+
 /** What the right-click menu on the tabs offers, in order. */
 export type TabMenuItem =
   | { kind: 'close' }

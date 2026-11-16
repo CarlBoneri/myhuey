@@ -44,6 +44,25 @@ export function pickRoom(view: StudioView, next: string | null, on: string | nul
   return viewOf(view, next);
 }
 
+/**
+ * The designer is keyed so that choosing another room starts it clean. A rename the designer made
+ * itself (told through markRename) keeps the key, so the same designer carries on under the new name.
+ */
+export function nextDesignerKey(prev: { n: number; room: string }, room: string, rename: { from: string; to: string } | null): { n: number; room: string } {
+  if (room === prev.room) return prev;
+  return rename && rename.from === prev.room && rename.to === room ? { n: prev.n, room } : { n: prev.n + 1, room };
+}
+
+let renamed: { from: string; to: string } | null = null;
+/** The designer says: the room I am showing is being renamed, and I am about to go to its new address. */
+export const markRename = (from: string, to: string) => { renamed = { from, to }; };
+/** Whatever rename was marked, once. */
+export function takeRename(): { from: string; to: string } | null {
+  const now = renamed;
+  renamed = null;
+  return now;
+}
+
 /** A room-less Studio address, turned into the screen it stands for. Other routes pass through. */
 export function resolveStudioRoute(route: Route, rooms: Named, current: string | null): Route {
   if (route.view !== 'studio-room') return route;

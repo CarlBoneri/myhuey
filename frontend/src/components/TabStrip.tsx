@@ -5,12 +5,14 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
 import { PanelLeftClose, PanelLeftOpen, Plus, RotateCcw, X, type LucideIcon } from 'lucide-react';
 import { href, go, type Route } from '../lib/router';
-import { DEFAULT_TABS, RAIL_DEFAULT, RAIL_MAX, RAIL_MIN, RAIL_STEP, clampRail, closeTab, isVertical, moveTab, neighbour, reopenTab, settleRail, shiftTab, tabMenuItems, type TabId, type TabMenuItem, type TabPlacement, type TabState } from '../lib/tabs';
+import { DEFAULT_TABS, contextOrigin, focusAfterClose, RAIL_DEFAULT, RAIL_MAX, RAIL_MIN, RAIL_STEP, clampRail, closeTab, isVertical, moveTab, neighbour, reopenTab, settleRail, shiftTab, tabMenuItems, type TabId, type TabMenuItem, type TabPlacement, type TabState } from '../lib/tabs';
 import { useUi } from '../uiStore';
 import { TabContextMenu } from './TabContextMenu';
 
 export interface Tab { id: TabId; label: string; icon: LucideIcon; route: Route }
 const TAB_DRAG = 'application/x-myhuey-tab';
+/** Set when the tab menu closes by choice; the next render of any strip (a placement change builds a new one) takes it and moves focus. */
+let refocusAfterMenu: { restore: HTMLElement | null } | null = null;
 
 interface Props {
   /** Where the strip is drawn right now (a rail falls back to top in a narrow window). */
@@ -38,6 +40,10 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
   const dragging = useRef<TabId | null>(null);
   const nav = useRef<HTMLElement>(null);
   const shell = useRef<HTMLDivElement>(null);
+  const contextRef = useRef<Context | null>(null);
+  contextRef.current = context;
+  // A menu key that went down on a tab, so the `contextmenu` event that follows is known to be the keyboard's.
+  const menuKey = useRef<{ at: number; tab: TabId; el: HTMLElement; timer?: number } | null>(null);
 
   useEffect(() => {
     if (!menu) return;
@@ -51,9 +57,24 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
 
   // The tab you are on stays in view when the strip (or rail) overflows.
   useEffect(() => {
+    if (contextRef.current) return; // a scroll now would close the open menu
     const active = nav.current?.querySelector<HTMLElement>('.tab.active');
     if (active && typeof active.scrollIntoView === 'function') active.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   }, [activeTab, placement, collapsed, tabs.length]);
+
+  // After the menu closes (and what it chose has been drawn, even in a strip that was rebuilt elsewhere), put focus back.
+  useEffect(() => {
+    if (!refocusAfterMenu) return;
+    const { restore } = refocusAfterMenu;
+    refocusAfterMenu = null;
+    const area = nav.current;
+    const active = area?.querySelector<HTMLElement>('.tab.active a') ?? null;
+    const any = area?.querySelector<HTMLElement>('.tab a') ?? null;
+    const toggle = area?.querySelector<HTMLElement>('.rail-toggle') ?? null;
+    const target = { restore: restore?.isConnected ? restore : null, active, any, toggle };
+    const pick = focusAfterClose({ restore: !!target.restore, active: !!active, any: !!any, toggle: !!toggle });
+    if (pick !== 'none') target[pick]!.focus();
+  });
 
   const close = (id: TabId) => {
     const next = closeTab(state, id);
@@ -91,15 +112,13 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
     const active = document.activeElement;
     setContext({ x, y, tab, restore: active instanceof HTMLElement && active !== document.body ? active : null });
   };
-  const shutContext = useCallback(() => {
-    setContext((now) => {
-      if (now?.restore?.isConnected) now.restore.focus();
-      return null;
-    });
+  const shutContext = useCallback((restoreFocus: boolean) => {
+    if (restoreFocus) refocusAfterMenu = { restore: contextRef.current?.restore ?? null };
+    setContext(null);
   }, []);
   const choose = (item: TabMenuItem) => {
     const tab = context?.tab ?? null;
-    shutContext();
+    shutContext(true);
     switch (item.kind) {
       case 'close': if (tab) close(tab); break;
       case 'place': setTabPlacement(item.placement); break;
@@ -142,8 +161,18 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
 
   const strip = (
     <nav ref={nav} className={`tabs ${placement}${vertical ? ' rail' : ''}${collapsed ? ' collapsed' : ''}`} aria-label="Main" aria-orientation={vertical ? 'vertical' : 'horizontal'}
+      onPointerDown={() => { if (menuKey.current) { window.clearTimeout(menuKey.current.timer); menuKey.current = null; } }}
       onContextMenu={(event) => {
         event.preventDefault();
+        const key = menuKey.current;
+        if (key && contextOrigin(key.at, Date.now()) === 'keyboard') {
+          // From a menu key: anchor to the focused tab, whatever coordinates the browser put on the event.
+          window.clearTimeout(key.timer);
+          menuKey.current = null;
+          const box = key.el.getBoundingClientRect();
+          openContext(box.left + 8, box.bottom, key.tab);
+          return;
+        }
         const hit = (event.target as HTMLElement).closest<HTMLElement>('[data-tab]');
         openContext(event.clientX, event.clientY, (hit?.dataset.tab as TabId | undefined) ?? null);
       }}
@@ -178,11 +207,22 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
             <a href={href(tab.route)} draggable={false} aria-current={active ? 'page' : undefined}
               aria-label={collapsed ? tab.label : undefined}
               title={collapsed ? tab.label : vertical ? 'Drag to move · Alt-Shift-↑ ↓ moves it with the keyboard' : 'Drag to move · Alt-Shift-← → moves it with the keyboard'}
+              onKeyUp={(event) => {
+                const key = menuKey.current;
+                if (!key || !(event.key === 'ContextMenu' || event.key === 'F10')) return;
+                // A browser that fires `contextmenu` has done so by now (and cleared the key); one that does not gets the menu here.
+                key.timer = window.setTimeout(() => {
+                  if (menuKey.current !== key) return;
+                  menuKey.current = null;
+                  const box = key.el.getBoundingClientRect();
+                  openContext(box.left + 8, box.bottom, key.tab);
+                }, 80);
+              }}
               onKeyDown={(event) => {
                 if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
-                  event.preventDefault();
-                  const box = event.currentTarget.getBoundingClientRect();
-                  openContext(box.left + 8, box.bottom, tab.id);
+                  // Not opened here: the browser follows with a `contextmenu` event (handled once, on the nav).
+                  // Where it does not, the key coming back up opens the menu.
+                  menuKey.current = { at: Date.now(), tab: tab.id, el: event.currentTarget };
                   return;
                 }
                 const keys = vertical ? ['ArrowUp', 'ArrowDown'] : ['ArrowLeft', 'ArrowRight'];

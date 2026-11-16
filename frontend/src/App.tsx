@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Box, CircleHelp, Command, House, Lightbulb, Map as MapIcon, Palette, Settings, SlidersHorizontal, Sparkles, Terminal, X } from 'lucide-react';
 import { applyTheme, applyTransparency, followSystemTheme, normalizeTheme, themeGroups, type Theme } from './lib/theme';
 import { useStore } from './store';
@@ -15,7 +15,7 @@ import { LightsView } from './views/LightsView';
 import { SettingsView } from './views/SettingsView';
 import { HelpView } from './views/HelpView';
 import { topicFor } from './lib/helpDocs';
-import { resolveStudioRoute, studioRoom } from './lib/studio';
+import { nextDesignerKey, resolveStudioRoute, studioRoom, takeRename } from './lib/studio';
 import { RAIL_ICONS, isVertical, openTabs, reopenTab, tabForRoute, type TabId, type TabPlacement } from './lib/tabs';
 import { TabStrip, type Tab } from './components/TabStrip';
 import { SandboxBanner } from './components/SandboxBanner';
@@ -125,14 +125,19 @@ export function App() {
     return () => clearInterval(timer);
   }, [refreshLights, preferences.poll_seconds]);
 
+  const designerKey = useRef({ n: 0, room: '' });
+  if (route.view === 'design' && designerKey.current.room !== route.room) designerKey.current = nextDesignerKey(designerKey.current, route.room, takeRename());
+  const designer = designerKey.current;
+
   const view = (() => {
     if (!ready) return <div className="loading">Loading your home…</div>;
     switch (route.view) {
       case 'room':
         return <RoomWorkbench name={route.room} />;
       case 'design':
-        // Keyed by room: a room picked in the Studio starts clean, like opening that room's designer from anywhere.
-        return <RoomDesigner key={route.room} name={route.room} tab={route.tab} />;
+        // Keyed by the room picked: another room starts clean, like opening its designer from anywhere.
+        // A rename the designer made keeps its key, so the same designer carries on.
+        return <RoomDesigner key={designer.n} name={route.room} tab={route.tab} />;
       case 'studio-room':
         return <div className="loading">Opening the Studio…</div>;
       case 'scenes':

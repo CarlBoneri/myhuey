@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Armchair, Copy, DoorOpen, Hand, Lightbulb, PenLine, Plus, RotateCw, Trash2 } from 'lucide-react';
 import { api } from '../api';
 import { attempt, useStore } from '../store';
-import { go, href, type DesignTab } from '../lib/router';
+import { go, href, parseRoute, type DesignTab } from '../lib/router';
+import { markRename } from '../lib/studio';
 import { area, bounds, pathOf, round1 } from '../lib/geometry';
 import { formatArea, formatLength, snap } from '../lib/units';
 import { effectiveLength, liveColors, placedProfile } from '../lib/lights';
@@ -224,7 +225,14 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
     const updated = await attempt(() => api.updateRoom(current.name, changes));
     if (updated) {
       replaceRoom(current.name, updated);
-      if (changes.name && changes.name !== current.name) go({ view: 'design', room: updated.name, tab });
+      if (changes.name && changes.name !== current.name) {
+        // Follow the rename only if this room is still the one on screen; someone who has switched rooms since stays where they are.
+        const here = parseRoute(window.location.hash);
+        if (here.view === 'design' && here.room === current.name) {
+          markRename(current.name, updated.name);
+          go({ view: 'design', room: updated.name, tab: here.tab });
+        }
+      }
     } else {
       setDraft(source);
     }
