@@ -107,6 +107,17 @@ describe('StudioHead', () => {
     expect(go).toHaveBeenCalledTimes(1);
   });
 
+  it('opens a pending room at once on an outside blur once the header press has been released', () => {
+    render(<StudioHead view="plan" room="Office" />);
+    byKey('Den');
+    fireEvent.pointerDown(radio('3D'));
+    fireEvent.pointerUp(window);
+    wait(0);
+    fireEvent.blur(picker(), { relatedTarget: null });
+    expect(go).toHaveBeenCalledTimes(1);
+    expect(go).toHaveBeenCalledWith({ view: 'design', room: 'Den', tab: 'plan' });
+  });
+
   it('keeps a pending room for the view switch when a press in the header blurs the picker without focusing anything (Safari, Firefox)', () => {
     render(<StudioHead view="plan" room="Office" />);
     byKey('Den');

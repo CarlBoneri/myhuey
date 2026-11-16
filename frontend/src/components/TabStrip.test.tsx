@@ -56,6 +56,27 @@ describe('TabStrip focus after the menu closes', () => {
     expect(document.activeElement).toBe(link('Studio'));
   });
 
+  it('after Reset the tabs from the "+" menu, focus lands on the "+" button', () => {
+    strip({ state: normalizeTabs({ order: ids, closed: ['lights'] }) });
+    fireEvent.click(screen.getByRole('button', { name: 'Reopen or reset tabs' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Reset the tabs' }));
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Reopen or reset tabs' }));
+  });
+
+  it('after Reopen from the "+" menu, focus lands on the reopened tab once it is active', () => {
+    const closed = normalizeTabs({ order: ids, closed: ['lights'] });
+    const { setTabs, rerender } = strip({ state: closed });
+    fireEvent.click(screen.getByRole('button', { name: 'Reopen or reset tabs' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /Lights/ }));
+    const next = setTabs.mock.calls[0][0] as TabState;
+    expect(next.closed).not.toContain('lights');
+    rerender({ state: next, activeTab: 'home' });
+    expect(document.activeElement?.closest('.tab a')).toBeNull();
+    rerender({ state: next, activeTab: 'lights' });
+    expect(document.activeElement).toBe(link('Lights'));
+  });
+
   it('after Close tab on another tab, focus goes back to where it was', () => {
     const { setTabs, rerender } = strip();
     link('Home').focus();
@@ -193,12 +214,31 @@ describe('TabStrip rail handle drag', () => {
     expect(handle.hasAttribute('data-pointer')).toBe(false);
   });
 
-  it('sets no mark for a right-button press', () => {
+  it('keeps the mark when a right-button press is followed by focus on the handle, without resizing or claiming the press', () => {
     useUi.setState({ tabPlacement: 'left' });
     strip({ placement: 'left' });
     const handle = screen.getByRole('separator', { name: 'Resize the tab rail' });
     handle.setPointerCapture = vi.fn();
-    fireEvent.pointerDown(handle, { pointerId: 1, clientX: 205, button: 2 });
+    const before = useUi.getState().tabRail.width;
+    expect(fireEvent.pointerDown(handle, { pointerId: 1, clientX: 205, button: 2 })).toBe(true);
+    handle.focus();
+    expect(handle.hasAttribute('data-pointer')).toBe(true);
+    fireEvent.pointerMove(handle, { pointerId: 1, clientX: 245 });
+    expect(useUi.getState().tabRail.width).toBe(before);
+  });
+
+  it('sets no mark when focus arrives with no recent press on the handle', () => {
+    vi.useFakeTimers();
+    useUi.setState({ tabPlacement: 'left' });
+    strip({ placement: 'left' });
+    const handle = screen.getByRole('separator', { name: 'Resize the tab rail' });
+    handle.setPointerCapture = vi.fn();
+    fireEvent.pointerDown(handle, { pointerId: 1, clientX: 205, button: 1 }); // a middle press does not focus
+    act(() => { vi.advanceTimersByTime(500); });
+    handle.focus(); // a later Tab-in
+    expect(handle.hasAttribute('data-pointer')).toBe(false);
+    handle.blur();
+    handle.focus(); // and a Tab-in with no press at all
     expect(handle.hasAttribute('data-pointer')).toBe(false);
   });
 

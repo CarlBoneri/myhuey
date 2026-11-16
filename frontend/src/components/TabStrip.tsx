@@ -155,14 +155,20 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
   };
 
   // The rail's inner edge: dragged with the pointer (live, snapping to icons on release), or moved by keys.
+  // When a press (any button) last landed on the handle: focus that follows it is pointer focus, any other focus is the keyboard's.
+  const pressedAt = useRef<number | null>(null);
+  const pressDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    pressedAt.current = performance.now();
+    dragRail(event);
+  };
   const dragRail = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!isResizePress(event, isMac())) return;
     const bar = event.currentTarget;
     // Claim the press: left alone, the browser starts a text selection and then a native drag of a tab, and cancels the resize.
     event.preventDefault();
-    // Focus from a pointer press is not keyboard focus: mark it, so the pill keeps its resting look once the pointer leaves.
-    bar.dataset.pointer = '';
-    bar.focus();
+    // The focus this gives is marked as pointer focus by the handle's onFocus; a handle that already has focus fires none, so it is marked here.
+    if (document.activeElement === bar) bar.dataset.pointer = '';
+    else bar.focus();
     bar.setPointerCapture(event.pointerId);
     const before = useUi.getState().tabRail;
     const startX = event.clientX;
@@ -281,13 +287,13 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
             {closed.map((tab) => {
               const Icon = tab.icon;
               return (
-                <button key={tab.id} type="button" role="menuitem" onClick={() => { setTabs(reopenTab(state, tab.id)); setMenu(null); go(tab.route); }}>
+                <button key={tab.id} type="button" role="menuitem" onClick={() => { setTabs(reopenTab(state, tab.id)); setMenu(null); refocusAfterMenu = { restore: null, waitFor: tab.id, at: Date.now() }; go(tab.route); }}>
                   <Icon size={13} aria-hidden="true" /> {tab.label}
                 </button>
               );
             })}
             {!closed.length && <p>No closed tabs. × on a tab closes it.</p>}
-            <button type="button" role="menuitem" onClick={() => { setTabs(DEFAULT_TABS); setMenu(null); }}><RotateCcw size={13} aria-hidden="true" /> Reset the tabs</button>
+            <button type="button" role="menuitem" onClick={() => { setTabs(DEFAULT_TABS); setMenu(null); plus.current?.focus(); }}><RotateCcw size={13} aria-hidden="true" /> Reset the tabs</button>
           </div>
         )}
       </span>
@@ -305,7 +311,13 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
       {!collapsed && (
         <div className={`splitter col rail-handle ${placement}`} role="separator" aria-orientation="vertical" aria-label="Resize the tab rail" tabIndex={0}
           aria-valuemin={RAIL_MIN} aria-valuemax={RAIL_MAX} aria-valuenow={tabRail.width}
-          title="Drag to resize · drag narrow to fold to icons · double-click to reset" onPointerDown={dragRail} onKeyDown={railKey} onBlur={(event) => { delete event.currentTarget.dataset.pointer; }}
+          title="Drag to resize · drag narrow to fold to icons · double-click to reset" onPointerDown={pressDown} onKeyDown={railKey} onBlur={(event) => { delete event.currentTarget.dataset.pointer; }}
+          onFocus={(event) => {
+            // Focus from a pointer press is not keyboard focus: mark it, so the pill keeps its resting look once the pointer leaves.
+            const at = pressedAt.current;
+            if (at !== null && performance.now() - at <= 100) event.currentTarget.dataset.pointer = '';
+            else delete event.currentTarget.dataset.pointer;
+          }}
           onDoubleClick={() => setTabRail({ width: RAIL_DEFAULT, collapsed: false })}><span /></div>
       )}
     </div>

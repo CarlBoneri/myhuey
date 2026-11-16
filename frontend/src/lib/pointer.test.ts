@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { isMac, isResizePress } from './pointer';
 
 describe('isResizePress', () => {
@@ -10,5 +10,19 @@ describe('isResizePress', () => {
 });
 
 describe('isMac', () => {
-  it('is false when there is no navigator', () => expect(typeof navigator === 'undefined' ? isMac() : false).toBe(false));
+  afterEach(() => vi.unstubAllGlobals());
+  it('is true for a Mac navigator.platform', () => {
+    vi.stubGlobal('navigator', { platform: 'MacIntel' });
+    expect(isMac()).toBe(true);
+  });
+  it('is false for a Windows navigator.platform', () => {
+    vi.stubGlobal('navigator', { platform: 'Win32' });
+    expect(isMac()).toBe(false);
+  });
+  it('prefers userAgentData.platform over navigator.platform', () => {
+    vi.stubGlobal('navigator', { platform: 'Win32', userAgentData: { platform: 'macOS' } });
+    expect(isMac()).toBe(true);
+    vi.stubGlobal('navigator', { platform: 'MacIntel', userAgentData: { platform: 'Windows' } });
+    expect(isMac()).toBe(false);
+  });
 });
