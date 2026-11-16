@@ -450,7 +450,7 @@ h1, h2, h3, h4 { margin: 0; font-weight: 600; letter-spacing: -0.01em; }
 .rail-shell .splitter.rail-handle { flex: 0 0 7px; width: 7px; user-select: none; -webkit-user-select: none; }
 .rail-shell .splitter.rail-handle span { width: 3px; }
 .rail-handle:focus-visible { outline: none; }
-.rail-handle:focus-visible span { background: var(--accent); }
+.rail-handle:focus-visible:not([data-pointer]) span { background: var(--accent); }
 .rail-toggle {
   position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 8px; flex: none; height: var(--rail-top-pin); padding: 8px 8px 0; border: 0; border-radius: 0;
   background: var(--rail-bg); color: var(--text-3); font: inherit; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer;

@@ -175,6 +175,33 @@ describe('TabStrip rail handle drag', () => {
     expect(useUi.getState().tabRail).toEqual({ width: 250, collapsed: false });
   });
 
+  it('marks the handle as pointer-focused after a mouse press, and clears the mark on the next key and on blur', () => {
+    useUi.setState({ tabPlacement: 'left' });
+    strip({ placement: 'left' });
+    const handle = screen.getByRole('separator', { name: 'Resize the tab rail' });
+    handle.setPointerCapture = vi.fn();
+    fireEvent.pointerDown(handle, { pointerId: 1, clientX: 205, button: 0 });
+    fireEvent.pointerUp(handle, { pointerId: 1, clientX: 205 });
+    expect(handle.hasAttribute('data-pointer')).toBe(true);
+    expect(document.activeElement).toBe(handle);
+    fireEvent.keyDown(handle, { key: 'ArrowRight' });
+    expect(handle.hasAttribute('data-pointer')).toBe(false);
+    fireEvent.pointerDown(handle, { pointerId: 2, clientX: 205, button: 0 });
+    fireEvent.pointerUp(handle, { pointerId: 2, clientX: 205 });
+    expect(handle.hasAttribute('data-pointer')).toBe(true);
+    fireEvent.blur(handle);
+    expect(handle.hasAttribute('data-pointer')).toBe(false);
+  });
+
+  it('sets no mark for a right-button press', () => {
+    useUi.setState({ tabPlacement: 'left' });
+    strip({ placement: 'left' });
+    const handle = screen.getByRole('separator', { name: 'Resize the tab rail' });
+    handle.setPointerCapture = vi.fn();
+    fireEvent.pointerDown(handle, { pointerId: 1, clientX: 205, button: 2 });
+    expect(handle.hasAttribute('data-pointer')).toBe(false);
+  });
+
   it('ignores a right-button press on the handle', () => {
     useUi.setState({ tabPlacement: 'left' });
     strip({ placement: 'left' });

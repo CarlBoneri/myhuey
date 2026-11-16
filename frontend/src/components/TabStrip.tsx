@@ -160,6 +160,8 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
     const bar = event.currentTarget;
     // Claim the press: left alone, the browser starts a text selection and then a native drag of a tab, and cancels the resize.
     event.preventDefault();
+    // Focus from a pointer press is not keyboard focus: mark it, so the pill keeps its resting look once the pointer leaves.
+    bar.dataset.pointer = '';
     bar.focus();
     bar.setPointerCapture(event.pointerId);
     const before = useUi.getState().tabRail;
@@ -177,7 +179,8 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
     bar.addEventListener('pointerup', stop);
     bar.addEventListener('pointercancel', stop);
   };
-  const railKey = (event: React.KeyboardEvent) => {
+  const railKey = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    delete event.currentTarget.dataset.pointer;
     // The edge faces the content: for a left rail, right widens it; for a right rail, left does.
     const wider = placement === 'left' ? 'ArrowRight' : 'ArrowLeft';
     const narrower = placement === 'left' ? 'ArrowLeft' : 'ArrowRight';
@@ -302,7 +305,7 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
       {!collapsed && (
         <div className={`splitter col rail-handle ${placement}`} role="separator" aria-orientation="vertical" aria-label="Resize the tab rail" tabIndex={0}
           aria-valuemin={RAIL_MIN} aria-valuemax={RAIL_MAX} aria-valuenow={tabRail.width}
-          title="Drag to resize · drag narrow to fold to icons · double-click to reset" onPointerDown={dragRail} onKeyDown={railKey}
+          title="Drag to resize · drag narrow to fold to icons · double-click to reset" onPointerDown={dragRail} onKeyDown={railKey} onBlur={(event) => { delete event.currentTarget.dataset.pointer; }}
           onDoubleClick={() => setTabRail({ width: RAIL_DEFAULT, collapsed: false })}><span /></div>
       )}
     </div>
