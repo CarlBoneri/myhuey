@@ -1,25 +1,32 @@
 // Every light, grouped by room. Click a light to adjust it; Cmd/Ctrl/Shift-click or tick several
-// (or a whole room) to change them together.
+// (or a whole room) to change them together. Save a pick as a named group (stored by myhuey, not on
+// the bridge); a group can also keep a look that ▶ puts back in one tap.
 import { useEffect, useMemo, useState } from 'react';
-import { Power, PowerOff, X } from 'lucide-react';
-import { useStore, sendLight } from '../store';
-import type { BridgeLight } from '../types';
+import { Check, Pencil, Play, Plus, Power, PowerOff, Save, Trash2, X } from 'lucide-react';
+import { api } from '../api';
+import { attempt, useStore, sendLight } from '../store';
+import type { BridgeLight, LightGroup } from '../types';
 import { LightControls } from '../components/LightControls';
 import { ColorPicker } from '../components/ColorPicker';
-import { Empty, HueIcon, Panel, Slider, Toggle } from '../components/ui';
+import { Empty, HueIcon, IconButton, Panel, Slider, TextInput, Toggle } from '../components/ui';
 import { formatLength } from '../lib/units';
 import { groupLightsByRoom } from '../lib/lights';
 import { kelvinToHex } from '../lib/color';
-import { groupState, pick, pickAll } from '../lib/selection';
+import { groupState, pick, pickAll, sameLights } from '../lib/selection';
 import { throttleLatest } from '../lib/throttle';
 
 export function LightsView() {
   const { lights, rooms, setup, lightsError } = useStore();
   const [selected, setSelected] = useState<string[]>([]);
+  const [saved, setSaved] = useState<LightGroup[]>([]);
+  const [groupId, setGroupId] = useState<string | null>(null);
+  const [naming, setNaming] = useState<string | null>(null);
+
+  useEffect(() => { void attempt(() => api.groups()).then((list) => list && setSaved(list)); }, []);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !(event.target instanceof HTMLInputElement)) setSelected([]);
+      if (event.key === 'Escape' && !(event.target instanceof HTMLInputElement)) { setSelected([]); setGroupId(null); }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -32,6 +39,24 @@ export function LightsView() {
     ([room, ids]) => [room, ids.map((id) => lights[id])] as [string, BridgeLight[]],
   );
   const picked = selected.map((id) => lights[id]).filter((light): light is BridgeLight => !!light);
+  const group = saved.find((item) => item.id === groupId) ?? null;
+  const replace = (next: LightGroup) => setSaved(saved.map((item) => (item.id === next.id ? next : item)));
+  const openGroup = (item: LightGroup) => { setGroupId(item.id); setSelected(item.lights.filter((id) => lights[id])); };
+  const applyLook = async (item: LightGroup) => {
+    const result = await attempt(() => api.applyGroup(item.id));
+    if (!result) return;
+    const failed = result.results.filter((r) => !r.ok);
+    useStore.getState().toast(failed.length
+      ? `${failed.length} light(s) in ${item.name} did not change: ${failed.map((r) => r.label).join(', ')}`
+      : `${item.name} is back the way you saved it.`, failed.length > 0);
+    await useStore.getState().refreshLights();
+  };
+  const saveSelection = async () => {
+    const name = (naming ?? '').trim();
+    if (!name) return;
+    const made = await attempt(() => api.createGroup(name, selected), `Saved the group ${name}.`);
+    if (made) { setSaved([...saved, made]); setGroupId(made.id); setNaming(null); }
+  };
 
   return (
     <div className="page lights">
@@ -46,6 +71,27 @@ export function LightsView() {
       </header>
       <div className="split">
         <div className="light-groups">
+          <div className="group-bar" role="group" aria-label="Saved groups">
+            {saved.map((item) => (
+              <span key={item.id} className={`group-chip${item.id === groupId ? ' active' : ''}`}>
+                <button type="button" onClick={() => openGroup(item)} title={`Select the ${item.lights.length} lights in ${item.name}`}>{item.name}</button>
+                {item.look && (
+                  <button type="button" className="group-play" aria-label={`Apply the look saved for ${item.name}`} title="Put these lights back the way they were saved"
+                    onClick={() => void applyLook(item)}><Play size={13} /></button>
+                )}
+              </span>
+            ))}
+            {naming === null ? (
+              <button type="button" className="button subtle small" disabled={!picked.length} onClick={() => setNaming('')}
+                title={picked.length ? 'Save the picked lights as a group' : 'Pick some lights first'}><Plus size={14} /> Save selection</button>
+            ) : (
+              <form className="group-name-form" onSubmit={(event) => { event.preventDefault(); void saveSelection(); }}>
+                <TextInput autoFocus value={naming} onChange={(e) => setNaming(e.target.value)} placeholder="Group name" aria-label="Group name" maxLength={60} />
+                <button type="submit" className="button small primary" disabled={!naming.trim()}>Save</button>
+                <button type="button" className="button small subtle" onClick={() => setNaming(null)}>Cancel</button>
+              </form>
+            )}
+          </div>
           <p className="hint">Click a light to adjust it. Tick several, or Cmd/Ctrl-click them, to change them together.</p>
           {groups.map(([room, list]) => {
             const ids = list.map((light) => light.id);
@@ -87,6 +133,10 @@ export function LightsView() {
           })}
         </div>
         <aside className="inspector">
+          {group && (
+            <GroupPanel key={group.id} group={group} selected={selected} onApply={() => void applyLook(group)} onChange={replace}
+              onDeleted={() => { setSaved(saved.filter((item) => item.id !== group.id)); setGroupId(null); }} />
+          )}
           {picked.length > 1 ? <GroupControls lights={picked} />
             : picked.length === 1 ? <Panel title="Light"><LightControls light={picked[0]} /></Panel>
               : <Panel title="Light"><p className="hint">Pick a light to change its brightness and color.</p></Panel>}
@@ -132,6 +182,62 @@ function GroupControls({ lights }: { lights: BridgeLight[] }) {
         <ColorPicker compact value={lights.find((light) => light.supports_color)?.color ?? '#ffffff'}
           onChange={paint} />
       )}
+    </Panel>
+  );
+}
+
+/** The current saved group: its look, its lights, its name. */
+function GroupPanel({ group, selected, onApply, onChange, onDeleted }: {
+  group: LightGroup; selected: string[]; onApply: () => void; onChange: (group: LightGroup) => void; onDeleted: () => void;
+}) {
+  const [name, setName] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const differs = selected.length > 0 && !sameLights(selected, group.lights);
+  const update = async (work: () => Promise<LightGroup>, message?: string) => {
+    const next = await attempt(work, message);
+    if (next) onChange(next);
+    return next;
+  };
+  return (
+    <Panel title={name === null ? group.name : 'Rename group'} actions={name === null && !confirming && (
+      <>
+        <IconButton label={`Rename ${group.name}`} onClick={() => setName(group.name)}><Pencil size={15} /></IconButton>
+        <IconButton label={`Delete ${group.name}`} danger onClick={() => setConfirming(true)}><Trash2 size={15} /></IconButton>
+      </>
+    )}>
+      {name !== null && (
+        <form className="group-name-form" onSubmit={async (event) => {
+          event.preventDefault();
+          if (name.trim() && (await update(() => api.updateGroup(group.id, { name: name.trim() })))) setName(null);
+        }}>
+          <TextInput autoFocus value={name} onChange={(e) => setName(e.target.value)} aria-label="Group name" maxLength={60} />
+          <IconButton label="Save the name" onClick={async () => { if (name.trim() && (await update(() => api.updateGroup(group.id, { name: name.trim() })))) setName(null); }}><Check size={15} /></IconButton>
+          <IconButton label="Cancel renaming" onClick={() => setName(null)}><X size={15} /></IconButton>
+        </form>
+      )}
+      {confirming && (
+        <div className="inline-confirm">
+          <span>Delete {group.name}? Your lights are not changed.</span>
+          <button type="button" className="button small danger" onClick={async () => {
+            if (await attempt(() => api.deleteGroup(group.id), `Deleted ${group.name}.`)) onDeleted();
+          }}>Yes</button>
+          <button type="button" className="button small subtle" onClick={() => setConfirming(false)}>No</button>
+        </div>
+      )}
+      <p className="hint">{group.lights.length} lights · {group.look ? 'a look is saved' : 'no look saved yet'}</p>
+      <div className="button-row">
+        {group.look && <button type="button" className="button primary" onClick={onApply}><Play size={15} /> Apply look</button>}
+        <button type="button" className="button" onClick={() => void update(() => api.saveGroupLook(group.id), `Saved how ${group.name} looks now.`)}>
+          <Save size={15} /> {group.look ? 'Save current look again' : 'Save current look'}
+        </button>
+        {group.look && <button type="button" className="button subtle" onClick={() => void update(() => api.clearGroupLook(group.id))}>Clear look</button>}
+      </div>
+      {differs && (
+        <button type="button" className="button subtle" onClick={() => void update(() => api.updateGroup(group.id, { lights: selected }), `${group.name} now has ${selected.length} lights.`)}>
+          Update lights to this selection ({selected.length})
+        </button>
+      )}
+      <p className="hint">A look keeps each light's on/off, brightness, and color, so ▶ puts them all back in one tap.</p>
     </Panel>
   );
 }

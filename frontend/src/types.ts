@@ -298,3 +298,11 @@ export interface LayoutSummary {
   scenes: number;
   updated: number | null;
 }
+
+/** A saved light group (app-wide). Its look, when saved, puts each light back as it was. */
+export interface LightGroup {
+  id: string;
+  name: string;
+  lights: string[];
+  look: Record<string, { on: boolean; bri?: number; xy?: [number, number]; ct?: number; gradient?: { colors: string[]; mode: string | null } }> | null;
+}
