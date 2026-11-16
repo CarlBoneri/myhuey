@@ -20,7 +20,7 @@ across rooms, which scenes (one room each) can't do.
   light ID to its state:
   - `on`
   - `bri` (1–254)
-  - one of `xy`, `kelvin` or `gradient` (`{colors, mode}`)
+  - one of `xy`, `ct` (mired) or `gradient` (`{colors, mode}`)
 - **Lights tab:**
   - A Groups row of buttons. Clicking a group selects its lights; ▶ appears when the group has a
     look and applies it.
@@ -73,11 +73,11 @@ across rooms, which scenes (one room each) can't do.
 - **What a look keeps from each light** (read as on/off, brightness, then colour):
   - On/off and brightness come from the bridge's v1 state.
   - Colour is kept as a 2+ point gradient (from v2) if the light has one; otherwise as `xy` when
-    the colour mode is xy or hs; otherwise as `kelvin` when the colour mode is ct.
+    the colour mode is xy or hs; otherwise as `ct` (the bridge's exact mired value; kelvin rounds to 100 K and would drift) when the colour mode is ct.
   - A light that is off keeps only `on: false`.
 - **Applying a look:**
   - A light that was off is turned off.
-  - Otherwise the light gets one v1 command with on, brightness and xy or kelvin.
+  - Otherwise the light gets one v1 command with on, brightness and xy or ct.
   - A gradient light then also gets its gradient set.
 - **Pure helpers** live in a new `light_groups.py`: validation, capture from raw state, and turning
   a look into commands.
