@@ -973,3 +973,9 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .group-name-form { display: inline-flex; align-items: center; gap: 6px; }
 .group-name-form .input { width: 180px; }
 .inline-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); }
+
+/* Settings: the theme picker and its palette */
+.theme-pick { display: inline-flex; align-items: center; gap: 10px; }
+.theme-select { min-width: 170px; }
+.theme-swatches { display: inline-flex; gap: 3px; }
+.theme-swatches span { width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--swatch-ring); }

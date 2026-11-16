@@ -106,11 +106,19 @@ function PreferenceRow({ label, hint, children }: { label: string; hint?: string
 function ThemeSelect({ label, value, onChange, kind, withSystem = false }: {
   label: string; value: string; onChange: (value: Theme) => void; kind?: 'dark' | 'light'; withSystem?: boolean;
 }) {
+  const shown = THEMES.find((t) => t.id === value);
   return (
-    <select className="input theme-select" aria-label={label} value={value} onChange={(e) => onChange(e.target.value as Theme)}>
-      {withSystem && <option value="system">System</option>}
-      {THEMES.filter((t) => !kind || t.kind === kind).map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
-    </select>
+    <span className="theme-pick">
+      <select className="input theme-select" aria-label={label} value={value} onChange={(e) => onChange(e.target.value as Theme)}>
+        {withSystem && <option value="system">System</option>}
+        {THEMES.filter((t) => !kind || t.kind === kind).map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+      </select>
+      {shown && (
+        <span className="theme-swatches" aria-hidden="true">
+          {shown.swatches.map((color) => <span key={color} style={{ background: color }} />)}
+        </span>
+      )}
+    </span>
   );
 }
 
