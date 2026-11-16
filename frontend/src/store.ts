@@ -3,7 +3,7 @@ import { API_VERSION, api, onLayoutGone, setOpenLayout } from './api';
 import { isMissingLayout, readStoredLayout, storeLayout } from './lib/layout';
 import { readCachedTheme } from './lib/theme';
 import type { Preferences } from './types';
-import type { BridgeLight, HomePlan, LayoutSummary, ProfileTable, Room, Scene, SetupStatus } from './types';
+import type { BridgeLight, HomePlan, LayoutSummary, LightGroup, ProfileTable, Room, Scene, SetupStatus } from './types';
 
 export interface Toast { id: number; message: string; error: boolean }
 
@@ -25,6 +25,14 @@ interface State {
   preferences: Preferences;
   profiles: ProfileTable | null;
   toasts: Toast[];
+  /** Saved light groups (app-wide, not part of any layout). */
+  groups: LightGroup[];
+  loadGroups: () => Promise<void>;
+  createGroup: (name: string, lights: string[]) => Promise<LightGroup | undefined>;
+  updateGroup: (id: string, changes: { name?: string; lights?: string[] }) => Promise<LightGroup | undefined>;
+  saveGroupLook: (id: string) => Promise<LightGroup | undefined>;
+  clearGroupLook: (id: string) => Promise<LightGroup | undefined>;
+  deleteGroup: (id: string) => Promise<boolean>;
   load: () => Promise<void>;
   refreshLights: () => Promise<void>;
   refreshRooms: () => Promise<void>;
@@ -67,6 +75,43 @@ export const useStore = create<State>((set, get) => ({
   preferences: DEFAULT_PREFERENCES,
   profiles: null,
   toasts: [],
+  groups: [],
+
+  // Every change merges into the list as it is when the answer arrives, never as it was when the
+  // request left: a slow look save must not undo a group made in the meantime.
+  async loadGroups() {
+    try {
+      const groups = await api.groups();
+      set({ groups });
+    } catch (error) {
+      get().toast((error as Error).message);
+    }
+  },
+
+  async createGroup(name, lights) {
+    const made = await groupCall(() => api.createGroup(name, lights));
+    if (made) set((state) => ({ groups: [...state.groups.filter((g) => g.id !== made.id), made] }));
+    return made;
+  },
+
+  async updateGroup(id, changes) {
+    return replaceGroup(await groupCall(() => api.updateGroup(id, changes)));
+  },
+
+  async saveGroupLook(id) {
+    return replaceGroup(await groupCall(() => api.saveGroupLook(id)));
+  },
+
+  async clearGroupLook(id) {
+    return replaceGroup(await groupCall(() => api.clearGroupLook(id)));
+  },
+
+  async deleteGroup(id) {
+    const done = await groupCall(() => api.deleteGroup(id));
+    if (done === undefined) return false;
+    set((state) => ({ groups: state.groups.filter((g) => g.id !== id) }));
+    return true;
+  },
 
   async load() {
     try {
@@ -254,4 +299,18 @@ export async function attempt<T>(work: () => Promise<T>, success?: string): Prom
     if (!isMissingLayout(error)) useStore.getState().toast((error as Error).message); // reported by the API client
     return undefined;
   }
+}
+
+async function groupCall<T>(work: () => Promise<T>): Promise<T | undefined> {
+  try {
+    return await work();
+  } catch (error) {
+    useStore.getState().toast((error as Error).message);
+    return undefined;
+  }
+}
+
+function replaceGroup(next: LightGroup | undefined): LightGroup | undefined {
+  if (next) useStore.setState((state) => ({ groups: state.groups.map((g) => (g.id === next.id ? next : g)) }));
+  return next;
 }

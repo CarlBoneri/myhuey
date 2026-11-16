@@ -70,3 +70,8 @@ class LayoutChanged(HueError):
 
     def __init__(self) -> None:
         super().__init__("The active layout just changed. Reload and try again.")
+
+
+class GroupNotFound(HueError, LookupError):
+    def __init__(self, key: str) -> None:
+        super().__init__(f"Group '{key}' not found")

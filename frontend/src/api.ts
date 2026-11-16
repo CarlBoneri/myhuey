@@ -1,7 +1,7 @@
 import type { BridgeInfo } from './lib/setupFlow';
 import { MISSING_LAYOUT, layoutHeaders } from './lib/layout';
 import type { Preferences } from './types';
-import type { LayoutSummary } from './types';
+import type { LayoutSummary, LightGroup } from './types';
 import type { CatalogItem, HueSceneSet, HomePlan, Placement, Opening, ImageLayer, Mood, PaletteEntry, Setup, PinnableRole, ProfileTable, Room, Scene, SceneResult, SetupStatus, Suggestion, Swatch, BridgeLight, Furniture, PhotoSpot, Pt } from './types';
 
 export class ApiError extends Error {
@@ -158,6 +158,15 @@ export const api = {
     const query = new URLSearchParams(Object.entries(params).filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => [k, String(v)]));
     return call<PaletteEntry[]>(`/api/palettes?${query}`);
   },
+  groups: () => call<LightGroup[]>('/api/groups'),
+  createGroup: (name: string, lights: string[]) => call<LightGroup>('/api/groups', { method: 'POST', json: { name, lights } }),
+  updateGroup: (id: string, changes: { name?: string; lights?: string[] }) =>
+    call<LightGroup>(`/api/groups/${encodeURIComponent(id)}`, { method: 'PATCH', json: changes }),
+  deleteGroup: (id: string) => call(`/api/groups/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  saveGroupLook: (id: string) => call<LightGroup>(`/api/groups/${encodeURIComponent(id)}/look`, { method: 'PUT' }),
+  clearGroupLook: (id: string) => call<LightGroup>(`/api/groups/${encodeURIComponent(id)}/look`, { method: 'DELETE' }),
+  applyGroup: (id: string) =>
+    call<{ results: { light_id: string; label: string; ok: boolean; error?: string }[]; failed: number }>(`/api/groups/${encodeURIComponent(id)}/apply`, { method: 'POST' }),
   applyScene: (id: string, activeOnly = false) =>
     call<{ results: SceneResult[]; failed: number }>(`/api/scenes/${id}/apply`, { method: 'POST', activeOnly }),
 };

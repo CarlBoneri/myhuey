@@ -28,3 +28,12 @@ describe('a group of lights', () => {
     expect(groupState([light(true, null)])).toMatchObject({ dimmable: false, brightness: null });
   });
 });
+
+describe('same lights', () => {
+  it('ignores order and repeats', async () => {
+    const { sameLights } = await import('./selection');
+    expect(sameLights(['1', '2'], ['2', '1', '1'])).toBe(true);
+    expect(sameLights(['1', '2'], ['1'])).toBe(false);
+    expect(sameLights([], [])).toBe(true);
+  });
+});

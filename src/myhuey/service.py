@@ -16,7 +16,7 @@ from typing import Any, Callable
 
 from .color import hex_to_rgb, light_state_to_hex, mired_to_color_temperature, rgb_to_xy, xy_to_hex, xy_to_kelvin
 from .discovery import discover
-from .errors import BridgeNotConfigured, BridgeUnreachable, HueError, LayoutChanged, LayoutNotFound, RoomNotFound, SceneNotFound
+from .errors import BridgeNotConfigured, BridgeUnreachable, GroupNotFound, HueError, LayoutChanged, LayoutNotFound, RoomNotFound, SceneNotFound
 from .geometry import rectangle
 from .hue import HueBridgeClient
 from .images import ImageSampler, extract_palette, image_path, prune_unreferenced, store_image
@@ -30,6 +30,7 @@ from .suggest import suggest as suggest_scenes
 from .shapes import profile_for
 from .layout_store import backup_layout, delete_layout, list_layouts, load_layout, save_layout, swap_active
 from .layouts import HOME_KEYS, clean_name, current_layout, ensure_identity, using_layout
+from .light_groups import capture_look, clean_group_name, clean_light_ids, look_commands
 from .migrations import CURRENT_VERSION, migrate
 from .storage import DEFAULT_STORAGE_PATH, load_config, save_config, uploads_dir
 from .tls import pin_certificate, pinned_bridge_id
@@ -381,6 +382,101 @@ class HueRoomService:
             raise ValueError(f"Light {light_id} does not support the effect '{effect}' (it supports: {', '.join(effects['values'])})")
         self.client().set_v2_light(info["rid"], {"effects": {"effect": effect}})
         self._v2_loaded = 0.0
+
+    # Saved light groups: app-wide (outside HOME_KEYS), so every layout sees the same ones.
+
+    def _groups(self, config: dict[str, Any]) -> list[dict[str, Any]]:
+        groups = config.get("groups")
+        if not isinstance(groups, list):
+            groups = config["groups"] = []
+        return groups
+
+    def _group(self, config: dict[str, Any], key: str) -> dict[str, Any]:
+        text = str(key or "").strip()
+        for group in self._groups(config):
+            if group.get("id") == text or str(group.get("name", "")).casefold() == text.casefold():
+                return group
+        raise GroupNotFound(text)
+
+    def _check_group_name(self, config: dict[str, Any], name: str, own_id: str | None = None) -> str:
+        cleaned = clean_group_name(name)
+        if any(g.get("id") != own_id and str(g.get("name", "")).casefold() == cleaned.casefold() for g in self._groups(config)):
+            raise ValueError(f"A group named '{cleaned}' already exists")
+        return cleaned
+
+    def groups(self) -> list[dict[str, Any]]:
+        return [dict(group) for group in self._groups(self._load())]
+
+    def create_group(self, name: str, lights: list[str]) -> dict[str, Any]:
+        config = self._load()
+        group = {"id": new_id(), "name": self._check_group_name(config, name), "lights": clean_light_ids(lights), "look": None}
+        self._groups(config).append(group)
+        self._save(config)
+        return dict(group)
+
+    def update_group(self, key: str, *, name: str | None = None, lights: list[str] | None = None) -> dict[str, Any]:
+        config = self._load()
+        group = self._group(config, key)
+        if name is not None:
+            group["name"] = self._check_group_name(config, name, group["id"])
+        if lights is not None:
+            group["lights"] = clean_light_ids(lights)
+            if group.get("look"):  # a look only ever covers the group's own lights
+                group["look"] = {lid: state for lid, state in group["look"].items() if lid in group["lights"]} or None
+        self._save(config)
+        return dict(group)
+
+    def delete_group(self, key: str) -> None:
+        config = self._load()
+        group = self._group(config, key)
+        config["groups"] = [g for g in self._groups(config) if g is not group]
+        self._save(config)
+
+    def save_group_look(self, key: str) -> dict[str, Any]:
+        """Remember what each of the group's lights shows right now."""
+        lights = self._group(self._load(), key)["lights"]
+        raw = self.client().get_lights()
+        look = capture_look(raw, self.v2_index(refresh=True), lights)
+        config = self._load()
+        group = self._group(config, key)
+        group["look"] = look or None
+        self._save(config)
+        return dict(group)
+
+    def clear_group_look(self, key: str) -> dict[str, Any]:
+        config = self._load()
+        group = self._group(config, key)
+        group["look"] = None
+        self._save(config)
+        return dict(group)
+
+    @_one_bridge_write
+    def apply_group(self, key: str, *, pause: float | None = None) -> list[dict[str, Any]]:
+        """Put the group's lights back the way its saved look has them, one light at a time.
+        A light that fails, or is gone from the bridge, does not stop the rest."""
+        group = self._group(self._load(), key)
+        if not group.get("look"):
+            raise ValueError(f"The group '{group['name']}' has no saved look yet")
+        pause = self._command_gap() if pause is None else pause
+        client = self.client()
+        raw = client.get_lights()
+        commands, skipped = look_commands(group["look"], set(raw))
+        results: list[dict[str, Any]] = []
+        for light_id in skipped:
+            results.append({"light_id": light_id, "label": f"Light {light_id}", "ok": False, "error": f"Light {light_id} is no longer on the bridge"})
+        for command in commands:
+            light_id = command["light_id"]
+            result: dict[str, Any] = {"light_id": light_id, "label": raw[light_id].get("name") or f"Light {light_id}", "ok": True}
+            try:
+                client.set_light_color(light_id, **command["v1"])
+                if command["gradient"]:
+                    self.set_gradient(light_id, command["gradient"]["colors"], command["gradient"].get("mode"))
+            except (HueError, ValueError) as exc:
+                result.update(ok=False, error=str(exc))
+            results.append(result)
+            if pause:
+                self.sleep(pause)
+        return results
 
     # Rooms
 

@@ -27,3 +27,10 @@ export function groupState(lights: BridgeLight[]) {
     colorTemp: lights.some((light) => light.supports_color_temp),
   };
 }
+
+/** Whether two lists name the same lights, whatever the order or repeats. */
+export function sameLights(a: string[], b: string[]): boolean {
+  const left = new Set(a);
+  const right = new Set(b);
+  return left.size === right.size && [...left].every((id) => right.has(id));
+}

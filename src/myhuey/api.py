@@ -14,7 +14,8 @@ from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field, StrictInt
 
-from .errors import BridgeNotConfigured, HueError, LayoutChanged, LayoutNotFound, LinkButtonNotPressed, PairingInProgress, RoomNotFound, SceneNotFound
+from .errors import BridgeNotConfigured, GroupNotFound, HueError, LayoutChanged, LayoutNotFound, LinkButtonNotPressed, PairingInProgress, RoomNotFound, SceneNotFound
+from .light_groups import MAX_GROUP_LIGHTS, MAX_GROUP_NAME
 from .layouts import MAX_NAME, using_layout
 from .hue import COLLECTIONS, PAIRING_WINDOW, HueBridgeClient
 from .images import MAX_UPLOAD_BYTES, media_type
@@ -92,6 +93,16 @@ class LayoutRename(Body):
     name: str = Field(..., max_length=MAX_NAME + 20)
 
 
+class GroupCreate(Body):
+    name: str = Field(..., max_length=MAX_GROUP_NAME + 20)  # trimmed and checked by the service
+    lights: list[str] = Field(..., max_length=MAX_GROUP_LIGHTS * 2)
+
+
+class GroupUpdate(Body):
+    name: str | None = Field(None, max_length=MAX_GROUP_NAME + 20)
+    lights: list[str] | None = Field(None, max_length=MAX_GROUP_LIGHTS * 2)
+
+
 class LayoutMiddleware:
     """Open the layout named by the X-Myhuey-Layout header for the rest of the request.
 
@@ -106,7 +117,8 @@ class LayoutMiddleware:
 
     async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
         path = scope.get("path", "") if scope["type"] == "http" else ""
-        if not path.startswith("/api/") or path.startswith("/api/layouts"):
+        # Layouts and light groups are app-wide: a stale or deleted sandbox never blocks them.
+        if not path.startswith("/api/") or path.startswith(("/api/layouts", "/api/groups")):
             await self.app(scope, receive, send)
             return
         named = dict(scope.get("headers") or []).get(b"x-myhuey-layout", b"").decode("latin-1").strip()
@@ -235,7 +247,7 @@ class EffectChange(BaseModel):
 
 
 def _status_for(exc: Exception) -> int:
-    if isinstance(exc, (RoomNotFound, SceneNotFound, LayoutNotFound)):
+    if isinstance(exc, (RoomNotFound, SceneNotFound, LayoutNotFound, GroupNotFound)):
         return 404
     if isinstance(exc, (LinkButtonNotPressed, PairingInProgress, LayoutChanged)):
         return 409
@@ -559,6 +571,38 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
     def apply_scene(scene_id: str) -> dict[str, Any]:
         results = service.apply_scene(scene_id)
         return {"results": results, "failed": sum(1 for item in results if item.get("error"))}
+
+    # Saved light groups (app-wide)
+
+    @app.get("/api/groups")
+    def list_groups() -> list[dict[str, Any]]:
+        return service.groups()
+
+    @app.post("/api/groups")
+    def create_group(body: GroupCreate) -> dict[str, Any]:
+        return service.create_group(body.name, body.lights)
+
+    @app.patch("/api/groups/{group_id}")
+    def update_group(group_id: str, body: GroupUpdate) -> dict[str, Any]:
+        return service.update_group(group_id, name=body.name, lights=body.lights)
+
+    @app.delete("/api/groups/{group_id}")
+    def delete_group(group_id: str) -> dict[str, str]:
+        service.delete_group(group_id)
+        return {"deleted": group_id}
+
+    @app.put("/api/groups/{group_id}/look")
+    def save_group_look(group_id: str) -> dict[str, Any]:
+        return service.save_group_look(group_id)
+
+    @app.delete("/api/groups/{group_id}/look")
+    def clear_group_look(group_id: str) -> dict[str, Any]:
+        return service.clear_group_look(group_id)
+
+    @app.post("/api/groups/{group_id}/apply")
+    def apply_group(group_id: str) -> dict[str, Any]:
+        results = service.apply_group(group_id)
+        return {"results": results, "failed": sum(1 for item in results if not item.get("ok"))}
 
     # Lights and other bridge resources
 

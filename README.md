@@ -33,7 +33,7 @@ For UI development, run `myhuey serve` and `npm --prefix frontend run dev` toget
 - **Home** is for everyday control: on/off and brightness for every room, and a tile per room showing what's on and its colours. The **⋮** on a tile offers eye-comfort suggestions for right now and the room's saved scenes, one tap each. Click a tile to open that room's **workbench** (each light, the room's scenes, and the full suggestions).
 - **Studio** is for building: saved layouts and sandboxes, the floor-plan image, tracing and drawing rooms, and each room's designer (outline, furniture, doors and windows, light placement, and the room photo).
 - **Scenes** lists every scene and makes new ones from images, colours, or the Hue gallery.
-- **Lights** lists every light. Tick several, or Cmd/Ctrl-click them, to change them together.
+- **Lights** lists every light. Tick several, or Cmd/Ctrl-click them, to change them together. **Save selection** keeps the pick as a named group (stored by myhuey, not on the bridge); **Save current look** on a group remembers each light's on/off, brightness, and color, and **▶** puts them all back in one tap. From the terminal: `myhuey groups list`, `myhuey groups new --name Desk --lights 1,2`, `myhuey groups save-look Desk`, `myhuey groups apply Desk`.
 - **Settings** holds the bridge pairing and your preferences.
 
 ## Suggested scenes

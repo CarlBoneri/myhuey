@@ -99,6 +99,15 @@ def build_parser() -> argparse.ArgumentParser:
     layouts.add_argument("--name", help="Name for duplicate and rename")
     layouts.set_defaults(handler=handle_layouts)
 
+    groups = subparsers.add_parser(
+        "groups", help="Saved light groups: named sets of lights, with an optional saved look to put back in one go"
+    )
+    groups.add_argument("action", choices=["list", "new", "rename", "delete", "save-look", "clear-look", "apply"])
+    groups.add_argument("group", nargs="?", metavar="NAME_OR_ID", help="The group (not needed for list and new)")
+    groups.add_argument("--name", help="Name for new and rename")
+    groups.add_argument("--lights", help="Light IDs for new, comma separated, for example 1,2,5")
+    groups.set_defaults(handler=handle_groups)
+
     prefs = subparsers.add_parser("prefs", help="Show or change app preferences (shared with the web app)")
     prefs.add_argument("action", choices=["show", "set"])
     prefs.add_argument("--key", help="Preference name, for set")
@@ -312,6 +321,47 @@ def handle_layouts(args: argparse.Namespace) -> int:
         name = next(entry["name"] for entry in service.layouts() if entry["id"] == layout_id)
         service.delete_layout(layout_id)
         print(f"Deleted {name}.")
+    return 0
+
+
+def _group_line(group: dict[str, Any]) -> str:
+    look = "look saved" if group.get("look") else "no look"
+    return f"{group['name']} · {len(group['lights'])} lights ({', '.join(group['lights'])}) · {look} · {group['id']}"
+
+
+def handle_groups(args: argparse.Namespace) -> int:
+    service = HueRoomService(args.db)
+    if args.action == "list":
+        listed = service.groups()
+        print("\n".join(_group_line(group) for group in listed) if listed else "No groups yet.")
+        return 0
+    if args.action == "new":
+        if not args.name or not args.lights:
+            raise ValueError("`groups new` needs --name and --lights")
+        print(f"Saved {service.create_group(args.name, args.lights.split(','))['name']}.")
+        return 0
+    if not args.group:
+        raise ValueError(f"`groups {args.action}` needs a group name or ID")
+    if args.action == "rename":
+        if not args.name:
+            raise ValueError("`groups rename` needs --name")
+        print(f"Renamed to {service.update_group(args.group, name=args.name)['name']}.")
+    elif args.action == "delete":
+        service.delete_group(args.group)
+        print(f"Deleted {args.group}.")
+    elif args.action == "save-look":
+        group = service.save_group_look(args.group)
+        print(f"Saved how the {len(group.get('look') or {})} lights in {group['name']} look now.")
+    elif args.action == "clear-look":
+        print(f"Cleared the look for {service.clear_group_look(args.group)['name']}.")
+    else:
+        results = service.apply_group(args.group)
+        ok = sum(1 for item in results if item["ok"])
+        print(f"{ok} lights set.")
+        for item in results:
+            if not item["ok"]:
+                print(f"  {item['label']}: {item.get('error')}", file=sys.stderr)
+        return 0 if ok == len(results) else 1
     return 0
 
 
@@ -733,7 +783,7 @@ def _elevation_arg(text: str | None, units: str) -> float | str | None:
 def main(argv: Sequence[str] | None = None) -> None:
     args = build_parser().parse_args(argv)
     try:
-        if args.layout and args.command != "layouts":
+        if args.layout and args.command not in ("layouts", "groups"):  # both are app-wide
             service = HueRoomService(args.db)
             with using_layout(service.sandbox_id(service.resolve_layout(args.layout))):
                 code = args.handler(args)
