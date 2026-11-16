@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pencil, Play, Plus, Trash2 } from 'lucide-react';
 import { api } from '../api';
 import { attempt, useStore } from '../store';
 import { go } from '../lib/router';
 import { bounds, pathOf } from '../lib/geometry';
-import type { Room, Scene } from '../types';
+import type { HueSceneSet, Room, Scene } from '../types';
 import { Empty, Field, Panel, TextInput } from '../components/ui';
 
 export function ScenePreview({ scene, room }: { scene: Scene; room: Room | undefined }) {
@@ -113,8 +113,43 @@ export function ScenesView() {
             </Field>
             <button type="button" className="button primary" onClick={create}><Plus size={16} /> Create scene</button>
           </Panel>
+          <HueGalleryPanel room={room} />
         </aside>
       </div>
     </div>
+  );
+}
+
+/** Recreate a scene from the Hue app's gallery in a room, then fine-tune it like any scene. */
+function HueGalleryPanel({ room }: { room: string }) {
+  const { refreshScenes } = useStore();
+  const [sets, setSets] = useState<HueSceneSet[]>([]);
+  const [setName, setSetName] = useState('Cozy');
+  const [sceneName, setSceneName] = useState('');
+  useEffect(() => { api.hueScenes().then(setSets).catch(() => setSets([])); }, []);
+  const group = sets.find((s) => s.name === setName);
+  const chosen = group?.scenes.find((s) => s.name === sceneName) ?? group?.scenes[0];
+  return (
+    <Panel title="From the Hue gallery">
+      <p className="hint">The scenes from the Hue app, laid out over your room. Defaults are whites; the rest spread their colors around the room.</p>
+      <Field label="Set">
+        <select className="input" value={setName} onChange={(e) => { setSetName(e.target.value); setSceneName(''); }}>
+          {sets.map((s) => <option key={s.name} value={s.name}>{s.name}</option>)}
+        </select>
+      </Field>
+      <Field label="Scene">
+        <select className="input" value={chosen?.name ?? ''} onChange={(e) => setSceneName(e.target.value)}>
+          {group?.scenes.map((s) => <option key={s.name} value={s.name}>{s.name}</option>)}
+        </select>
+      </Field>
+      {chosen && <div className="palette-strip" aria-label="Scene colors">{chosen.colors.map((c, i) => <span key={i} style={{ background: c }} />)}</div>}
+      <button type="button" className="button" disabled={!chosen || !room} onClick={async () => {
+        if (!chosen) return;
+        const made = await attempt(() => api.hueScene(room, setName, chosen.name));
+        if (!made) return;
+        const saved = await attempt(() => api.createScene(made.scene), `Added “${made.scene.name}”.`);
+        if (saved) { await refreshScenes(); go({ view: 'scene', id: saved.id }); }
+      }}><Plus size={16} /> Add to {room || 'a room'}</button>
+    </Panel>
   );
 }

@@ -1,6 +1,6 @@
 import type { BridgeInfo } from './lib/setupFlow';
 import type { Preferences } from './types';
-import type { CatalogItem, HomePlan, Placement, Opening, ImageLayer, Mood, PaletteEntry, Setup, PinnableRole, ProfileTable, Room, Scene, SceneResult, SetupStatus, Suggestion, Swatch, BridgeLight, Furniture, PhotoSpot, Pt } from './types';
+import type { CatalogItem, HueSceneSet, HomePlan, Placement, Opening, ImageLayer, Mood, PaletteEntry, Setup, PinnableRole, ProfileTable, Room, Scene, SceneResult, SetupStatus, Suggestion, Swatch, BridgeLight, Furniture, PhotoSpot, Pt } from './types';
 
 export class ApiError extends Error {
   constructor(message: string, readonly status: number) {
@@ -107,6 +107,9 @@ export const api = {
   deleteScene: (id: string) => call(`/api/scenes/${id}`, { method: 'DELETE' }),
   preview: (scene: Partial<Scene> & { image: ImageLayer | null }) =>
     call<SceneResult[]>('/api/scenes/preview', { method: 'POST', json: scene }),
+  hueScenes: () => call<HueSceneSet[]>('/api/hue-scenes'),
+  hueScene: (name: string, set: string, scene: string) =>
+    call<{ scene: Scene; preview: SceneResult[] }>(`${room(name)}/hue-scenes`, { method: 'POST', json: { set, name: scene } }),
   catalog: () => call<CatalogItem[]>('/api/catalog'),
   addPlannedLight: (name: string, body: { catalog: string; x: number; y: number; label?: string; rotation?: number; elevation?: number | 'auto' }) =>
     call<Placement>(`${room(name)}/planned-lights`, { method: 'POST', json: body }),

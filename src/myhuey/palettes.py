@@ -240,8 +240,17 @@ def from_dict(data: dict[str, Any]) -> Palette:
 
 @lru_cache(maxsize=1)
 def _library() -> tuple[Palette, ...]:
+    from .hue_scenes import as_palettes
+
     text = resources.files("myhuey.data").joinpath("palettes.json").read_text(encoding="utf-8")
-    return tuple(from_dict(item) for item in json.loads(text))
+    shipped = [from_dict(item) for item in json.loads(text)]
+    # The Hue gallery's color scenes join as they are (only near-black and neon colors drop out).
+    hue = []
+    for item in as_palettes():
+        colors = clean(item["colors"])
+        if len(colors) >= MIN_COLORS:
+            hue.append(from_dict({**item, "colors": colors, "tags": tag(colors)}))
+    return tuple(hue + shipped)
 
 
 def load() -> list[Palette]:

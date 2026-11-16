@@ -1,6 +1,7 @@
 /** Pure helpers for the Suggest panel. */
 
 export interface PaletteCredit {
+  set?: string;
   scheme?: string;
   by?: string;
   author?: string;
@@ -27,6 +28,9 @@ export function cardTitle(mode: string, palette: { name: string }): string {
 export function creditText(palette: { source: string; credit: PaletteCredit }): string {
   const { credit } = palette;
   if (palette.source === 'colourlovers' && credit.author) return `Palette by ${credit.author} on COLOURlovers (CC BY-NC-SA 3.0)`;
+  if (palette.source === 'hue' && credit.set) {
+    return `A Hue app scene from the “${credit.set}” set (values recorded by Hypfer and coderph0x)`;
+  }
   if (palette.source === 'd3' && credit.scheme) {
     return `${credit.scheme === 'CubehelixDefault' ? 'Cubehelix' : credit.scheme} scheme by ${credit.by ?? 'd3-scale-chromatic'}${credit.license ? ` (${credit.license})` : ''}`;
   }

@@ -124,6 +124,11 @@ export interface RoomPhoto {
   floor_transform?: { photo: Pt[]; plan: Pt[] } | null;
 }
 
+export interface HueSceneSet {
+  name: string;
+  scenes: { name: string; bri: number; colors: string[] }[];
+}
+
 export interface CatalogItem {
   id: string;
   label: string;
@@ -227,7 +232,7 @@ export interface PaletteEntry {
   colors: string[];
   tags: string[];
   source: 'colourlovers' | 'met' | 'generated' | string;
-  credit: { author?: string; title?: string; artist?: string; url?: string; license?: string; scheme?: string; by?: string };
+  credit: { author?: string; title?: string; artist?: string; url?: string; license?: string; scheme?: string; by?: string; set?: string };
 }
 
 export interface Suggestion {

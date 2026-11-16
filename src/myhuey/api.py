@@ -17,6 +17,7 @@ from .errors import BridgeNotConfigured, HueError, LinkButtonNotPressed, Pairing
 from .hue import COLLECTIONS, PAIRING_WINDOW, HueBridgeClient
 from .images import MAX_UPLOAD_BYTES, media_type
 from .catalog import CATALOG
+from .hue_scenes import gallery
 from .models import Room
 from .palette import MOODS
 from .palettes import search as search_palettes
@@ -144,6 +145,11 @@ class SetupRequest(Body):
 class FloorRequest(Body):
     photo: list[list[float]]
     plan: list[list[float]]
+
+
+class HueSceneRequest(Body):
+    set: str = Field(..., max_length=40)
+    name: str = Field(..., max_length=60)
 
 
 class SuggestRequest(Body):
@@ -331,6 +337,14 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
     def room_brightness(room_name: str, body: RoomBrightness) -> dict[str, Any]:
         results = service.set_room_brightness(room_name, body.brightness)
         return {"results": results, "failed": sum(1 for item in results if not item["ok"])}
+
+    @app.get("/api/hue-scenes")
+    def hue_scenes() -> list[dict[str, Any]]:
+        return gallery()
+
+    @app.post("/api/rooms/{room_name}/hue-scenes")
+    def make_hue_scene(room_name: str, body: HueSceneRequest) -> dict[str, Any]:
+        return service.hue_scene(room_name, body.set, body.name)
 
     @app.get("/api/catalog")
     def catalog() -> list[dict[str, Any]]:
