@@ -5,8 +5,11 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe('theme ids', () => {
   it('lists seven themes, Neon first', () => {
-    expect(THEMES.map((t) => t.id)).toEqual(['neon', 'monokai', 'dracula', 'nord', 'graphite', 'solarized-light', 'light']);
-    expect(THEMES.filter((t) => t.kind === 'light').map((t) => t.id)).toEqual(['solarized-light', 'light']);
+    expect(THEMES.slice(0, 7).map((t) => t.id)).toEqual(['neon', 'monokai', 'dracula', 'nord', 'graphite', 'solarized-light', 'light']);
+    expect(THEMES.filter((t) => t.kind === 'light').map((t) => t.id).slice(0, 2)).toEqual(['solarized-light', 'light']);
+    expect(new Set(THEMES.map((t) => t.id)).size).toBe(THEMES.length);
+    // Imported themes are named for where they came from, so they can never take a built-in id.
+    for (const theme of THEMES.slice(7)) expect(theme.id).toMatch(/^(vscode|starship)-[a-z0-9-]+$/);
   });
   it('reads an old "dark" or an unknown value as Neon', () => {
     expect(normalizeTheme('dark')).toBe('neon');

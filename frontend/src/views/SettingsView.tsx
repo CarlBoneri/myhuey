@@ -4,7 +4,7 @@ import { api } from '../api';
 import { useStore } from '../store';
 import { Field, HueIcon, Panel, Segmented, TextInput, Toggle } from '../components/ui';
 import type { Preferences } from '../types';
-import { THEMES, type Theme, type ThemeId } from '../lib/theme';
+import { THEMES, themeGroups, type Theme, type ThemeId } from '../lib/theme';
 import { quarterHours, scheduleWarning } from '../lib/suggest';
 
 export function SettingsView() {
@@ -111,11 +111,15 @@ function ThemeSelect({ label, value, onChange, kind, withSystem = false }: {
     <span className="theme-pick">
       <select className="input theme-select" aria-label={label} value={value} onChange={(e) => onChange(e.target.value as Theme)}>
         {withSystem && <option value="system">System</option>}
-        {THEMES.filter((t) => !kind || t.kind === kind).map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+        {themeGroups(kind).map((group) => (
+          <optgroup key={group.label} label={group.label}>
+            {group.themes.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+          </optgroup>
+        ))}
       </select>
       {shown && (
         <span className="theme-swatches" aria-hidden="true">
-          {shown.swatches.map((color) => <span key={color} style={{ background: color }} />)}
+          {shown.swatches.map((color, index) => <span key={index} style={{ background: color }} />)}
         </span>
       )}
     </span>

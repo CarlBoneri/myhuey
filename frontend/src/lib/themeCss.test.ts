@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { contrastRatio } from './contrast';
 import { THEMES } from './theme';
 
-const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
+// The hand-made themes and the imported ones are held to the same rules.
+const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8') + '\n' + readFileSync(new URL('../themes.generated.css', import.meta.url), 'utf8');
 
 function rule(selector: string): string {
   const start = css.indexOf(`${selector} {`);

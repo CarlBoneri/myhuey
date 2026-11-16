@@ -11,8 +11,23 @@ from typing import Any
 # Times of day in 15-minute steps, "00:00" to "23:45".
 QUARTER_HOURS = tuple(f"{hour:02d}:{minute:02d}" for hour in range(24) for minute in (0, 15, 30, 45))
 
-DARK_THEMES = ("neon", "monokai", "dracula", "nord", "graphite")
-LIGHT_THEMES = ("solarized-light", "light")
+
+
+def _imported_themes() -> dict[str, list[str]]:
+    """Themes imported from VS Code and Starship (see scripts/import_editor_themes.py), if any."""
+    import json
+    from importlib import resources
+
+    try:
+        found = json.loads(resources.files("myhuey.data").joinpath("themes.json").read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {"dark": [], "light": []}
+    return {kind: [str(item) for item in found.get(kind, [])] for kind in ("dark", "light")}
+
+
+_IMPORTED = _imported_themes()
+DARK_THEMES = ("neon", "monokai", "dracula", "nord", "graphite", *_IMPORTED["dark"])
+LIGHT_THEMES = ("solarized-light", "light", *_IMPORTED["light"])
 
 PREFERENCES: dict[str, tuple[Any, Any]] = {
     # Look
