@@ -13,26 +13,7 @@ from myhuey.errors import LayoutNotFound, RoomNotFound
 from myhuey.models import FURNITURE_SIZES
 from myhuey.service import HueRoomService
 
-from conftest import LIGHTS, USERNAME
-
-TABLE = {"archetype": "tableshade", "productname": "Hue color lamp"}
-STRIP = {"archetype": "huelightstrip", "productname": "Hue lightstrip plus"}
-
-
-@pytest.fixture
-def service(db_path):
-    service = HueRoomService(db_path)
-    service.sleep = lambda seconds: None
-    service.set_bridge("10.0.0.77", USERNAME)
-    service.add_room("Den", 400, 400)
-    service.update_room("Den", furniture=[
-        {"kind": "desk", "x": 200, "y": 150, "width": 140, "depth": 70},
-        {"kind": "monitor-27", "x": 200, "y": 130, "width": 61, "depth": 20},
-    ])
-    service.assign_light("Den", "1", x=260, y=160, product=TABLE)
-    service.assign_light("Den", "2", x=390, y=190, product=TABLE)
-    service.assign_light("Den", "3", x=200, y=115, product=STRIP)
-    return service
+from conftest import LIGHTS, TABLE, USERNAME
 
 
 def test_list_and_get_room(service):
