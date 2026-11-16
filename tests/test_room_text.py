@@ -65,6 +65,11 @@ def test_a_monitor_stands_above_its_desk_in_the_drawing_and_rugs_are_not_drawn()
     assert [(entry["mark"], entry["what"]) for entry in result["legend"]] == [("A", "desk"), ("B", "monitor-27")]
     assert "B" in result["drawing"] and "R" not in result["drawing"]
 
+def test_lights_on_the_far_and_near_walls_are_still_drawn():
+    result = draw_room(_room(lights=[("1", 200, 100, {}), ("2", 0, 0, {})]), cell=10)
+    rows = result["drawing"].split("\n")
+    assert rows[0][0] == "b" and rows[-1][-1] == "a"
+
 
 @pytest.fixture
 def service(db_path):

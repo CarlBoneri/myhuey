@@ -57,7 +57,9 @@ def draw_room(room: Room, cell: float | None = None) -> dict[str, Any]:
     marks = {item.id: _mark(index, string.ascii_uppercase) for index, item in enumerate(_solid(room))}
     light_cells = {}
     for index, light in enumerate(room.lights):
-        light_cells[(int((light.y - min_y) // row_cm), int((light.x - min_x) // cell))] = _mark(index, string.ascii_lowercase)
+        row = min(max(int((light.y - min_y) // row_cm), 0), rows - 1)
+        column = min(max(int((light.x - min_x) // cell), 0), columns - 1)
+        light_cells[(row, column)] = _mark(index, string.ascii_lowercase)
 
     lines = []
     for row in range(rows):
