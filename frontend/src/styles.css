@@ -450,7 +450,7 @@ h1, h2, h3, h4 { margin: 0; font-weight: 600; letter-spacing: -0.01em; }
 .rail-shell .splitter.rail-handle { flex: 0 0 7px; width: 7px; user-select: none; -webkit-user-select: none; }
 .rail-shell .splitter.rail-handle span { width: 3px; }
 .rail-handle:focus-visible { outline: none; }
-.rail-handle:focus-visible span { background: var(--accent); }
+.rail-handle:focus-visible:not([data-pointer]) span { background: var(--accent); }
 .rail-toggle {
   position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 8px; flex: none; height: var(--rail-top-pin); padding: 8px 8px 0; border: 0; border-radius: 0;
   background: var(--rail-bg); color: var(--text-3); font: inherit; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer;
@@ -881,6 +881,8 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
   /* The stacked column has no height for the panes' percentage sizes to resolve against, so the 3D view gets a height of its own (flex: none, because a flex-basis of 0% would otherwise hide the height). */
   .studio3d-main > .pane { flex: none !important; }
   .studio3d .pane-body.stage { flex: none; height: clamp(320px, 62vh, 620px); }
+  /* With the glare table folded, the 3D view takes the rest of the window under the top bar, Studio header, tab bar and pane head. */
+  .studio3d.audit-folded .pane-body.stage { height: clamp(320px, calc(100dvh - 190px), 1200px); }
   .studio3d .pane-body.audit { max-height: 50vh; }
   .split { grid-template-columns: 1fr; }
   .stage { min-height: 60vh; }

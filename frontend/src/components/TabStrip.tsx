@@ -2,10 +2,12 @@
 // (both horizontal), or in a rail down one side (vertical). Drag, close, reopen, reset, and the
 // keyboard moves all work the same in each; only the axis changes. A rail can also be resized by
 // its inner edge and folded to icons. Right-clicking the tabs opens a menu (TabContextMenu).
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
 import { PanelLeftClose, PanelLeftOpen, Plus, RotateCcw, X, type LucideIcon } from 'lucide-react';
 import { href, go, type Route } from '../lib/router';
 import { DEFAULT_TABS, contextOrigin, dragWidth, focusAfterClose, refocusReady, RAIL_DEFAULT, RAIL_MAX, RAIL_MIN, RAIL_STEP, clampRail, closeTab, isVertical, moveTab, narrowRailNote, neighbour, reopenTab, settleRail, shiftTab, tabMenuItems, type TabId, type TabMenuItem, type TabPlacement, type TabState } from '../lib/tabs';
+import { moveMenuFocus } from '../lib/menuKeys';
+import { isMac, isResizePress } from '../lib/pointer';
 import { useUi } from '../uiStore';
 import { TabContextMenu } from './TabContextMenu';
 
@@ -39,10 +41,20 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
   const [dropAt, setDropAt] = useState<TabId | 'end' | null>(null);
   const dragging = useRef<TabId | null>(null);
   const nav = useRef<HTMLElement>(null);
+  const plus = useRef<HTMLButtonElement>(null);
+  const plusMenu = useRef<HTMLDivElement>(null);
   const contextRef = useRef<Context | null>(null);
   contextRef.current = context;
   // A menu key that went down on a tab, so the `contextmenu` event that follows is known to be the keyboard's.
   const menuKey = useRef<{ at: number; tab: TabId; el: HTMLElement; timer?: number } | null>(null);
+
+  // The "+" menu takes focus when it opens, on its first item.
+  useLayoutEffect(() => { if (menu) plusMenu.current?.querySelector<HTMLElement>('button')?.focus(); }, [menu]);
+  // Escape or Tab from inside the menu close it and put focus back on "+". Escape from anywhere else (focus still on "+" after a click) is closed by the window listener below.
+  const plusKeys = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Escape' || event.key === 'Tab') { event.preventDefault(); setMenu(null); plus.current?.focus(); return; }
+    if (moveMenuFocus(event.currentTarget, event.key)) event.preventDefault();
+  };
 
   useEffect(() => {
     if (!menu) return;
@@ -143,11 +155,20 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
   };
 
   // The rail's inner edge: dragged with the pointer (live, snapping to icons on release), or moved by keys.
+  // When a press (any button) last landed on the handle: focus that follows it is pointer focus, any other focus is the keyboard's.
+  const pressedAt = useRef<number | null>(null);
+  const pressDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    pressedAt.current = performance.now();
+    dragRail(event);
+  };
   const dragRail = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!isResizePress(event, isMac())) return;
     const bar = event.currentTarget;
     // Claim the press: left alone, the browser starts a text selection and then a native drag of a tab, and cancels the resize.
     event.preventDefault();
-    bar.focus();
+    // The focus this gives is marked as pointer focus by the handle's onFocus; a handle that already has focus fires none, so it is marked here.
+    if (document.activeElement === bar) bar.dataset.pointer = '';
+    else bar.focus();
     bar.setPointerCapture(event.pointerId);
     const before = useUi.getState().tabRail;
     const startX = event.clientX;
@@ -164,7 +185,8 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
     bar.addEventListener('pointerup', stop);
     bar.addEventListener('pointercancel', stop);
   };
-  const railKey = (event: React.KeyboardEvent) => {
+  const railKey = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    delete event.currentTarget.dataset.pointer;
     // The edge faces the content: for a left rail, right widens it; for a right rail, left does.
     const wider = placement === 'left' ? 'ArrowRight' : 'ArrowLeft';
     const narrower = placement === 'left' ? 'ArrowLeft' : 'ArrowRight';
@@ -258,20 +280,20 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
       })}
       {dropAt === 'end' && <span className="tab-drop-end" aria-hidden="true" />}
       <span className="tab-add" onPointerDown={(event) => event.stopPropagation()}>
-        <button type="button" className="tab-close always" aria-haspopup="menu" aria-expanded={!!menu} aria-label="Reopen or reset tabs"
+        <button ref={plus} type="button" className="tab-close always" aria-haspopup="menu" aria-expanded={!!menu} aria-label="Reopen or reset tabs"
           title={closed.length ? `Reopen a closed tab (${closed.length}), or reset the tabs` : 'Reset the tabs'} onClick={(event) => toggleMenu(event.currentTarget)}><Plus size={13} /></button>
         {menu && (
-          <div className="tab-menu" role="menu" style={menu}>
+          <div ref={plusMenu} className="tab-menu" role="menu" style={menu} onKeyDown={plusKeys}>
             {closed.map((tab) => {
               const Icon = tab.icon;
               return (
-                <button key={tab.id} type="button" role="menuitem" onClick={() => { setTabs(reopenTab(state, tab.id)); setMenu(null); go(tab.route); }}>
+                <button key={tab.id} type="button" role="menuitem" onClick={() => { setTabs(reopenTab(state, tab.id)); setMenu(null); refocusAfterMenu = { restore: null, waitFor: tab.id, at: Date.now() }; go(tab.route); }}>
                   <Icon size={13} aria-hidden="true" /> {tab.label}
                 </button>
               );
             })}
             {!closed.length && <p>No closed tabs. × on a tab closes it.</p>}
-            <button type="button" role="menuitem" onClick={() => { setTabs(DEFAULT_TABS); setMenu(null); }}><RotateCcw size={13} aria-hidden="true" /> Reset the tabs</button>
+            <button type="button" role="menuitem" onClick={() => { setTabs(DEFAULT_TABS); setMenu(null); plus.current?.focus(); }}><RotateCcw size={13} aria-hidden="true" /> Reset the tabs</button>
           </div>
         )}
       </span>
@@ -289,7 +311,13 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
       {!collapsed && (
         <div className={`splitter col rail-handle ${placement}`} role="separator" aria-orientation="vertical" aria-label="Resize the tab rail" tabIndex={0}
           aria-valuemin={RAIL_MIN} aria-valuemax={RAIL_MAX} aria-valuenow={tabRail.width}
-          title="Drag to resize · drag narrow to fold to icons · double-click to reset" onPointerDown={dragRail} onKeyDown={railKey}
+          title="Drag to resize · drag narrow to fold to icons · double-click to reset" onPointerDown={pressDown} onKeyDown={railKey} onBlur={(event) => { delete event.currentTarget.dataset.pointer; }}
+          onFocus={(event) => {
+            // Focus from a pointer press is not keyboard focus: mark it, so the pill keeps its resting look once the pointer leaves.
+            const at = pressedAt.current;
+            if (at !== null && performance.now() - at <= 100) event.currentTarget.dataset.pointer = '';
+            else delete event.currentTarget.dataset.pointer;
+          }}
           onDoubleClick={() => setTabRail({ width: RAIL_DEFAULT, collapsed: false })}><span /></div>
       )}
     </div>

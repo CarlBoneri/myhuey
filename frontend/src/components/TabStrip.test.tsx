@@ -56,6 +56,27 @@ describe('TabStrip focus after the menu closes', () => {
     expect(document.activeElement).toBe(link('Studio'));
   });
 
+  it('after Reset the tabs from the "+" menu, focus lands on the "+" button', () => {
+    strip({ state: normalizeTabs({ order: ids, closed: ['lights'] }) });
+    fireEvent.click(screen.getByRole('button', { name: 'Reopen or reset tabs' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Reset the tabs' }));
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Reopen or reset tabs' }));
+  });
+
+  it('after Reopen from the "+" menu, focus lands on the reopened tab once it is active', () => {
+    const closed = normalizeTabs({ order: ids, closed: ['lights'] });
+    const { setTabs, rerender } = strip({ state: closed });
+    fireEvent.click(screen.getByRole('button', { name: 'Reopen or reset tabs' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /Lights/ }));
+    const next = setTabs.mock.calls[0][0] as TabState;
+    expect(next.closed).not.toContain('lights');
+    rerender({ state: next, activeTab: 'home' });
+    expect(document.activeElement?.closest('.tab a')).toBeNull();
+    rerender({ state: next, activeTab: 'lights' });
+    expect(document.activeElement).toBe(link('Lights'));
+  });
+
   it('after Close tab on another tab, focus goes back to where it was', () => {
     const { setTabs, rerender } = strip();
     link('Home').focus();
@@ -173,5 +194,119 @@ describe('TabStrip rail handle drag', () => {
     expect(useUi.getState().tabRail.width).toBe(250);
     fireEvent.pointerUp(handle, { pointerId: 1, clientX: 245 });
     expect(useUi.getState().tabRail).toEqual({ width: 250, collapsed: false });
+  });
+
+  it('marks the handle as pointer-focused after a mouse press, and clears the mark on the next key and on blur', () => {
+    useUi.setState({ tabPlacement: 'left' });
+    strip({ placement: 'left' });
+    const handle = screen.getByRole('separator', { name: 'Resize the tab rail' });
+    handle.setPointerCapture = vi.fn();
+    fireEvent.pointerDown(handle, { pointerId: 1, clientX: 205, button: 0 });
+    fireEvent.pointerUp(handle, { pointerId: 1, clientX: 205 });
+    expect(handle.hasAttribute('data-pointer')).toBe(true);
+    expect(document.activeElement).toBe(handle);
+    fireEvent.keyDown(handle, { key: 'ArrowRight' });
+    expect(handle.hasAttribute('data-pointer')).toBe(false);
+    fireEvent.pointerDown(handle, { pointerId: 2, clientX: 205, button: 0 });
+    fireEvent.pointerUp(handle, { pointerId: 2, clientX: 205 });
+    expect(handle.hasAttribute('data-pointer')).toBe(true);
+    fireEvent.blur(handle);
+    expect(handle.hasAttribute('data-pointer')).toBe(false);
+  });
+
+  it('keeps the mark when a right-button press is followed by focus on the handle, without resizing or claiming the press', () => {
+    useUi.setState({ tabPlacement: 'left' });
+    strip({ placement: 'left' });
+    const handle = screen.getByRole('separator', { name: 'Resize the tab rail' });
+    handle.setPointerCapture = vi.fn();
+    const before = useUi.getState().tabRail.width;
+    expect(fireEvent.pointerDown(handle, { pointerId: 1, clientX: 205, button: 2 })).toBe(true);
+    handle.focus();
+    expect(handle.hasAttribute('data-pointer')).toBe(true);
+    fireEvent.pointerMove(handle, { pointerId: 1, clientX: 245 });
+    expect(useUi.getState().tabRail.width).toBe(before);
+  });
+
+  it('sets no mark when focus arrives with no recent press on the handle', () => {
+    vi.useFakeTimers();
+    useUi.setState({ tabPlacement: 'left' });
+    strip({ placement: 'left' });
+    const handle = screen.getByRole('separator', { name: 'Resize the tab rail' });
+    handle.setPointerCapture = vi.fn();
+    fireEvent.pointerDown(handle, { pointerId: 1, clientX: 205, button: 1 }); // a middle press does not focus
+    act(() => { vi.advanceTimersByTime(500); });
+    handle.focus(); // a later Tab-in
+    expect(handle.hasAttribute('data-pointer')).toBe(false);
+    handle.blur();
+    handle.focus(); // and a Tab-in with no press at all
+    expect(handle.hasAttribute('data-pointer')).toBe(false);
+  });
+
+  it('ignores a right-button press on the handle', () => {
+    useUi.setState({ tabPlacement: 'left' });
+    strip({ placement: 'left' });
+    const handle = screen.getByRole('separator', { name: 'Resize the tab rail' });
+    handle.setPointerCapture = vi.fn();
+    const before = useUi.getState().tabRail.width;
+    expect(fireEvent.pointerDown(handle, { pointerId: 1, clientX: 205, button: 2 })).toBe(true);
+    fireEvent.pointerMove(handle, { pointerId: 1, clientX: 245 });
+    expect(useUi.getState().tabRail.width).toBe(before);
+    expect(handle.setPointerCapture).not.toHaveBeenCalled();
+  });
+});
+
+describe('TabStrip "+" menu keys', () => {
+  const twoClosed = normalizeTabs({ order: ids, closed: ['lights', 'settings'] });
+  const plus = () => screen.getByRole('button', { name: 'Reopen or reset tabs' });
+  const items = () => screen.getAllByRole('menuitem');
+  const open = () => fireEvent.click(plus());
+  const key = (k: string) => fireEvent.keyDown(document.activeElement!, { key: k });
+
+  it('focuses the first item when the "+" menu opens', () => {
+    strip({ state: twoClosed });
+    open();
+    expect(document.activeElement).toBe(items()[0]);
+  });
+
+  it('moves through the items with the arrows, Home and End, and wraps', () => {
+    strip({ state: twoClosed });
+    open();
+    expect(items()).toHaveLength(3);
+    key('ArrowDown'); key('ArrowDown'); key('ArrowDown');
+    expect(document.activeElement).toBe(items()[0]);
+    key('End');
+    expect(document.activeElement).toBe(screen.getByRole('menuitem', { name: 'Reset the tabs' }));
+    key('Home');
+    expect(document.activeElement).toBe(items()[0]);
+    key('ArrowUp');
+    expect(document.activeElement).toBe(items()[2]);
+  });
+
+  it('stays on the only item when nothing is closed', () => {
+    strip();
+    open();
+    const only = screen.getByRole('menuitem', { name: 'Reset the tabs' });
+    expect(document.activeElement).toBe(only);
+    key('ArrowDown');
+    expect(document.activeElement).toBe(only);
+    key('ArrowUp');
+    expect(document.activeElement).toBe(only);
+    expect(document.activeElement?.tagName).toBe('BUTTON');
+  });
+
+  it.each(['Escape', 'Tab'])('closes on %s and gives focus back to "+"', (k) => {
+    strip({ state: twoClosed });
+    open();
+    key(k);
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(document.activeElement).toBe(plus());
+  });
+
+  it('still closes on Escape when focus is outside the menu', () => {
+    strip({ state: twoClosed });
+    open();
+    plus().focus();
+    fireEvent.keyDown(plus(), { key: 'Escape' });
+    expect(screen.queryByRole('menu')).toBeNull();
   });
 });

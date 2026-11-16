@@ -46,6 +46,15 @@ describe('tab rail layout', () => {
     expect(bodies('.rail-shell .splitter.rail-handle').join('\n')).toMatch(/user-select:\s*none/);
   });
 
+  it('colours the handle pill on keyboard focus only, not after a pointer press focused it', () => {
+    const colouring = rulesAbout('.rail-handle').filter((found) => found.selector.includes(':focus-visible') && /background/.test(found.body));
+    expect(colouring.length).toBeGreaterThan(0);
+    for (const found of colouring) {
+      expect(found.selector).toContain(':focus-visible:not([data-pointer])');
+      expect(found.body).toMatch(/var\(--accent\)/);
+    }
+  });
+
   it('draws a right rail with its lane on the inner side', () => {
     expect(bodies('.rail-shell.right').join('\n')).toMatch(/flex-direction:\s*row-reverse/);
   });

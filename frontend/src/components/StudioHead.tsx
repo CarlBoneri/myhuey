@@ -102,8 +102,31 @@ export function StudioHead({ view, room, onPick, children }: {
     else if (pendingRef.current !== null) restart(); // any other key, even one that changes nothing, keeps the pause going
   };
   // Blur opens the pending choice, unless focus is only moving to another control in this header (the view switch), which acts on it itself.
+  // Safari and Firefox on a Mac do not focus a clicked button, so then the blur names no target; a press that began in this header is told apart so the click it makes can still switch the view.
+  const pressed = useRef(false);
+  const release = useRef<(() => void) | null>(null);
+  const press = () => {
+    pressed.current = true;
+    if (release.current) return;
+    const end = () => {
+      window.removeEventListener('pointerup', end, true);
+      window.removeEventListener('pointercancel', end, true);
+      release.current = null;
+      // The click comes after the pointerup, so the press stays on until then.
+      window.setTimeout(() => { pressed.current = false; }, 0);
+    };
+    release.current = end;
+    window.addEventListener('pointerup', end, true);
+    window.addEventListener('pointercancel', end, true);
+  };
+  useEffect(() => () => {
+    if (!release.current) return;
+    window.removeEventListener('pointerup', release.current, true);
+    window.removeEventListener('pointercancel', release.current, true);
+  }, []);
   const blur = (to: EventTarget | null) => {
     if (pendingRef.current !== null && to instanceof Node && header.current?.contains(to)) return;
+    if (pendingRef.current !== null && to === null && pressed.current) return; // the timer keeps running
     open();
   };
   // The view switch acts on the room the picker has chosen, whether or not that room has opened yet.
@@ -114,7 +137,7 @@ export function StudioHead({ view, room, onPick, children }: {
   };
 
   return (
-    <header ref={header} className="page-head studio-head">
+    <header ref={header} onPointerDownCapture={press} className="page-head studio-head">
       <div>
         <p className="eyebrow">Studio</p>
         <h1 className={view === 'home' || !known ? undefined : 'as-typed'}>{view === 'home' || !known ? 'Whole home' : room}</h1>

@@ -4,6 +4,7 @@
 import { useEffect, useId, useLayoutEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { PanelLeftClose, PanelLeftOpen, RotateCcw, X } from 'lucide-react';
+import { moveMenuFocus } from '../lib/menuKeys';
 import { PLACE_LABELS, type TabMenuItem } from '../lib/tabs';
 
 const EDGE = 8;
@@ -52,14 +53,7 @@ export function TabContextMenu({ items, at, note, onChoose, onClose }: {
   const move = (event: React.KeyboardEvent) => {
     // Tab leaves the menu like Escape does, so focus goes back to the tab it came from.
     if (event.key === 'Tab') { event.preventDefault(); onClose(true); return; }
-    const keys = ['ArrowDown', 'ArrowUp', 'Home', 'End'];
-    if (!keys.includes(event.key)) return;
-    event.preventDefault();
-    const buttons = [...menu.current!.querySelectorAll<HTMLElement>('button')];
-    const at = buttons.indexOf(document.activeElement as HTMLElement);
-    const next = event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1
-      : (at + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length;
-    buttons[next]?.focus();
+    if (moveMenuFocus(menu.current!, event.key)) event.preventDefault();
   };
 
   const row = (item: TabMenuItem) => {
