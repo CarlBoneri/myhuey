@@ -105,8 +105,11 @@ export const useStore = create<State>((set, get) => ({
   },
 
   async refreshRooms() {
-    const [rooms, activeRooms] = await Promise.all([api.rooms(), get().layout ? api.activeRooms() : Promise.resolve([] as Room[])]);
-    set({ rooms, activeRooms });
+    // The layout list carries room counts, so it is refreshed alongside.
+    const [rooms, activeRooms, layouts] = await Promise.all([
+      api.rooms(), get().layout ? api.activeRooms() : Promise.resolve([] as Room[]), api.layouts().catch(() => get().layouts),
+    ]);
+    set({ rooms, activeRooms, layouts });
   },
 
   async refreshLayouts() {
@@ -138,7 +141,8 @@ export const useStore = create<State>((set, get) => ({
   },
 
   async refreshScenes() {
-    set({ scenes: await api.scenes() });
+    const [scenes, layouts] = await Promise.all([api.scenes(), api.layouts().catch(() => get().layouts)]);
+    set({ scenes, layouts });
   },
 
   setPlan(plan) {
