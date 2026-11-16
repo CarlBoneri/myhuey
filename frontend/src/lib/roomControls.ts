@@ -1,5 +1,6 @@
 // The room's master dimmer: what it shows and when it appears.
 import type { BridgeLight, Preferences, Room } from '../types';
+import { liveColors } from './lights';
 
 /** Average brightness (1-100 %) of the room's lights that are on, or null when none is on. */
 export function roomBrightness(room: Room, lights: Record<string, BridgeLight>): number | null {
@@ -22,4 +23,12 @@ export function brightnessToSend(value: number, live: number | null): number | n
   if (live === null) return null;
   const level = Math.round(value);
   return level === live ? null : level;
+}
+
+/** What a room tile shows: how many of its lights the bridge knows and has on, the room's
+ * brightness, and up to five distinct live colors as chips. */
+export function roomSummary(room: Room, lights: Record<string, BridgeLight>): { known: number; on: number; brightness: number | null; chips: string[] } {
+  const known = room.lights.map((p) => lights[p.light_id]).filter((l): l is BridgeLight => !!l);
+  const chips = [...new Set(known.flatMap((light) => liveColors(light) ?? []))].slice(0, 5);
+  return { known: known.length, on: known.filter((l) => l.on).length, brightness: roomBrightness(room, lights), chips };
 }

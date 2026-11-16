@@ -127,3 +127,23 @@ export function oneAtATime(run: (isLast: () => boolean) => Promise<void>): () =>
     return running;
   };
 }
+
+const QUICK_MODE_KEY = 'myhuey.quickMode';
+
+/** The mode the quick settings menu last used in this browser; Code when unknown or unreadable. */
+export function readQuickMode(): string {
+  try {
+    const stored = localStorage.getItem(QUICK_MODE_KEY);
+    return stored && Object.hasOwn(MODE_LABELS, stored) ? stored : 'code';
+  } catch {
+    return 'code';
+  }
+}
+
+export function storeQuickMode(mode: string): void {
+  try {
+    localStorage.setItem(QUICK_MODE_KEY, mode);
+  } catch {
+    // storage blocked: the menu just starts on Code next time
+  }
+}

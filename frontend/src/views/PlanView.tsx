@@ -8,7 +8,7 @@ import { area, bounds, pathOf, rectPoints, round1 } from '../lib/geometry';
 import { calibrate, imageToPlan, lightsOutside, planToImage, snapCorner, snapPoint } from '../lib/plan';
 import { href } from '../lib/router';
 import { OutlineHandles } from '../components/OutlineHandles';
-import { scaleToFit, simplifyPolygon, toGray, traceRoom, type Gray } from '../lib/trace';
+import { TRACE_MESSAGES, scaleToFit, simplifyPolygon, toGray, traceRoom, type Gray } from '../lib/trace';
 import { formatArea, formatLength, parseLength } from '../lib/units';
 import type { HomePlan, Pt, Room, Units } from '../types';
 import { PlanCanvas, usePlan } from '../components/PlanCanvas';
@@ -19,11 +19,6 @@ import { RoomOnPlan } from './HomeView';
 type Tool = 'select' | 'scale' | 'trace' | 'draw';
 type DrawShape = 'rect' | 'L' | 'points';
 const MAX_CORNERS = 200;
-const TRACE_MESSAGES = {
-  wall: 'That spot is on a wall. Click inside the room.',
-  leak: 'The outline escaped the room. Raise “Close door gaps”, or draw this room by hand.',
-  tiny: 'That area is too small to be a room.',
-} as const;
 
 /** The plan image as gray pixels at most 1600 px wide, for tracing. */
 function usePlanPixels(plan: HomePlan | null) {
