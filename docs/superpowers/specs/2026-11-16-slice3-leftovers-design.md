@@ -131,6 +131,25 @@ Every item below either works as described or is reported as not checkable, with
   right-click), 12, 13 and 14 (a narrow width via a same-origin iframe if the window will not
   resize).
 
+## Answers from the builder check (my calls, on autopilot)
+
+- **Merging and restarting.** I merge A to main, rebuild the frontend in the main checkout, and
+  restart the live server on :8000 the way it was started on 2026-11-16 (`.venv/bin/myhuey serve
+  --port 8000` from the main checkout, in the background, its log in the session scratchpad). Then B
+  branches from that main, and the same happens after B. No pause for the owner between them.
+- **Item 2 covers the path-style headings only.** The Scenes page's small uppercase group labels
+  ("OFFICE") are a deliberate label style and stay. Layout names appear in no heading today, so
+  nothing changes for them. Room names in the path keep their case too ("scenes / Kitchen").
+- **Ctrl+click on a Mac counts as a right-click** (item 11): it opens the browser's menu and does
+  not start a resize.
+- **Tokens:** every light theme, the 16 imported ones included, already sets `--hover-stroke` and
+  `--handle-stroke`. Any new colour token is built from tokens every theme defines (for example
+  `color-mix(in srgb, var(--text) 40%, transparent)`), never by re-running
+  `scripts/import_editor_themes.py`, which reads themes installed on this Mac and a git-ignored
+  folder and could quietly drop themes.
+- **The "Suggested: …" line** (`OriginLabel`) in the scene editor's heading block may move to its
+  own line under the heading.
+
 ## Left to the builder
 
 The exact sizes and tokens, how the heading keeps a name's case, the styling of the editable name,
