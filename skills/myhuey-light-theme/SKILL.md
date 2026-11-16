@@ -1,6 +1,6 @@
 ---
 name: myhuey-light-theme
-description: Design a Philips Hue light scene for a room from a plain-words request ("warm and dim in the office, a little teal behind the monitor") with the MyHuey tools, preview it, and apply or save it once the person agrees. Use when someone asks for a light theme, mood, or scene. Read myhuey-basics first.
+description: Design a Philips Hue light scene for a room from a plain-words request ("warm and dim in the office, a little teal in the corner") with the MyHuey tools, preview it, and apply or save it once the person agrees. Use when someone asks for a light theme, mood, or scene. Read myhuey-basics first.
 ---
 
 # Design a light theme for a room
@@ -37,7 +37,7 @@ first: the roles and the five eye-comfort rules decide most of the numbers.
 
    Turning words into numbers: "dim" is about 20 to 35 percent for the room, "very dim" about
    10; "warm" is 2200 to 2700 K; "bright" or "focus" 60 to 90 percent at 3500 to 4500 K (by
-   day only); "a little" colour is one muted colour at low brightness on one or two lights.
+   day only); "a little" colour is one muted colour at low brightness on one or two ambient lights.
 4. **Preview.** `preview_scene` with the room, a short name, the `lights` settings, and
    `others` if you use it. It saves nothing and sends nothing. It returns, for every light in
    the room, what it would show: `on`, `color`, `kelvin`, `brightness`, `gradient`, `planned`,
@@ -97,35 +97,37 @@ suggest {"room": "Office", "mode": "code", "at": "21:30"}
 From the request:
 
 - "Warm and dim": whites down to 2400 K and levels down from the baseline's 50.
-- "A little teal behind the monitor": light 4 is the bias light. Teal is what they asked for,
-  so it gets teal, but at 15 percent, inside rule 2.
+- "A little teal behind the monitor": light 4 is the bias light, and rule 2 keeps a bias light
+  near-white. It stays a warm white at 15 percent, and the teal goes to the Signe (7), the
+  farthest ambient light, where rule 4 puts colour. This softens what they asked for, so say so.
 - "Nothing bright behind me": light 12 is behind the chair. Very warm white at 8 percent.
 - The ceiling (9) is white only and near the middle of the room: 2400 K at 25 percent.
-- The Signe (7) is the farthest ambient light: it carries the warmth as an amber gradient.
+- The Signe (7) carries the mood: an amber that fades into a muted teal.
 
 ```
 preview_scene {"room": "Office", "name": "Teal evening",
-               "lights": {"4": {"colors": ["#2a9d8f"], "brightness": 15},
-                          "7": {"colors": ["#e08a3c", "#c0603a"], "brightness": 35,
+               "lights": {"4": {"white": 2400, "brightness": 15},
+                          "7": {"colors": ["#e08a3c", "#2a9d8f"], "brightness": 30,
                                 "mode": "interpolated_palette"},
                           "9": {"white": 2400, "brightness": 25},
                           "12": {"white": 2200, "brightness": 8}}}
 → {"scene": {"name": "Teal evening", "room": "Office"},
-   "lights": [{"id": "4", "name": "Monitor strip", "on": true, "color": "#2a9d8f", "kelvin": null,
+   "lights": [{"id": "4", "name": "Monitor strip", "on": true, "color": "#ff9b3d", "kelvin": 2400,
                "brightness": 15.0, "gradient": null, "planned": false, "changed": true},
               {"id": "7", "name": "Signe", "on": true, "color": "#e08a3c", "kelvin": null,
-               "brightness": 35.0, "gradient": ["#e08a3c", "#c0603a"], "planned": false, "changed": true},
+               "brightness": 30.0, "gradient": ["#e08a3c", "#2a9d8f"], "planned": false, "changed": true},
               ...],
    "saved": false, "sent": false}
 ```
 
-All four changed, none above 35 percent. Then, to the person:
+All four changed, none above 30 percent. Then, to the person:
 
-> Here is "Teal evening" for the office: the strip behind your monitors glows a soft teal at
-> 15 percent, kept low so it eases the contrast with the screen instead of competing with it.
-> The Signe in the corner fades from amber to copper at 35 percent, the ceiling light is a warm
-> 2400 K at 25 percent, and the shelf lamp behind your chair is a very warm white at 8 percent
-> so it will not reflect in the screen. Shall I put it on the lights now, save it as a scene, or both?
+> Here is "Teal evening" for the office. I kept the strip behind your monitors a warm white at
+> 15 percent instead of teal: colour right behind a screen tints what you see on it. The teal
+> is on the Signe in the corner, which fades from amber into a soft teal at 30 percent. The
+> ceiling light is a warm 2400 K at 25 percent, and the shelf lamp behind your chair is a very
+> warm white at 8 percent so it will not reflect in the screen. Shall I put it on the lights
+> now, save it as a scene, or both?
 
 They answer "both". Call `save_scene` with the same arguments, then `apply_scene` with
 `{"scene": "<the id save_scene returned>"}`, and report how many lights took it.

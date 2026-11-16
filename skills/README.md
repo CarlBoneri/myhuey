@@ -7,7 +7,7 @@ easy on the eyes at a desk, and the steps for each job.
 | Skill | What it is for |
 |---|---|
 | `myhuey-basics/` | The shared reference: plan coordinates and units, which way furniture faces, light roles, the eye-comfort rules, and what the tools refuse to do. The other two build on it. |
-| `myhuey-light-theme/` | "Warm and dim in the office, a little teal behind the monitor": design a scene, preview it, and apply or save it when you say so. |
+| `myhuey-light-theme/` | "Warm and dim in the office, a little teal in the corner": design a scene, preview it, and apply or save it when you say so. |
 | `myhuey-room-layout/` | "12 by 14 feet, desk on the north wall under the window": build the room in a sandbox and hand you a link to see it in 3D. |
 
 The tools themselves come from `myhuey mcp`, a tool server your assistant starts on your own

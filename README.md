@@ -275,7 +275,7 @@ It can read your rooms, lights, and scenes, design a scene and preview it, save 
 
 Two requests to start with:
 
-- *"Make the office easy on the eyes for coding tonight: warm and dim, a little teal behind the monitor. Show me before you apply anything."* The assistant reads the room, previews a scene, and applies or saves it when you say so.
+- *"Make the office easy on the eyes for coding tonight: warm and dim, a little teal in the corner. Show me before you apply anything."* The assistant reads the room, previews a scene, and applies or saves it when you say so.
 - *"Build my office in a sandbox: 12 by 14 feet, desk on the north wall under the window, door on the south wall."* It builds the room, checks it, and gives you a link that opens the sandbox in the 3D view.
 
 The server also offers two prompts, `design_light_theme` and `design_room_layout`, and a `guide` tool for assistants that do not read skill files. `skills/README.md` describes the skills.

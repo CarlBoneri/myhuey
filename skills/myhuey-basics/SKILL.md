@@ -71,8 +71,10 @@ request pulls against one, do what was asked in the gentlest form and say so.
 
 1. **Near-white by the eyes and the screen.** Task lights and anything at the desk get `white`
    (kelvin), not colour. Colour close to the eyes tires them and shifts how the screen looks.
-2. **A bias light behind a screen stays at 10 to 20 percent.** Its job is to soften the
-   contrast with the screen. Brighter than that, it becomes glare itself.
+2. **A bias light behind a screen stays near-white, at 10 to 20 percent.** Its job is to
+   soften the contrast with the screen. Brighter than that, it becomes glare itself; coloured,
+   it tints how the screen looks. When someone asks for colour there, keep the bias light
+   `white`, give the colour to an ambient light away from the screen, and say so.
 3. **Less colour and less brightness in view or behind the chair.** A light in view shines into
    the eyes; a light behind the chair reflects in the screen. Keep them mostly white, a hint of
    colour at most, at about half the room's level or less.
