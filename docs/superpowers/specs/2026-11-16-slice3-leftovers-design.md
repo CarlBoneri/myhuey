@@ -185,3 +185,26 @@ Where the finished work differs from the design above, and why:
 Not checked by eye: the baseline of tags and role badges (they appear only after selecting a light
 or with overrides, next to real light controls); the transparency listener (needs the Mac's
 setting changed; a test covers it).
+
+## As built, Part B (2026-11-16)
+
+Where the finished work differs from the design above, and why:
+
+- Item 12's cause, confirmed in Chrome: the handle is focused from the press handler, and a script
+  focus there matches `:focus-visible`, so the focus colour stayed after the drag. The fix marks a
+  focus that follows a pointer press (any button, within 100ms) and shows the focus colour only
+  without that mark. A right-click also focuses the handle and lit it up; found by eye, now marked
+  too. Any key on the handle, or focusing it with Tab, brings the focus colour back.
+- Choosing an item in the "+" menu hands focus on: after "Reset the tabs" to "+", after reopening
+  a tab to that tab. Found by the final review; the right-click menu already did this.
+- Item 14: folding the glare table in a narrow window first grew the view by only 80px, and the
+  wrapped Studio header pushed the bottom of the view under the prompt. The folded view is now as
+  tall as the work area allows (`100dvh - 190px`), and the "Give the 3D view the whole column"
+  button scrolls the work area so the view fills it. Only that button scrolls, only when folding,
+  only in a narrow window; reopening the page with the table folded does not scroll.
+- Item 15 is covered by tests only: the browser here is Chrome, which focuses a clicked button.
+
+Checked by eye in Chrome: the "+" menu with real keys, a right-click and a mouse drag on the rail
+handle, Tab onto the handle, both 3D pane bars (they end within 0.01px of the pointer), and the
+narrow "whole column" button. Not checked by eye: Safari and Firefox, the Menu key, the native
+Room picker list.
