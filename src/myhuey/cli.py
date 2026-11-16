@@ -203,6 +203,11 @@ def build_parser() -> argparse.ArgumentParser:
     serve.add_argument("--port", type=int, default=8000)
     serve.set_defaults(handler=handle_serve)
 
+    mcp = subparsers.add_parser("mcp", help="Run a tool server (MCP, over stdio) for an AI assistant")
+    mcp.add_argument("--app-url", default="http://127.0.0.1:8000", help="Where the web app runs, for open_in_app")
+    mcp.add_argument("--list", action="store_true", help="List the tools the server offers, then exit")
+    mcp.set_defaults(handler=handle_mcp)
+
     return parser
 
 
@@ -717,6 +722,19 @@ def handle_lights(args: argparse.Namespace) -> int:
     }
     service.set_light(args.light_id, **{key: value for key, value in changes.items() if value is not None})
     print(f"Updated light {args.light_id}.")
+    return 0
+
+
+def handle_mcp(args: argparse.Namespace) -> int:
+    from . import mcp_server
+
+    if args.list:
+        from .assistant import TOOLS
+
+        for name, tool in TOOLS.items():
+            print(f"{name:<18}{(tool.__doc__ or '').strip().splitlines()[0]}")
+        return 0
+    mcp_server.run(args.db, args.app_url)
     return 0
 
 
