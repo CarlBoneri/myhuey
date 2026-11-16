@@ -145,6 +145,14 @@ def build_parser() -> argparse.ArgumentParser:
     setups.add_argument("--add", type=int, metavar="N", help="Add setup N (from the list) to the room as planned lights")
     setups.set_defaults(handler=handle_setups)
 
+    hue = subparsers.add_parser("hue-scenes", help="List the Hue app's scene gallery, or recreate one of its scenes in a room")
+    hue.add_argument("--room", help="Room to recreate the scene in")
+    hue.add_argument("--set", help="Scene set, such as Cozy or Defaults")
+    hue.add_argument("--scene", help="Scene name, such as Savanna sunset")
+    hue.add_argument("--save", action="store_true", help="Save the recreated scene")
+    hue.add_argument("--apply", action="store_true", help="Send the recreated scene to the lights")
+    hue.set_defaults(handler=handle_hue_scenes)
+
     catalog = subparsers.add_parser("catalog", help="List the Hue products you can plan with")
     catalog.set_defaults(handler=handle_catalog)
 
@@ -533,6 +541,32 @@ def handle_setups(args: argparse.Namespace) -> int:
             print(f"   - {light['label']} ({light['role']}): {light['why']}")
         for mode, info in setup["modes"].items():
             print(f"   {mode:<6} {info['summary']} · palette {info['palette']}")
+    return 0
+
+
+def handle_hue_scenes(args: argparse.Namespace) -> int:
+    from .hue_scenes import gallery
+    from .scenes import Scene
+
+    if not args.room:
+        for group in gallery():
+            print(f"{group['name']}: {', '.join(scene['name'] for scene in group['scenes'])}")
+        return 0
+    if not args.set or not args.scene:
+        raise ValueError("--set and --scene are required with --room (see `myhuey hue-scenes`)")
+    service = HueRoomService(args.db)
+    made = service.hue_scene(args.room, args.set, args.scene)
+    for light in made["preview"]:
+        shown = f"{light['color_temp']} K" if light.get("color_temp") else (light.get("color") or "off")
+        print(f"  {light['label']:<24} {shown:<9} {light['brightness']:>5}%")
+    if args.save:
+        saved = service.save_scene(made["scene"])
+        print(f"Saved '{saved.name}' ({saved.id}).")
+    if args.apply:
+        results = service.apply_scene_object(Scene.from_dict(made["scene"]))
+        _print_results(results)
+        if any(item.get("error") for item in results):
+            return 1
     return 0
 
 

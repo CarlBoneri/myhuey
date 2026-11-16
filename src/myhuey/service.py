@@ -20,6 +20,7 @@ from .geometry import rectangle
 from .hue import HueBridgeClient
 from .images import ImageSampler, extract_palette, image_path, prune_unreferenced, store_image
 from .catalog import catalog_item
+from .hue_scenes import hue_scene
 from .setups import generate_setups
 from .models import Furniture, HomePlan, LayoutLight, Opening, Room, RoomPhoto, floor_transform, new_id, opening_fits, reanchor_openings, validate_outline
 from .preferences import chosen as chosen_preferences, merged as merged_preferences, validate as validate_preferences
@@ -851,6 +852,12 @@ class HueRoomService:
             return ImageSampler(self.image_file(scene.image.file)).color_at
         except ValueError:
             return None
+
+    def hue_scene(self, room_name: str, set_name: str, name: str) -> dict[str, Any]:
+        """A Hue gallery scene recreated for this room, as a preview (nothing saved or sent)."""
+        room = self.get_room(room_name)
+        scene = hue_scene(room, set_name, name)
+        return {"scene": scene.to_dict(), "preview": evaluate(scene, room)}
 
     def suggest(
         self, room_name: str, mode: str, *, at: str | None = None, palette_id: str | None = None,

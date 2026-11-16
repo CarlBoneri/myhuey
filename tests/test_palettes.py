@@ -67,3 +67,31 @@ def test_met_credit_titles_are_not_cut_mid_word():
             title = palette.credit["title"]
             assert len(title) != 60 or title.endswith("…"), palette.id
             assert palette.name.endswith(f"({palette.id.rsplit('-', 1)[1]})")
+
+
+D3_SEQUENTIAL = {
+    "Blues", "Greens", "Greys", "Oranges", "Purples", "Reds",
+    "BuGn", "BuPu", "GnBu", "OrRd", "PuBuGn", "PuBu", "PuRd", "RdPu", "YlGnBu", "YlGn", "YlOrBr", "YlOrRd",
+    "Turbo", "Viridis", "Inferno", "Magma", "Plasma", "Cividis", "Warm", "Cool", "CubehelixDefault",
+}
+
+
+def _brownish(palette):
+    from myhuey.palettes import chroma, hue, lab
+
+    values = [lab(color) for color in palette.colors]
+    mean_chroma = sum(chroma(v) for v in values) / len(values)
+    warm = sum(1 for v in values if chroma(v) > 0.02 and 30 <= hue(v) <= 95) / len(values)
+    return mean_chroma < 0.09 and warm >= 0.6
+
+
+def test_every_d3_sequential_scheme_ships_with_credit():
+    d3 = [p for p in load() if p.source == "d3"]
+    assert {p.credit.get("scheme") for p in d3} == D3_SEQUENTIAL
+    assert all(p.credit.get("license") and p.credit.get("by") and p.id.startswith("d3-") for p in d3)
+
+
+def test_the_library_is_not_mostly_brown_any_more():
+    palettes = load()
+    assert sum(_brownish(p) for p in palettes) <= 0.2 * len(palettes)
+    assert sum("vivid" in p.tags for p in palettes) >= 60

@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import sys
 import tempfile
 import time
@@ -149,8 +150,76 @@ def _same(first: list[str], second: list[str]) -> bool:
     return sum(sum((a - b) ** 2 for a, b in zip(x, y)) ** 0.5 for x, y in pairs) / len(first) < DUPLICATE_DISTANCE
 
 
-def build(limit_cl: int, limit_met: int, generated: int) -> list[dict]:
-    found = colourlovers(limit_cl) + met(limit_met)
+# Who made each d3 sequential scheme, and the terms it comes under. d3-scale-chromatic itself
+# is ISC-licensed; the single- and multi-hue schemes are ColorBrewer's (Apache 2.0).
+_COLORBREWER = {"by": "Cynthia Brewer (ColorBrewer), via d3-scale-chromatic",
+                "license": "Apache 2.0 (ColorBrewer); ISC (d3)", "url": "https://colorbrewer2.org"}
+_MATPLOTLIB = {"license": "CC0 (matplotlib colormaps); ISC (d3)", "url": "https://bids.github.io/colormap/"}
+D3_CREDITS = {
+    "Turbo": {"by": "Anton Mikhailov (Google), via d3-scale-chromatic", "license": "Apache 2.0",
+              "url": "https://research.google/blog/turbo-an-improved-rainbow-colormap-for-visualization/"},
+    "Viridis": {"by": "van der Walt, Smith, and Firing for matplotlib, via d3-scale-chromatic", **_MATPLOTLIB},
+    "Inferno": {"by": "van der Walt and Smith for matplotlib, via d3-scale-chromatic", **_MATPLOTLIB},
+    "Magma": {"by": "van der Walt and Smith for matplotlib, via d3-scale-chromatic", **_MATPLOTLIB},
+    "Plasma": {"by": "van der Walt and Smith for matplotlib, via d3-scale-chromatic", **_MATPLOTLIB},
+    "Cividis": {"by": "Nuñez, Anderton, and Renslow, via d3-scale-chromatic", "license": "ISC (as distributed in d3-scale-chromatic)",
+                "url": "https://doi.org/10.1371/journal.pone.0199239"},
+    "Warm": {"by": "after Niccoli's perceptual rainbow, via d3-scale-chromatic", "license": "ISC (d3)",
+             "url": "https://d3js.org/d3-scale-chromatic/sequential"},
+    "Cool": {"by": "Niccoli's perceptual rainbow, via d3-scale-chromatic", "license": "ISC (d3)",
+             "url": "https://d3js.org/d3-scale-chromatic/sequential"},
+    "CubehelixDefault": {"by": "Dave Green's cubehelix, via d3-scale-chromatic", "license": "ISC (d3)",
+                         "url": "https://people.phy.cam.ac.uk/dag9/CUBEHELIX/"},
+}
+_WINDOW_NAMES = {"full": "full", "bright": "bright end", "middle": "middle", "deep": "deep end"}
+
+
+def d3_palettes(path: Path) -> list[dict]:
+    """Palettes from scripts/sample_d3_sequential.mjs output, filtered for room light."""
+    palettes = []
+    for item in json.loads(path.read_text(encoding="utf-8")):
+        colors = clean(item["colors"])
+        if not usable(colors):
+            continue
+        scheme = item["scheme"]
+        label = "Cubehelix" if scheme == "CubehelixDefault" else scheme
+        palettes.append({
+            "id": f"d3-{scheme.lower()}-{item['window']}", "name": f"{label} · {_WINDOW_NAMES[item['window']]}",
+            "colors": colors, "source": "d3",
+            "credit": {"scheme": scheme, **D3_CREDITS.get(scheme, _COLORBREWER)},
+        })
+    return palettes
+
+
+def brownish(colors: list[str]) -> bool:
+    """Mostly low-chroma browns and beiges (the varnish look of old paintings)."""
+    values = [lab(color) for color in colors]
+    mean_chroma = sum(math.hypot(v[1], v[2]) for v in values) / len(values)
+    # Only colors with real chroma have a hue; pure greys are neutral, not brown.
+    warm = sum(1 for v in values if math.hypot(v[1], v[2]) > 0.02
+               and 30 <= math.degrees(math.atan2(v[2], v[1])) % 360 <= 95) / len(values)
+    return mean_chroma < 0.09 and warm >= 0.6
+
+
+def cap_brown(palettes: list[dict], max_share: float) -> list[dict]:
+    """Drop the least colorful brown palettes until they are at most `max_share` of the library."""
+    browns = sorted((p for p in palettes if brownish(p["colors"])),
+                    key=lambda p: sum(math.hypot(*lab(c)[1:]) for c in p["colors"]) / len(p["colors"]))
+    drop: set[str] = set()
+    total = len(palettes)
+    while browns and (len(browns) - 0) > max_share * total:
+        drop.add(browns.pop(0)["id"])
+        total -= 1
+    return [p for p in palettes if p["id"] not in drop]
+
+
+def build(limit_cl: int, limit_met: int, generated: int, *, d3_file: Path | None = None,
+          reuse: Path | None = None, max_brown: float = 0.2) -> list[dict]:
+    found = d3_palettes(d3_file) if d3_file else []
+    if reuse:  # keep earlier fetched palettes without going online again
+        found += [p for p in json.loads(reuse.read_text(encoding="utf-8")) if p.get("source") in ("met", "colourlovers")]
+    else:
+        found += colourlovers(limit_cl) + met(limit_met)
     found += [palette.to_dict() for palette in generate(0, generated)]
     kept: list[dict] = []
     for palette in found:
@@ -158,7 +227,7 @@ def build(limit_cl: int, limit_met: int, generated: int) -> list[dict]:
             continue
         palette["tags"] = tag(palette["colors"])
         kept.append(palette)
-    return kept
+    return cap_brown(kept, max_brown)
 
 
 def refresh_met_titles(palettes: list[dict]) -> tuple[int, int]:
@@ -197,6 +266,9 @@ def main() -> None:
     parser.add_argument("--limit-cl", type=int, default=600)
     parser.add_argument("--limit-met", type=int, default=300)
     parser.add_argument("--generated", type=int, default=300)
+    parser.add_argument("--d3", type=Path, help="JSON from scripts/sample_d3_sequential.mjs to include")
+    parser.add_argument("--reuse", type=Path, help="reuse the Met/COLOURlovers entries of this palettes.json (no network)")
+    parser.add_argument("--max-brown", type=float, default=0.2, help="largest share of brown/beige palettes to keep")
     parser.add_argument("--refresh-met-titles", action="store_true",
                         help="fix Met titles cut at 60 characters in the existing --out file, then stop")
     args = parser.parse_args()
@@ -207,7 +279,7 @@ def main() -> None:
         path.write_text(json.dumps(palettes, indent=1) + "\n", encoding="utf-8")
         print(f"Met titles: {refreshed} refreshed, {trimmed} trimmed in {args.out}")
         return
-    palettes = build(args.limit_cl, args.limit_met, args.generated)
+    palettes = build(args.limit_cl, args.limit_met, args.generated, d3_file=args.d3, reuse=args.reuse, max_brown=args.max_brown)
     Path(args.out).write_text(json.dumps(palettes, indent=1) + "\n", encoding="utf-8")
     counts: dict[str, int] = {}
     for palette in palettes:
