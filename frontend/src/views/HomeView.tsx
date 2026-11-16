@@ -13,7 +13,7 @@ import { LightSilhouette, OpeningShape } from '../components/Shapes';
 import { Empty, Field, Panel, TextInput } from '../components/ui';
 import { RoomDimmer } from '../components/RoomDimmer';
 
-export function RoomOnPlan({ room, offset, onMove, onDrop, onSelect, selected, readOnly = false, activeOnly = false, onOpen }: {
+export function RoomOnPlan({ room, offset, onMove, onDrop, onSelect, selected, readOnly = false, activeOnly = false, onOpen, fillOpacity }: {
   room: Room; offset: Pt; onMove: (d: Pt) => void; onDrop: () => void;
   /** On the floor plan: a click selects the room for reshaping instead of opening it. */
   onSelect?: () => void; selected?: boolean;
@@ -23,6 +23,8 @@ export function RoomOnPlan({ room, offset, onMove, onDrop, onSelect, selected, r
   activeOnly?: boolean;
   /** Replaces opening the room's page on a click. */
   onOpen?: () => void;
+  /** See-through floor over a plan image (0 to 1); solid when left out. */
+  fillOpacity?: number;
 }) {
   const drag = useDrag();
   const { cmPerPx } = usePlan();
@@ -49,7 +51,7 @@ export function RoomOnPlan({ room, offset, onMove, onDrop, onSelect, selected, r
       role="button"
       aria-label={`${room.name}, ${formatLength(room.width, room.units)} by ${formatLength(room.height, room.units)}`}
     >
-      <path d={pathOf(room.outline)} className="room-floor" strokeWidth={1.5 * cmPerPx} />
+      <path d={pathOf(room.outline)} className="room-floor" strokeWidth={1.5 * cmPerPx} style={fillOpacity === undefined ? undefined : { fillOpacity }} />
       {room.openings.map((opening) => <OpeningShape key={opening.id} outline={room.outline} opening={opening} cmPerPx={cmPerPx} />)}
       {room.furniture.map((item) => (
         <rect key={item.id} x={-item.width / 2} y={-item.depth / 2} width={item.width} height={item.depth}

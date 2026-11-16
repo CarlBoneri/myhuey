@@ -408,6 +408,8 @@ class HomePlan:
     opacity: float = 0.5
     width: int = 0
     height: int = 0
+    # How solid room shapes are drawn over the image, so it shows through while tracing.
+    room_opacity: float = 0.4
 
     @classmethod
     def from_dict(cls, data: dict[str, Any] | None) -> HomePlan | None:
@@ -429,6 +431,7 @@ class HomePlan:
             opacity=min(1.0, max(0.0, _num(data.get("opacity"), 0.5))),
             width=int(data.get("width") or 0),
             height=int(data.get("height") or 0),
+            room_opacity=min(1.0, max(0.0, _num(data.get("room_opacity"), 0.4))),
         )
 
     def to_dict(self) -> dict[str, Any]:

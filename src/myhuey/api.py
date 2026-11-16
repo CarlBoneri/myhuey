@@ -124,6 +124,7 @@ class PlanUpdate(Body):
     offset: list[float] | None = Field(None, min_length=2, max_length=2)
     rotation: float | None = None
     opacity: float | None = Field(None, ge=0, le=1)
+    room_opacity: float | None = Field(None, ge=0, le=1)
 
 
 class FurnitureItem(Body):

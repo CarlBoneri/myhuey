@@ -348,6 +348,7 @@ export function PlanView({ focus }: { focus?: string } = {}) {
                 <RoomOnPlan key={room.name} room={room.name === selected && draft ? { ...room, outline: draft } : room}
                   offset={moving?.name === room.name ? moving.delta : [0, 0]}
                   selected={room.name === selected} onSelect={() => setSelected(room.name)}
+                  fillOpacity={plan ? plan.room_opacity ?? 0.4 : undefined}
                   onMove={(delta) => setMoving({ name: room.name, delta })}
                   onDrop={async () => {
                     const delta = movingRef.current?.name === room.name ? movingRef.current.delta : null;
@@ -442,6 +443,8 @@ export function PlanView({ focus }: { focus?: string } = {}) {
                 <p className="hint">{plan.width} × {plan.height} px · 100 px = {formatLength(plan.cm_per_px * 100, units)}</p>
                 <Slider label="Opacity" value={Math.round(plan.opacity * 100)} min={5} max={100} format={(v) => `${v}%`}
                   onChange={(v) => setPlan({ ...plan, opacity: v / 100 })} onCommit={(v) => savePlan({ opacity: v / 100 })} />
+                <Slider label="Room fill" value={Math.round((plan.room_opacity ?? 0.4) * 100)} min={0} max={100} format={(v) => `${v}%`}
+                  onChange={(v) => setPlan({ ...plan, room_opacity: v / 100 })} onCommit={(v) => savePlan({ room_opacity: v / 100 })} />
                 <Slider label="Rotation" value={plan.rotation} min={0} max={359} format={(v) => `${Math.round(v)}°`}
                   onChange={(rotation) => setPlan({ ...plan, rotation })} onCommit={(rotation) => savePlan({ rotation })} />
                 <div className="field-row">

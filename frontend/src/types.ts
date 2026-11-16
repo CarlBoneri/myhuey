@@ -105,6 +105,8 @@ export interface HomePlan {
   opacity: number;
   width: number;
   height: number;
+  /** How solid room shapes are drawn over the plan image (0 to 1). */
+  room_opacity: number;
 }
 
 export interface PhotoSpot {

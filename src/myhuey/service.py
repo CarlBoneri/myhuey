@@ -810,12 +810,12 @@ class HueRoomService:
         return home["plan"]
 
     def update_plan(self, **changes: Any) -> dict[str, Any]:
-        """Change the plan's scale (cm_per_px), offset, rotation, or opacity."""
+        """Change the plan's scale (cm_per_px), offset, rotation, opacity, or room_opacity."""
         config = self._load()
         home = config.setdefault("home", {})
         if not home.get("plan"):
             raise ValueError("Upload a floor-plan image first")
-        allowed = {key: value for key, value in changes.items() if key in ("cm_per_px", "offset", "rotation", "opacity")}
+        allowed = {key: value for key, value in changes.items() if key in ("cm_per_px", "offset", "rotation", "opacity", "room_opacity")}
         home["plan"] = HomePlan.from_dict({**home["plan"], **allowed}).to_dict()
         self._save(config)
         return home["plan"]

@@ -105,7 +105,7 @@ export const api = {
 
   plan: () => call<HomePlan | null>('/api/plan'),
   uploadPlan: (file: File) => upload<HomePlan>('/api/plan/image', file),
-  updatePlan: (changes: Partial<Pick<HomePlan, 'cm_per_px' | 'offset' | 'rotation' | 'opacity'>>) =>
+  updatePlan: (changes: Partial<Pick<HomePlan, 'cm_per_px' | 'offset' | 'rotation' | 'opacity' | 'room_opacity'>>) =>
     call<HomePlan>('/api/plan', { method: 'PATCH', json: changes }),
   deletePlan: () => call('/api/plan', { method: 'DELETE' }),
 
