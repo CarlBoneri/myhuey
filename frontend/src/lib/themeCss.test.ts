@@ -45,6 +45,16 @@ function tokens(selector: string): Record<string, string> {
   return Object.fromEntries([...body.matchAll(/(--[\w-]+):\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]));
 }
 const root = tokens(':root');
+
+/** A colour with alpha (rgba or #rrggbbaa) laid over a solid hex, as the screen shows it. */
+function over(top: string, bottom: string): string {
+  const hex = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const rgba = top.match(/rgba?\(([\d.\s,]+)\)/);
+  const [r, g, b, a] = rgba ? rgba[1].split(',').map(Number) : [...hex(top), top.length === 9 ? parseInt(top.slice(7), 16) / 255 : 1];
+  const base = hex(bottom);
+  const mix = [r, g, b].map((c, i) => Math.round(c * a + base[i] * (1 - a)));
+  return '#' + mix.map((c) => c.toString(16).padStart(2, '0')).join('');
+}
 const NOT_COLOURS = ['--radius-xl', '--radius-l', '--radius-m', '--radius-s', '--font', '--mono', '--glass-blur'];
 const NEW_TOKENS = ['--ansi-red', '--ansi-green', '--ansi-yellow', '--ansi-blue', '--ansi-magenta', '--ansi-cyan',
   '--glass-bg', '--glass-border', '--glass-highlight', '--glass-blur', '--glow-lit', '--selection'];
@@ -74,6 +84,43 @@ describe('theme token sets', () => {
   it.each(THEMES.map((t) => [t.id, t.swatches] as const))('%s picker swatches match its ANSI tokens', (id, swatches) => {
     const set = { ...root, ...(id === 'neon' ? {} : tokens(`:root[data-theme="${id}"]`)) };
     expect(['--ansi-red', '--ansi-green', '--ansi-yellow', '--ansi-blue', '--ansi-magenta', '--ansi-cyan'].map((n) => set[n])).toEqual(swatches);
+  });
+
+  // Text sits on the page, on panels, and on hovered rows and cards inside panels (--surface-2 over the page).
+  const TEXT = ['--text', '--text-2', '--text-3', '--warn-text', '--danger-text', '--link'];
+  it.each(THEMES.map((t) => [t.id] as const))('%s: every text colour reads at 4.5:1 on the page and on cards', (id) => {
+    const set = { ...root, ...(id === 'neon' ? {} : tokens(`:root[data-theme="${id}"]`)) };
+    const grounds = { '--bg': set['--bg'], '--bg-2': set['--bg-2'], 'surface-2 on bg': over(set['--surface-2'], set['--bg']) };
+    for (const text of TEXT) {
+      for (const [name, ground] of Object.entries(grounds)) {
+        expect(contrastRatio(set[text], ground), `${id} ${text} on ${name}`).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  });
+
+  it.each(THEMES.map((t) => [t.id] as const))('%s: text on the accent reads on every stop of the accent gradient', (id) => {
+    const set = { ...root, ...(id === 'neon' ? {} : tokens(`:root[data-theme="${id}"]`)) };
+    const stops = set['--accent-gradient'].match(/#[0-9a-f]{6}/gi) ?? [];
+    expect(stops.length, `${id} gradient stops`).toBeGreaterThanOrEqual(2);
+    for (const stop of stops) expect(contrastRatio(set['--on-accent'], stop), `${id} on ${stop}`).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('status and link text use the readable text tokens, not the palette colours', () => {
+    for (const selector of ['.warn-text, .error-text', '.field small', '.save-state.dirty', '.pill.warn']) expect(rule(selector)).toContain('var(--warn-text)');
+    for (const selector of ['\n.error-text', '.button.danger']) expect(rule(selector)).toContain('var(--danger-text)');
+    for (const selector of ['.notice', '.link-button', '.sandbox-note a', '.quick-footer a']) expect(rule(selector)).toContain('var(--link)');
+  });
+
+  it('numbers on accent dots in photo setup use the text-on-accent colour', () => {
+    expect(rule('.corner-map text')).toContain('var(--on-accent)');
+  });
+
+  it('decorative path and bracket characters are hidden from screen readers', () => {
+    expect(rule('.page-head .eyebrow::before')).toMatch(/content: "~ \/ " \/ ""/);
+    expect(rule('.page-head h1::before')).toMatch(/content: " \/ " \/ ""/);
+    expect(rule('.page-head h1::after')).toMatch(/content: "▌" \/ ""/);
+    expect(rule('.segmented button::before')).toMatch(/content: "\[ " \/ ""/);
+    expect(rule('.segmented button::after')).toMatch(/content: " \]" \/ ""/);
   });
 
   it('graphite and light keep today\'s backgrounds', () => {
