@@ -79,3 +79,10 @@ describe('reduce transparency', () => {
     expect(attrs.transparency).toBeUndefined();
   });
 });
+
+describe('theme swatches', () => {
+  it('every theme carries six palette colours for the picker', () => {
+    for (const theme of THEMES) expect(theme.swatches, theme.id).toHaveLength(6);
+    expect(THEMES[0].swatches).toEqual(['#ff4060', '#a6e22e', '#e6db74', '#5a7dff', '#ff2eea', '#37f6ff']);
+  });
+});

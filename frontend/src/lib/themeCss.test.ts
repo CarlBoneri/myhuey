@@ -63,11 +63,17 @@ describe('theme token sets', () => {
       for (const name of Object.keys(root).filter((n) => !NOT_COLOURS.includes(n))) expect(own, `${id} ${name}`).toHaveProperty(name);
     }
     const set = { ...root, ...own };
+    expect(contrastRatio(set['--on-accent'], set['--accent']), `${id} text on the accent`).toBeGreaterThanOrEqual(4.5);
     for (const text of ['--text', '--text-2', '--text-3']) {
       for (const bg of ['--bg', '--bg-2']) {
         expect(contrastRatio(set[text], set[bg]), `${id} ${text} on ${bg}`).toBeGreaterThanOrEqual(4.5);
       }
     }
+  });
+
+  it.each(THEMES.map((t) => [t.id, t.swatches] as const))('%s picker swatches match its ANSI tokens', (id, swatches) => {
+    const set = { ...root, ...(id === 'neon' ? {} : tokens(`:root[data-theme="${id}"]`)) };
+    expect(['--ansi-red', '--ansi-green', '--ansi-yellow', '--ansi-blue', '--ansi-magenta', '--ansi-cyan'].map((n) => set[n])).toEqual(swatches);
   });
 
   it('graphite and light keep today\'s backgrounds', () => {
@@ -98,5 +104,19 @@ describe('glass and reduce transparency', () => {
   });
   it('uses JetBrains Mono everywhere', () => {
     expect(root['--font'].startsWith("'JetBrains Mono Variable'")).toBe(true);
+  });
+});
+
+describe('IDE touches', () => {
+  it('page headings read as a path with a cursor', () => {
+    expect(rule('.page-head .eyebrow::before')).toContain('content: "~ / "');
+    expect(rule('.page-head h1::after')).toContain('▌');
+  });
+  it('the cursor holds still for people who ask for less motion', () => {
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*\{[^}]*\.page-head h1::after\s*\{\s*animation: none/);
+  });
+  it('segmented options are bracketed like terminal flags', () => {
+    expect(rule('.segmented button::before')).toContain('content: "[ "');
+    expect(rule('.segmented button::after')).toContain('content: " ]"');
   });
 });

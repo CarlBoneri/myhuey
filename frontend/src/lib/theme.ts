@@ -7,14 +7,15 @@ export type ThemeId = 'neon' | 'monokai' | 'dracula' | 'nord' | 'graphite' | 'so
 export type Theme = ThemeId | 'system';
 export type ThemePrefs = { theme: string; theme_dark?: string; theme_light?: string };
 
-export const THEMES: { id: ThemeId; label: string; kind: 'dark' | 'light' }[] = [
-  { id: 'neon', label: 'Neon', kind: 'dark' },
-  { id: 'monokai', label: 'Monokai', kind: 'dark' },
-  { id: 'dracula', label: 'Dracula', kind: 'dark' },
-  { id: 'nord', label: 'Nord', kind: 'dark' },
-  { id: 'graphite', label: 'Graphite', kind: 'dark' },
-  { id: 'solarized-light', label: 'Solarized Light', kind: 'light' },
-  { id: 'light', label: 'Light', kind: 'light' },
+/** Each theme's six ANSI colours (red, green, yellow, blue, magenta, cyan), shown in the picker; styles.css holds the same values. */
+export const THEMES: { id: ThemeId; label: string; kind: 'dark' | 'light'; swatches: string[] }[] = [
+  { id: 'neon', label: 'Neon', kind: 'dark', swatches: ['#ff4060', '#a6e22e', '#e6db74', '#5a7dff', '#ff2eea', '#37f6ff'] },
+  { id: 'monokai', label: 'Monokai', kind: 'dark', swatches: ['#f92672', '#a6e22e', '#e6db74', '#66d9ef', '#ae81ff', '#a1efe4'] },
+  { id: 'dracula', label: 'Dracula', kind: 'dark', swatches: ['#ff5555', '#50fa7b', '#f1fa8c', '#bd93f9', '#ff79c6', '#8be9fd'] },
+  { id: 'nord', label: 'Nord', kind: 'dark', swatches: ['#bf616a', '#a3be8c', '#ebcb8b', '#81a1c1', '#b48ead', '#88c0d0'] },
+  { id: 'graphite', label: 'Graphite', kind: 'dark', swatches: ['#f87171', '#34d399', '#fbbf24', '#60a5fa', '#c084fc', '#22d3ee'] },
+  { id: 'solarized-light', label: 'Solarized Light', kind: 'light', swatches: ['#dc322f', '#859900', '#b58900', '#268bd2', '#d33682', '#2aa198'] },
+  { id: 'light', label: 'Light', kind: 'light', swatches: ['#dc2626', '#059669', '#b45309', '#2563eb', '#c026d3', '#0891b2'] },
 ];
 
 const CACHE_KEY = 'myhuey.theme';
