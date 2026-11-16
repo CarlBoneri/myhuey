@@ -1,16 +1,17 @@
 // The right-click menu on the tab bar: close a tab, choose where the tabs sit, fold or reset the
 // rail. It opens at the pointer (or beside a focused tab), stays inside the window, takes focus,
 // and hands it back when it closes. Escape and Tab both leave it. What it offers is decided by tabMenuItems in lib/tabs.ts.
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { PanelLeftClose, PanelLeftOpen, RotateCcw, X } from 'lucide-react';
-import type { TabMenuItem, TabPlacement } from '../lib/tabs';
+import { PLACE_LABELS, type TabMenuItem } from '../lib/tabs';
 
-export const PLACE_LABELS: Record<TabPlacement, string> = { top: 'Top', bottom: 'Bottom', left: 'Left', right: 'Right' };
 const EDGE = 8;
 
-export function TabContextMenu({ items, at, onChoose, onClose }: {
+export function TabContextMenu({ items, at, note, onChoose, onClose }: {
   items: TabMenuItem[];
+  /** Said under the position rows when the tabs are not drawn where they were saved. */
+  note?: string | null;
   /** Where to open: the pointer, or the corner of the tab it was asked for from. */
   at: { x: number; y: number };
   onChoose: (item: TabMenuItem) => void;
@@ -18,6 +19,7 @@ export function TabContextMenu({ items, at, onChoose, onClose }: {
   onClose: (restoreFocus: boolean) => void;
 }) {
   const menu = useRef<HTMLDivElement>(null);
+  const noteId = useId();
 
   // Measured before it is painted, then moved through the element (so it stays visible and can take
   // focus) until the whole menu is inside the window.
@@ -86,13 +88,14 @@ export function TabContextMenu({ items, at, onChoose, onClose }: {
       onBlur={(event) => { const to = event.relatedTarget as Node | null; if (to && !menu.current?.contains(to)) onClose(false); }}
       onContextMenu={(event) => { event.preventDefault(); event.stopPropagation(); }}>
       {before.map((item) => <span key={item.kind} role="none">{row(item)}</span>)}
-      <div role="group" aria-label="Tab position" className="tab-menu-group">
+      <div role="group" aria-label="Tab position" aria-describedby={note ? noteId : undefined} className="tab-menu-group">
         <span className="tab-menu-label" aria-hidden="true">Tab position</span>
         {places.map((item) => (
           <button key={item.placement} type="button" role="menuitemradio" aria-checked={item.checked} className={item.checked ? 'checked' : ''} onClick={() => onChoose(item)}>
             <span className="tab-menu-mark" aria-hidden="true">{item.checked ? '●' : ''}</span> {PLACE_LABELS[item.placement]}
           </button>
         ))}
+        {note && <p className="tab-menu-note" id={noteId}>{note}</p>}
       </div>
       {rail.length > 0 && <div role="group" aria-label="Tab rail" className="tab-menu-group">{rail.map((item) => <span key={item.kind} role="none">{row(item)}</span>)}</div>}
       <div className="tab-menu-group" role="none">{reset.map((item) => <span key={item.kind} role="none">{row(item)}</span>)}</div>

@@ -421,6 +421,8 @@ h1, h2, h3, h4 { margin: 0; font-weight: 600; letter-spacing: -0.01em; }
 .tab-menu span[role="none"] { display: contents; }
 .tab-menu.context { min-width: 190px; }
 .tab-menu p { margin: 0; padding: 7px 9px; color: var(--text-3); font-size: 12px; }
+/* The narrow-window note wraps inside the menu's own width instead of stretching it. */
+.tab-menu p.tab-menu-note { max-width: 208px; white-space: normal; }
 /* Tab placement: a strip above the prompt, or a rail down one side (the menu's own position is set inline) */
 .tab-menu-group { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; padding-top: 6px; border-top: 1px solid var(--border); }
 .tab-menu-label { padding: 2px 9px 4px; color: var(--text-3); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }

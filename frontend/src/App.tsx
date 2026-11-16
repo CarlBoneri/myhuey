@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, type CSSProperties } from 'react';
 import { Box, CircleHelp, Command, House, Lightbulb, Map as MapIcon, Palette, Settings, SlidersHorizontal, Sparkles, Terminal, X } from 'lucide-react';
 import { applyTheme, applyTransparency, followSystemTheme, normalizeTheme, themeGroups, type Theme } from './lib/theme';
 import { useStore } from './store';
@@ -25,21 +25,7 @@ import { WorkflowsDrawer } from './components/WorkflowsDrawer';
 import { API_VERSION } from './api';
 import { useUi } from './uiStore';
 import { snapshot } from './lib/runCommand';
-
-/** Below this width a rail has no room beside the content, so it is drawn in the top bar instead. */
-const NARROW = '(max-width: 719.98px)';
-function useNarrow(): boolean {
-  const [narrow, setNarrow] = useState(() => typeof window.matchMedia === 'function' && window.matchMedia(NARROW).matches);
-  useEffect(() => {
-    if (typeof window.matchMedia !== 'function') return;
-    const query = window.matchMedia(NARROW);
-    const update = () => setNarrow(query.matches);
-    update();
-    query.addEventListener('change', update);
-    return () => query.removeEventListener('change', update);
-  }, []);
-  return narrow;
-}
+import { useNarrow } from './lib/useNarrow';
 
 /** Every tab there can be. The workbench tab follows the room you were last in, and needs one; the Studio's 3D tab only needs a room to exist. */
 function allTabs(studio: string | null, room: string | null): Tab[] {

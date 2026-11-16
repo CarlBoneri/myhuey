@@ -30,6 +30,18 @@ export const normalizePlacement = (value: unknown): TabPlacement =>
 /** Rails run down the side; their tabs stack, so they move along the vertical axis. */
 export const isVertical = (placement: TabPlacement): boolean => placement === 'left' || placement === 'right';
 
+export const PLACE_LABELS: Record<TabPlacement, string> = { top: 'Top', bottom: 'Bottom', left: 'Left', right: 'Right' };
+
+/** Below this width a rail has no room beside the content, so it is drawn in the top bar instead. */
+export const NARROW_QUERY = '(max-width: 719.98px)';
+export const isNarrowWindow = (): boolean => typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia(NARROW_QUERY).matches;
+
+/** The one sentence that says a saved side rail is drawn at the top for now; null when the tabs are where they were saved. */
+export function narrowRailNote(saved: TabPlacement, narrow: boolean): string | null {
+  if (!narrow || !isVertical(saved)) return null;
+  return `This window is too narrow for a side rail, so the tabs are at the top for now. ${PLACE_LABELS[saved]} is saved and applies when the window is wider.`;
+}
+
 export const openTabs = (state: TabState): TabId[] => state.order.filter((id) => !state.closed.includes(id));
 
 /** Move a tab to sit just before another, or to the end when `before` is null. */

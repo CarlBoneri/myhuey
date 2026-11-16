@@ -1,8 +1,8 @@
 // @vitest-environment happy-dom
 import { Home, Lightbulb, Palette, Settings, Map as MapIcon } from 'lucide-react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, fireEvent, render, screen } from '../test/dom';
-import { REFOCUS_WINDOW, normalizeTabs, openTabs, type TabId, type TabState } from '../lib/tabs';
+import { act, cleanup, fireEvent, render, screen, within } from '../test/dom';
+import { REFOCUS_WINDOW, normalizeTabs, openTabs, type TabId, type TabPlacement, type TabState } from '../lib/tabs';
 import { useUi } from '../uiStore';
 import { TabStrip, type Tab } from './TabStrip';
 
@@ -18,21 +18,21 @@ const everyone = normalizeTabs({ order: ids, closed: [] });
 const link = (label: string) => screen.getByRole('link', { name: new RegExp(label) });
 
 // A strip with five tabs, `home` active, placement `top`. `rerender` takes the state the strip should now show.
-function strip(over: { activeTab?: TabId; state?: TabState } = {}, extra?: React.ReactNode) {
+function strip(over: { activeTab?: TabId; state?: TabState; placement?: TabPlacement } = {}, extra?: React.ReactNode) {
   const setTabs = vi.fn();
-  const draw = (o: { activeTab?: TabId; state?: TabState }) => {
+  const draw = (o: { activeTab?: TabId; state?: TabState; placement?: TabPlacement }) => {
     const state = o.state ?? everyone;
     const open = openTabs(state).filter((id) => ids.includes(id)).map((id) => byId.get(id)!);
     return (
       <>
         {extra}
-        <TabStrip placement="top" tabs={open} closed={state.closed.filter((id) => ids.includes(id)).map((id) => byId.get(id)!)} available={ids} byId={byId}
+        <TabStrip placement={o.placement ?? 'top'} tabs={open} closed={state.closed.filter((id) => ids.includes(id)).map((id) => byId.get(id)!)} available={ids} byId={byId}
           activeTab={o.activeTab ?? 'home'} state={state} setTabs={setTabs} />
       </>
     );
   };
   const view = render(draw(over));
-  return { setTabs, rerender: (o: { activeTab?: TabId; state?: TabState }) => view.rerender(draw(o)) };
+  return { setTabs, rerender: (o: { activeTab?: TabId; state?: TabState; placement?: TabPlacement }) => view.rerender(draw(o)) };
 }
 
 beforeEach(() => {
@@ -109,4 +109,42 @@ describe('TabStrip menu keys', () => {
   };
   it('opens one menu from Shift+F10 whether or not the browser follows with a contextmenu event', () => one('F10', true));
   it('opens one menu from the Menu key', () => one('ContextMenu', false));
+});
+
+describe('TabStrip screen-reader details and the narrow-window note', () => {
+  const nav = () => screen.getByRole('navigation', { name: 'Main' });
+  it('puts no aria-orientation on the nav, in a strip or a rail', () => {
+    strip();
+    expect(nav().hasAttribute('aria-orientation')).toBe(false);
+    cleanup();
+    useUi.setState({ tabPlacement: 'left' });
+    strip({ placement: 'left' });
+    expect(nav().hasAttribute('aria-orientation')).toBe(false);
+  });
+  it('names the rail toggle once and lets aria-expanded carry the state', () => {
+    useUi.setState({ tabPlacement: 'left' });
+    strip({ placement: 'left' });
+    expect(screen.getByRole('button', { name: 'Tab rail' }).getAttribute('aria-expanded')).toBe('true');
+    cleanup();
+    useUi.setState({ tabRail: { width: 210, collapsed: true } });
+    strip({ placement: 'left' });
+    expect(screen.getByRole('button', { name: 'Tab rail' }).getAttribute('aria-expanded')).toBe('false');
+    expect(screen.queryByRole('separator')).toBeNull();
+  });
+  it('explains a rail drawn at the top in the menu', () => {
+    useUi.setState({ tabPlacement: 'left' });
+    strip();
+    fireEvent.contextMenu(link('Home'));
+    expect(within(screen.getByRole('menu', { name: 'Tabs' })).getByText(/too narrow for a side rail.*Left is saved/)).toBeTruthy();
+  });
+  it('adds nothing to the menu when the tabs are where they were saved', () => {
+    strip();
+    fireEvent.contextMenu(link('Home'));
+    expect(document.querySelector('.tab-menu-note')).toBeNull();
+    cleanup();
+    useUi.setState({ tabPlacement: 'left' });
+    strip({ placement: 'left' });
+    fireEvent.contextMenu(link('Home'));
+    expect(document.querySelector('.tab-menu-note')).toBeNull();
+  });
 });

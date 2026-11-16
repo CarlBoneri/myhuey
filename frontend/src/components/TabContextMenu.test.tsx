@@ -5,8 +5,8 @@ import { tabMenuItems } from '../lib/tabs';
 import { TabContextMenu } from './TabContextMenu';
 
 const items = (over = {}) => tabMenuItems({ closable: true, tabPlacement: 'top', drawnAsRail: false, rail: { width: 210, collapsed: false }, ...over });
-const open = (over = {}, onChoose = vi.fn(), onClose = vi.fn()) => {
-  const { unmount } = render(<TabContextMenu items={items(over)} at={{ x: 10, y: 10 }} onChoose={onChoose} onClose={onClose} />);
+const open = (over = {}, onChoose = vi.fn(), onClose = vi.fn(), note?: string) => {
+  const { unmount } = render(<TabContextMenu items={items(over)} note={note} at={{ x: 10, y: 10 }} onChoose={onChoose} onClose={onClose} />);
   return { onChoose, onClose, unmount };
 };
 
@@ -76,5 +76,15 @@ describe('TabContextMenu', () => {
     const { onChoose } = open();
     fireEvent.click(screen.getByRole('menuitemradio', { name: 'Bottom' }));
     expect(onChoose).toHaveBeenCalledWith({ kind: 'place', placement: 'bottom', checked: false });
+  });
+
+  it('describes the Tab position group with the note, when there is one', () => {
+    open({}, vi.fn(), vi.fn(), 'Left is saved.');
+    const group = screen.getByRole('group', { name: 'Tab position' });
+    expect(document.getElementById(group.getAttribute('aria-describedby')!)?.textContent).toBe('Left is saved.');
+  });
+  it('has no description without a note', () => {
+    open();
+    expect(screen.getByRole('group', { name: 'Tab position' }).hasAttribute('aria-describedby')).toBe(false);
   });
 });

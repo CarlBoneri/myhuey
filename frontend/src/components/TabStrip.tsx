@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
 import { PanelLeftClose, PanelLeftOpen, Plus, RotateCcw, X, type LucideIcon } from 'lucide-react';
 import { href, go, type Route } from '../lib/router';
-import { DEFAULT_TABS, contextOrigin, focusAfterClose, refocusReady, RAIL_DEFAULT, RAIL_MAX, RAIL_MIN, RAIL_STEP, clampRail, closeTab, isVertical, moveTab, neighbour, reopenTab, settleRail, shiftTab, tabMenuItems, type TabId, type TabMenuItem, type TabPlacement, type TabState } from '../lib/tabs';
+import { DEFAULT_TABS, contextOrigin, focusAfterClose, refocusReady, RAIL_DEFAULT, RAIL_MAX, RAIL_MIN, RAIL_STEP, clampRail, closeTab, isVertical, moveTab, narrowRailNote, neighbour, reopenTab, settleRail, shiftTab, tabMenuItems, type TabId, type TabMenuItem, type TabPlacement, type TabState } from '../lib/tabs';
 import { useUi } from '../uiStore';
 import { TabContextMenu } from './TabContextMenu';
 
@@ -175,7 +175,7 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
   };
 
   const strip = (
-    <nav ref={nav} className={`tabs ${placement}${vertical ? ' rail' : ''}${collapsed ? ' collapsed' : ''}`} aria-label="Main" aria-orientation={vertical ? 'vertical' : 'horizontal'}
+    <nav ref={nav} className={`tabs ${placement}${vertical ? ' rail' : ''}${collapsed ? ' collapsed' : ''}`} aria-label="Main"
       onPointerDown={() => { if (menuKey.current) { window.clearTimeout(menuKey.current.timer); menuKey.current = null; } }}
       onContextMenu={(event) => {
         event.preventDefault();
@@ -195,7 +195,7 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
       onDrop={(event) => { event.preventDefault(); dropOn(null); }}>
       {vertical && (
         <button type="button" className={`rail-toggle ${placement}`} aria-expanded={!collapsed}
-          aria-label={collapsed ? 'Expand the tab rail' : 'Collapse the tab rail'} title={collapsed ? 'Expand the tab rail' : 'Collapse the tab rail to icons'}
+          aria-label="Tab rail" title={collapsed ? 'Expand the tab rail' : 'Collapse the tab rail to icons'}
           onClick={() => setTabRail({ ...tabRail, collapsed: !collapsed })}>
           {collapsed ? <PanelLeftOpen size={14} aria-hidden="true" /> : <PanelLeftClose size={14} aria-hidden="true" />}
           {!collapsed && <span>Tabs</span>}
@@ -274,7 +274,7 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
         )}
       </span>
       {context && (
-        <TabContextMenu at={{ x: context.x, y: context.y }} onClose={shutContext} onChoose={choose}
+        <TabContextMenu at={{ x: context.x, y: context.y }} note={narrowRailNote(tabPlacement, isVertical(tabPlacement) && !vertical)} onClose={shutContext} onChoose={choose}
           items={tabMenuItems({ closable: context.tab !== null && tabs.length > 1, tabPlacement, drawnAsRail: vertical, rail: tabRail })} />
       )}
     </nav>

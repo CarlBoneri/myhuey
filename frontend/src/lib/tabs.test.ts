@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { contextOrigin, focusAfterClose, refocusReady, REFOCUS_WINDOW, type TabId, RAIL_DEFAULT, RAIL_MAX, RAIL_MIN, RAIL_SNAP, tabMenuItems, clampRail, normalizeRail, settleRail, ALL_TABS, DEFAULT_TABS, TAB_PLACEMENTS, closeTab, isVertical, normalizePlacement, moveTab, neighbour, normalizeTabs, openTabs, reopenTab, shiftTab, tabForRoute, type TabState } from './tabs';
+import { contextOrigin, isNarrowWindow, narrowRailNote, focusAfterClose, refocusReady, REFOCUS_WINDOW, type TabId, RAIL_DEFAULT, RAIL_MAX, RAIL_MIN, RAIL_SNAP, tabMenuItems, clampRail, normalizeRail, settleRail, ALL_TABS, DEFAULT_TABS, TAB_PLACEMENTS, closeTab, isVertical, normalizePlacement, moveTab, neighbour, normalizeTabs, openTabs, reopenTab, shiftTab, tabForRoute, type TabState } from './tabs';
 
 const state = (order: string, closed = ''): TabState => normalizeTabs({ order: order.split(' ').filter(Boolean), closed: closed.split(' ').filter(Boolean) });
 
@@ -168,3 +168,18 @@ describe('refocusReady', () => {
     expect(refocusReady(claim, { restore: false }, 'home', 1000 + REFOCUS_WINDOW + 1)).toBe('drop');
   });
 });
+
+describe('narrowRailNote', () => {
+  it('says the saved side still applies when a rail is drawn at the top', () => {
+    expect(narrowRailNote('left', true)).toBe('This window is too narrow for a side rail, so the tabs are at the top for now. Left is saved and applies when the window is wider.');
+    expect(narrowRailNote('right', true)).toBe('This window is too narrow for a side rail, so the tabs are at the top for now. Right is saved and applies when the window is wider.');
+  });
+  it('says nothing in a wide window', () => {
+    for (const place of TAB_PLACEMENTS) expect(narrowRailNote(place, false)).toBeNull();
+  });
+  it('says nothing for top or bottom tabs, however narrow', () => {
+    expect(narrowRailNote('top', true)).toBeNull();
+    expect(narrowRailNote('bottom', true)).toBeNull();
+  });
+});
+it('isNarrowWindow is false where there is no matchMedia', () => { expect(isNarrowWindow()).toBe(false); });
