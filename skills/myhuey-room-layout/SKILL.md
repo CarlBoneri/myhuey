@@ -23,8 +23,9 @@ You never make the sandbox active; the person does that in the app once they lik
    id as `layout` to every call below. To rework a room that already exists, pass `copy_from`
    "active" and change the copy (`update_room`, `remove_light`, and so on) instead of adding a new room.
 3. **Add the room.** `add_room` with `layout`, `name`, `width` (along x), `depth` (along y),
-   and optionally `ceiling` and `units` ("imperial" or "metric", for how the app shows it). For
-   an L-shape or any other shape, pass `outline` instead: [x, y] corners in cm, going clockwise
+   and optionally `ceiling` and `units` ("imperial" or "metric", for how the app shows it). There
+   is no default size, so it refuses a room without both. For an L-shape or any other shape,
+   pass `outline` instead: [x, y] corners in cm, going clockwise
    from the top-left. The result is the room as `get_room` shows it (there the depth is called
    `height`).
 4. **Doors and windows.** `set_openings` with a list of `{"kind": "door" or "window", "wall",

@@ -7,6 +7,7 @@ from myhuey.assistant import (
     WRITES_LAYOUT, Refused, add_room, check_layout, create_sandbox, get_room, open_in_app, place_light,
     remove_light, remove_room, set_furniture, set_openings, update_room,
 )
+from myhuey.errors import RoomNotFound
 from myhuey.layouts import using_layout
 from myhuey.service import HueRoomService
 
@@ -282,3 +283,38 @@ def test_moving_a_light_already_in_the_room_asks_the_bridge_nothing(service, ses
     box = create_sandbox(service, copy_from="active")
     place_light(service, box["id"], "Den", 100, 100, light_id="2")
     assert session.calls == [] and session.clip_calls == []
+
+
+@pytest.mark.parametrize("sizes", [{}, {"width": 300}, {"depth": 300}])
+def test_a_room_needs_a_size(service, sizes):
+    box = create_sandbox(service)
+    with pytest.raises(ValueError) as refused:
+        add_room(service, box["id"], "Office", **sizes)
+    assert str(refused.value) == "Give the room's width and depth (along x and y), or an outline of [x, y] corners in cm."
+    assert create_sandbox_rooms(service, box) == []
+    assert add_room(service, box["id"], "Office", outline=[[0, 0], [300, 0], [300, 200], [0, 200]])["width"] == 300
+
+
+def test_a_missing_room_says_where_it_looked(service):
+    with pytest.raises(RoomNotFound) as missing:
+        get_room(service, "Office")
+    assert str(missing.value) == "Room 'Office' not found in the active home. Rooms there: Den. Pass layout to look in a sandbox."
+    box = create_sandbox(service, "Office idea")
+    with pytest.raises(RoomNotFound) as missing:
+        place_light(service, box["id"], "Den", 10, 10, catalog="go")
+    assert str(missing.value) == "Room 'Den' not found in sandbox Office idea. Rooms there: none."
+
+
+def test_positions_may_be_negative_and_check_layout_says_so(service):
+    box = create_sandbox(service, copy_from="active")
+    lamp = place_light(service, box["id"], "Den", -5, "-20", catalog="floor-lamp")
+    assert (lamp["x"], lamp["y"]) == (-5, -20)
+    room = set_furniture(service, box["id"], "Den", [{"kind": "chair", "x": -30, "y": 10}])
+    assert (room["furniture"][0]["x"], room["furniture"][0]["y"]) == (-30, 10)
+    kinds = {(problem["kind"], problem["item"]) for problem in check_layout(service, "Den", layout=box["id"])["problems"]}
+    assert ("outside", lamp["light_id"]) in kinds and ("outside", room["furniture"][0]["id"]) in kinds
+    for bad in ("left", float("nan"), float("inf")):
+        with pytest.raises(ValueError, match="x: cannot read"):
+            place_light(service, box["id"], "Den", bad, 10, catalog="go")
+    with pytest.raises(ValueError, match="width"):
+        set_furniture(service, box["id"], "Den", [{"kind": "chair", "x": 10, "y": 10, "width": -40}])  # sizes stay lengths

@@ -18,7 +18,7 @@ import requests
 
 from .catalog import CATALOG, catalog_item
 from .errors import BridgeNotConfigured, HueError, LayoutChanged, LayoutNotFound, RoomNotFound, SceneNotFound
-from .layouts import using_layout
+from .layouts import current_layout, using_layout
 from .models import DEFAULT_FURNITURE_HEIGHT, FURNITURE_HEIGHTS, FURNITURE_SIZES, new_id
 from .room_text import draw_room, layout_problems
 from .room_view import room_json
@@ -74,8 +74,12 @@ def _room_name(service: HueRoomService, room: str) -> str:
     for name in names:
         if name.casefold() == str(room).strip().casefold():
             return name
+    open_id = current_layout.get()
+    sandbox_name = next((entry["name"] for entry in service.layouts() if entry["id"] == open_id and not entry["active"]), None)
+    where = f"sandbox {sandbox_name}" if sandbox_name else "the active home"
+    hint = "" if sandbox_name else " Pass layout to look in a sandbox."
     error = RoomNotFound(room)
-    error.args = (f"Room '{room}' not found. Rooms that exist: {', '.join(names) or 'none'}.",)
+    error.args = (f"Room '{room}' not found in {where}. Rooms there: {', '.join(names) or 'none'}.{hint}",)
     raise error
 
 
@@ -400,13 +404,26 @@ def sandbox(service: HueRoomService, layout: str | None) -> Iterator[str]:
 
 
 def _plan_cm(value: float | int | str, what: str) -> float:
-    """A position or offset in cm: like cm(), but 0 is allowed."""
+    """An offset or height in cm: like cm(), but 0 is allowed."""
     try:
         if not isinstance(value, bool) and float(value) == 0:
             return 0.0
     except (TypeError, ValueError):
         pass
     return cm(value, what)
+
+
+def _position(value: float | int | str, what: str) -> float:
+    """An x or y in cm: any finite number, below zero too. A position is not a length: an item can
+    sit outside the room, and check_layout reports it."""
+    if isinstance(value, str) and value.strip().startswith("-"):
+        try:
+            return -_plan_cm(value.strip()[1:], what)
+        except ValueError:
+            return cm(value, what)  # refused, naming the value as it was given
+    if isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) and value < 0:
+        return float(value)
+    return _plan_cm(value, what)
 
 
 def _room_dict(service: HueRoomService, room: str) -> dict[str, Any]:
@@ -442,6 +459,8 @@ def add_room(
 
     Lengths may be cm or strings with a unit, such as "12ft" or "3.8m"."""
     with sandbox(service, layout) as layout_id:
+        if outline is None and (width is None or depth is None):  # no silent default size
+            raise ValueError("Give the room's width and depth (along x and y), or an outline of [x, y] corners in cm.")
         sizes: dict[str, Any] = {}
         if width is not None:
             sizes["width"] = cm(width, "width")
@@ -529,7 +548,7 @@ def set_furniture(service: HueRoomService, layout: str | None, room: str, furnit
                 raise ValueError(f"Unknown furniture kind '{kind}'. See catalog.")
             label, width, depth, shape = FURNITURE_SIZES[kind]
             data: dict[str, Any] = {"kind": kind, "label": item.get("label") or label, "shape": shape, "width": width, "depth": depth,
-                                    "x": _plan_cm(item.get("x"), "x"), "y": _plan_cm(item.get("y"), "y")}
+                                    "x": _position(item.get("x"), "x"), "y": _position(item.get("y"), "y")}
             for key in ("width", "depth"):
                 if item.get(key) is not None:
                     data[key] = cm(item[key], key)
@@ -560,7 +579,7 @@ def place_light(
         name = _room_name(service, room)
         if (light_id is None) == (catalog is None):
             raise ValueError("Give exactly one of light_id or catalog.")
-        spot = {"x": _plan_cm(x, "x"), "y": _plan_cm(y, "y")}
+        spot = {"x": _position(x, "x"), "y": _position(y, "y")}
         elevation = _plan_cm(height, "height") if height is not None else None
         size = cm(length, "length") if length is not None else None
         if catalog is not None:
