@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 
+export type DesignTab = 'plan' | '3d' | 'photo';
+
 export type Route =
   | { view: 'home' }
   /** A room's workbench: use and tune it. */
@@ -7,7 +9,7 @@ export type Route =
   /** The whole-home floor plan; `focus` selects a room for reshaping. */
   | { view: 'studio'; focus?: string }
   /** One room's designer in the Studio: outline, furniture, light placement, photo. */
-  | { view: 'design'; room: string; tab: 'plan' | 'photo' }
+  | { view: 'design'; room: string; tab: DesignTab }
   | { view: 'setup' }
   | { view: 'scenes' }
   | { view: 'scene'; id: string }
@@ -22,7 +24,7 @@ export function parseRoute(hash: string): Route {
     return third === 'photo' ? { view: 'design', room: second, tab: 'photo' } : { view: 'room', room: second };
   }
   if (first === 'studio') {
-    if (second === 'room' && third) return { view: 'design', room: third, tab: fourth === 'photo' ? 'photo' : 'plan' };
+    if (second === 'room' && third) return { view: 'design', room: third, tab: fourth === 'photo' || fourth === '3d' ? fourth : 'plan' };
     if (second === 'plan' && third) return { view: 'studio', focus: third };
     return { view: 'studio' };
   }
@@ -42,7 +44,7 @@ export function href(route: Route): string {
     case 'room':
       return `#/room/${part(route.room)}`;
     case 'design':
-      return `#/studio/room/${part(route.room)}${route.tab === 'photo' ? '/photo' : ''}`;
+      return `#/studio/room/${part(route.room)}${route.tab === 'plan' ? '' : `/${route.tab}`}`;
     case 'studio':
       return route.focus ? `#/studio/plan/${part(route.focus)}` : '#/studio';
     case 'scene':

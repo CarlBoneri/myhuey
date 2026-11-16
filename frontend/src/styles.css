@@ -993,3 +993,72 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .theme-select { min-width: 170px; }
 .theme-swatches { display: inline-flex; gap: 3px; }
 .theme-swatches span { width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--swatch-ring); }
+
+/* The 3D room view */
+
+.view3d { position: absolute; inset: 0; touch-action: none; cursor: grab; user-select: none; }
+.view3d:active { cursor: grabbing; }
+.view3d svg { display: block; }
+.v3-floor { fill: var(--floor); stroke: var(--floor-stroke); stroke-width: 1.5; stroke-linejoin: round; }
+.v3-grid line { stroke: var(--grid); stroke-width: 1; }
+.v3-wall polygon { fill: var(--text-2); stroke: var(--floor-stroke); stroke-width: 1; stroke-linejoin: round; }
+.v3-wall.cut { pointer-events: none; }
+.v3-wall.cut > polygon:first-child { stroke-dasharray: 4 4; stroke-opacity: 0.45; }
+.v3-wall .v3-opening.window { fill: var(--ansi-cyan); fill-opacity: 0.16; stroke: var(--ansi-cyan); stroke-opacity: 0.7; }
+.v3-wall .v3-opening.door { fill: var(--stage); fill-opacity: 0.55; stroke: var(--text-3); }
+.v3-pool { mix-blend-mode: screen; pointer-events: none; }
+.v3-solid { cursor: move; }
+.v3-solid polygon { stroke: var(--furniture-stroke); stroke-width: 1; stroke-linejoin: round; }
+.v3-solid.flat polygon { fill-opacity: 0.5; }
+.v3-solid.selected polygon { stroke: var(--accent); stroke-width: 2; }
+.v3-screen polygon { fill: color-mix(in srgb, var(--text-3) 35%, var(--stage)); stroke: var(--text-3); stroke-width: 1.5; }
+.v3-screen.front polygon { fill: color-mix(in srgb, var(--accent) 22%, #05060a); stroke: var(--accent); }
+.v3-light { cursor: pointer; }
+.v3-drop { stroke: var(--text-3); stroke-width: 1; stroke-dasharray: 3 3; stroke-opacity: 0.6; }
+.v3-foot { fill: var(--text-3); }
+.v3-glow { pointer-events: none; }
+.v3-bar { stroke-linecap: round; }
+.v3-bulb, .v3-bar { paint-order: stroke; }
+.v3-bulb { stroke: var(--halo); stroke-width: 1.5; }
+.v3-light:not(.lit) .v3-bulb, .v3-light:not(.lit) .v3-bar { opacity: 0.55; }
+.v3-light.planned .v3-bulb { stroke: var(--text-2); stroke-dasharray: 3 2; }
+.v3-ring { fill: none; stroke-width: 2; stroke: var(--handle-stroke); }
+.v3-light.tone-danger .v3-ring { stroke: var(--danger); }
+.v3-light.tone-warn .v3-ring { stroke: var(--warn); }
+.v3-light.selected .v3-ring { stroke: var(--handle-stroke); stroke-dasharray: none; }
+.v3-light.selected .v3-drop { stroke: var(--accent); stroke-opacity: 1; }
+.v3-label { font-size: 11px; fill: var(--text); stroke: var(--halo); stroke-width: 3; paint-order: stroke; pointer-events: none; }
+.v3-ray { pointer-events: none; }
+.v3-ray polyline { fill: none; stroke-width: 2; stroke-dasharray: 6 5; stroke-linejoin: round; animation: v3-march 1.2s linear infinite; }
+.v3-ray.tone-danger polyline { stroke: var(--danger); }
+.v3-ray.tone-danger circle { fill: var(--danger); }
+.v3-ray.tone-warn polyline { stroke: var(--warn); stroke-opacity: 0.8; }
+.v3-eye circle { fill: var(--ansi-magenta); stroke: var(--handle-stroke); stroke-width: 1.5; }
+@keyframes v3-march { to { stroke-dashoffset: -22; } }
+@media (prefers-reduced-motion: reduce) { .v3-ray polyline { animation: none; } }
+.view3d .segmented button { display: inline-flex; align-items: center; gap: 6px; }
+.view3d-hud {
+  position: absolute; z-index: 3; left: 14px; bottom: 14px; right: 14px; width: fit-content; max-width: calc(100% - 28px);
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 5px 8px; border-radius: 16px; cursor: default;
+  background: var(--glass-strong); backdrop-filter: blur(var(--glass-blur)); box-shadow: var(--shadow);
+}
+.view3d-hud .pill { display: inline-flex; align-items: center; gap: 5px; }
+.view3d-zoom { min-width: 52px; background: transparent; border: 0; color: var(--text); font: inherit; font-size: 12.5px; cursor: pointer; }
+.view3d .toolbar.floating, .view3d .stage-hint { cursor: default; }
+.view3d .stage-hint { pointer-events: none; }
+
+.glare-summary { margin: 0; font-size: 13px; color: var(--done-text); }
+.glare-summary.flagged { color: var(--warn-text); }
+.glare-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.glare-list button {
+  width: 100%; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; text-align: left; cursor: pointer;
+  padding: 8px 10px; border-radius: var(--radius-s); border: 1px solid var(--border); background: var(--inset); color: var(--text); font: inherit; font-size: 12.5px;
+}
+.glare-list button.active { border-color: var(--accent); }
+.glare-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.glare-name small { color: var(--text-3); font-size: 11.5px; }
+.glare-badge { flex: none; padding: 2px 8px; border-radius: 999px; font-size: 10.5px; border: 1px solid currentColor; }
+.glare-badge.tone-danger { color: var(--danger-text); }
+.glare-badge.tone-warn { color: var(--warn-text); }
+.glare-badge.tone-ok { color: var(--done-text); }
+.glare-badge.tone-muted { color: var(--text-3); }

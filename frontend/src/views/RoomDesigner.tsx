@@ -1,10 +1,10 @@
 // The Studio's room designer: one room drawn to scale, with its outline, furniture, doors and
 // windows, and lights at their physical sizes; plus the room photo. Using the room is the workbench's job.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Armchair, Camera, Copy, DoorOpen, Hand, Lightbulb, Map as MapIcon, PenLine, Plus, RotateCw, Trash2 } from 'lucide-react';
+import { Armchair, Box, Camera, Copy, DoorOpen, Hand, Lightbulb, Map as MapIcon, PenLine, Plus, RotateCw, Trash2 } from 'lucide-react';
 import { api } from '../api';
 import { attempt, useStore } from '../store';
-import { go, href } from '../lib/router';
+import { go, href, type DesignTab } from '../lib/router';
 import { area, bounds, pathOf, round1 } from '../lib/geometry';
 import { formatArea, formatLength, snap } from '../lib/units';
 import { effectiveLength, liveColors, placedProfile } from '../lib/lights';
@@ -18,6 +18,10 @@ import { PhotoView } from './PhotoView';
 import { OutlineHandles } from '../components/OutlineHandles';
 import { PlanLightsPanel } from '../components/PlanLightsPanel';
 import { autoRoleLabel, placementNeedsRefresh } from '../lib/suggest';
+import { Room3DStage } from '../components/Room3DStage';
+import { GlarePanel } from '../components/GlarePanel';
+import { glareScene, traceGlare } from '../lib/glareMath';
+import { posedRoom, type Posture } from '../lib/rig';
 
 type Selection = { type: 'light'; id: string } | { type: 'furniture'; id: string } | { type: 'opening'; id: string } | null;
 type Tool = 'select' | 'outline' | 'openings';
@@ -199,13 +203,15 @@ function PlacedFurniture({ item, selected, onSelect, onChange, onCommit, units }
   );
 }
 
-export function RoomDesigner({ name, tab }: { name: string; tab: 'plan' | 'photo' }) {
-  const { rooms, lights, replaceRoom, refreshRooms } = useStore();
+export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
+  const { rooms, lights, profiles, replaceRoom, refreshRooms } = useStore();
   const source = rooms.find((room) => room.name === name);
   const [draft, setDraft, draftRef] = useDraft(source);
   const [selection, setSelection] = useState<Selection>(null);
   const [tool, setTool] = useState<Tool>('select');
   const [openingKind, setOpeningKind] = useState<Opening['kind']>('window');
+  const [posture, setPosture] = useState<Posture>('seated');
+  const [glareMode, setGlareMode] = useState('code');
 
   const fit = useMemo(() => {
     if (!source) return { x: 0, y: 0, w: 450, h: 300 };
@@ -319,7 +325,7 @@ export function RoomDesigner({ name, tab }: { name: string; tab: 'plan' | 'photo
   // Keyboard: Escape deselects, Delete removes, arrows nudge (Shift for a foot or 10 cm), R rotates 15°.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (tab !== 'plan' || !selection || event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) return;
+      if (tab === 'photo' || !selection || event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) return;
       if (event.key === 'Escape') {
         setSelection(null);
         return;
@@ -353,6 +359,27 @@ export function RoomDesigner({ name, tab }: { name: string; tab: 'plan' | 'photo
     return () => window.removeEventListener('keydown', onKey);
   });
 
+  // The 3D view: the room as it stands in the chosen posture, and the glare from its seat.
+  // Recomputed from the draft, so it follows a drag without a request.
+  const posed = useMemo(() => (draft && tab === '3d' ? posedRoom(draft, posture) : draft), [draft, posture, tab]);
+  const glare = useMemo(() => {
+    if (!posed || tab !== '3d') return null;
+    const scene = glareScene(posed, posture, glareMode, (placement) => {
+      const profile = placedProfile(placement, lights[placement.light_id], profiles);
+      return profile.linear ? effectiveLength(placement, profile) : 0;
+    });
+    return { scene, report: traceGlare(scene) };
+  }, [posed, posture, glareMode, lights, profiles, tab]);
+
+  /** After a desk moved with what was on it: save the lights it carried, then the furniture. */
+  const commitRig = async (lightIds: string[]) => {
+    for (const id of lightIds) {
+      const placement = draftRef.current?.lights.find((l) => l.light_id === id);
+      if (placement) await saveLight(placement);
+    }
+    await saveRoom({ furniture: draftRef.current!.furniture });
+  };
+
   if (!source || !draft) {
     return <div className="page"><Empty title={`No room named “${name}”`}><a className="button" href="#/studio">Back to the Studio</a></Empty></div>;
   }
@@ -379,6 +406,7 @@ export function RoomDesigner({ name, tab }: { name: string; tab: 'plan' | 'photo
             onChange={(next) => go({ view: 'design', room: draft.name, tab: next })}
             options={[
               { value: 'plan', label: <><MapIcon size={15} /> Plan</> },
+              { value: '3d', label: <><Box size={15} /> 3D</> },
               { value: 'photo', label: <><Camera size={15} /> Photo</> },
             ]}
           />
@@ -389,6 +417,12 @@ export function RoomDesigner({ name, tab }: { name: string; tab: 'plan' | 'photo
         <PhotoView room={draft} />
       ) : (
         <div className="split">
+          {tab === '3d' && posed && glare ? (
+            <div className="stage">
+              <Room3DStage room={draft} posed={posed} posture={posture} onPosture={setPosture} selection={selection} onSelect={setSelection}
+                onLight={updateLocalLight} onLightCommit={saveLight} onRoom={setDraft} onRigCommit={commitRig} scene={glare.scene} report={glare.report} />
+            </div>
+          ) : (
           <div className="stage">
             <div className="toolbar floating">
               <IconButton label="Select and move" active={tool === 'select'} onClick={() => setTool('select')}><Hand size={18} strokeWidth={1.5} /></IconButton>
@@ -447,8 +481,13 @@ export function RoomDesigner({ name, tab }: { name: string; tab: 'plan' | 'photo
             {tool === 'outline' && <p className="stage-hint">Drag corners to reshape. Drag a + to add a corner. Double-click a corner to remove it.</p>}
             {tool === 'openings' && <p className="stage-hint">Click a wall to add a {openingKind} there. Doors and windows follow their wall when you reshape the room, and go if their wall does.</p>}
           </div>
+          )}
 
           <aside className="inspector">
+            {tab === '3d' && glare && (
+              <GlarePanel room={draft} report={glare.report} hasSeat={!!glare.scene.eye} mode={glareMode} onMode={setGlareMode}
+                selectedId={selection?.type === 'light' ? selection.id : undefined} onSelect={(id) => setSelection({ type: 'light', id })} />
+            )}
             {selectedLight && (
               <Panel title={selectedLight.planned ? 'Planned light' : 'Light'} actions={<IconButton label="Remove from room" danger onClick={removeSelected}><Trash2 size={16} /></IconButton>}>
                 {selectedLight.planned ? (
