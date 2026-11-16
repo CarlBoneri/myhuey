@@ -56,7 +56,8 @@ function over(top: string, bottom: string): string {
   const mix = [r, g, b].map((c, i) => Math.round(c * a + base[i] * (1 - a)));
   return '#' + mix.map((c) => c.toString(16).padStart(2, '0')).join('');
 }
-const NOT_COLOURS = ['--radius-xl', '--radius-l', '--radius-m', '--radius-s', '--font', '--mono', '--glass-blur'];
+// Not palette entries: sizes and fonts, and --plan-line, which is mixed from each theme's own --text.
+const NOT_COLOURS = ['--radius-xl', '--radius-l', '--radius-m', '--radius-s', '--font', '--mono', '--glass-blur', '--plan-line'];
 const NEW_TOKENS = ['--ansi-red', '--ansi-green', '--ansi-yellow', '--ansi-blue', '--ansi-magenta', '--ansi-cyan',
   '--glass-bg', '--glass-border', '--glass-highlight', '--glass-blur', '--glow-lit', '--selection'];
 

@@ -63,6 +63,7 @@
   --glow-3: transparent;
   --lit: #ffd98a;
   --handle-stroke: #ffffff;
+  --plan-line: color-mix(in srgb, var(--text) 45%, transparent);
   --swatch-ring: rgba(255, 255, 255, 0.12);
   --swatch-active: #ffffff;
   --done-text: #c3f75d;
@@ -670,7 +671,7 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .mid-handle path { stroke: var(--handle-stroke); }
 .mid-handle:hover circle { fill: var(--accent-strong); }
 .end-handle { cursor: grab; }
-.end-handle circle { fill: var(--accent-strong); stroke: #fff; }
+.end-handle circle { fill: var(--accent-strong); stroke: var(--handle-stroke); }
 .resize-handle { fill: #fff; stroke: var(--accent-strong); cursor: nwse-resize; }
 .dimmed { opacity: 0.4; }
 

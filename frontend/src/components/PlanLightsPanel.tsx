@@ -93,7 +93,7 @@ function SetupMap({ room, setup }: { room: Room; setup: Setup }) {
       ))}
       {setup.lights.map((light, i) => {
         const { fill, opacity } = lightFill(preview[i] ?? { on: true, color: '#ffd29a', brightness: 60 });
-        return <circle key={i} cx={light.x} cy={light.y} r={span / 26} fill={fill} opacity={opacity} stroke="#fff" strokeDasharray={`${span / 120}`} strokeWidth={span / 300}><title>{light.label}</title></circle>;
+        return <circle key={i} cx={light.x} cy={light.y} r={span / 26} fill={fill} opacity={opacity} style={{ stroke: 'var(--plan-line)' }} strokeDasharray={`${span / 120}`} strokeWidth={span / 300}><title>{light.label}</title></circle>;
       })}
     </svg>
   );

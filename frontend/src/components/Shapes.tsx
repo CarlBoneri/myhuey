@@ -55,7 +55,7 @@ export function LightSilhouette({
       <g>
         {gradient}
         {glow}
-        <line x1={-half} x2={half} y1={0} y2={0} stroke="rgba(255,255,255,0.35)" strokeWidth={cmPerPx} />
+        <line x1={-half} x2={half} y1={0} y2={0} style={{ stroke: 'var(--plan-line)' }} strokeWidth={cmPerPx} />
         {Array.from({ length: count }, (_, i) => (
           <circle key={i} cx={-half + (length * i) / (count - 1)} cy={0} r={Math.max(1.4, minPx * 0.6)} fill={on ? (stops?.[i] ?? colors?.[0] ?? OFF) : OFF} />
         ))}
