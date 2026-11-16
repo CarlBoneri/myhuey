@@ -1,12 +1,15 @@
 import asyncio
 import json
+import re
 
 import pytest
+import requests
 from mcp import Client
 
-from myhuey.assistant import TOOLS
+from myhuey.assistant import TOOLS, set_furniture
 from myhuey.cli import main
 from myhuey.errors import LayoutChanged
+from myhuey.layouts import using_layout
 from myhuey.mcp_server import INSTRUCTIONS, build_server
 from myhuey.skills import skill
 
@@ -67,6 +70,56 @@ def test_a_layout_swapped_mid_call_is_a_readable_error(service, monkeypatch):
     monkeypatch.setattr(service, "_save", lambda config: (_ for _ in ()).throw(LayoutChanged()))
     result = _call(build_server(service), "add_room", {"layout": box["id"], "name": "X", "width": 300, "depth": 300})
     assert result.is_error is True and str(LayoutChanged()) in result.content[0].text
+
+
+def test_an_unexpected_error_names_the_tool_and_its_type_and_logs_the_rest(service, monkeypatch, caplog, capsys):
+    monkeypatch.setattr(service, "rooms", lambda: {}["/home/someone/secret.py"])
+    result = _call(build_server(service), "list_rooms", {})
+    text = result.content[0].text
+    assert result.is_error is True and "list_rooms" in text and "KeyError" in text and "malformed" in text
+    assert "Traceback" not in text and "secret.py" not in text and "/home" not in text
+    assert "Traceback" in caplog.text and "secret.py" in caplog.text  # the whole story goes to the log (stderr)
+    assert capsys.readouterr().out == ""
+
+
+def test_a_network_error_never_prints_its_url(service, monkeypatch):
+    from conftest import USERNAME
+
+    def unreachable():
+        raise requests.ConnectionError(f"Max retries exceeded with url: http://10.0.0.77/api/{USERNAME}/lights")
+
+    monkeypatch.setattr(service, "rooms", unreachable)
+    text = _call(build_server(service), "list_rooms", {}).content[0].text
+    assert text.endswith("The bridge or the app could not be reached.") and USERNAME not in text and "http" not in text
+
+
+def test_malformed_furniture_says_the_shape(service):
+    box = service.new_layout("Try")
+    _call(build_server(service), "add_room", {"layout": box["id"], "name": "Office", "width": 400, "depth": 400})
+    furniture = [{"kind": ["desk"], "x": 10, "y": 10}]
+    result = _call(build_server(service), "set_furniture", {"layout": box["id"], "room": "Office", "furniture": furniture})
+    assert result.is_error is True and '{"kind": "desk", "x": 120, "y": 60}' in result.content[0].text
+    with pytest.raises(ValueError, match=re.escape('[{"kind": "desk", "x": 120, "y": 60}]')):
+        set_furniture(service, box["id"], "Office", ["desk"])  # the schema stops this one; the tool checks too
+
+
+def test_parallel_calls_into_one_sandbox_all_land(service):
+    """The SDK runs each sync tool in its own worker thread; calls sent together must not lose writes."""
+    box = service.new_layout("Try")
+    _call(build_server(service), "add_room", {"layout": box["id"], "name": "Office", "width": 400, "depth": 400})
+
+    async def go():
+        async with Client(build_server(service)) as client:
+            calls = [
+                client.call_tool("place_light", {"layout": box["id"], "room": "Office", "x": 20 * i + 10, "y": 50, "catalog": "go"})
+                for i in range(12)
+            ]
+            return await asyncio.gather(*calls)
+
+    results = asyncio.run(go())
+    assert all(result.is_error is False for result in results)
+    with using_layout(box["id"]):
+        assert len(service.get_room("Office").lights) == 12
 
 
 def test_tools_without_a_service_still_answer(service):

@@ -477,11 +477,16 @@ def set_furniture(service: HueRoomService, layout: str | None, room: str, furnit
     Missing width, depth, shape, and label come from the catalog's size for the kind."""
     with sandbox(service, layout) as layout_id:
         name = _room_name(service, room)
+        shape = 'Give a list of objects such as [{"kind": "desk", "x": 120, "y": 60}], one per piece, with kind a catalog name.'
         if not isinstance(furniture, list):
-            raise ValueError("furniture must be a list of {kind, x, y} objects.")
+            raise ValueError(f"furniture must be a list. {shape}")
         built = []
         for item in furniture:
-            kind = item.get("kind") if isinstance(item, dict) else None
+            if not isinstance(item, dict):
+                raise ValueError(f"Each piece of furniture is an object, not {item!r}. {shape}")
+            kind = item.get("kind")
+            if not isinstance(kind, str):
+                raise ValueError(f"kind must be one catalog name as a string, not {kind!r}. {shape}")
             if kind not in FURNITURE_SIZES:
                 raise ValueError(f"Unknown furniture kind '{kind}'. See catalog.")
             label, width, depth, shape = FURNITURE_SIZES[kind]
