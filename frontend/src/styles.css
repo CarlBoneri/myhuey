@@ -488,7 +488,8 @@ h1, h2, h3, h4 { margin: 0; font-weight: 600; letter-spacing: -0.01em; }
 a.chrome-button { text-decoration: none; }
 .chrome-button svg { color: var(--ansi-magenta); }
 .chrome-button.active { border-color: var(--accent); }
-.workspace { display: flex; min-height: 0; min-width: 0; }
+/* Positioned so the Workflows drawer, absolute in a narrow window, is laid out against the work area and not the whole shell. */
+.workspace { display: flex; position: relative; min-height: 0; min-width: 0; }
 .workspace > .main { flex: 1; }
 
 .main { position: relative; z-index: 1; overflow: auto; min-width: 0; }
@@ -869,6 +870,10 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
   .bridge-pill, .window-dots, .chrome-button span { display: none; }
   .studio3d { display: flex !important; flex-direction: column; height: auto; }
   .studio3d .splitter.col { display: none; }
+  /* The stacked column has no height for the panes' percentage sizes to resolve against, so the 3D view gets a height of its own (flex: none, because a flex-basis of 0% would otherwise hide the height). */
+  .studio3d-main > .pane { flex: none !important; }
+  .studio3d .pane-body.stage { flex: none; height: clamp(320px, 62vh, 620px); }
+  .studio3d .pane-body.audit { max-height: 50vh; }
   .split { grid-template-columns: 1fr; }
   .stage { min-height: 60vh; }
   .page { padding: 16px; height: auto; }
@@ -1196,7 +1201,7 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .pane-body.audit .hint { padding: 12px; }
 .audit-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 8px; background: var(--text-3); }
 .audit-role { color: var(--ansi-magenta); text-transform: capitalize; }
-.splitter { display: grid; place-items: center; flex: none; touch-action: none; }
+.splitter { display: grid; place-items: center; flex: none; touch-action: none; user-select: none; -webkit-user-select: none; }
 .splitter span { border-radius: 999px; background: var(--border-strong); transition: 0.12s; }
 .splitter:hover span, .splitter:active span { background: var(--accent); }
 .splitter.row { height: 10px; cursor: row-resize; }
