@@ -15,6 +15,7 @@ import { LightsView } from './views/LightsView';
 import { SettingsView } from './views/SettingsView';
 import { HelpView } from './views/HelpView';
 import { topicFor } from './lib/helpDocs';
+import { resolveStudioRoute, studioRoom } from './lib/studio';
 import { isVertical, openTabs, reopenTab, tabForRoute, type TabId, type TabPlacement } from './lib/tabs';
 import { TabStrip, type Tab } from './components/TabStrip';
 import { SandboxBanner } from './components/SandboxBanner';
@@ -40,10 +41,10 @@ function useNarrow(): boolean {
   return narrow;
 }
 
-/** Every tab there can be. The room tabs follow the room you were last in, and need one. */
-function allTabs(room: string | null): Tab[] {
+/** Every tab there can be. The workbench tab follows the room you were last in, and needs one; the Studio's 3D tab only needs a room to exist. */
+function allTabs(studio: string | null, room: string | null): Tab[] {
   return [
-    ...(room ? [{ id: '3d' as TabId, label: 'Studio · 3D & Glare', icon: Box, route: { view: 'design', room, tab: '3d' } as Route }] : []),
+    ...(studio ? [{ id: '3d' as TabId, label: 'Studio · 3D & Glare', icon: Box, route: { view: 'design', room: studio, tab: '3d' } as Route }] : []),
     { id: 'home', label: 'Home · Active', icon: House, route: { view: 'home' } },
     ...(room ? [{ id: 'workbench' as TabId, label: `Workbench · ${room}`, icon: SlidersHorizontal, route: { view: 'room', room } as Route }] : []),
     { id: 'studio', label: 'Studio · Floor Plan', icon: MapIcon, route: { view: 'studio' } },
@@ -83,8 +84,9 @@ export function App() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [setPalette]);
-  void rooms; void currentRoom; // the tabs are worked out from both
-  const every = allTabs(ready ? snapshot().currentRoom : null);
+  // The tabs are worked out from the rooms and the room you were last in.
+  const studio = ready ? studioRoom(rooms, currentRoom) : null;
+  const every = allTabs(studio, ready ? snapshot().currentRoom : null);
   const available = every.map((tab) => tab.id);
   const byId = new Map(every.map((tab) => [tab.id, tab]));
   const tabs = openTabs(tabState).map((id) => byId.get(id)).filter((tab): tab is Tab => !!tab);
@@ -95,6 +97,10 @@ export function App() {
     const now = useUi.getState().tabs;
     if (now.closed.includes(activeTab)) setTabs(reopenTab(now, activeTab));
   }, [activeTab, setTabs]);
+  // A Studio address with no room (#/studio/3d) becomes the address of the room it stands for.
+  useEffect(() => {
+    if (ready && route.view === 'studio-room') window.location.replace(href(resolveStudioRoute(route, rooms, currentRoom)));
+  }, [ready, route, rooms, currentRoom]);
   const strip = <TabStrip placement={placement} tabs={tabs} closed={closed} available={available} byId={byId} activeTab={activeTab} state={tabState} setTabs={setTabs} />;
   const bridgeOk = !!setup?.configured && !lightsError;
 
@@ -125,7 +131,10 @@ export function App() {
       case 'room':
         return <RoomWorkbench name={route.room} />;
       case 'design':
-        return <RoomDesigner name={route.room} tab={route.tab} />;
+        // Keyed by room: a room picked in the Studio starts clean, like opening that room's designer from anywhere.
+        return <RoomDesigner key={route.room} name={route.room} tab={route.tab} />;
+      case 'studio-room':
+        return <div className="loading">Opening the Studio…</div>;
       case 'scenes':
         return <ScenesView />;
       case 'scene':

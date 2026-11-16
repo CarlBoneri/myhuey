@@ -15,6 +15,7 @@ import { PlanCanvas, usePlan } from '../components/PlanCanvas';
 import { Empty, Field, IconButton, LengthInput, Panel, Segmented, Sidebar, Slider, TextInput } from '../components/ui';
 import { LayoutsPanel } from '../components/LayoutsPanel';
 import { RoomOnPlan } from '../components/RoomOnPlan';
+import { StudioHead } from '../components/StudioHead';
 
 type Tool = 'select' | 'scale' | 'trace' | 'draw';
 type DrawShape = 'rect' | 'L' | 'points';
@@ -217,7 +218,14 @@ export function PlanView({ focus }: { focus?: string } = {}) {
   // Reshaping a room in place, over the plan image: the selected room and its outline mid-drag.
   const [selected, setSelected] = useState<string | null>(focus ?? null);
   const [draft, setDraft] = useState<Pt[] | null>(null);
-  useEffect(() => { if (focus) { setSelected(focus); setTool('select'); } }, [focus]);
+  // The route's focus selects a room; "Whole home" in the picker takes the focus (and the selection) away.
+  const hadFocus = useRef(!!focus);
+  useEffect(() => {
+    if (focus) { setSelected(focus); setTool('select'); setDraft(null); }
+    else if (hadFocus.current) { setSelected(null); setDraft(null); }
+    hadFocus.current = !!focus;
+  }, [focus]);
+  const pickOnPlan = (room: string | null) => { setSelected(room); setDraft(null); if (room) setTool('select'); };
   // Another layout was opened: drop what was selected or half-drawn in the last one.
   const firstLayout = useRef(layout);
   useEffect(() => {
@@ -354,12 +362,7 @@ export function PlanView({ focus }: { focus?: string } = {}) {
 
   return (
     <div className="page plan-page">
-      <header className="page-head">
-        <div>
-          <p className="eyebrow">Studio</p>
-          <h1>Floor plan</h1>
-        </div>
-      </header>
+      <StudioHead view="home" room={selectedRoom?.name ?? null} onPick={pickOnPlan} />
       <div className="split">
         <div className="stage">
           <div className="toolbar floating">

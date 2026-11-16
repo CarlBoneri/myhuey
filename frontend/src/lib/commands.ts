@@ -7,6 +7,7 @@ import type { Posture } from './rig';
 import { THEMES, type Theme } from './theme';
 import { TOPICS } from './helpDocs';
 import { TAB_PLACEMENTS, type TabPlacement } from './tabs';
+import { studioRoom } from './studio';
 
 export interface Snapshot {
   rooms: { name: string }[];
@@ -15,6 +16,8 @@ export interface Snapshot {
   layouts: { id: string; name: string; active: boolean }[];
   /** The room commands fall back to when none is named. */
   currentRoom: string | null;
+  /** The room you were last in, as remembered (no fallback). The Studio's own rule starts here. */
+  remembered?: string | null;
 }
 
 export type Intent =
@@ -53,7 +56,7 @@ export const HELP: [string, string][] = [
   ['layouts list | layouts open <layout>|active', 'Saved layouts and sandboxes'],
   ['layouts new [name]', 'Copy the open layout into a new sandbox and open it'],
   ['open home|studio|scenes|lights|settings|setup', 'Go to a screen'],
-  ['open workbench|plan|3d|photo [room]', 'Go to a room: use it, or design it'],
+  ['open workbench|plan|3d|photo [room]', 'Go to a room: use it, or design it in the Studio. Without a room, plan, 3d, and photo open the room you were last in, else the first'],
   ['open help [topic]', 'The help pages'],
   ['tabs top|bottom|left|right', 'Put the tabs in the top bar, above the prompt, or in a rail down the left or right'],
   ['tabs reset', 'Put every tab back, in the original order'],
@@ -203,7 +206,12 @@ export function plan(line: string, snapshot: Snapshot): Intent {
     }
     if (action && screens[action]) return { kind: 'open', route: screens[action], label: action };
     if (action === 'workbench' || action === 'plan' || action === '3d' || action === 'photo') {
-      const room = roomNamed(snapshot, rest.join(' ') || undefined);
+      const typed = rest.join(' ') || undefined;
+      // The Studio views with no room named use the Studio's rule: the remembered room, else the first.
+      const unnamed = typed === undefined && action !== 'workbench';
+      const defaulted = unnamed ? studioRoom(snapshot.rooms, snapshot.remembered !== undefined ? snapshot.remembered : snapshot.currentRoom) : null;
+      if (unnamed && !defaulted) return fail('There are no rooms yet. Add one in the Studio first: open studio');
+      const room = defaulted ?? roomNamed(snapshot, typed);
       if (typeof room !== 'string') return room;
       const route: Route = action === 'workbench' ? { view: 'room', room } : { view: 'design', room, tab: action };
       return { kind: 'open', route, label: `${action} · ${room}` };
@@ -268,6 +276,8 @@ export function shortcuts(snapshot: Snapshot): Shortcut[] {
       { group: 'Design', title: `Photo of ${item.name}`, detail: 'Pin lights on a photo and preview scenes on it', command: `open photo ${r}` },
     );
   }
+  list.push({ group: 'Design', title: 'Studio: whole home', detail: 'The floor plan, with every room', command: 'open studio' });
+  if (room) list.push({ group: 'Design', title: `3D view of ${room}`, detail: 'The room in 3D, with the glare check', command: `open 3d ${quote(room)}` });
   list.push(
     { group: 'Design', title: 'Add a room or reshape one', detail: 'Draw rooms on the floor plan, or import them from the Hue app', command: 'open studio' },
     { group: 'Design', title: 'Design a scene', detail: 'Paint colors onto a room, or lay an image over it', command: 'open scenes' },

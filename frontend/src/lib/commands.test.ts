@@ -76,6 +76,18 @@ describe('other commands', () => {
     expect(run('open 3d')).toEqual({ kind: 'open', route: { view: 'design', room: 'Office', tab: '3d' }, label: '3d · Office' });
     expect(run('open workbench Living room')).toMatchObject({ route: { view: 'room', room: 'Living room' } });
   });
+  it('opens the Studio views for the remembered room, else the first, with no name typed', () => {
+    const fresh: Snapshot = { ...snapshot, currentRoom: 'Office', remembered: null };
+    expect(run('open 3d', fresh)).toEqual({ kind: 'open', route: { view: 'design', room: 'Office', tab: '3d' }, label: '3d · Office' });
+    expect(run('open 3d', { ...fresh, rooms: [{ name: 'Loft' }, { name: 'Den' }] })).toMatchObject({ route: { view: 'design', room: 'Loft', tab: '3d' } });
+    expect(run('open plan', { ...fresh, remembered: 'Loft' })).toMatchObject({ route: { view: 'design', room: 'Loft', tab: 'plan' } });
+    expect(run('open photo', { ...fresh, remembered: 'Gone' })).toMatchObject({ route: { view: 'design', room: 'Office', tab: 'photo' } });
+  });
+  it('says plainly that there is no room to open', () => {
+    const empty: Snapshot = { ...snapshot, rooms: [], currentRoom: null, remembered: null };
+    for (const line of ['open 3d', 'open plan', 'open photo']) expect(run(line, empty)).toMatchObject({ kind: 'error', message: expect.stringMatching(/no rooms/i) });
+    expect(run('open studio', empty)).toMatchObject({ kind: 'open', route: { view: 'studio' } });
+  });
   it('switches themes', () => {
     expect(run('theme dracula')).toEqual({ kind: 'theme', theme: 'dracula' });
     expect(run('theme Solarized Light')).toEqual({ kind: 'theme', theme: 'solarized-light' });
@@ -94,6 +106,15 @@ describe('other commands', () => {
     expect(message('layouts delete late')).toMatch(/Not in the browser prompt/);
     expect(message('   ')).toMatch(/Type a command/);
     expect(run('help')).toEqual({ kind: 'help' });
+  });
+});
+
+describe('Studio shortcuts', () => {
+  it('offers the whole home, and the current room in plan, 3D, and photo', () => {
+    const list = shortcuts(snapshot).filter((item) => item.group === 'Design');
+    expect(list.map((item) => item.command)).toEqual(expect.arrayContaining(['open studio', 'open plan Office', 'open 3d Office', 'open photo Office']));
+    expect(list.find((item) => item.command === 'open studio')?.title).toBe('Studio: whole home');
+    for (const item of list) expect(run(item.command).kind).not.toBe('error');
   });
 });
 

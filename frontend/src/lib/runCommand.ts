@@ -18,6 +18,7 @@ export function snapshot(): Snapshot {
   const current = useUi.getState().currentRoom;
   return {
     rooms, scenes, groups, layouts,
+    remembered: current && rooms.some((room) => room.name === current) ? current : null,
     currentRoom: current && rooms.some((room) => room.name === current) ? current : rooms.find((room) => room.name === 'Office')?.name ?? rooms[0]?.name ?? null,
   };
 }

@@ -73,7 +73,7 @@ export const TOPICS: Topic[] = [
   {
     id: 'design', title: 'Design a room', summary: 'Outline, furniture, doors and windows, and where the lights sit.',
     blocks: [
-      { p: 'The Studio’s room designer draws one room to scale. It has three views of the same room: Plan, 3D, and Photo. Everything is measured in real units, and you can type lengths as 12ft 6in, 3.8m, or 380cm.' },
+      { p: 'The Studio is one place for designing rooms, and you can open it from its tab without going through a room first. Its header has a Room menu and four views: Home plan (the whole floor plan), Room plan, 3D, and Photo. Choose another room in the menu and you stay on the same view of it; choose Whole home to go back to the floor plan. The room designer draws one room to scale. Everything is measured in real units, and you can type lengths as 12ft 6in, 3.8m, or 380cm.' },
       { steps: [
         'Shape the room. Use the outline tool to drag corners, add a corner with +, or pick Rectangle or L-shape in the Room panel.',
         'Add doors and windows with the openings tool. Windows keep a sill and a top height.',
@@ -89,7 +89,7 @@ export const TOPICS: Topic[] = [
   {
     id: 'glare', title: '3D view and the glare check', summary: 'See the room in 3D and find lights that hurt your eyes.',
     blocks: [
-      { p: 'The 3D tab draws the room from the same data as the plan: walls on the real outline up to the ceiling, doors and windows at their heights, furniture as solids, and each light at its height in its live color.' },
+      { p: 'The 3D view is one of the Studio’s four views. Its Room menu switches to another room and stays in 3D, and the Studio · 3D & Glare tab always opens it, for the room you were last in or else the first. It draws the room from the same data as the plan: walls on the real outline up to the ceiling, doors and windows at their heights, furniture as solids, and each light at its height in its live color.' },
       { list: [
         'Drag the background to orbit. Shift-drag or Space-drag pans. The wheel zooms toward the cursor.',
         'Drag a light and it slides across the room at its own height. Hold Alt (Option) and drag to raise or lower it.',
@@ -202,7 +202,7 @@ export function topicFor(route: Route): string {
   switch (route.view) {
     case 'home': return 'home';
     case 'room': return 'workbench';
-    case 'design': return route.tab === '3d' ? 'glare' : 'design';
+    case 'design': case 'studio-room': return route.tab === '3d' ? 'glare' : 'design';
     case 'studio': return 'design';
     case 'scenes': case 'scene': return 'scenes';
     case 'lights': return 'lights';

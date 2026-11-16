@@ -10,6 +10,8 @@ export type Route =
   | { view: 'studio'; focus?: string }
   /** One room's designer in the Studio: outline, furniture, light placement, photo. */
   | { view: 'design'; room: string; tab: DesignTab }
+  /** A Studio address with no room (`#/studio/room`, `#/studio/3d`): lib/studio.ts picks the room. */
+  | { view: 'studio-room'; tab: DesignTab }
   | { view: 'setup' }
   | { view: 'scenes' }
   | { view: 'scene'; id: string }
@@ -27,6 +29,8 @@ export function parseRoute(hash: string): Route {
   }
   if (first === 'studio') {
     if (second === 'room' && third) return { view: 'design', room: third, tab: fourth === 'photo' || fourth === '3d' ? fourth : 'plan' };
+    if (second === 'room') return { view: 'studio-room', tab: 'plan' };
+    if (second === '3d' || second === 'photo') return { view: 'studio-room', tab: second };
     if (second === 'plan' && third) return { view: 'studio', focus: third };
     return { view: 'studio' };
   }
@@ -48,6 +52,8 @@ export function href(route: Route): string {
       return `#/room/${part(route.room)}`;
     case 'design':
       return `#/studio/room/${part(route.room)}${route.tab === 'plan' ? '' : `/${route.tab}`}`;
+    case 'studio-room':
+      return route.tab === 'plan' ? '#/studio/room' : `#/studio/${route.tab}`;
     case 'studio':
       return route.focus ? `#/studio/plan/${part(route.focus)}` : '#/studio';
     case 'scene':

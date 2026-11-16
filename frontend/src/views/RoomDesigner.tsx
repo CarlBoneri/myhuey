@@ -1,7 +1,7 @@
 // The Studio's room designer: one room drawn to scale, with its outline, furniture, doors and
 // windows, and lights at their physical sizes; plus the room photo. Using the room is the workbench's job.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Armchair, Box, Camera, Copy, DoorOpen, Hand, Lightbulb, Map as MapIcon, PenLine, Plus, RotateCw, Trash2 } from 'lucide-react';
+import { Armchair, Copy, DoorOpen, Hand, Lightbulb, PenLine, Plus, RotateCw, Trash2 } from 'lucide-react';
 import { api } from '../api';
 import { attempt, useStore } from '../store';
 import { go, href, type DesignTab } from '../lib/router';
@@ -13,6 +13,7 @@ import { openingAt, reanchorOpenings } from '../lib/plan';
 import { PlanCanvas, useDrag, usePlan } from '../components/PlanCanvas';
 import { FURNITURE_CATALOG, FurnitureShape, LightSilhouette, OpeningShape } from '../components/Shapes';
 import { LightControls } from '../components/LightControls';
+import { StudioHead } from '../components/StudioHead';
 import { Empty, Field, HueIcon, IconButton, LengthInput, Panel, Segmented, Sidebar, Slider, TextInput } from '../components/ui';
 import { PhotoView } from './PhotoView';
 import { OutlineHandles } from '../components/OutlineHandles';
@@ -479,25 +480,9 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
 
   return (
     <div className="page room">
-      <header className="page-head">
-        <div>
-          <p className="eyebrow"><a href="#/studio">Studio</a> / Room</p>
-          <h1>{draft.name}</h1>
-        </div>
-        <div className="head-tools">
-          <a className="button" href={href({ view: 'room', room: draft.name })}><Lightbulb size={15} /> Open workbench</a>
-          <Segmented
-            label="View"
-            value={tab}
-            onChange={(next) => go({ view: 'design', room: draft.name, tab: next })}
-            options={[
-              { value: 'plan', label: <><MapIcon size={15} /> Plan</> },
-              { value: '3d', label: <><Box size={15} /> 3D</> },
-              { value: 'photo', label: <><Camera size={15} /> Photo</> },
-            ]}
-          />
-        </div>
-      </header>
+      <StudioHead view={tab} room={draft.name}>
+        <a className="button" href={href({ view: 'room', room: draft.name })}><Lightbulb size={15} /> Open workbench</a>
+      </StudioHead>
 
       {tab === 'photo' ? (
         <PhotoView room={draft} />

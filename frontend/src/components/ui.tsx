@@ -89,7 +89,7 @@ export function Pill({ active, onClick, children, title }: { active?: boolean; o
   );
 }
 
-export function Segmented<T extends string>({ value, options, onChange, label }: { value: T; options: { value: T; label: ReactNode; title?: string }[]; onChange: (value: T) => void; label: string }) {
+export function Segmented<T extends string>({ value, options, onChange, label }: { value: T; options: { value: T; label: ReactNode; title?: string; disabled?: boolean }[]; onChange: (value: T) => void; label: string }) {
   return (
     <div className="segmented" role="radiogroup" aria-label={label}>
       {options.map((option) => (
@@ -98,6 +98,7 @@ export function Segmented<T extends string>({ value, options, onChange, label }:
           type="button"
           role="radio"
           aria-checked={option.value === value}
+          disabled={option.disabled}
           className={option.value === value ? 'active' : ''}
           onClick={() => onChange(option.value)}
           title={option.title}

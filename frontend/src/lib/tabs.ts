@@ -72,7 +72,7 @@ export function neighbour(state: TabState, id: TabId, available: TabId[] = ALL_T
 export function tabForRoute(route: Route): TabId {
   switch (route.view) {
     case 'room': return 'workbench';
-    case 'design': return '3d';
+    case 'design': case 'studio-room': return '3d';
     case 'studio': return 'studio';
     case 'scenes': case 'scene': return 'scenes';
     case 'lights': return 'lights';
