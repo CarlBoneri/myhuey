@@ -1,102 +1,255 @@
 # MyHuey
 
-MyHuey is a local app for a Philips Hue home: a Python library, a CLI, and a web UI. You draw each room to scale, place furniture and lights at their real sizes, and paint scenes onto rooms. Each light takes the color of the zone or image it sits under, and gradient lights take colors along their length.
+MyHuey lights your desk so your eyes get less of a beating, using the Philips Hue lights you already own. You draw each room to scale and place the lights where they really sit. MyHuey then works out which lights should stay white, which should dim, and which can carry color, for what you're doing and the time of day.
 
-## Features
+It runs on your own machine as one small server, with a web app and a command line. It talks to your Hue bridge and nothing else. It's free for non-commercial use.
 
-- **Rooms to scale.** Enter dimensions in feet and inches or meters, and reshape the outline beyond rectangles (drag corners, add or remove them). Place furniture at real sizes.
-- **Lights drawn as they look.** Lightstrips are long and thin, Play bars are bars, tubes are tubes, Signe is a column, and bulbs and spots are round fixtures. The shape comes from each light's archetype, product name, and model ID. Lights rotate, and lightstrip and string-light length is adjustable.
-- **Scenes.** Paint color zones (rectangle, ellipse, freehand) onto a room. Lights outside every zone can turn off, stay as they are, take a base color, or take the nearest zone. Scenes are named, saved, editable, and can be applied from the UI or the CLI.
-- **Images in scenes.** Import an image to extract a color theme by mood (colorful, bright, muted, deep, dark), with a draggable picker on the image for every swatch. Lay the image over the room so lights take the color beneath them.
-- **Room photos.** Upload a photo of the real room and place its lights on it, as a second view beside the plan.
-- **Gradients and effects.** Edit each gradient light's colors (2 to 5 points), mode (blend, mirrored, bands, scatter), and effect (candle, fire, prism, and more) from the light controls. The plan draws each light's live gradient.
-- **Color tools.** An OKLCH and HCT color picker with tonal palettes, harmonies, and shades, tints, and tones.
+## Why it exists
 
-## Quick start
+I code at a desk, often late. The Hue app is good at "make the living room purple." It knows nothing about where your monitor is, which lamp sits in your line of sight, or that it's 11 pm and you should be winding down.
+
+So the day-to-day job here is small: open it, get to the room you're in, and set it for evening or late work in two taps. Everything else (floor plans, photos, scenes from paintings) is there to make that one job smarter. Some of it is just for fun.
+
+## How it fits together
+
+```mermaid
+flowchart TB
+  web["Web app in your browser<br/>Home, Studio, Scenes, Lights, Settings"]
+  cli["Command line<br/>myhuey room, scene, lights, groups, ..."]
+  server["myhuey serve: one local process on port 8000<br/>HTTP API plus the service: rooms, scenes, layouts,<br/>light groups, suggestions, paced light commands"]
+  store["~/.myhuey on your machine<br/>myhuey.db, uploads/, certs/"]
+  bridge["Hue bridge on your network<br/>v1 API for lights and rooms, v2 API for gradients and effects"]
+  web -- "JSON over HTTP at /api" --> server
+  cli -- "calls the same service directly" --> server
+  server -- "reads and writes" --> store
+  server -- "light commands, paced" --> bridge
+```
+
+The web app and the command line share one service, and only that service touches your files and your bridge. The one exception to "nothing goes to the internet" is Hue's discovery service, and MyHuey only calls it when you ask it to find a bridge.
+
+## How to use it
+
+### Install and run
+
+You need Python 3.11 or newer, Node to build the web app once, and a Hue bridge on the same network.
 
 ```bash
 python3 -m venv .venv
-. .venv/bin/activate
-pip install -e '.[dev]'
-
+.venv/bin/pip install -e '.[dev]'
 npm --prefix frontend install
-npm --prefix frontend run build      # builds the web UI into static/app
+npm --prefix frontend run build          # builds the web app into static/app
 
-myhuey bridge setup                  # guided pairing: press the bridge's link button
-myhuey serve --port 8000             # open http://127.0.0.1:8000
+.venv/bin/myhuey bridge setup            # press the round link button on the bridge when it asks
+.venv/bin/myhuey serve --port 8000       # then open http://127.0.0.1:8000
 ```
 
-For UI development, run `myhuey serve` and `npm --prefix frontend run dev` together. The Vite dev server proxies `/api` to port 8000.
+If you skip `bridge setup`, the web app opens the same pairing wizard the first time you load it.
 
-## Finding your way
+There's no separate frontend server in normal use: `myhuey serve` runs the API and serves the built app. Day-to-day management looks like this:
 
-- **Home** is for everyday control: on/off and brightness for every room, and a tile per room showing what's on and its colours. The **⋮** on a tile offers eye-comfort suggestions for right now and the room's saved scenes, one tap each. Click a tile to open that room's **workbench** (each light, the room's scenes, and the full suggestions).
-- **Studio** is for building: saved layouts and sandboxes, the floor-plan image, tracing and drawing rooms, and each room's designer (outline, furniture, doors and windows, light placement, and the room photo).
-- **Scenes** lists every scene and makes new ones from images, colours, or the Hue gallery.
-- **Lights** lists every light. Tick several, or Cmd/Ctrl-click them, to change them together. **Save selection** keeps the pick as a named group (stored by myhuey, not on the bridge); **Save current look** on a group remembers each light's on/off, brightness, and color, and **▶** puts them all back in one tap. From the terminal: `myhuey groups list`, `myhuey groups new --name Desk --lights 1,2`, `myhuey groups save-look Desk`, `myhuey groups apply Desk`.
-- **Settings** holds the bridge pairing and your preferences.
+| Task | Command |
+| --- | --- |
+| Stop it | `pkill -f "myhuey serve"` |
+| Run it in the background | `nohup .venv/bin/myhuey serve --port 8000 > ~/.myhuey/serve.log 2>&1 &` |
+| Check it's up | `curl -s localhost:8000/api/health` should answer `{"status":"ok","api":5}` |
 
-## Suggested scenes
+### Home
 
-Open a room's ⋮ menu on Home, or its workbench (or run `myhuey suggest --room Office --mode code`). Pick what you are doing: **code**, **work**, **study**, **read**, or **relax**. MyHuey suggests scenes from a palette library, the time of day, and where each light sits in the room:
+Home is the everyday screen, and it always controls your active home, even while you're trying ideas in a sandbox.
 
-- **The clock**: white light cools and brightens after your wake time and warms and dims over the four hours before your bedtime (set both in Settings). Blue-heavy palettes are left out from three hours before bed until you wake.
-- **Your eyes**: lights by the desk stay white (task), a light just behind the monitor stays dim (bias), and lights in your line of sight or behind your chair are dimmed and kept near white, so the screen doesn't fight glare or reflections. The palette colors the rest of the room.
-- **Heights and roles**: each light's height is guessed from its product (ceiling, floor lamp, table lamp, strip) and the furniture under it; set it in the light's details if the guess is off. A light's role is worked out automatically, or pin it to Bias, Task, or View.
+Down the left, Quick settings gives each room a row with how many lights are on, All on, All off, and a brightness slider that moves every lit light in the room together. Next to that is a square tile per room. Each tile shows whether the room is on, how bright it is, and up to five chips of the colors its lights are showing right now. A lit tile glows in its main color.
 
-A suggestion is a normal scene: preview it on the lights, then save it and edit it like any other. Put your monitors on the plan so MyHuey knows where the screen is.
+The ⋮ in a tile's corner is the two-tap path. It opens three eye-comfort suggestions for right now, with a mode picker (Code, Work, Study, Read, Relax) that your browser remembers, plus the room's saved scenes. Tap one and it goes to the lights. Clicking anywhere else on the tile opens that room's workbench.
 
-## CLI
+### Room workbench
 
-Lengths accept units: `12ft`, `12'6"`, `3.8m`, `380cm`. A bare number means feet in imperial rooms and meters in metric rooms. Positions (`--x`, `--y`) are in centimeters from the room's corner.
+The workbench is for using and tuning one room. There's no shape or furniture editing here on purpose; that lives in the Studio.
+
+You get All on, All off, the room dimmer, and a card per light. Click a card for that light's brightness, white temperature (2000 to 6500 K), and color. Gradient lights also get a gradient editor (2 to 5 colors, as a blend, mirrored, bands, or scatter) and effects like candle and fire. The right side lists the room's scenes with Apply, and the full suggestions panel stays open below the lights.
+
+### Studio
+
+The Studio is where you build. Changes here go to whichever layout is open.
+
+**Floor plan.** Upload a floor plan image (JPEG, PNG, or WebP) and set its scale by dragging a line over a printed dimension and typing its length, like `12' 6"` or `3.8 m`. Then hover inside a room to preview its traced outline and click to keep it. If a spot won't trace, the hint tells you why before you click: it leaks through a doorway, it's on a wall, or it's too small. The Close door gaps slider fixes most doorway leaks. You can also draw rooms by hand (rectangle, L-shape, or corner by corner, snapping to neighbors), drag rooms around, reshape their corners over the image, add a room by width and depth, or import rooms straight from your Hue bridge. Room fill sets how see-through the room shapes are so you can trace without fighting them.
+
+**Layouts and sandboxes.** A layout is a whole home: rooms, scenes, and plan. One is Active and runs the app, and the rest are sandboxes. You can duplicate, rename, delete, or start one fresh. A banner shows while a sandbox is open, with Make active and Back to Active. Sandboxes can still preview on the real lights, which is the point of trying things out.
+
+**Room designer.** Each room opens to scale in feet and inches or meters. Here you edit:
+
+- the outline, with labeled edge lengths
+- doors and windows, which count as daylight for glare checks
+- furniture at real sizes, including monitors
+- lights
+
+Drag paired lights onto the plan and they're drawn the way they actually look: strips long and thin, bars as bars, bulbs round, all worked out from the product data. Each light gets a height (guessed from the product and the furniture under it, or set by you) and a role (Auto, or pinned to Bias, Task, or View). You can also place Hue products you don't own yet. They take part in suggestions without sending anything to the bridge, and you swap them for the real light once it shows up. Arrows nudge, R rotates 15 degrees, Delete removes, and Escape deselects.
+
+**Room photo.** Upload a photo of the real room (it's re-encoded, which strips location data) and pin each light where it appears. Map four floor points between the photo and the plan, and MyHuey can project plan positions onto the photo. That's what powers Setups, which proposes desk lighting (a bias strip behind the monitor, a floor lamp, a desk lamp) on your actual photo before you buy anything. It also lets you preview a suggestion's colors painted onto the photo.
+
+### Eye-comfort suggestions
+
+This is the part the whole app exists for. You pick a mode and a time (now, by default), and MyHuey builds scenes from three inputs: what you're doing, the clock, and where every light sits relative to your desk and screen.
+
+- The clock. White light cools and brightens after your wake time. It warms and dims over the four hours before bed. Blue-heavy palettes drop out from three hours before bed until you wake. You set both times in Settings.
+- Your eyes. Lights by the desk stay white (task) and a light just behind the monitor stays dim (bias). Lights in your line of sight or behind your chair get dimmed and kept near white, so the screen isn't fighting glare or reflections. The palette colors the rest of the room.
+- Where things sit. Each light's role is worked out per focus (desk, reading chair, sofa) from the plan, which is why it matters to put your monitor on it.
+
+Each suggestion card shows a mini map of the room in the suggested colors and the white temperature near the desk. It has Preview on lights and Save as scene. A saved suggestion is just a scene, so you can edit it like any other. The palettes come from a built-in library, including colors pulled from public-domain paintings at The Met. You can shuffle, browse by tag, or let MyHuey pick.
+
+### Scenes
+
+A scene paints light onto one room. You draw zones (rectangle, ellipse, or freehand) with a color and brightness, and each light takes the color of whatever it sits under. Gradient lights take colors along their length. Lights outside every zone can turn off, stay as they are, take a base color, or take the nearest zone's color.
+
+You can also drop an image on the room. MyHuey pulls a theme from it by mood (colorful, bright, muted, deep, dark), gives every swatch a picker you can drag around the image, and lights take the color beneath them. Any light can be overridden with its own colors, mode, effect, or brightness. You can also recreate any scene from the Hue app's gallery in a room. The color picker works in OKLCH and HCT, with tonal palettes, harmonies, and shades, tints, and tones.
+
+### Lights and saved groups
+
+The Lights tab lists every light on the bridge, grouped by room. Click one to adjust it. Tick several, Cmd/Ctrl-click them, or hit Select all on a room, and the side panel controls them together: on, off, brightness, white temperature, and color. Each change goes only to the lights that can take it. Slider drags are paced to about ten bridge commands a second, because that's roughly what a Hue bridge is happy with.
+
+Save selection keeps a pick as a named group. Groups are stored by MyHuey (nothing is created on the bridge) and every layout sees the same ones. Save current look on a group remembers what each light is showing: on/off, brightness, and its color, exact white temperature, or gradient. After that, ▶ on the group puts them all back in one tap. A light that's gone or refuses the change gets reported, and the rest still change.
+
+### Settings
+
+Settings holds the bridge pairing and the preferences, which the web app and `myhuey prefs` share. Pairing works by address or by discovery: local mDNS first, then Hue's discovery service, which allows one request per 15 minutes. The bridge certificate is pinned after pairing, and the dot at the bottom of the side rail tells you whether the bridge is answering.
+
+| Preference | Choices | Default |
+| --- | --- | --- |
+| Theme | Dark, Light, System (or the sun/moon button on the rail) | Dark |
+| Room sliders on Home | on / off | on |
+| Sliders only while lights are on | on / off | on |
+| Glow around lit lights on plans | on / off | on |
+| Read light states every | 0 (on demand), 2, 5, 10, 30 s | 5 s |
+| Gap between light commands | 100, 150, 200, 300 ms | 100 ms |
+| Units for new rooms | imperial, metric | imperial |
+| Wake time / bedtime | any quarter hour | 07:00 / 23:00 |
+
+## Command line
+
+Everything the web app does with rooms, scenes, lights, layouts, and groups also works from `myhuey`. Lengths take units (`12ft`, `12'6"`, `3.8m`, `380cm`), and a bare number means feet in imperial rooms and meters in metric ones. Positions are centimeters from the room's corner. `--layout NAME_OR_ID` works on a sandbox instead of the active layout, and `--db PATH` points at another storage file.
+
+| Command | Actions | What it does |
+| --- | --- | --- |
+| `myhuey serve` | `--port` | Runs the web app and API |
+| `myhuey discover` | | Lists Hue bridges on the network |
+| `myhuey bridge` | setup, register, status | Pairs with a bridge or checks the pairing |
+| `myhuey room` | list, show, create, update, assign, remove-light, delete, import, photo, remove-photo, on, off, dim, tags, tag, untag, plan-light, swap | Rooms, outlines, lights, photos, power, and brightness |
+| `myhuey furniture` | list, add, remove | Furniture in a room |
+| `myhuey layouts` | list, new, duplicate, rename, activate, delete | Saved layouts and sandboxes |
+| `myhuey scene` | list, show, create, zone, image, preview, apply, delete | Scenes painted onto rooms |
+| `myhuey suggest` | `--room`, `--mode`, `--count` | Eye-comfort suggestions for a room |
+| `myhuey setups` | | Proposed desk lighting, before you buy |
+| `myhuey hue-scenes` | | The Hue gallery, or recreate one of its scenes |
+| `myhuey catalog` | | Hue products you can plan with |
+| `myhuey palettes` | | Browse the palette library |
+| `myhuey palette` | `--file`, `--mood`, `--count` | Pull a color theme from an image |
+| `myhuey lights` | list, set, gradient, effect | Lights on the bridge |
+| `myhuey groups` | list, new, rename, delete, save-look, clear-look, apply | Saved light groups and looks |
+| `myhuey prefs` | show, set | App preferences |
+
+A typical first session:
 
 ```bash
-myhuey bridge status
-myhuey room import                                   # copy Hue rooms and their lights
-myhuey room create --name Office --width 12ft --height "10ft 6in"
+myhuey room import                                   # copy your Hue rooms and their lights
 myhuey room update --name Office --outline "0,0 14,0 14,8 8,8 8,12 0,12"   # an L-shaped room, in feet
 myhuey room assign --name Office --light-id 28 --x 120 --y 40 --rotation 90 --length 2m
-myhuey room photo --name Office --file office.jpg
 myhuey furniture add --room Office --kind desk --width 5ft --depth 30in --x 200 --y 80
 
-myhuey scene create --name Sunset --room Office --base-mode nearest
-myhuey scene zone --scene Sunset --rect 0,0,200,300 --color "#ff4d6d" --brightness 80
-myhuey scene image --scene Sunset --file sunset.jpg --mood bright
-myhuey scene preview --scene Sunset
-myhuey scene apply --scene Sunset
-
-myhuey palette --file sunset.jpg --mood muted --count 5
-myhuey lights list
-myhuey lights set --light-id 3 --on on --brightness 200 --color "#ff8000"
+myhuey suggest --room Office --mode code
 myhuey lights gradient --light-id 28 --colors "#ff4d6d,#ffd166,#3a86ff" --mode segmented_palette
-myhuey lights effect --light-id 28 --effect candle     # no_effect stops it
+
+myhuey groups new --name Desk --lights 1,2
+myhuey groups save-look Desk
+myhuey groups apply Desk
 ```
 
-Gradient lights take 2 to 5 colors, spaced evenly from start to end (Hue fixes the spacing). The mode draws them as a blend (`interpolated_palette`), mirrored from the middle, as hard bands (`segmented_palette`), or scattered (`random_pixelated`); each light lists the modes and effects it supports in `lights list`. On the bridge an effect replaces the gradient, and setting a gradient stops the effect. Scenes can override any light with its own colors, mode, effect, or brightness.
+Gradient lights take 2 to 5 colors, spaced evenly from start to end, and Hue fixes the spacing. The modes draw them as:
 
-## Storage
+- a blend: `interpolated_palette`
+- mirrored from the middle: `interpolated_palette_mirrored`
+- hard bands: `segmented_palette`
+- scattered: `random_pixelated`
 
-Everything lives under `~/.myhuey`:
+`lights list` shows what each light supports. One bridge quirk to know: setting an effect replaces the gradient, and setting a gradient stops the effect.
 
-- `myhuey.db` is SQLite with one JSON document (table `app_state`, key `config`) holding the pairing, rooms, and scenes. Lengths are in centimeters. Older documents are upgraded when they are loaded, and the original is kept under the key `config_backup_v1`. Version 1 rooms (900 x 600 abstract units) became 4.5 m x 3 m, with light positions scaled the same way.
-- `certs/` holds the pinned bridge certificate.
-- `uploads/` holds room photos and scene images. Uploads must be JPEG, PNG, or WebP, at most 15 MB. They are re-encoded, which removes EXIF data such as GPS location, and saved under server-generated names. Images that nothing refers to anymore are deleted.
+## HTTP API
 
-The pairing key never leaves the server: API responses and CLI output do not include it.
+The web app talks to a local JSON API on the same port, and anything else on your machine can too. Send `X-Myhuey-Layout: <id>` to work on a sandbox; leave it off and you get the active layout. Layouts and groups ignore the header. `GET /api/health` reports the API revision so the page can warn you when the server is older than it. In the table, `…` is short for `/api/rooms/{room}`.
 
-## Hue API versions
+| Area | Endpoints |
+| --- | --- |
+| Setup and bridge | `GET /api/setup/status`, `GET /api/bridges/discover`, `GET /api/bridges/check`, `POST /api/bridge/register`, `POST /api/bridge/register-any` |
+| Lights | `GET /api/lights`, `GET /api/light-profiles`, `PUT /api/lights/{id}/state`, `PUT /api/lights/{id}/gradient`, `PUT /api/lights/{id}/effect` |
+| Rooms | `GET/POST /api/rooms`, `POST /api/rooms/import`, `GET/PATCH/DELETE …`, `POST …/power`, `POST …/brightness`, `POST …/lights`, `DELETE …/lights/{id}` |
+| Planning | `GET /api/catalog`, `POST …/planned-lights`, `POST …/planned-lights/{id}/swap`, `GET …/setups`, `POST …/setups/apply` |
+| Room photo | `POST/DELETE …/photo`, `PUT …/photo/tags`, `PUT …/photo/placements`, `PUT/DELETE …/photo/floor` |
+| Floor plan | `GET/PATCH/DELETE /api/plan`, `POST /api/plan/image` |
+| Scenes | `GET/POST /api/scenes`, `GET/PUT/DELETE /api/scenes/{id}`, `POST /api/scenes/{id}/apply`, `POST /api/scenes/preview`, `GET /api/hue-scenes`, `POST …/hue-scenes` |
+| Suggestions | `POST …/suggest`, `POST …/suggest/apply`, `GET /api/palettes` |
+| Images | `POST /api/images`, `GET /api/images/{name}`, `GET /api/images/{name}/theme` |
+| Layouts | `GET/POST /api/layouts`, `PATCH/DELETE /api/layouts/{id}`, `POST /api/layouts/{id}/activate` |
+| Groups | `GET/POST /api/groups`, `PATCH/DELETE /api/groups/{id}`, `PUT/DELETE /api/groups/{id}/look`, `POST /api/groups/{id}/apply` |
+| Preferences | `GET/PATCH /api/preferences` |
+| Raw bridge, read-only | `GET /api/hue/{collection}`, `GET /api/hue/{collection}/{id}` |
 
-Bridge traffic goes through `myhuey.hue.HueBridgeClient`. Pairing, lights, rooms, and plain color changes use the v1 API. Gradient lights use the v2 (CLIP) API, which is the only way to set colors along a light's length. The v1 username works as the v2 `hue-application-key`. Placements keep v1 light IDs, and the v2 IDs are looked up through each light's `id_v1`.
+Errors come back as `{"detail": "…"}`:
 
-## Tests
+| Status | Meaning |
+| --- | --- |
+| 400 | Bad input |
+| 404 | No such room, scene, layout, or group |
+| 409 | A race, like pairing already in progress or the active layout just changed |
+| 502 | The bridge failed |
+
+## Notes
+
+### Where your data lives
+
+Everything sits under `~/.myhuey`.
+
+`myhuey.db` is SQLite holding one JSON document (table `app_state`, key `config`). It has the pairing, preferences, saved groups, and the active layout's rooms, scenes, and plan, with every length in centimeters. Each other layout is its own record (`layout:<id>`). A `.json` storage path works too, with one file per layout beside it.
+
+Older documents get migrated when they're loaded (the schema is on version 5), and the original of each version is kept as a backup that's never overwritten. Make active swaps layouts in a single transaction. A write that finds the active layout changed underneath it gets refused instead of quietly overwriting it.
+
+`uploads/` holds plan images, room photos, and scene images. Each must be a JPEG, PNG, or WebP of at most 15 MB. Every upload is re-encoded (which strips EXIF data like GPS location) and saved under a name the server picks. Images nothing refers to in any layout get cleaned up.
+
+`certs/` holds the pinned bridge certificate. Your pairing key never leaves the server: no API response or CLI output includes it.
+
+Under the hood, bridge traffic goes through `myhuey.hue.HueBridgeClient`. Pairing, lights, rooms, and plain color changes use Hue's v1 API. Gradients use the v2 (CLIP) API, because that's the only way to set colors along a light's length. The v1 username doubles as the v2 `hue-application-key`.
+
+### Known gaps
+
+These came out of code review and are parked for later. None of them loses data in normal use.
+
+| Area | Gap |
+| --- | --- |
+| Home | The ⋮ menu gets clipped on phone-width screens. |
+| Home | A double tap on a suggestion applies it twice. If suggestions fail to load, the room's scenes hide too. |
+| Home | Tile and menu roles aren't great for screen readers yet. |
+| Groups | Applying a look briefly flashes a gradient light's old colors, and gradient colors drift slightly over a save and replay. |
+| Groups | After you open a group, "Update lights to this selection" is one tap from shrinking it to a single light. |
+| Groups | Nothing tells you when some of a group's lights are gone from the bridge. Groups only reload when you open the Lights tab. |
+| Lights | The group white-temperature slider always starts at 2700 K. |
+| Layouts | On JSON-file storage, a crash mid Make active can leave an undeletable duplicate. A layout ID with "/" in the header returns 500. |
+| Layouts | The CLI quietly ignores `--layout` with `layouts`. |
+| App | A hand-typed broken address like `#/room/50%` stops the page. |
+
+### Development
+
+Run the API and the Vite dev server side by side. Vite serves the UI with live reload on port 5173 and passes `/api` through to port 8000.
 
 ```bash
-pytest -q
-npm --prefix frontend test
+.venv/bin/myhuey serve --port 8000       # terminal 1
+npm --prefix frontend run dev            # terminal 2, then open http://localhost:5173
+
+.venv/bin/pytest -q                      # Python tests
+npm --prefix frontend test               # frontend tests
+npm --prefix frontend run typecheck
 ```
 
-## Credits
+### Credits and license
 
-Light and room icons are path data from [hass-hue-icons](https://github.com/arallsopp/hass-hue-icons) by Andrew Allsopp, licensed [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) (non-commercial use only). See `frontend/src/components/HUE_ICONS_LICENSE.txt`. The Inter font is bundled locally from `@fontsource-variable/inter`.
+MyHuey is free for non-commercial use.
 
-Suggested-scene palettes include colors taken from public-domain paintings in [The Metropolitan Museum of Art's Open Access collection](https://www.metmuseum.org/hubs/open-access) (CC0); each palette names its painting. The rest are generated by MyHuey. See `src/myhuey/data/PALETTES_LICENSE.md`.
+Light and room icons are path data from [hass-hue-icons](https://github.com/arallsopp/hass-hue-icons) by Andrew Allsopp, licensed [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/), which is non-commercial only (see `frontend/src/components/HUE_ICONS_LICENSE.txt`). Go check out his project, it's what makes the lights look like lights.
+
+Some suggestion palettes take their colors from public-domain paintings in [The Metropolitan Museum of Art's Open Access collection](https://www.metmuseum.org/hubs/open-access) (CC0), and each of those palettes names its painting. MyHuey generates the rest (see `src/myhuey/data/PALETTES_LICENSE.md`). The Inter font is bundled locally from `@fontsource-variable/inter`.
