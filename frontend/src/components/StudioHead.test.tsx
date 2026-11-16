@@ -135,4 +135,39 @@ describe('StudioHead', () => {
     for (const name of ['Room plan', '3D', 'Photo']) expect((radio(name) as HTMLButtonElement).disabled).toBe(true);
     expect((radio('Home plan') as HTMLButtonElement).disabled).toBe(false);
   });
+
+  it('the view switch goes to the room the keyboard just chose', () => {
+    render(<StudioHead view="plan" room="Office" />);
+    byKey('Den');
+    fireEvent.click(radio('3D'));
+    expect(vi.mocked(go).mock.lastCall).toEqual([{ view: 'design', room: 'Den', tab: '3d' }]);
+    wait(PICK_SETTLE_MS);
+    expect(go).toHaveBeenCalledTimes(1);
+  });
+
+  it('the view switch still goes to the chosen room when blur opened it first', () => {
+    render(<StudioHead view="plan" room="Office" />);
+    byKey('Den');
+    fireEvent.blur(picker());
+    expect(go).toHaveBeenCalledWith({ view: 'design', room: 'Den', tab: 'plan' });
+    fireEvent.click(radio('3D'));
+    expect(vi.mocked(go).mock.lastCall).toEqual([{ view: 'design', room: 'Den', tab: '3d' }]);
+  });
+
+  it('opens a room chosen from the open list at once', () => {
+    render(<StudioHead view="3d" room="Office" />);
+    fireEvent.keyDown(picker(), { key: 'ArrowDown' });
+    wait(500);
+    fireEvent.change(picker(), { target: { value: 'Den' } });
+    expect(go).toHaveBeenCalledTimes(1);
+    expect(go).toHaveBeenCalledWith({ view: 'design', room: 'Den', tab: '3d' });
+  });
+
+  it('opens at once when Enter chooses in the open list', () => {
+    render(<StudioHead view="3d" room="Office" />);
+    fireEvent.keyDown(picker(), { key: 'Enter' });
+    fireEvent.change(picker(), { target: { value: 'Den' } });
+    expect(go).toHaveBeenCalledTimes(1);
+    expect(go).toHaveBeenCalledWith({ view: 'design', room: 'Den', tab: '3d' });
+  });
 });

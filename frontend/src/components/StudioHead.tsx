@@ -1,12 +1,13 @@
 // The header every Studio screen shares: the room picker and the four views, so the home plan and
 // a room's designer read as one module. The rules for where each choice goes are in lib/studio.ts.
-// A room chosen with the pointer opens at once; one chosen with the keys waits for them to settle.
+// A room chosen from the open list or with the pointer opens at once; one stepped to with the keys
+// on the closed picker waits for them to settle.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Box, Camera, House, Map as MapIcon } from 'lucide-react';
 import { useStore } from '../store';
 import { useUi } from '../uiStore';
 import { go } from '../lib/router';
-import { PICK_SETTLE_MS, pickRoom, switchView, type StudioView } from '../lib/studio';
+import { PICK_KEY_WINDOW_MS, PICK_SETTLE_MS, pickRoom, switchView, type StudioView } from '../lib/studio';
 import { Segmented } from './ui';
 
 const WHOLE_HOME = '';
@@ -43,10 +44,13 @@ export function StudioHead({ view, room, onPick, children }: {
   const [pending, setPending] = useState<string | null>(null);
   const pendingRef = useRef<string | null>(null);
   const timer = useRef<number | undefined>(undefined);
-  const byKeyboard = useRef(false);
+  const lastKey = useRef<{ key: string; at: number } | null>(null);
+  // The room this picker just opened that the screen has not caught up with, so a view switch clicked in that gap still goes to it.
+  const opened = useRef<string | null>(null);
 
   const pick = (value: string) => {
     const next = value === WHOLE_HOME ? null : value;
+    opened.current = value;
     refocusPicker = true;
     window.setTimeout(() => { refocusPicker = false; }, 1500); // a pick that changed nothing leaves no claim behind
     onPick?.(next);
@@ -73,10 +77,13 @@ export function StudioHead({ view, room, onPick, children }: {
     window.clearTimeout(timer.current);
     pendingRef.current = null;
     setPending(null);
+    opened.current = null;
   }, [shown]);
 
   const change = (value: string) => {
-    if (!byKeyboard.current) { drop(); pick(value); return; }
+    const last = lastKey.current;
+    const stepping = last !== null && last.key !== 'Enter' && Date.now() - last.at < PICK_KEY_WINDOW_MS;
+    if (!stepping) { drop(); pick(value); return; }
     pendingRef.current = value;
     setPending(value);
     window.clearTimeout(timer.current);
@@ -84,9 +91,15 @@ export function StudioHead({ view, room, onPick, children }: {
   };
   const keyDown = (key: string) => {
     if (key === 'Tab') return;
-    if (key === 'Enter') { open(); return; }
-    if (key === 'Escape') { drop(); return; }
-    byKeyboard.current = true;
+    lastKey.current = { key, at: Date.now() };
+    if (key === 'Enter') open();
+    else if (key === 'Escape') drop();
+  };
+  // The view switch acts on the room the picker has chosen, whether or not that room has opened yet.
+  const switchTo = (next: StudioView) => {
+    const chosen = pendingRef.current ?? opened.current ?? shown;
+    drop();
+    go(switchView(view, next, { rooms, remembered, on: chosen === WHOLE_HOME ? null : chosen }));
   };
 
   return (
@@ -99,7 +112,7 @@ export function StudioHead({ view, room, onPick, children }: {
         <label className="studio-room">
           <span>Room</span>
           <select ref={picker} className="input" value={pending ?? shown}
-            onPointerDown={() => { byKeyboard.current = false; }} onKeyDown={(event) => keyDown(event.key)}
+            onPointerDown={() => { lastKey.current = null; }} onKeyDown={(event) => keyDown(event.key)}
             onBlur={open} onChange={(event) => change(event.target.value)}>
             <option value={WHOLE_HOME}>Whole home</option>
             {rooms.map((item) => <option key={item.name} value={item.name}>{item.name}</option>)}
@@ -108,7 +121,7 @@ export function StudioHead({ view, room, onPick, children }: {
         <Segmented<StudioView>
           label="View"
           value={view}
-          onChange={(next) => go(switchView(view, next, { rooms, remembered, on: known ? room : null }))}
+          onChange={switchTo}
           options={[
             { value: 'home', label: <><House size={15} /> Home plan</>, title: 'The whole-home floor plan' },
             { value: 'plan', label: <><MapIcon size={15} /> Room plan</>, title: 'One room: outline, furniture, and lights', disabled: none },

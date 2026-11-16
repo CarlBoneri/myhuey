@@ -76,3 +76,10 @@ export function resolveStudioRoute(route: Route, rooms: Named, current: string |
  * keys are given time to land on the room the person means.
  */
 export const PICK_SETTLE_MS = 350;
+
+/**
+ * How soon after a key a `change` still counts as that key stepping through the closed picker. A
+ * closed select fires `change` straight after the key that caused it; a room chosen in the open
+ * list arrives long after the key that opened it (or right after Enter), and must open at once.
+ */
+export const PICK_KEY_WINDOW_MS = 80;
