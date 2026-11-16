@@ -37,7 +37,7 @@ export function SettingsView() {
 
   return (
     <div className="page settings">
-      <header className="page-head"><div><p className="eyebrow">Bridge</p><h1>Hue bridge</h1></div></header>
+      <header className="page-head"><div><p className="eyebrow">Settings</p><h1>Bridge and preferences</h1></div></header>
       <div className="settings-grid">
         <Panel title={<><HueIcon name="bridge-v2" size={18} /> Pairing</>}>
           {setup?.configured ? (

@@ -14,7 +14,7 @@ import type { HomePlan, Pt, Room, Units } from '../types';
 import { PlanCanvas, usePlan } from '../components/PlanCanvas';
 import { Empty, Field, IconButton, LengthInput, Panel, Segmented, Slider, TextInput } from '../components/ui';
 import { LayoutsPanel } from '../components/LayoutsPanel';
-import { RoomOnPlan } from './HomeView';
+import { RoomOnPlan } from '../components/RoomOnPlan';
 
 type Tool = 'select' | 'scale' | 'trace' | 'draw';
 type DrawShape = 'rect' | 'L' | 'points';

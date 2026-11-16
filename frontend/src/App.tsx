@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { House, LayoutGrid, Map as MapIcon, Moon, Palette, Settings, Sun, X } from 'lucide-react';
+import { House, LayoutGrid, Lightbulb, Map as MapIcon, Moon, Palette, Settings, Sun, X } from 'lucide-react';
 import { applyTheme, followSystemTheme, systemPrefersDark, toggledTheme } from './lib/theme';
 import { useStore } from './store';
 import { href, useRoute, type Route } from './lib/router';
@@ -19,6 +19,7 @@ const NAV: { route: Route; label: string; icon: typeof House; match: Route['view
   { route: { view: 'home' }, label: 'Home', icon: House, match: ['home', 'room'] },
   { route: { view: 'studio' }, label: 'Studio', icon: MapIcon, match: ['studio', 'design'] },
   { route: { view: 'scenes' }, label: 'Scenes', icon: Palette, match: ['scenes', 'scene'] },
+  { route: { view: 'lights' }, label: 'Lights', icon: Lightbulb, match: ['lights'] },
   { route: { view: 'settings' }, label: 'Settings', icon: Settings, match: ['settings', 'setup'] },
 ];
 
@@ -68,8 +69,10 @@ export function App() {
         return <PlanView focus={route.focus} />;
       case 'setup':
         return <SetupView />;
+      case 'lights':
+        return <LightsView />;
       case 'settings':
-        return route.section === 'lights' ? <LightsView /> : <SettingsView />;
+        return <SettingsView />;
       default:
         return <HomeView />;
     }

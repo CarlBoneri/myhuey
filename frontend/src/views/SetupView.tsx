@@ -250,7 +250,7 @@ export function SetupView() {
             </p>
             <div className="button-row">
               <button type="button" className="button primary" onClick={() => go({ view: 'studio' })}><MapIcon size={14} /> Lay out the floor plan</button>
-              <button type="button" className="button" onClick={() => go({ view: 'settings', section: 'lights' })}>See {Object.keys(lights).length} lights</button>
+              <button type="button" className="button" onClick={() => go({ view: 'lights' })}>See {Object.keys(lights).length} lights</button>
             </div>
           </>
         )}

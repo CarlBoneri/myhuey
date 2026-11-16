@@ -10,7 +10,7 @@ describe('routes', () => {
     expect(parseRoute('#/studio/room/Office')).toEqual({ view: 'design', room: 'Office', tab: 'plan' });
     expect(parseRoute('#/studio/room/Office/photo')).toEqual({ view: 'design', room: 'Office', tab: 'photo' });
     expect(parseRoute('#/settings')).toEqual({ view: 'settings' });
-    expect(parseRoute('#/settings/lights')).toEqual({ view: 'settings', section: 'lights' });
+    expect(parseRoute('#/lights')).toEqual({ view: 'lights' });
   });
 
   it('sends old links to their new screens', () => {
@@ -18,14 +18,14 @@ describe('routes', () => {
     expect(parseRoute('#/plan/Den')).toEqual({ view: 'studio', focus: 'Den' });
     expect(parseRoute('#/room/Den/photo')).toEqual({ view: 'design', room: 'Den', tab: 'photo' });
     expect(parseRoute('#/room/Den/plan')).toEqual({ view: 'room', room: 'Den' });
-    expect(parseRoute('#/lights')).toEqual({ view: 'settings', section: 'lights' });
+    expect(parseRoute('#/settings/lights')).toEqual({ view: 'lights' });
   });
 
   it('round-trips awkward room names', () => {
     const routes: Route[] = [
       { view: 'design', room: 'A/B c', tab: 'photo' }, { view: 'design', room: 'Den', tab: 'plan' },
       { view: 'studio', focus: 'A/B' }, { view: 'studio' }, { view: 'room', room: '50% room' },
-      { view: 'settings', section: 'lights' }, { view: 'settings' }, { view: 'home' }, { view: 'scene', id: 'x1' },
+      { view: 'lights' }, { view: 'settings' }, { view: 'home' }, { view: 'scene', id: 'x1' },
     ];
     for (const route of routes) expect(parseRoute(href(route))).toEqual(route);
   });

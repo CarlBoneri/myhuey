@@ -11,7 +11,8 @@ export type Route =
   | { view: 'setup' }
   | { view: 'scenes' }
   | { view: 'scene'; id: string }
-  | { view: 'settings'; section?: 'lights' };
+  | { view: 'lights' }
+  | { view: 'settings' };
 
 export function parseRoute(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').map(decodeURIComponent);
@@ -28,9 +29,9 @@ export function parseRoute(hash: string): Route {
   if (first === 'plan') return second ? { view: 'studio', focus: second } : { view: 'studio' };
   if (first === 'scenes' && second) return { view: 'scene', id: second };
   if (first === 'scenes') return { view: 'scenes' };
-  if (first === 'lights') return { view: 'settings', section: 'lights' };
+  if (first === 'lights') return { view: 'lights' };
   if (first === 'setup') return { view: 'setup' };
-  if (first === 'settings') return second === 'lights' ? { view: 'settings', section: 'lights' } : { view: 'settings' };
+  if (first === 'settings') return second === 'lights' ? { view: 'lights' } : { view: 'settings' };
   return { view: 'home' };
 }
 
@@ -46,8 +47,6 @@ export function href(route: Route): string {
       return route.focus ? `#/studio/plan/${part(route.focus)}` : '#/studio';
     case 'scene':
       return `#/scenes/${part(route.id)}`;
-    case 'settings':
-      return route.section ? `#/settings/${route.section}` : '#/settings';
     case 'home':
       return '#/';
     default:

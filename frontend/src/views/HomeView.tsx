@@ -1,137 +1,24 @@
-// The whole home: every room at its real size and place. Drag a room to move it; click to open.
-import { useMemo, useRef, useState } from 'react';
-import { Download, Plus, Power, PowerOff } from 'lucide-react';
-import { api } from '../api';
-import { attempt, setRoomPower, useStore } from '../store';
-import { go } from '../lib/router';
-import { area, bounds, labelPoint, pathOf } from '../lib/geometry';
-import { formatArea, formatLength, parseLength, snap } from '../lib/units';
-import { liveColors, placedProfile, effectiveLength } from '../lib/lights';
-import type { Pt, Room } from '../types';
-import { PlanCanvas, useDrag, usePlan } from '../components/PlanCanvas';
-import { LightSilhouette, OpeningShape } from '../components/Shapes';
-import { Empty, Field, Panel, TextInput } from '../components/ui';
+// Home: everyday control. Quick on/off and brightness for every room, and a tile per room with its
+// live state; the ⋮ on a tile applies an eye-comfort suggestion or a saved scene in one tap.
+// Home always works on the Active layout, even while a sandbox is open in the Studio.
+import { Map as MapIcon, Power, PowerOff } from 'lucide-react';
+import { setRoomPower, useStore } from '../store';
+import { go, href } from '../lib/router';
+import { roomSummary } from '../lib/roomControls';
+import type { Room } from '../types';
+import { Empty, Panel } from '../components/ui';
 import { RoomDimmer } from '../components/RoomDimmer';
-
-export function RoomOnPlan({ room, offset, onMove, onDrop, onSelect, selected, readOnly = false, activeOnly = false, onOpen, fillOpacity }: {
-  room: Room; offset: Pt; onMove: (d: Pt) => void; onDrop: () => void;
-  /** On the floor plan: a click selects the room for reshaping instead of opening it. */
-  onSelect?: () => void; selected?: boolean;
-  /** No dragging: the home screen while a sandbox is open. */
-  readOnly?: boolean;
-  /** Power goes to the Active layout's room (the home screen). */
-  activeOnly?: boolean;
-  /** Replaces opening the room's page on a click. */
-  onOpen?: () => void;
-  /** See-through floor over a plan image (0 to 1); solid when left out. */
-  fillOpacity?: number;
-}) {
-  const drag = useDrag();
-  const { cmPerPx } = usePlan();
-  const { lights, profiles } = useStore();
-  // Name, size, and power sit together at the room's most open spot, never outside a slanted wall.
-  const [lx, ly] = useMemo(() => labelPoint(room.outline), [room.outline]);
-  const fontSize = Math.max(12 * cmPerPx, 14);
-  return (
-    <g
-      className={`home-room${selected ? ' selected' : ''}`}
-      transform={`translate(${room.x + offset[0]},${room.y + offset[1]})`}
-      onPointerDown={(event) =>
-        drag(event, {
-          move: (_, delta) => { if (!readOnly) onMove([snap(delta[0], room.units), snap(delta[1], room.units)]); },
-          end: (moved) => {
-            if (moved && !readOnly) onDrop();
-            else if (moved) return;
-            else if (onSelect) onSelect();
-            else if (onOpen) onOpen();
-            else go({ view: 'design', room: room.name, tab: 'plan' });
-          },
-        })
-      }
-      role="button"
-      aria-label={`${room.name}, ${formatLength(room.width, room.units)} by ${formatLength(room.height, room.units)}`}
-    >
-      <path d={pathOf(room.outline)} className="room-floor" strokeWidth={1.5 * cmPerPx} style={fillOpacity === undefined ? undefined : { fillOpacity }} />
-      {room.openings.map((opening) => <OpeningShape key={opening.id} outline={room.outline} opening={opening} cmPerPx={cmPerPx} />)}
-      {room.furniture.map((item) => (
-        <rect key={item.id} x={-item.width / 2} y={-item.depth / 2} width={item.width} height={item.depth}
-          transform={`translate(${item.x},${item.y}) rotate(${item.rotation})`} className="furniture ghost" rx={4} />
-      ))}
-      {room.lights.map((placement) => {
-        const bridge = lights[placement.light_id];
-        const profile = placedProfile(placement, bridge, profiles);
-        const colors = liveColors(bridge);
-        return (
-          <g key={placement.light_id} transform={`translate(${placement.x},${placement.y}) rotate(${placement.rotation})`} pointerEvents="none">
-            <LightSilhouette profile={profile} length={effectiveLength(placement, profile)} colors={colors} on={!!colors} cmPerPx={cmPerPx} mode={bridge?.gradient?.mode} />
-          </g>
-        );
-      })}
-      <text x={lx} y={ly} className="room-name" fontSize={fontSize} textAnchor="middle" pointerEvents="none">{room.name}</text>
-      {room.lights.some((p) => lights[p.light_id]) && (() => {
-        const anyOn = room.lights.some((p) => lights[p.light_id]?.on);
-        const r = Math.max(14 * cmPerPx, 10);
-        return (
-          <g
-            className={`room-power${anyOn ? ' on' : ''}`}
-            transform={`translate(${lx},${ly - fontSize - r * 1.2})`}
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={(event) => { event.stopPropagation(); void setRoomPower(room, !anyOn, activeOnly); }}
-            role="button"
-            aria-label={`Turn every light in ${room.name} ${anyOn ? 'off' : 'on'}`}
-          >
-            <title>{anyOn ? 'All off' : 'All on'}</title>
-            <circle r={r} strokeWidth={1.5 * cmPerPx} />
-            <path d={`M0,${-r * 0.55}V${-r * 0.05}M${-r * 0.42},${-r * 0.32}A${r * 0.5},${r * 0.5} 0 1 0 ${r * 0.42},${-r * 0.32}`} fill="none" strokeWidth={2 * cmPerPx} strokeLinecap="round" />
-          </g>
-        );
-      })()}
-      <text x={lx} y={ly + fontSize * 1.1} className="room-size" fontSize={fontSize * 0.75} textAnchor="middle" pointerEvents="none">
-        {formatLength(room.width, room.units)} × {formatLength(room.height, room.units)}
-      </text>
-    </g>
-  );
-}
+import { QuickSettings } from '../components/QuickSettings';
 
 export function HomeView() {
-  const { setup, refreshRooms, replaceRoom, lights, layout, layouts, openLayout } = useStore();
-  // The home screen is the everyday control panel: it always shows the Active layout.
+  const { lights, layout, layouts, openLayout } = useStore();
   const rooms = useStore((state) => (state.layout ? state.activeRooms : state.rooms));
   const sandboxName = layout ? (layouts.find((item) => item.id === layout)?.name ?? 'a sandbox') : null;
+
+  // The workbench works on whatever layout is open, so leave a sandbox before opening it from here.
   const openRoom = async (room: Room) => {
     if (layout) await openLayout(null);
-    go({ view: 'design', room: room.name, tab: 'plan' });
-  };
-  const [moving, setMovingState] = useState<{ name: string; delta: Pt } | null>(null);
-  const movingRef = useRef<{ name: string; delta: Pt } | null>(null);
-  const setMoving = (next: { name: string; delta: Pt } | null) => {
-    movingRef.current = next; // drag handlers outlive the render that created them
-    setMovingState(next);
-  };
-  const [name, setName] = useState('');
-  const [width, setWidth] = useState(`14' 9"`);
-  const [depth, setDepth] = useState(`9' 10"`);
-
-  const fit = useMemo(() => {
-    if (!rooms.length) return { x: 0, y: 0, w: 1000, h: 700 };
-    const corners = rooms.flatMap((room) => room.outline.map(([x, y]) => [x + room.x, y + room.y] as Pt));
-    const box = bounds(corners);
-    return { x: box.minX, y: box.minY, w: box.maxX - box.minX, h: box.maxY - box.minY };
-  }, [rooms]);
-
-  const create = async () => {
-    const w = parseLength(width);
-    const d = parseLength(depth);
-    if (!name.trim() || !w || !d) {
-      useStore.getState().toast('Give the room a name, a width, and a depth.');
-      return;
-    }
-    const room = await attempt(() => api.createRoom(name.trim(), w, d));
-    if (room) {
-      setName('');
-      await refreshRooms();
-      go({ view: 'design', room: room.name, tab: 'plan' });
-    }
+    go({ view: 'room', room: room.name });
   };
 
   const lightsOn = Object.values(lights).filter((light) => light.on).length;
@@ -141,7 +28,7 @@ export function HomeView() {
       <header className="page-head">
         <div>
           <p className="eyebrow">Home</p>
-          <h1>Floor plan</h1>
+          <h1>Your rooms</h1>
         </div>
         <div className="stat-pills">
           <span className="pill static">{rooms.length} rooms</span>
@@ -149,65 +36,40 @@ export function HomeView() {
           <span className="pill static glow">{lightsOn} on</span>
         </div>
       </header>
-      <div className="split">
-        <div className="stage">
-          {rooms.length ? (
-            <PlanCanvas fit={fit} units={rooms[0]?.units ?? 'imperial'}>
-              {rooms.map((room) => (
-                <RoomOnPlan
-                  key={room.name}
-                  room={room}
-                  readOnly={!!layout}
-                  activeOnly
-                  onOpen={layout ? () => void openRoom(room) : undefined}
-                  offset={moving?.name === room.name ? moving.delta : [0, 0]}
-                  onMove={(delta) => setMoving({ name: room.name, delta })}
-                  onDrop={async () => {
-                    const current = movingRef.current;
-                    const delta = current?.name === room.name ? current.delta : null;
-                    setMoving(null);
-                    if (!delta) return;
-                    const updated = await attempt(() => api.updateRoom(room.name, { x: room.x + delta[0], y: room.y + delta[1] }));
-                    if (updated) replaceRoom(room.name, updated);
-                  }}
-                />
-              ))}
-            </PlanCanvas>
-          ) : (
-            <Empty title="No rooms yet">
-              <p>Add a room with its real size, or import the rooms from your Hue bridge.</p>
-            </Empty>
-          )}
-        </div>
-        <aside className="inspector">
-          {sandboxName && (
-            <p className="sandbox-note">
-              You're editing the sandbox {sandboxName}. This screen shows your active home. <a href="#/studio">Open sandbox</a>
-            </p>
-          )}
-          <Panel title="Rooms">
+
+      {sandboxName && (
+        <p className="sandbox-note">
+          You're editing the sandbox {sandboxName} in the Studio. Home always controls your active home.
+        </p>
+      )}
+
+      {!rooms.length ? (
+        <Empty title="No rooms yet">
+          <p>Lay out your home in the Studio: add rooms by size, import them from your Hue bridge, or trace a floor plan.</p>
+          <a className="button primary" href={href({ view: 'studio' })}><MapIcon size={16} /> Set up your home in the Studio</a>
+        </Empty>
+      ) : (
+        <div className="home-flows">
+          <Panel title="Quick settings" className="quick-settings">
             <ul className="room-list">
               {rooms.map((room) => {
-                const known = room.lights.filter((p) => lights[p.light_id]);
-                const onCount = known.filter((p) => lights[p.light_id].on).length;
+                const { known, on } = roomSummary(room, lights);
                 return (
                   <li key={room.name} className="room-row">
-                    <a href={`#/room/${encodeURIComponent(room.name)}`} onClick={(event) => {
+                    <a href={href({ view: 'room', room: room.name })} onClick={(event) => {
                       if (!layout) return;
                       event.preventDefault();
                       void openRoom(room);
                     }}>
                       <span>{room.name}</span>
-                      <small>
-                        {known.length ? `${onCount} of ${known.length} on` : `${room.lights.length} lights`} · {formatArea(area(room.outline), room.units)}
-                      </small>
+                      <small>{known ? `${on} of ${known} on` : room.lights.length ? `${room.lights.length} lights` : 'No lights placed'}</small>
                     </a>
-                    {known.length > 0 && (
+                    {known > 0 && (
                       <div className="room-power-buttons">
-                        <button type="button" className={`icon-button${onCount === known.length ? ' lit' : ''}`} title="All on" aria-label={`Turn on every light in ${room.name}`} onClick={() => setRoomPower(room, true, true)}>
+                        <button type="button" className={`icon-button${on === known ? ' lit' : ''}`} title="All on" aria-label={`Turn on every light in ${room.name}`} onClick={() => setRoomPower(room, true, true)}>
                           <Power size={16} strokeWidth={1.6} />
                         </button>
-                        <button type="button" className={`icon-button${onCount === 0 ? ' dim' : ''}`} title="All off" aria-label={`Turn off every light in ${room.name}`} onClick={() => setRoomPower(room, false, true)}>
+                        <button type="button" className={`icon-button${on === 0 ? ' dim' : ''}`} title="All off" aria-label={`Turn off every light in ${room.name}`} onClick={() => setRoomPower(room, false, true)}>
                           <PowerOff size={16} strokeWidth={1.6} />
                         </button>
                       </div>
@@ -218,38 +80,42 @@ export function HomeView() {
               })}
             </ul>
           </Panel>
-          <Panel title="Add a room">
-            <fieldset className="plain-fieldset" disabled={!!layout}>
-            <Field label="Name"><TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="Living room" /></Field>
-            <div className="field-row">
-              <Field label="Width"><TextInput value={width} onChange={(e) => setWidth(e.target.value)} /></Field>
-              <Field label="Depth"><TextInput value={depth} onChange={(e) => setDepth(e.target.value)} /></Field>
+
+          <Panel title="Rooms" className="rooms-panel">
+            <div className="room-tiles">
+              {rooms.map((room) => <RoomTile key={room.name} room={room} onOpen={() => void openRoom(room)} />)}
             </div>
-            <div className="button-row">
-              <button type="button" className="button primary" onClick={create}><Plus size={16} /> Add room</button>
-              {setup?.configured && (
-                <button
-                  type="button"
-                  className="button"
-                  onClick={async () => {
-                    const result = await attempt(() => api.importRooms());
-                    if (result) {
-                      useStore.getState().toast(result.added.length ? `Imported ${result.added.join(', ')}` : 'No new rooms to import.', false);
-                      await refreshRooms();
-                    }
-                  }}
-                >
-                  <Download size={16} /> Import from Hue
-                </button>
-              )}
-            </div>
-            </fieldset>
-            <p className="hint">{layout
-              ? 'Add rooms in the sandbox on the Plan screen.'
-              : 'Drag rooms to arrange the home. Scroll to zoom, drag the background to pan.'}</p>
           </Panel>
-        </aside>
-      </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+function RoomTile({ room, onOpen }: { room: Room; onOpen: () => void }) {
+  const lights = useStore((state) => state.lights);
+  const { known, on, brightness, chips } = roomSummary(room, lights);
+  const lit = on > 0;
+  const state = !known ? (room.lights.length ? 'Lights not answering' : 'No lights placed') : lit ? `${on} of ${known} on` : 'Off';
+  return (
+    <article className={`room-tile${lit ? ' lit' : ''}`} role="link" tabIndex={0} aria-label={`${room.name}: ${state}. Open the workbench.`}
+      style={{ ['--tile-glow' as string]: chips[0] ?? 'transparent' }}
+      onClick={onOpen}
+      onKeyDown={(event) => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); onOpen(); } }}>
+      <div className="room-tile-head">
+        <strong>{room.name}</strong>
+        <QuickSettings room={room} />
+      </div>
+      <div className="room-tile-state">
+        <span className={`state-dot${lit ? ' on' : ''}`} aria-hidden="true" />
+        <span>{state}</span>
+      </div>
+      <div className="room-tile-foot">
+        <span className="room-tile-level">{brightness !== null ? `${brightness}%` : '—'}</span>
+        <span className="chip-row" aria-label="Colors in the room now">
+          {chips.map((color) => <span key={color} className="chip-dot" style={{ background: color }} title={color} />)}
+        </span>
+      </div>
+    </article>
   );
 }
