@@ -57,7 +57,7 @@ export function App() {
       case 'lights':
         return <LightsView />;
       case 'plan':
-        return <PlanView />;
+        return <PlanView focus={route.room} />;
       case 'setup':
         return <SetupView />;
       case 'settings':

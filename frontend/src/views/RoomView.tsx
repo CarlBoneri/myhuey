@@ -16,6 +16,7 @@ import { Empty, Field, HueIcon, IconButton, LengthInput, Panel, Segmented, Slide
 import { PhotoView } from './PhotoView';
 import { RoomDimmer } from '../components/RoomDimmer';
 import { SuggestPanel } from '../components/SuggestPanel';
+import { OutlineHandles } from '../components/OutlineHandles';
 import { PlanLightsPanel } from '../components/PlanLightsPanel';
 import { autoRoleLabel, placementNeedsRefresh } from '../lib/suggest';
 
@@ -65,74 +66,6 @@ function EdgeLabels({ outline, units }: { outline: Pt[]; units: Units }) {
   );
 }
 
-function OutlineHandles({ outline, units, onChange, onCommit }: { outline: Pt[]; units: Units; onChange: (o: Pt[]) => void; onCommit: (o: Pt[]) => void }) {
-  const drag = useDrag();
-  const { cmPerPx } = usePlan();
-  const r = 6 * cmPerPx;
-  const latest = useRef(outline);
-  latest.current = outline;
-  return (
-    <g>
-      {outline.map((a, i) => {
-        const b = outline[(i + 1) % outline.length];
-        const mid: Pt = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
-        return (
-          <g key={`m${i}`} className="mid-handle" transform={`translate(${mid[0]},${mid[1]})`}
-            onPointerDown={(event) => {
-              const inserted = [...outline.slice(0, i + 1), mid, ...outline.slice(i + 1)];
-              onChange(inserted);
-              drag(event, {
-                move: (point) => {
-                  const next = [...latest.current];
-                  next[i + 1] = [snap(point[0], units), snap(point[1], units)];
-                  onChange(next);
-                },
-                end: () => onCommit(latest.current),
-              });
-            }}>
-            <circle r={r * 0.9} />
-            <path d={`M${-r * 0.45},0H${r * 0.45}M0,${-r * 0.45}V${r * 0.45}`} strokeWidth={cmPerPx * 1.3} />
-          </g>
-        );
-      })}
-      {outline.map((p, i) => (
-        <circle
-          key={`v${i}`}
-          className="vertex-handle"
-          cx={p[0]}
-          cy={p[1]}
-          r={r}
-          strokeWidth={1.5 * cmPerPx}
-          onDoubleClick={() => outline.length > 3 && onCommit(outline.filter((_, j) => j !== i))}
-          onPointerDown={(event) =>
-            drag(event, {
-              move: (point, _delta, e) => {
-                const next = [...latest.current];
-                let target: Pt = [snap(point[0], units), snap(point[1], units)];
-                if (!e.altKey) {
-                  // Square up against neighbors: snap to their x or y within 10 px.
-                  const prev = next[(i - 1 + next.length) % next.length];
-                  const after = next[(i + 1) % next.length];
-                  for (const n of [prev, after]) {
-                    if (Math.abs(target[0] - n[0]) < 10 * cmPerPx) target = [n[0], target[1]];
-                    if (Math.abs(target[1] - n[1]) < 10 * cmPerPx) target = [target[0], n[1]];
-                  }
-                }
-                next[i] = target;
-                onChange(next);
-              },
-              end: (moved) => moved && onCommit(latest.current),
-            })
-          }
-        >
-          <title>Drag to move this corner. Double-click to remove it. Hold Alt to skip squaring.</title>
-        </circle>
-      ))}
-    </g>
-  );
-}
-
-/** Wide invisible strokes along each wall: click one to put a door or window there. */
 function WallHits({ outline, onPick }: { outline: Pt[]; onPick: (point: Pt) => void }) {
   const { cmPerPx, toPlan } = usePlan();
   return (
@@ -697,6 +630,7 @@ function RoomFields({ room, onSave, onDelete }: { room: Room; onSave: (changes: 
       <div className="button-row">
         <button type="button" className="button subtle" onClick={() => onSave({ outline: [[box.minX, box.minY], [box.maxX, box.minY], [box.maxX, box.maxY], [box.minX, box.maxY]] })}>Rectangle</button>
         <button type="button" className="button subtle" onClick={() => onSave({ outline: lShape() })}>L-shape</button>
+        <a className="button subtle" href={`#/plan/${encodeURIComponent(room.name)}`} title="Edit the corners over your floor plan image">Reshape on the floor plan</a>
         <button type="button" className="button danger subtle" onClick={onDelete}><Trash2 size={14} /> Delete</button>
       </div>
     </Panel>

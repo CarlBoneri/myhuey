@@ -44,6 +44,33 @@ export function snapPoint(p: Pt, { units, radius, corners, edges }: { units: Uni
   return best ?? [snap(p[0], units), snap(p[1], units)];
 }
 
+const SQUARE_PX = 10;
+
+/**
+ * Where a dragged outline corner lands: on another room's corner or wall when it's close
+ * (so shared walls line up), otherwise squared up against its two neighbors (unless `free`,
+ * Alt held), otherwise on the grid. Everything is in the same coordinates as `target`.
+ */
+export function snapCorner(
+  target: Pt, neighbors: [Pt, Pt],
+  { units, radius, corners, edges }: { units: Units; radius: number; corners: Pt[]; edges: [Pt, Pt][] },
+  free: boolean,
+): Pt {
+  const onOther = snapPoint(target, { units, radius, corners, edges });
+  const touched = corners.some((c) => c[0] === onOther[0] && c[1] === onOther[1])
+    || edges.some(([a, b]) => nearestOnSegment(target, a, b).distance <= radius);
+  if (touched) return onOther;
+  let p: Pt = [snap(target[0], units), snap(target[1], units)];
+  if (!free) {
+    const tolerance = (radius / 12) * SQUARE_PX;
+    for (const n of neighbors) {
+      if (Math.abs(target[0] - n[0]) < tolerance) p = [n[0], p[1]];
+      if (Math.abs(target[1] - n[1]) < tolerance) p = [p[0], n[1]];
+    }
+  }
+  return p;
+}
+
 function edgeOf(outline: Pt[], index: number): { a: Pt; length: number; unit: Pt } | null {
   if (index < 0 || index >= outline.length) return null;
   const a = outline[index];

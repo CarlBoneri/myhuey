@@ -64,3 +64,24 @@ it('lists lights left outside a new outline', () => {
   const lights = [{ light_id: '1', x: 50, y: 50 }, { light_id: '2', x: 350, y: 50 }] as Placement[];
   expect(lightsOutside(lights, [[0, 0], [200, 0], [200, 300], [0, 300]]).map((l) => l.light_id)).toEqual(['2']);
 });
+
+import { snapCorner } from './plan';
+
+describe('snapping a corner while reshaping on the plan', () => {
+  const neighbors: [[number, number], [number, number]] = [[0, 0], [300, 200]];
+  const base = { units: 'metric' as const, radius: 12, corners: [] as [number, number][], edges: [] as [[number, number], [number, number]][] };
+
+  it("lands on another room's corner first", () => {
+    expect(snapCorner([403, 197], neighbors, { ...base, corners: [[400, 200]] }, false)).toEqual([400, 200]);
+  });
+
+  it("lands on another room's wall when no corner is close", () => {
+    const p = snapCorner([405, 120], neighbors, { ...base, edges: [[[400, 0], [400, 300]]] }, false);
+    expect(p[0]).toBeCloseTo(400);
+  });
+
+  it('squares up against its neighbors otherwise, unless Alt is held', () => {
+    expect(snapCorner([297, 103], neighbors, base, false)[0]).toBe(300);
+    expect(snapCorner([297, 103], neighbors, base, true)[0]).not.toBe(300);
+  });
+});
