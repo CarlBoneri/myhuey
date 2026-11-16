@@ -81,3 +81,46 @@ export function tabForRoute(route: Route): TabId {
     default: return 'home';
   }
 }
+
+/** The tab rail (tabs on the left or right): how wide it is, and whether it is folded to icons. */
+export interface TabRail { width: number; collapsed: boolean }
+export const RAIL_MIN = 150;
+export const RAIL_MAX = 420;
+export const RAIL_DEFAULT = 210;
+/** Dragging the rail narrower than this and letting go folds it to icons. */
+export const RAIL_SNAP = 110;
+/** The width of the icon-only rail. */
+export const RAIL_ICONS = 48;
+/** What an arrow key on the rail's handle moves it by. */
+export const RAIL_STEP = 16;
+
+export const clampRail = (width: number): number =>
+  Number.isFinite(width) ? Math.min(RAIL_MAX, Math.max(RAIL_MIN, Math.round(width))) : RAIL_DEFAULT;
+
+/** A saved rail made safe: anything unreadable is the standard open rail, and the width stays in range. */
+export function normalizeRail(saved: unknown): TabRail {
+  const raw = (saved && typeof saved === 'object' ? saved : {}) as { width?: unknown; collapsed?: unknown };
+  return { width: typeof raw.width === 'number' ? clampRail(raw.width) : RAIL_DEFAULT, collapsed: raw.collapsed === true };
+}
+
+/** Where a drag of the rail's edge ends: too narrow folds it (and keeps the width it had), otherwise it opens at the clamped width. */
+export function settleRail(dragged: number, before: TabRail): TabRail {
+  return dragged < RAIL_SNAP ? { width: before.width, collapsed: true } : { width: clampRail(dragged), collapsed: false };
+}
+
+/** What the right-click menu on the tabs offers, in order. */
+export type TabMenuItem =
+  | { kind: 'close' }
+  | { kind: 'place'; placement: TabPlacement; checked: boolean }
+  | { kind: 'rail-fold'; collapsed: boolean }
+  | { kind: 'rail-reset' }
+  | { kind: 'reset-tabs' };
+
+export function tabMenuItems(ctx: { closable: boolean; tabPlacement: TabPlacement; drawnAsRail: boolean; rail: TabRail }): TabMenuItem[] {
+  return [
+    ...(ctx.closable ? [{ kind: 'close' } as const] : []),
+    ...TAB_PLACEMENTS.map((placement): TabMenuItem => ({ kind: 'place', placement, checked: placement === ctx.tabPlacement })),
+    ...(ctx.drawnAsRail ? [{ kind: 'rail-fold', collapsed: ctx.rail.collapsed } as const, { kind: 'rail-reset' } as const] : []),
+    { kind: 'reset-tabs' },
+  ];
+}

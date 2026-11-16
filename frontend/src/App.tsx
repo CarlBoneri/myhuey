@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { Box, CircleHelp, Command, House, Lightbulb, Map as MapIcon, Palette, Settings, SlidersHorizontal, Sparkles, Terminal, X } from 'lucide-react';
 import { applyTheme, applyTransparency, followSystemTheme, normalizeTheme, themeGroups, type Theme } from './lib/theme';
 import { useStore } from './store';
@@ -16,7 +16,7 @@ import { SettingsView } from './views/SettingsView';
 import { HelpView } from './views/HelpView';
 import { topicFor } from './lib/helpDocs';
 import { resolveStudioRoute, studioRoom } from './lib/studio';
-import { isVertical, openTabs, reopenTab, tabForRoute, type TabId, type TabPlacement } from './lib/tabs';
+import { RAIL_ICONS, isVertical, openTabs, reopenTab, tabForRoute, type TabId, type TabPlacement } from './lib/tabs';
 import { TabStrip, type Tab } from './components/TabStrip';
 import { SandboxBanner } from './components/SandboxBanner';
 import { PromptBar } from './components/PromptBar';
@@ -58,7 +58,7 @@ function allTabs(studio: string | null, room: string | null): Tab[] {
 export function App() {
   const route = useRoute();
   const { ready, setup, load, refreshLights, toasts, dismiss, lightsError, serverStale, preferences, setPreferences, rooms } = useStore();
-  const { paletteOpen, workflowsOpen, setPalette, setWorkflows, setCurrentRoom, currentRoom, tabs: tabState, setTabs, tabPlacement } = useUi();
+  const { paletteOpen, workflowsOpen, setPalette, setWorkflows, setCurrentRoom, currentRoom, tabs: tabState, setTabs, tabPlacement, tabRail } = useUi();
   const narrow = useNarrow();
   // The saved choice is untouched; a narrow window just draws a rail in the top bar.
   const placement: TabPlacement = narrow && isVertical(tabPlacement) ? 'top' : tabPlacement;
@@ -155,7 +155,9 @@ export function App() {
   })();
 
   return (
-    <div className={`shell tabs-${placement}${preferences.show_light_glow ? '' : ' no-glow'}`}>
+    // --rail-w is the one width of a side rail; the rail itself, the toasts, and the Workflows drawer all read it.
+    <div className={`shell tabs-${placement}${preferences.show_light_glow ? '' : ' no-glow'}`}
+      style={{ '--rail-w': `${tabRail.collapsed ? RAIL_ICONS : tabRail.width}px` } as CSSProperties}>
       <header className="topbar">
         <div className="topbar-left">
           <span className="window-dots" aria-hidden="true"><i /><i /><i /></span>

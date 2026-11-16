@@ -107,6 +107,14 @@ async function execute(intent: Intent): Promise<Outcome> {
     case 'tabs-reset':
       ui.setTabs(DEFAULT_TABS);
       return { output: 'Every tab is back, in the original order', ok: true };
+    case 'tabs-rail': {
+      ui.setTabRail({ ...ui.tabRail, ...(intent.collapsed !== undefined ? { collapsed: intent.collapsed } : {}), ...(intent.width !== undefined ? { width: intent.width } : {}) });
+      const rail = useUi.getState().tabRail;
+      const narrow = typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 719.98px)').matches;
+      const inRail = (ui.tabPlacement === 'left' || ui.tabPlacement === 'right') && !narrow;
+      const said = `Tab rail: ${rail.collapsed ? 'icons only' : `${rail.width} px wide`}`;
+      return { output: inRail ? said : `${said}, saved. It applies when the tabs are on the left or right.`, ok: true };
+    }
     case 'tabs-place':
       ui.setTabPlacement(intent.placement);
       return { output: `Tabs: ${intent.placement}`, ok: true };

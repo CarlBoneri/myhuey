@@ -1,15 +1,16 @@
 // The window tabs, drawn once and placed three ways: in the top bar, in a strip above the prompt
 // (both horizontal), or in a rail down one side (vertical). Drag, close, reopen, reset, and the
-// keyboard moves all work the same in each; only the axis changes.
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { Plus, RotateCcw, X, type LucideIcon } from 'lucide-react';
+// keyboard moves all work the same in each; only the axis changes. A rail can also be resized by
+// its inner edge and folded to icons. Right-clicking the tabs opens a menu (TabContextMenu).
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
+import { PanelLeftClose, PanelLeftOpen, Plus, RotateCcw, X, type LucideIcon } from 'lucide-react';
 import { href, go, type Route } from '../lib/router';
-import { DEFAULT_TABS, TAB_PLACEMENTS, closeTab, isVertical, moveTab, neighbour, reopenTab, shiftTab, type TabId, type TabPlacement, type TabState } from '../lib/tabs';
+import { DEFAULT_TABS, RAIL_DEFAULT, RAIL_MAX, RAIL_MIN, RAIL_STEP, clampRail, closeTab, isVertical, moveTab, neighbour, reopenTab, settleRail, shiftTab, tabMenuItems, type TabId, type TabMenuItem, type TabPlacement, type TabState } from '../lib/tabs';
 import { useUi } from '../uiStore';
+import { TabContextMenu } from './TabContextMenu';
 
 export interface Tab { id: TabId; label: string; icon: LucideIcon; route: Route }
 const TAB_DRAG = 'application/x-myhuey-tab';
-const PLACE_LABELS: Record<TabPlacement, string> = { top: 'Top', bottom: 'Bottom', left: 'Left', right: 'Right' };
 
 interface Props {
   /** Where the strip is drawn right now (a rail falls back to top in a narrow window). */
@@ -24,12 +25,19 @@ interface Props {
   setTabs: (tabs: TabState) => void;
 }
 
+/** Where the right-click menu is open, on which tab (null: the empty part), and what had focus before. */
+interface Context { x: number; y: number; tab: TabId | null; restore: HTMLElement | null }
+
 export function TabStrip({ placement, tabs, closed, available, byId, activeTab, state, setTabs }: Props) {
-  const { tabPlacement, setTabPlacement } = useUi();
+  const { tabPlacement, setTabPlacement, tabRail, setTabRail } = useUi();
   const vertical = isVertical(placement);
+  const collapsed = vertical && tabRail.collapsed;
   const [menu, setMenu] = useState<CSSProperties | null>(null);
+  const [context, setContext] = useState<Context | null>(null);
   const [dropAt, setDropAt] = useState<TabId | 'end' | null>(null);
   const dragging = useRef<TabId | null>(null);
+  const nav = useRef<HTMLElement>(null);
+  const shell = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!menu) return;
@@ -39,7 +47,13 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
     window.addEventListener('keydown', onKey);
     return () => { window.removeEventListener('pointerdown', shut); window.removeEventListener('keydown', onKey); };
   }, [menu]);
-  useEffect(() => setMenu(null), [placement]);
+  useEffect(() => { setMenu(null); setContext(null); }, [placement]);
+
+  // The tab you are on stays in view when the strip (or rail) overflows.
+  useEffect(() => {
+    const active = nav.current?.querySelector<HTMLElement>('.tab.active');
+    if (active && typeof active.scrollIntoView === 'function') active.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [activeTab, placement, collapsed, tabs.length]);
 
   const close = (id: TabId) => {
     const next = closeTab(state, id);
@@ -58,6 +72,7 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
   // The menu is fixed so the strip's own scrolling cannot clip it; it opens away from the screen edge it sits against.
   const toggleMenu = (button: HTMLElement) => {
     if (menu) return setMenu(null);
+    setContext(null);
     const box = button.getBoundingClientRect();
     const style: CSSProperties = { maxHeight: 'calc(100vh - 16px)', overflowY: 'auto' };
     if (vertical) {
@@ -70,15 +85,83 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
     setMenu(style);
   };
 
-  return (
-    <nav className={`tabs ${placement}${vertical ? ' rail' : ''}`} aria-label="Main" aria-orientation={vertical ? 'vertical' : 'horizontal'}
+  // The right-click menu, from the pointer or (Shift+F10, the Menu key) from a focused tab.
+  const openContext = (x: number, y: number, tab: TabId | null) => {
+    setMenu(null);
+    const active = document.activeElement;
+    setContext({ x, y, tab, restore: active instanceof HTMLElement && active !== document.body ? active : null });
+  };
+  const shutContext = useCallback(() => {
+    setContext((now) => {
+      if (now?.restore?.isConnected) now.restore.focus();
+      return null;
+    });
+  }, []);
+  const choose = (item: TabMenuItem) => {
+    const tab = context?.tab ?? null;
+    shutContext();
+    switch (item.kind) {
+      case 'close': if (tab) close(tab); break;
+      case 'place': setTabPlacement(item.placement); break;
+      case 'rail-fold': setTabRail({ ...tabRail, collapsed: !item.collapsed }); break;
+      case 'rail-reset': setTabRail({ width: RAIL_DEFAULT, collapsed: tabRail.collapsed }); break;
+      case 'reset-tabs': setTabs(DEFAULT_TABS); break;
+    }
+  };
+
+  // The rail's inner edge: dragged with the pointer (live, snapping to icons on release), or moved by keys.
+  const dragRail = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const bar = event.currentTarget;
+    bar.setPointerCapture(event.pointerId);
+    const before = useUi.getState().tabRail;
+    let raw = before.width;
+    const apply = (move: PointerEvent) => {
+      const rect = shell.current!.getBoundingClientRect();
+      raw = placement === 'left' ? move.clientX - rect.left : rect.right - move.clientX;
+      setTabRail({ width: clampRail(raw), collapsed: false });
+    };
+    const stop = () => {
+      bar.removeEventListener('pointermove', apply); bar.removeEventListener('pointerup', stop); bar.removeEventListener('pointercancel', stop);
+      setTabRail(settleRail(raw, before));
+    };
+    bar.addEventListener('pointermove', apply);
+    bar.addEventListener('pointerup', stop);
+    bar.addEventListener('pointercancel', stop);
+  };
+  const railKey = (event: React.KeyboardEvent) => {
+    // The edge faces the content: for a left rail, right widens it; for a right rail, left does.
+    const wider = placement === 'left' ? 'ArrowRight' : 'ArrowLeft';
+    const narrower = placement === 'left' ? 'ArrowLeft' : 'ArrowRight';
+    const width = tabRail.width;
+    const next = event.key === wider ? width + RAIL_STEP : event.key === narrower ? width - RAIL_STEP
+      : event.key === 'Home' ? RAIL_MIN : event.key === 'End' ? RAIL_MAX : null;
+    if (next === null) return;
+    event.preventDefault();
+    setTabRail({ width: clampRail(next), collapsed: false });
+  };
+
+  const strip = (
+    <nav ref={nav} className={`tabs ${placement}${vertical ? ' rail' : ''}${collapsed ? ' collapsed' : ''}`} aria-label="Main" aria-orientation={vertical ? 'vertical' : 'horizontal'}
+      onContextMenu={(event) => {
+        event.preventDefault();
+        const hit = (event.target as HTMLElement).closest<HTMLElement>('[data-tab]');
+        openContext(event.clientX, event.clientY, (hit?.dataset.tab as TabId | undefined) ?? null);
+      }}
       onDragOver={(event) => { if (dragging.current) { event.preventDefault(); setDropAt('end'); } }}
       onDrop={(event) => { event.preventDefault(); dropOn(null); }}>
+      {vertical && (
+        <button type="button" className={`rail-toggle ${placement}`} aria-expanded={!collapsed}
+          aria-label={collapsed ? 'Expand the tab rail' : 'Collapse the tab rail'} title={collapsed ? 'Expand the tab rail' : 'Collapse the tab rail to icons'}
+          onClick={() => setTabRail({ ...tabRail, collapsed: !collapsed })}>
+          {collapsed ? <PanelLeftOpen size={14} aria-hidden="true" /> : <PanelLeftClose size={14} aria-hidden="true" />}
+          {!collapsed && <span>Tabs</span>}
+        </button>
+      )}
       {tabs.map((tab, index) => {
         const Icon = tab.icon;
         const active = tab.id === activeTab;
         return (
-          <span key={tab.id} className={`tab${active ? ' active' : ''}${dropAt === tab.id ? ' drop-before' : ''}`} draggable
+          <span key={tab.id} data-tab={tab.id} className={`tab${active ? ' active' : ''}${dropAt === tab.id ? ' drop-before' : ''}`} draggable
             onDragStart={(event) => { dragging.current = tab.id; event.dataTransfer.setData(TAB_DRAG, tab.id); event.dataTransfer.effectAllowed = 'move'; }}
             onDragEnd={() => { dragging.current = null; setDropAt(null); }}
             onDragOver={(event) => {
@@ -93,8 +176,15 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
             onDrop={(event) => { event.preventDefault(); event.stopPropagation(); dropOn(dropAt === 'end' || dropAt === null ? null : dropAt); }}
             onAuxClick={(event) => { if (event.button === 1) { event.preventDefault(); close(tab.id); } }}>
             <a href={href(tab.route)} draggable={false} aria-current={active ? 'page' : undefined}
-              title={vertical ? 'Drag to move · Alt-Shift-↑ ↓ moves it with the keyboard' : 'Drag to move · Alt-Shift-← → moves it with the keyboard'}
+              aria-label={collapsed ? tab.label : undefined}
+              title={collapsed ? tab.label : vertical ? 'Drag to move · Alt-Shift-↑ ↓ moves it with the keyboard' : 'Drag to move · Alt-Shift-← → moves it with the keyboard'}
               onKeyDown={(event) => {
+                if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
+                  event.preventDefault();
+                  const box = event.currentTarget.getBoundingClientRect();
+                  openContext(box.left + 8, box.bottom, tab.id);
+                  return;
+                }
                 const keys = vertical ? ['ArrowUp', 'ArrowDown'] : ['ArrowLeft', 'ArrowRight'];
                 if (!(event.altKey && event.shiftKey) || !keys.includes(event.key)) return;
                 event.preventDefault();
@@ -103,7 +193,7 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
               <Icon size={13} strokeWidth={1.6} aria-hidden="true" />
               <span>{tab.label}</span>
             </a>
-            {tabs.length > 1 && (
+            {tabs.length > 1 && !collapsed && (
               <button type="button" className="tab-close" aria-label={`Close the ${tab.label} tab`} title="Close this tab" onClick={() => close(tab.id)}><X size={11} /></button>
             )}
           </span>
@@ -111,8 +201,8 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
       })}
       {dropAt === 'end' && <span className="tab-drop-end" aria-hidden="true" />}
       <span className="tab-add" onPointerDown={(event) => event.stopPropagation()}>
-        <button type="button" className="tab-close always" aria-haspopup="menu" aria-expanded={!!menu} aria-label="Reopen or reset tabs, or move the tabs"
-          title={closed.length ? `Reopen a closed tab (${closed.length}), or move the tabs` : 'Reset the tabs, or move them'} onClick={(event) => toggleMenu(event.currentTarget)}><Plus size={13} /></button>
+        <button type="button" className="tab-close always" aria-haspopup="menu" aria-expanded={!!menu} aria-label="Reopen or reset tabs"
+          title={closed.length ? `Reopen a closed tab (${closed.length}), or reset the tabs` : 'Reset the tabs'} onClick={(event) => toggleMenu(event.currentTarget)}><Plus size={13} /></button>
         {menu && (
           <div className="tab-menu" role="menu" style={menu}>
             {closed.map((tab) => {
@@ -125,18 +215,26 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
             })}
             {!closed.length && <p>No closed tabs. × on a tab closes it.</p>}
             <button type="button" role="menuitem" onClick={() => { setTabs(DEFAULT_TABS); setMenu(null); }}><RotateCcw size={13} aria-hidden="true" /> Reset the tabs</button>
-            <div role="group" aria-label="Tab position" className="tab-menu-group">
-              <span className="tab-menu-label" aria-hidden="true">Tab position</span>
-              {TAB_PLACEMENTS.map((place) => (
-                <button key={place} type="button" role="menuitemradio" aria-checked={place === tabPlacement} className={place === tabPlacement ? 'checked' : ''}
-                  onClick={() => { setTabPlacement(place); setMenu(null); }}>
-                  <span className="tab-menu-mark" aria-hidden="true">{place === tabPlacement ? '●' : ''}</span> {PLACE_LABELS[place]}
-                </button>
-              ))}
-            </div>
           </div>
         )}
       </span>
+      {context && (
+        <TabContextMenu at={{ x: context.x, y: context.y }} onClose={shutContext} onChoose={choose}
+          items={tabMenuItems({ closable: context.tab !== null && tabs.length > 1, tabPlacement, drawnAsRail: vertical, rail: tabRail })} />
+      )}
     </nav>
+  );
+
+  if (!vertical) return strip;
+  return (
+    <div ref={shell} className={`rail-shell ${placement}${collapsed ? ' collapsed' : ''}`}>
+      {strip}
+      {!collapsed && (
+        <div className={`splitter col rail-handle ${placement}`} role="separator" aria-orientation="vertical" aria-label="Resize the tab rail" tabIndex={0}
+          aria-valuemin={RAIL_MIN} aria-valuemax={RAIL_MAX} aria-valuenow={tabRail.width}
+          title="Drag to resize · drag narrow to fold to icons · double-click to reset" onPointerDown={dragRail} onKeyDown={railKey}
+          onDoubleClick={() => setTabRail({ width: RAIL_DEFAULT, collapsed: false })}><span /></div>
+      )}
+    </div>
   );
 }

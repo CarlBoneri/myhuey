@@ -6,7 +6,7 @@ import type { Route } from './router';
 import type { Posture } from './rig';
 import { THEMES, type Theme } from './theme';
 import { TOPICS } from './helpDocs';
-import { TAB_PLACEMENTS, type TabPlacement } from './tabs';
+import { RAIL_MAX, RAIL_MIN, TAB_PLACEMENTS, clampRail, type TabPlacement } from './tabs';
 import { studioRoom } from './studio';
 
 export interface Snapshot {
@@ -35,6 +35,7 @@ export type Intent =
   | { kind: 'layout-new'; name: string | null }
   | { kind: 'tabs-reset' }
   | { kind: 'tabs-place'; placement: TabPlacement }
+  | { kind: 'tabs-rail'; collapsed?: boolean; width?: number }
   | { kind: 'scenes'; room: string | null }
   | { kind: 'scene-apply'; id: string; name: string }
   | { kind: 'open'; route: Route; label: string }
@@ -59,6 +60,8 @@ export const HELP: [string, string][] = [
   ['open workbench|plan|3d|photo [room]', 'Go to a room: use it, or design it in the Studio. Without a room, plan, 3d, and photo open the room you were last in, else the first'],
   ['open help [topic]', 'The help pages'],
   ['tabs top|bottom|left|right', 'Put the tabs in the top bar, above the prompt, or in a rail down the left or right'],
+  ['tabs collapse|expand', 'Fold the tab rail (tabs on the left or right) to icons, or open it again'],
+  ['tabs width <px>', `Set the tab rail's width, ${RAIL_MIN} to ${RAIL_MAX} px`],
   ['tabs reset', 'Put every tab back, in the original order'],
   ['theme <name>|system', 'Switch the color theme'],
 ];
@@ -221,9 +224,16 @@ export function plan(line: string, snapshot: Snapshot): Intent {
 
   if (verb === 'tabs' || verb === 'tab') {
     if (action === 'reset') return { kind: 'tabs-reset' };
+    if (action === 'collapse') return { kind: 'tabs-rail', collapsed: true };
+    if (action === 'expand') return { kind: 'tabs-rail', collapsed: false };
+    if (action === 'width') {
+      const wanted = rest.join(' ').trim();
+      if (!/^\d+(\.\d+)?$/.test(wanted)) return fail(`The rail's width is a number of pixels from ${RAIL_MIN} to ${RAIL_MAX}, for example: tabs width 260`);
+      return { kind: 'tabs-rail', width: clampRail(Number(wanted)) };
+    }
     const place = TAB_PLACEMENTS.find((item) => item === action);
     if (place) return { kind: 'tabs-place', placement: place };
-    return fail(`Try: tabs ${TAB_PLACEMENTS.join(', tabs ')}, or tabs reset. Drag a tab to move it; × closes it; + brings closed tabs back.`);
+    return fail(`Try: tabs ${TAB_PLACEMENTS.join(', tabs ')}, tabs collapse, tabs expand, tabs width <px>, or tabs reset. Drag a tab to move it; × closes it; + brings closed tabs back.`);
   }
 
   if (verb === 'theme') {
@@ -309,6 +319,8 @@ export function shortcuts(snapshot: Snapshot): Shortcut[] {
   for (const item of TOPICS) list.push({ group: 'Help', title: `Help: ${item.title}`, detail: item.summary, command: `open help ${item.id}` });
   list.push(
     ...TAB_PLACEMENTS.map((place): Shortcut => ({ group: 'Window', title: `Tabs: ${place}`, detail: TAB_PLACE_DETAIL[place], command: `tabs ${place}` })),
+    { group: 'Window', title: 'Collapse the tab rail', detail: 'Icons only, when the tabs are on the left or right', command: 'tabs collapse' },
+    { group: 'Window', title: 'Expand the tab rail', detail: 'Labels again, at the width it had', command: 'tabs expand' },
     { group: 'Window', title: 'Reset the tabs', detail: 'Every tab back, in the original order', command: 'tabs reset' },
     { group: 'Window', title: 'What can I type? (commands)', detail: 'Everything the prompt understands', command: 'help' },
   );

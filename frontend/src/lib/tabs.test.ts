@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ALL_TABS, DEFAULT_TABS, TAB_PLACEMENTS, closeTab, isVertical, normalizePlacement, moveTab, neighbour, normalizeTabs, openTabs, reopenTab, shiftTab, tabForRoute, type TabState } from './tabs';
+import { RAIL_DEFAULT, RAIL_MAX, RAIL_MIN, RAIL_SNAP, tabMenuItems, clampRail, normalizeRail, settleRail, ALL_TABS, DEFAULT_TABS, TAB_PLACEMENTS, closeTab, isVertical, normalizePlacement, moveTab, neighbour, normalizeTabs, openTabs, reopenTab, shiftTab, tabForRoute, type TabState } from './tabs';
 
 const state = (order: string, closed = ''): TabState => normalizeTabs({ order: order.split(' ').filter(Boolean), closed: closed.split(' ').filter(Boolean) });
 
@@ -75,5 +75,53 @@ describe('tab placement', () => {
   });
   it('knows which places are rails', () => {
     expect(TAB_PLACEMENTS.filter(isVertical)).toEqual(['left', 'right']);
+  });
+});
+
+describe('the tab rail', () => {
+  const standard = { width: RAIL_DEFAULT, collapsed: false };
+  it('has the limits the owner set', () => {
+    expect([RAIL_MIN, RAIL_DEFAULT, RAIL_MAX, RAIL_SNAP]).toEqual([150, 210, 420, 110]);
+  });
+  it('reads anything that was stored as a safe rail', () => {
+    for (const junk of [null, undefined, 'x', 7, [], {}, { width: 'wide' }, { width: NaN }, { width: Infinity }]) expect(normalizeRail(junk)).toEqual(standard);
+    expect(normalizeRail({ width: 300, collapsed: true })).toEqual({ width: 300, collapsed: true });
+    expect(normalizeRail({ width: 10 })).toEqual({ width: RAIL_MIN, collapsed: false });
+    expect(normalizeRail({ width: 9000 })).toEqual({ width: RAIL_MAX, collapsed: false });
+    expect(normalizeRail({ width: 250.6, collapsed: 'yes' })).toEqual({ width: 251, collapsed: false });
+  });
+  it('clamps a width', () => {
+    expect([clampRail(0), clampRail(200), clampRail(1000), clampRail(NaN)]).toEqual([RAIL_MIN, 200, RAIL_MAX, RAIL_DEFAULT]);
+  });
+  it('snaps to collapsed when dragged narrower than the snap width, and remembers the old width', () => {
+    expect(settleRail(109, { width: 260, collapsed: false })).toEqual({ width: 260, collapsed: true });
+    expect(settleRail(110, { width: 260, collapsed: false })).toEqual({ width: RAIL_MIN, collapsed: false });
+    expect(settleRail(130, { width: 260, collapsed: false })).toEqual({ width: RAIL_MIN, collapsed: false });
+    expect(settleRail(300, { width: 260, collapsed: false })).toEqual({ width: 300, collapsed: false });
+    expect(settleRail(999, { width: 260, collapsed: false })).toEqual({ width: RAIL_MAX, collapsed: false });
+  });
+});
+
+describe('the right-click menu on the tabs', () => {
+  const rail = { width: 210, collapsed: false };
+  const kinds = (items: ReturnType<typeof tabMenuItems>) => items.map((item) => item.kind);
+  it('offers close only on a tab that can be closed, and position always', () => {
+    const on = tabMenuItems({ closable: true, tabPlacement: 'top', drawnAsRail: false, rail });
+    expect(kinds(on)).toEqual(['close', 'place', 'place', 'place', 'place', 'reset-tabs']);
+    expect(kinds(tabMenuItems({ closable: false, tabPlacement: 'top', drawnAsRail: false, rail }))).not.toContain('close');
+  });
+  it('lists the four places in order and marks the current one', () => {
+    const places = tabMenuItems({ closable: false, tabPlacement: 'left', drawnAsRail: false, rail }).filter((item) => item.kind === 'place');
+    expect(places).toEqual([
+      { kind: 'place', placement: 'top', checked: false }, { kind: 'place', placement: 'bottom', checked: false },
+      { kind: 'place', placement: 'left', checked: true }, { kind: 'place', placement: 'right', checked: false },
+    ]);
+  });
+  it('offers the rail items only when the tabs are drawn as a rail, in the right state', () => {
+    const items = tabMenuItems({ closable: true, tabPlacement: 'left', drawnAsRail: true, rail: { width: 300, collapsed: true } });
+    expect(kinds(items)).toEqual(['close', 'place', 'place', 'place', 'place', 'rail-fold', 'rail-reset', 'reset-tabs']);
+    expect(items.find((item) => item.kind === 'rail-fold')).toEqual({ kind: 'rail-fold', collapsed: true });
+    // saved as left in a narrow window: drawn at the top, so no rail items
+    expect(kinds(tabMenuItems({ closable: false, tabPlacement: 'left', drawnAsRail: false, rail }))).not.toContain('rail-fold');
   });
 });

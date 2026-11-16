@@ -418,6 +418,8 @@ h1, h2, h3, h4 { margin: 0; font-weight: 600; letter-spacing: -0.01em; }
 }
 .tab-menu button { display: flex; align-items: center; gap: 8px; padding: 7px 9px; border: 0; border-radius: 6px; background: transparent; color: var(--text); font: inherit; font-size: 12.5px; text-align: left; cursor: pointer; }
 .tab-menu button:hover, .tab-menu button:focus-visible { background: var(--surface-2); }
+.tab-menu span[role="none"] { display: contents; }
+.tab-menu.context { min-width: 190px; }
 .tab-menu p { margin: 0; padding: 7px 9px; color: var(--text-3); font-size: 12px; }
 /* Tab placement: a strip above the prompt, or a rail down one side (the menu's own position is set inline) */
 .tab-menu-group { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; padding-top: 6px; border-top: 1px solid var(--border); }
@@ -426,9 +428,25 @@ h1, h2, h3, h4 { margin: 0; font-weight: 600; letter-spacing: -0.01em; }
 .tab-menu button.checked { color: var(--text); }
 .tabs.bottom { padding: 4px 12px; position: relative; z-index: 4; background: var(--glass-strong); border-top: 1px solid var(--border); }
 .tabs.rail {
-  --rail-w: 210px; flex: none; flex-direction: column; align-items: stretch; gap: 3px; width: var(--rail-w); padding: 8px 6px;
+  flex: 1; min-width: 0; flex-direction: column; align-items: stretch; gap: 3px; padding: 8px 6px;
   overflow-x: hidden; overflow-y: auto; position: relative; z-index: 3; background: var(--glass-strong); scrollbar-width: thin;
 }
+/* The rail's one width is --rail-w, set on the shell (210px is only the fallback). The handle sits on its inner edge. */
+.rail-shell { position: relative; display: flex; flex: none; width: var(--rail-w, 210px); z-index: 3; }
+.rail-handle { position: absolute; top: 0; bottom: 0; z-index: 4; }
+.rail-handle.left { right: -5px; }
+.rail-handle.right { left: -5px; }
+.rail-handle:focus-visible { outline: none; }
+.rail-handle:focus-visible span { background: var(--accent); }
+.rail-toggle {
+  position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 8px; flex: none; padding: 5px 8px; border: 0; border-radius: var(--radius-s);
+  background: transparent; color: var(--text-3); font: inherit; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer;
+}
+.rail-toggle:hover { background: var(--surface); color: var(--text); }
+.tabs.rail.collapsed { padding: 8px 4px; }
+.tabs.rail.collapsed .rail-toggle { justify-content: center; padding: 5px 0; }
+.tabs.rail.collapsed .tab a { justify-content: center; padding: 7px 0; }
+.tabs.rail.collapsed .tab a span { display: none; }
 .tabs.rail::-webkit-scrollbar { display: block; width: 8px; }
 .tabs.rail.left { border-right: 1px solid var(--border); }
 .tabs.rail.right { border-left: 1px solid var(--border); }
@@ -441,7 +459,7 @@ h1, h2, h3, h4 { margin: 0; font-weight: 600; letter-spacing: -0.01em; }
 .rail .tab-drop-end { align-self: auto; width: auto; height: 2px; margin: 0 6px; }
 .rail .tab-add { position: sticky; right: auto; bottom: 0; margin: 2px 0 0; padding-top: 2px; }
 .shell.tabs-bottom .toasts { bottom: 140px; }
-.shell.tabs-right .toasts { right: 230px; }
+.shell.tabs-right .toasts { right: calc(var(--rail-w, 210px) + 20px); }
 .bridge-pill {
   display: inline-flex; align-items: center; gap: 7px; padding: 5px 10px; border-radius: var(--radius-s); text-decoration: none; white-space: nowrap;
   background: var(--inset); box-shadow: inset 0 0 0 1px var(--border); color: var(--danger-text); font-size: 12px;
@@ -1248,7 +1266,7 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .workflows .button { justify-content: center; }
 @media (max-width: 980px) {
   .workflows { position: absolute; right: 0; top: 0; bottom: 0; z-index: 5; box-shadow: var(--shadow); }
-  .shell.tabs-right .workflows { right: 210px; }
+  .shell.tabs-right .workflows { right: var(--rail-w, 210px); }
   .prompt-path { display: none; }
 }
 

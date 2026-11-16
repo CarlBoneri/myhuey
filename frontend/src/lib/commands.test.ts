@@ -141,6 +141,28 @@ describe('shortcuts', () => {
   });
 });
 
+describe('tab rail commands', () => {
+  it('collapses, expands, and sets the width (clamped)', () => {
+    expect(run('tabs collapse')).toEqual({ kind: 'tabs-rail', collapsed: true });
+    expect(run('tabs expand')).toEqual({ kind: 'tabs-rail', collapsed: false });
+    expect(run('tabs width 300')).toEqual({ kind: 'tabs-rail', width: 300 });
+    expect(run('tabs width 20')).toEqual({ kind: 'tabs-rail', width: 150 });
+    expect(run('tabs width 5000')).toEqual({ kind: 'tabs-rail', width: 420 });
+  });
+  it('names the range when the width is not a number', () => {
+    for (const line of ['tabs width', 'tabs width wide', 'tabs width 12px']) {
+      expect(run(line)).toMatchObject({ kind: 'error', message: expect.stringMatching(/150.*420/) });
+    }
+  });
+  it('lists collapse and expand in the Window group and in HELP', () => {
+    const commands = shortcuts(snapshot).filter((item) => item.group === 'Window').map((item) => item.command);
+    expect(commands).toEqual(expect.arrayContaining(['tabs collapse', 'tabs expand']));
+    expect(commands).not.toContain('tabs width');
+    expect(HELP.some(([usage]) => usage.includes('tabs collapse'))).toBe(true);
+    expect(HELP.some(([usage]) => usage.includes('tabs width'))).toBe(true);
+  });
+});
+
 describe('tab position commands', () => {
   it('sets each of the four places', () => {
     for (const place of ['top', 'bottom', 'left', 'right']) {
