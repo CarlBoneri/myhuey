@@ -8,7 +8,7 @@ bridge username or the raw document.
 from __future__ import annotations
 
 import math
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from typing import Any
 from urllib.parse import quote
@@ -23,6 +23,7 @@ from .room_text import draw_room, layout_problems
 from .room_view import room_json
 from .scenes import Scene
 from .service import HueRoomService
+from .skills import TOPICS, skill
 from .units import UNIT_SYSTEMS, parse_length
 
 
@@ -68,7 +69,20 @@ def _room_name(service: HueRoomService, room: str) -> str:
     raise error
 
 
+def guide(topic: str | None = None) -> dict[str, Any]:
+    """How to use these tools well: call it before designing a scene or a room layout.
+
+    Without a topic, lists the topics. With one ("myhuey-basics", "myhuey-light-theme",
+    "myhuey-room-layout"), returns that guide's text."""
+    if topic is None:
+        return {"topics": [{"topic": name, "description": skill(name)["description"]} for name in TOPICS]}
+    if topic not in TOPICS:
+        raise ValueError(f'There is no topic "{topic}". Topics: {", ".join(TOPICS)}.')
+    return {"topic": topic, "text": skill(topic)["body"]}
+
+
 def list_rooms(service: HueRoomService, layout: str | None = None) -> list[dict[str, Any]]:
+    """Every room with its size in cm, light count, and whether it has a desk and a screen."""
     with in_layout(service, layout):
         return [
             {
@@ -86,6 +100,10 @@ def list_rooms(service: HueRoomService, layout: str | None = None) -> list[dict[
 
 
 def get_room(service: HueRoomService, room: str, layout: str | None = None) -> dict[str, Any]:
+    """One room in full: outline, ceiling, doors and windows, furniture, and lights with their roles.
+
+    Each light has its height worked out (`resolved_elevation`) and its role for each kind of
+    focus (`resolved_roles`: "desk", "read", "sofa"). The room's depth is called `height` here."""
     with in_layout(service, layout):
         data = room_json(service.get_room(_room_name(service, room)))
     data.pop("photo", None)
@@ -99,7 +117,10 @@ def describe_room(service: HueRoomService, room: str, layout: str | None = None)
 
 
 def check_layout(service: HueRoomService, room: str, layout: str | None = None) -> dict[str, Any]:
-    """What is wrong with a room's layout. `ok` is true when nothing is."""
+    """What is wrong with a room's layout, each problem with its kind, item, and a sentence.
+
+    `ok` is true when nothing is. Kinds: outside, overlap, screen_off_desk, screen_faces_wall,
+    no_seat, height_unknown."""
     with in_layout(service, layout):
         problems = layout_problems(service.get_room(_room_name(service, room)))
     return {"ok": not problems, "problems": problems}
@@ -138,6 +159,7 @@ def list_lights(service: HueRoomService) -> dict[str, Any]:
 
 
 def list_scenes(service: HueRoomService, room: str | None = None, layout: str | None = None) -> list[dict[str, Any]]:
+    """The saved scenes, all of them or one room's, with each one's id and how many lights it sets."""
     with in_layout(service, layout):
         name = _room_name(service, room) if room else None
         return [
@@ -147,6 +169,7 @@ def list_scenes(service: HueRoomService, room: str | None = None, layout: str | 
 
 
 def list_layouts(service: HueRoomService) -> list[dict[str, Any]]:
+    """The active layout (the real home) and the sandboxes, with their rooms and scene counts."""
     return [{key: entry[key] for key in ("id", "name", "active", "rooms", "scenes")} for entry in service.layouts()]
 
 
@@ -218,7 +241,11 @@ def _scene(
 def preview_scene(
     service: HueRoomService, room: str, name: str, lights: dict[str, dict[str, Any]], others: str = "keep", layout: str | None = None,
 ) -> dict[str, Any]:
-    """What each light in the room would show. Nothing is saved and nothing is sent."""
+    """What each light in the room would show for these settings, without saving or sending anything.
+
+    `lights` maps light IDs to settings: `colors` (1 to 5 hex colours) or `white` (2000 to 6500
+    kelvin), with `brightness` (0 to 100) and optionally `on`. Lights left out keep their state
+    unless `others` is "off"."""
     with in_layout(service, layout):
         scene = _scene(service, room, name, lights, others)
         planned = {light.light_id for light in service.get_room(scene.room).lights if light.planned}
@@ -248,7 +275,7 @@ def save_scene(
     service: HueRoomService, room: str, name: str, lights: dict[str, dict[str, Any]], others: str = "keep",
     scene_id: str | None = None, layout: str | None = None,
 ) -> dict[str, Any]:
-    """Save a scene, or replace the saved scene with `scene_id`. Nothing is sent to any light."""
+    """Save a scene, or replace the saved scene with `scene_id`, without sending anything to any light."""
     with in_layout(service, layout):
         if scene_id is not None and all(item.id != scene_id for item in service.scenes()):
             raise SceneNotFound(scene_id)
@@ -260,8 +287,10 @@ def apply_scene(
     service: HueRoomService, scene: str | None = None, room: str | None = None, name: str | None = None,
     lights: dict[str, dict[str, Any]] | None = None, others: str = "keep", layout: str | None = None,
 ) -> dict[str, Any]:
-    """Send a scene to the real lights: a saved one (`scene`, by ID or name), or one not saved
-    (`room`, `name`, `lights`). Planned lights are not installed, so they are reported, not sent."""
+    """Changes the real lights. Sends a scene to a room's lights and reports what each took.
+
+    Give a saved scene (`scene`, by ID or name), or one not saved (`room`, `name`, `lights`).
+    Planned lights are not installed, so they are reported, not sent."""
     if scene is not None and (room is not None or name is not None or lights is not None) or (
         scene is None and (room is None or lights is None)
     ):
@@ -289,7 +318,7 @@ def _sent(room: str, results: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def room_power(service: HueRoomService, room: str, on: bool, layout: str | None = None) -> dict[str, Any]:
-    """Turn every installed light in a room on or off."""
+    """Changes the real lights. Turns every installed light in a room on or off."""
     if not isinstance(on, bool):
         raise ValueError("on must be true or false.")
     with in_layout(service, layout):
@@ -298,7 +327,7 @@ def room_power(service: HueRoomService, room: str, on: bool, layout: str | None 
 
 
 def room_dim(service: HueRoomService, room: str, percent: float, layout: str | None = None) -> dict[str, Any]:
-    """Set the brightness of the lights that are on in a room, 1 to 100 percent."""
+    """Changes the real lights. Sets the brightness of the lights that are on in a room, 1 to 100 percent."""
     if isinstance(percent, bool) or not isinstance(percent, (int, float)):
         raise ValueError("Room brightness must be a number from 1 to 100 percent.")
     with in_layout(service, layout):
@@ -371,7 +400,9 @@ def add_room(
     depth: float | int | str | None = None, outline: list[list[float]] | None = None,
     ceiling: float | int | str | None = None, units: str | None = None,
 ) -> dict[str, Any]:
-    """Add a room to a sandbox: a width by depth rectangle, or an outline of [x, y] corners in cm."""
+    """Add a room to a sandbox: a width by depth rectangle, or an outline of [x, y] corners in cm.
+
+    Lengths may be cm or strings with a unit, such as "12ft" or "3.8m"."""
     with sandbox(service, layout) as layout_id:
         sizes: dict[str, Any] = {}
         if width is not None:
@@ -411,6 +442,7 @@ def update_room(
 
 
 def remove_room(service: HueRoomService, layout: str | None, room: str) -> dict[str, Any]:
+    """Take a room out of a sandbox, with its furniture, light placements, and scenes."""
     with sandbox(service, layout) as layout_id:
         name = _room_name(service, room)
         service.remove_room(name)
@@ -418,7 +450,9 @@ def remove_room(service: HueRoomService, layout: str | None, room: str) -> dict[
 
 
 def set_openings(service: HueRoomService, layout: str | None, room: str, openings: list[dict]) -> dict[str, Any]:
-    """Replace a room's doors and windows. `wall` counts the outline's edges from 0."""
+    """Replace a sandbox room's doors and windows with the list given.
+
+    `wall` counts the outline's edges from 0; `offset` is cm from that edge's starting corner."""
     with sandbox(service, layout) as layout_id:
         name = _room_name(service, room)
         if not isinstance(openings, list):
@@ -438,7 +472,9 @@ def set_openings(service: HueRoomService, layout: str | None, room: str, opening
 
 
 def set_furniture(service: HueRoomService, layout: str | None, room: str, furniture: list[dict]) -> dict[str, Any]:
-    """Replace a room's furniture. Missing width, depth, shape, and label come from the catalog's size for the kind."""
+    """Replace a sandbox room's furniture with the list given.
+
+    Missing width, depth, shape, and label come from the catalog's size for the kind."""
     with sandbox(service, layout) as layout_id:
         name = _room_name(service, room)
         if not isinstance(furniture, list):
@@ -494,6 +530,7 @@ def place_light(
 
 
 def remove_light(service: HueRoomService, layout: str | None, room: str, light_id: str) -> dict[str, Any]:
+    """Take a light's placement out of a room in a sandbox; the light itself stays on the bridge."""
     with sandbox(service, layout) as layout_id:
         name = _room_name(service, room)
         placed = [light.light_id for light in service.get_room(name).lights]
@@ -522,3 +559,15 @@ def open_in_app(service: HueRoomService, layout: str | None, room: str, app_url:
         else f"The app is not answering at {base}. Start it with `myhuey serve`, or give the address it runs at with --app-url."
     )
     return {"url": f"{base}/?layout={layout_id}#/studio/room/{quote(name, safe='')}/3d", "answering": answering, "note": note}
+
+
+# Every tool by name, in the order the design lists them, `guide` first. A server registers these.
+TOOLS: dict[str, Callable[..., Any]] = {
+    tool.__name__: tool
+    for tool in (
+        guide, list_rooms, get_room, describe_room, list_lights, list_scenes, list_layouts, catalog, suggest,
+        preview_scene, save_scene, apply_scene, room_power, room_dim,
+        create_sandbox, add_room, update_room, remove_room, remove_light, set_openings, set_furniture, place_light,
+        check_layout, open_in_app,
+    )
+}

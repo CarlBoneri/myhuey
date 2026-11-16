@@ -26,6 +26,9 @@ myhuey = "myhuey.cli:main"
 requires = ["hatchling>=1.18.0"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.wheel.force-include]
+"skills" = "myhuey/skills"
+
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
