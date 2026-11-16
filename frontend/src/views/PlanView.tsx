@@ -12,7 +12,7 @@ import { scaleToFit, simplifyPolygon, toGray, traceHint, traceRoom, type Gray } 
 import { formatArea, formatLength, parseLength } from '../lib/units';
 import type { HomePlan, Pt, Room, Units } from '../types';
 import { PlanCanvas, usePlan } from '../components/PlanCanvas';
-import { Empty, Field, IconButton, LengthInput, Panel, Segmented, Slider, TextInput } from '../components/ui';
+import { Empty, Field, IconButton, LengthInput, Panel, Segmented, Sidebar, Slider, TextInput } from '../components/ui';
 import { LayoutsPanel } from '../components/LayoutsPanel';
 import { RoomOnPlan } from '../components/RoomOnPlan';
 
@@ -401,7 +401,7 @@ export function PlanView({ focus }: { focus?: string } = {}) {
           <p className={`stage-hint${traceNote ? ' warn' : ''}`} role={traceNote ? 'status' : undefined}>{traceNote ?? hint}</p>
         </div>
 
-        <aside className="inspector">
+        <Sidebar name="floorplan">
           <LayoutsPanel />
           {!pending && !scaleLine && !(tool === 'select' && selectedRoom) && (
             <Panel title="Add a room">
@@ -418,7 +418,7 @@ export function PlanView({ focus }: { focus?: string } = {}) {
             </Panel>
           )}
           {tool === 'select' && selectedRoom && (
-            <Panel title={selectedRoom.name} actions={<IconButton label="Done reshaping" onClick={() => setSelected(null)}><Check size={16} /></IconButton>}>
+            <Panel id="room" title={selectedRoom.name} actions={<IconButton label="Done reshaping" onClick={() => setSelected(null)}><Check size={16} /></IconButton>}>
               <p className="hint">{formatLength(selectedRoom.width, selectedRoom.units)} × {formatLength(selectedRoom.height, selectedRoom.units)} · {selectedRoom.outline.length} corners</p>
               <p className="hint">Drag the corners onto the walls in the plan behind. Each change saves; doors and windows stay on their walls.</p>
               <div className="button-row">
@@ -506,7 +506,7 @@ export function PlanView({ focus }: { focus?: string } = {}) {
               </Empty>
             )}
           </Panel>
-        </aside>
+        </Sidebar>
       </div>
     </div>
   );

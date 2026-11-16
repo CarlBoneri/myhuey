@@ -53,6 +53,34 @@ There's no separate frontend server in normal use: `myhuey serve` runs the API a
 | Run it in the background | `nohup .venv/bin/myhuey serve --port 8000 > ~/.myhuey/serve.log 2>&1 &` |
 | Check it's up | `curl -s localhost:8000/api/health` should answer `{"status":"ok","api":5}` |
 
+### The window
+
+The app is laid out like a terminal. Tabs along the top open each screen: the 3D view and the workbench for the room you were last in, Home, the floor plan, Scenes, Lights and groups, Settings, and Help. The tabs are yours to arrange: drag one to move it (or Alt-Shift-← → with it focused), close it with its × or a middle click, and bring closed tabs back, or reset them all, from the + at the end. Opening a screen whose tab is closed reopens it. The top bar also shows the bridge's address and whether it is answering, the theme menu, Workflows, and ⌘K.
+
+A prompt is pinned to the bottom of every screen. Type a command and it runs through the same API the screens use, then shows what really happened and how long it took. Click the line above the prompt for the history. It understands a fixed set of commands and nothing else: it never runs a shell, and nothing runs on the server.
+
+| Command | What it does |
+|---|---|
+| `room list` | The rooms in the open layout |
+| `room on Office`, `room off Office` | Every light in the room on or off |
+| `room dim Office 30` | Dim the lit lights |
+| `room posture Office standing` | Preview sitting or standing in the 3D view |
+| `room glare Office [--mode code] [--fix]` | Check for glare from the desk; `--fix` dims the flagged lights |
+| `suggest --room Office --mode code [--apply]` | Eye-comfort suggestions; `--apply` sends the first one |
+| `scene list`, `scene apply <scene>` | Saved scenes |
+| `groups list`, `groups apply <group>` | Saved groups and their looks |
+| `layouts list`, `layouts open <layout>` | Layouts and sandboxes (`active` goes back) |
+| `open home`, `open 3d Office`, … | Go to a screen |
+| `theme dracula` | Switch theme |
+
+The real CLI's spelling works too (`myhuey room dim --name Office --level 30`), and a command with no room uses the one you were last in. `room posture` and `room glare` exist only in the browser for now. Commands act on the layout named in the prompt, so with a sandbox open they act on the sandbox. Press `/` to jump to the prompt.
+
+⌘K (Ctrl-K) opens a palette that searches rooms, scenes, groups, screens, layouts, themes, help pages, and design steps such as “design a room” or “place lights”; Enter runs the top result, and anything it does not recognise is run as a command. Workflows is a drawer of ready-made commands for the room you are in and your saved groups, each with a Run button and the command to copy.
+
+Side panels fold like an editor's tool windows. Click a panel's title, or the triangle beside it, to hide its contents; Alt-click folds or opens every panel in that sidebar. Folded panels stay folded next time, per browser.
+
+**Help** is built in. The Help tab has a page for each part of the app, searchable, with keyboard shortcuts and commands you can drop into the prompt. The ? in the top bar opens the page for the screen you are on.
+
 ### Home
 
 Home is the everyday screen, and it always controls your active home, even while you're trying ideas in a sandbox.
@@ -86,7 +114,9 @@ Drag paired lights onto the plan and they're drawn the way they actually look: s
 
 **3D view.** The designer's 3D tab draws the same room in three dimensions: walls on its real outline up to the ceiling, doors and windows at their heights, furniture as solids, and each light at its height and real length, in its live color. Drag to orbit, Shift-drag or Space-drag to pan, and use the wheel to zoom toward the cursor (`=`, `-`, and `0` work too). The eye button sits you at the desk, looking at the screen. Drag a light and it slides across the room at its own height; Alt-drag raises or lowers it. Drag a desk and the screens and lights on it come along; Shift-drag turns it. Everything saves to the same room the plan shows.
 
-The 3D tab also checks for glare from the desk seat. It flags lights that bounce off a screen into your eyes, and lights in or near your line of sight, and draws the paths. Lights just behind a screen count as bias lights. Each flagged light gets a level to stay under, and one button dims the lit ones that are over it (it never brightens anything). Standing is a preview: it raises your eyes and any sit-stand desk with what is on it, and it is not saved. The check runs in the browser for now; the CLI and API do not have it yet, and monitors are assumed to lean back 12 degrees.
+The 3D screen is three panes. The view is on top, with a switch between looking in from outside and sitting at the desk. Under it is the glare table: every light with its role, position, angle off your gaze, live level, and glare status; click a row to select the light. Beside them is the inspector, with nudge buttons and a height slider for the selected light, the posture switch, and the room's furniture. Drag the bars between panes to resize them, and fold any pane away; the sizes are remembered in your browser.
+
+The glare check is made from the desk seat. It flags lights that bounce off a screen into your eyes, and lights in or near your line of sight, and draws the paths. Lights just behind a screen count as bias lights. Each flagged light gets a level to stay under, and Fix glare dims the lit ones that are over it (it never brightens anything). Standing is a preview: it raises your eyes and any sit-stand desk with what is on it, and it is not saved. The check runs in the browser for now; the `myhuey` CLI and the API do not have it yet, and monitors are assumed to lean back 12 degrees.
 
 **Room photo.** Upload a photo of the real room (it's re-encoded, which strips location data) and pin each light where it appears. Map four floor points between the photo and the plan, and MyHuey can project plan positions onto the photo. That's what powers Setups, which proposes desk lighting (a bias strip behind the monitor, a floor lamp, a desk lamp) on your actual photo before you buy anything. It also lets you preview a suggestion's colors painted onto the photo.
 
@@ -114,7 +144,7 @@ Save selection keeps a pick as a named group. Groups are stored by MyHuey (nothi
 
 ### Settings
 
-Settings holds the bridge pairing and the preferences, which the web app and `myhuey prefs` share. The look is an editor's: a flat background, frosted glass panels, JetBrains Mono, and seven themes. Neon is the default, a dark Monokai-style palette. Each theme only recolors the app; the colors of your lights always show as they really are. Every theme's text is checked to read at 4.5:1 contrast or better, so some themes use slightly lighter greys for text than their palettes do. The sun/moon button on the rail flips between your dark and light theme without losing the one you picked. Pairing works by address or by discovery: local mDNS first, then Hue's discovery service, which allows one request per 15 minutes. The bridge certificate is pinned after pairing, and the dot at the bottom of the side rail tells you whether the bridge is answering.
+Settings holds the bridge pairing and the preferences, which the web app and `myhuey prefs` share. The look is an editor's: a flat background, frosted glass panels, JetBrains Mono, and seven themes of its own. Neon is the default, a dark Monokai-style palette. The theme menus also list the colour themes installed in VS Code on this computer and the palettes from Starship's presets, imported by `scripts/import_editor_themes.py`: run it again after installing a theme, then rebuild the web app and restart the server. Imported themes get the same contrast checks as the built-in ones, so their greys can differ slightly from the editor's. Each theme only recolors the app; the colors of your lights always show as they really are. Every theme's text is checked to read at 4.5:1 contrast or better, so some themes use slightly lighter greys for text than their palettes do. The theme menu in the top bar switches theme from any screen. Pairing works by address or by discovery: local mDNS first, then Hue's discovery service, which allows one request per 15 minutes. The bridge certificate is pinned after pairing, and the dot at the bottom of the side rail tells you whether the bridge is answering.
 
 | Preference | Choices | Default |
 | --- | --- | --- |

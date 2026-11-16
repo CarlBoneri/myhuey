@@ -14,7 +14,9 @@ export type Route =
   | { view: 'scenes' }
   | { view: 'scene'; id: string }
   | { view: 'lights' }
-  | { view: 'settings' };
+  | { view: 'settings' }
+  /** The in-app help; `topic` is one of the ids in lib/helpDocs.ts. */
+  | { view: 'help'; topic?: string };
 
 export function parseRoute(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').map(decodeURIComponent);
@@ -33,6 +35,7 @@ export function parseRoute(hash: string): Route {
   if (first === 'scenes') return { view: 'scenes' };
   if (first === 'lights') return { view: 'lights' };
   if (first === 'setup') return { view: 'setup' };
+  if (first === 'help') return second ? { view: 'help', topic: second } : { view: 'help' };
   if (first === 'settings') return second === 'lights' ? { view: 'lights' } : { view: 'settings' };
   return { view: 'home' };
 }
@@ -51,6 +54,8 @@ export function href(route: Route): string {
       return `#/scenes/${part(route.id)}`;
     case 'home':
       return '#/';
+    case 'help':
+      return route.topic ? `#/help/${part(route.topic)}` : '#/help';
     default:
       return `#/${route.view}`;
   }

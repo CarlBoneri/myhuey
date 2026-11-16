@@ -10,7 +10,7 @@ import { roomSummary } from '../lib/roomControls';
 import { LightControls } from '../components/LightControls';
 import { RoomDimmer } from '../components/RoomDimmer';
 import { SuggestPanel } from '../components/SuggestPanel';
-import { Empty, HueIcon, Panel, Toggle } from '../components/ui';
+import { Empty, HueIcon, Panel, Sidebar, Toggle } from '../components/ui';
 
 export function RoomWorkbench({ name }: { name: string }) {
   const { rooms, lights, scenes, refreshLights } = useStore();
@@ -77,7 +77,7 @@ export function RoomWorkbench({ name }: { name: string }) {
             {silent.length > 0 && <p className="hint">Not answering on the bridge: {silent.map((p) => p.label).join(', ')}.</p>}
             <SuggestPanel room={room} />
           </div>
-          <aside className="inspector">
+          <Sidebar name="workbench">
             <Panel title="Light">
               {current ? <LightControls light={current} /> : <p className="hint">Pick a light to change its brightness and color.</p>}
             </Panel>
@@ -99,7 +99,7 @@ export function RoomWorkbench({ name }: { name: string }) {
                 </ul>
               ) : <p className="hint">No scenes for this room yet. Save a suggestion, or make one from an image on the Scenes tab.</p>}
             </Panel>
-          </aside>
+          </Sidebar>
         </div>
       )}
     </div>

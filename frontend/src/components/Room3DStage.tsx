@@ -2,22 +2,22 @@
 // to the ceiling, doors and windows at their heights, furniture as solids, lights at their
 // heights and real lengths, and the glare paths from the seat. Orbit it, or sit in the chair.
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import { Armchair, Box, Maximize2, Minus, Plus, ScanEye, Square } from 'lucide-react';
+import { Compass, Maximize2, Minus, Plus, RotateCw, Square } from 'lucide-react';
 import { useStore } from '../store';
 import { bounds, round1 } from '../lib/geometry';
 import { CM_PER_FOOT, formatLength, snap } from '../lib/units';
 import { effectiveLength, liveColors, placedProfile } from '../lib/lights';
 import { displayCorners, isDisplay, statusTone, type GlareReport, type GlareScene } from '../lib/glareMath';
-import { covers, heightOf, moveRig, riders, topOf, type Posture } from '../lib/rig';
+import { covers, heightOf, moveRig, riders, topOf } from '../lib/rig';
 import {
   PITCH_RANGE, ZOOM_RANGE, centroid, clamp, facesCamera, fitOrbit, floorCircle, floorGrid, lightPool, orbitCamera, prism, project, projectPolygon,
   seatCamera, shade, toView, unprojectToHeight, wallFacing, wallOpacity, walls, zoomAt, type Camera, type Orbit, type Vec3,
 } from '../lib/view3d';
 import type { Placement, Pt, Room } from '../types';
-import { IconButton, Segmented } from './ui';
+import { IconButton } from './ui';
 
 export type Selection3D = { type: 'light'; id: string } | { type: 'furniture'; id: string } | { type: 'opening'; id: string } | null;
-type View = 'orbit' | 'seat';
+export type View3D = 'orbit' | 'seat';
 type Drag =
   | { kind: 'orbit'; x: number; y: number; yaw: number; pitch: number }
   | { kind: 'look'; x: number; y: number; yaw: number; pitch: number }
@@ -26,18 +26,19 @@ type Drag =
   | { kind: 'furniture'; id: string; x: number; y: number; z: number; grab: Pt; start: Room; moved: boolean };
 
 const PRESETS: { label: string; yaw: number; pitch: number }[] = [
-  { label: 'Top', yaw: 0, pitch: 90 },
+  { label: 'Top-down', yaw: 0, pitch: 90 },
   { label: 'Iso', yaw: -30, pitch: 34 },
-  { label: 'Front', yaw: 0, pitch: 8 },
-  { label: 'Side', yaw: 90, pitch: 8 },
+  { label: 'Eye level', yaw: 0, pitch: 6 },
+  { label: 'Rear', yaw: 180, pitch: 34 },
 ];
 const points = (list: Pt[]) => list.map((p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
 const snap15 = (deg: number, free: boolean) => (free ? Math.round(deg) : Math.round(deg / 15) * 15);
 
-export function Room3DStage({ room, posed, posture, onPosture, selection, onSelect, onLight, onLightCommit, onRoom, onRigCommit, scene, report }: {
+export function Room3DStage({ room, posed, view, selection, onSelect, onLight, onLightCommit, onRoom, onRigCommit, scene, report }: {
   /** The room as saved, and as it stands in the chosen posture (what is drawn). */
   room: Room; posed: Room;
-  posture: Posture; onPosture: (posture: Posture) => void;
+  /** From outside the room, orbiting; or from the desk seat, looking at the screen. */
+  view: View3D;
   selection: Selection3D; onSelect: (selection: Selection3D) => void;
   onLight: (placement: Placement) => void; onLightCommit: (placement: Placement) => void;
   onRoom: (room: Room) => void; onRigCommit: (lightIds: string[]) => void;
@@ -51,7 +52,6 @@ export function Room3DStage({ room, posed, posture, onPosture, selection, onSele
   const [look, setLook] = useState({ yaw: 0, pitch: 0 });
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState<Pt>([0, 0]);
-  const [view, setView] = useState<View>('orbit');
   const [showGlare, setShowGlare] = useState(true);
   const [showPools, setShowPools] = useState(true);
   const [hover, setHover] = useState('');
@@ -81,6 +81,16 @@ export function Room3DStage({ room, posed, posture, onPosture, selection, onSele
   cameraRef.current = camera;
 
   const reset = useCallback(() => { setZoom(1); setPan([0, 0]); setLook({ yaw: 0, pitch: 0 }); }, []);
+  useEffect(reset, [view, reset]);
+  const wrap = (deg: number) => ((((deg + 180) % 360) + 360) % 360) - 180;
+  /** Zoom in on where the eyes look, keeping the current angle. */
+  const deskCloseUp = () => {
+    if (!scene.target) return;
+    const closer = orbitCamera({ ...fitted.orbit, ...orbit, zoom: 1.85 }, fitted.base);
+    const at = project(scene.target, closer, viewport);
+    setZoom(1.85);
+    setPan([viewport.width / 2 - at.x, viewport.height / 2 - at.y]);
+  };
 
   // Wheel and pinch zoom toward the cursor. React's wheel listener is passive, so this one is added by hand.
   useEffect(() => {
@@ -361,16 +371,7 @@ export function Room3DStage({ room, posed, posture, onPosture, selection, onSele
         )}
       </svg>
 
-      <div className="toolbar floating" onPointerDown={(event) => event.stopPropagation()}>
-        <IconButton label="Look at the room from outside" active={!seated} onClick={() => { setView('orbit'); reset(); }}><Box size={18} strokeWidth={1.5} /></IconButton>
-        <IconButton label={scene.eye ? 'Sit at the desk and look at the screen' : 'Add a desk or a screen to sit here'} active={!!seated} disabled={!scene.eye}
-          onClick={() => { setView('seat'); reset(); }}><ScanEye size={18} strokeWidth={1.5} /></IconButton>
-        <span className="toolbar-sep" />
-        <Segmented label="Posture" value={posture} onChange={onPosture}
-          options={[{ value: 'seated', label: <><Armchair size={15} /> Seated</>, title: 'Eyes at sitting height' },
-            { value: 'standing', label: 'Standing', title: 'Preview: raises sit-stand desks and what is on them. Not saved.' }]} />
-      </div>
-      <p className="stage-hint">{hover || (seated
+      <p className="stage-hint left">{hover || (seated
         ? 'Drag to look around · wheel zooms'
         : 'Drag to orbit · Shift-drag or Space-drag pans · wheel zooms')}</p>
 
@@ -381,9 +382,20 @@ export function Room3DStage({ room, posed, posture, onPosture, selection, onSele
         <IconButton label="Fit the room" onClick={reset}><Maximize2 size={15} /></IconButton>
         {!seated && (
           <>
+            {scene.target && <button type="button" className="pill" onClick={deskCloseUp} title="Zoom in on the desk">Desk close-up</button>}
             <span className="toolbar-sep" />
+            <label className="view3d-dial" title="Turn the room">
+              <RotateCw size={13} aria-hidden="true" /><span>Yaw</span>
+              <input type="range" min={-180} max={180} value={Math.round(wrap(orbit.yaw))} onChange={(event) => setOrbit((o) => ({ ...o, yaw: Number(event.target.value) }))} />
+              <output>{Math.round(wrap(orbit.yaw))}°</output>
+            </label>
+            <label className="view3d-dial" title="Tilt from eye level to straight down">
+              <Compass size={13} aria-hidden="true" /><span>Pitch</span>
+              <input type="range" min={PITCH_RANGE[0]} max={PITCH_RANGE[1]} value={Math.round(orbit.pitch)} onChange={(event) => setOrbit((o) => ({ ...o, pitch: Number(event.target.value) }))} />
+              <output>{Math.round(orbit.pitch)}°</output>
+            </label>
             {PRESETS.map((preset) => (
-              <button key={preset.label} type="button" className={`pill${Math.abs(orbit.yaw - preset.yaw) < 1 && Math.abs(orbit.pitch - preset.pitch) < 1 ? ' active' : ''}`}
+              <button key={preset.label} type="button" className={`pill${Math.abs(wrap(orbit.yaw) - wrap(preset.yaw)) < 1 && Math.abs(orbit.pitch - preset.pitch) < 1 ? ' active' : ''}`}
                 onClick={() => { setOrbit({ yaw: preset.yaw, pitch: preset.pitch }); setPan([0, 0]); }}>{preset.label}</button>
             ))}
           </>

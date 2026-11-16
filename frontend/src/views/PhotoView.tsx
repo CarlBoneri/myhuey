@@ -15,7 +15,7 @@ import { formatLength } from '../lib/units';
 import type { CatalogItem, PhotoSpot, Pt, Room, Suggestion } from '../types';
 import { LightControls } from '../components/LightControls';
 import { SuggestPanel } from '../components/SuggestPanel';
-import { Empty, HueIcon, IconButton, Panel, Slider } from '../components/ui';
+import { Empty, HueIcon, IconButton, Panel, Sidebar, Slider } from '../components/ui';
 
 const ACCEPT = 'image/jpeg,image/png,image/webp';
 const MAX_MB = 15;
@@ -289,7 +289,7 @@ export function PhotoView({ room }: { room: Room }) {
           })}
         </div>
       </div>
-      <aside className="inspector">
+      <Sidebar name="photo">
         <div className="button-row">
           <button type="button" className={`button${suggesting ? ' active' : ''}`} aria-pressed={suggesting}
             onClick={() => { setSuggesting(!suggesting); if (suggesting) setShown(null); }}>
@@ -383,7 +383,7 @@ export function PhotoView({ room }: { room: Room }) {
           <input ref={input} type="file" accept={ACCEPT} hidden onChange={(e) => uploadFile(e.target.files?.[0])} />
           <p className="hint">{room.photo.width} × {room.photo.height} px. Replacing the photo keeps the tags.</p>
         </Panel>
-      </aside>
+      </Sidebar>
     </div>
   );
 }

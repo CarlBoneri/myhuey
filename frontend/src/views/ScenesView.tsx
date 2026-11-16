@@ -5,7 +5,7 @@ import { attempt, useStore } from '../store';
 import { go } from '../lib/router';
 import { bounds, pathOf } from '../lib/geometry';
 import type { HueSceneSet, Room, Scene } from '../types';
-import { Empty, Field, Panel, TextInput } from '../components/ui';
+import { Empty, Field, Panel, Sidebar, TextInput } from '../components/ui';
 
 export function ScenePreview({ scene, room }: { scene: Scene; room: Room | undefined }) {
   if (!room) return <div className="scene-thumb missing" />;
@@ -103,7 +103,7 @@ export function ScenesView() {
             <Empty title="No scenes yet"><p>Create a scene, then paint color zones or lay an image over the room. Each light takes the color under it.</p></Empty>
           )}
         </div>
-        <aside className="inspector">
+        <Sidebar name="scenes">
           <Panel title="New scene">
             <Field label="Name"><TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="Sunset" /></Field>
             <Field label="Room">
@@ -114,7 +114,7 @@ export function ScenesView() {
             <button type="button" className="button primary" onClick={create}><Plus size={16} /> Create scene</button>
           </Panel>
           <HueGalleryPanel room={room} />
-        </aside>
+        </Sidebar>
       </div>
     </div>
   );
