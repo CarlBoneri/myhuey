@@ -1,16 +1,182 @@
-/* MyHuey: a dark, layered interface. Frosted panels over soft purple-to-blue glows. */
+/* MyHuey: an editor-style interface. Flat theme backgrounds, frosted glass blocks, one token set per theme. */
 
+/* Neon, the default theme: the base set every other theme overrides. Text greys are lighter than the
+   palette's own greys where needed, so text reads at 4.5:1 or better; the palette greys stay for lines. */
 :root {
-  --bg: #0b0a12;
-  --bg-2: #12101c;
+  --bg: #1f1f23;
+  --bg-2: #19191c;
   --surface: rgba(255, 255, 255, 0.045);
   --surface-2: rgba(255, 255, 255, 0.075);
   --surface-3: rgba(255, 255, 255, 0.11);
   --border: rgba(255, 255, 255, 0.09);
   --border-strong: rgba(255, 255, 255, 0.16);
+  --text: #e6e6e6;
+  --text-2: #b8bcc8;
+  --text-3: #9097a6;
+  --accent: #5a7dff;
+  --accent-2: #37f6ff;
+  --accent-strong: #5a7dff;
+  --accent-gradient: linear-gradient(135deg, #5a7dff 0%, #8ea2ff 100%);
+  --danger: #ff4060;
+  --warn: #e6db74;
+  --ok: #a6e22e;
+  --ansi-red: #ff4060;
+  --ansi-green: #a6e22e;
+  --ansi-yellow: #e6db74;
+  --ansi-blue: #5a7dff;
+  --ansi-magenta: #ff2eea;
+  --ansi-cyan: #37f6ff;
+  --selection: #3a2a4a;
+  --radius-xl: 14px;
+  --radius-l: 12px;
+  --radius-m: 10px;
+  --radius-s: 8px;
+  --shadow: 0 12px 40px -16px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--border);
+  --floor: #26262c;
+  --floor-stroke: rgba(142, 162, 255, 0.6);
+  --furniture: rgba(184, 188, 200, 0.12);
+  --furniture-stroke: rgba(184, 188, 200, 0.4);
+  --grid: rgba(255, 255, 255, 0.045);
+  --font: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --glass: rgba(36, 36, 44, 0.55);
+  --glass-strong: rgba(30, 30, 38, 0.85);
+  --glass-bg: rgba(36, 36, 44, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-highlight: rgba(255, 255, 255, 0.08);
+  --glass-blur: 24px;
+  --glow-lit: rgba(255, 46, 234, 0.18);
+  --stage: #1b1b1f;
+  --panel-bg: var(--glass-bg);
+  --inset: rgba(0, 0, 0, 0.28);
+  --hairline: rgba(255, 255, 255, 0.08);
+  --soft-shadow: rgba(0, 0, 0, 0.4);
+  --halo: rgba(31, 31, 35, 0.85);
+  --halo-soft: rgba(31, 31, 35, 0.45);
+  --floor-hover: #2c2c34;
+  --hover-stroke: #ffffff;
+  --toast-bg: rgba(30, 30, 38, 0.92);
+  --warn-text: #fff2a8;
+  --glow-1: transparent;
+  --glow-2: transparent;
+  --glow-3: transparent;
+  --lit: #ffd98a;
+  --handle-stroke: #ffffff;
+  --swatch-ring: rgba(255, 255, 255, 0.12);
+  --swatch-active: #ffffff;
+  --done-text: #c3f75d;
+  color-scheme: dark;
+}
+
+/* Monokai. Comment grey #75715e stays a line colour; text uses lighter greys. */
+:root[data-theme="monokai"] {
+  --bg: #272822;
+  --bg-2: #1e1f1c;
+  --text: #f8f8f2;
+  --text-2: #cfcfc2;
+  --text-3: #a59f85;
+  --accent: #66d9ef;
+  --accent-2: #a6e22e;
+  --accent-strong: #66d9ef;
+  --accent-gradient: linear-gradient(135deg, #66d9ef 0%, #a6e22e 100%);
+  --danger: #f92672;
+  --warn: #e6db74;
+  --ok: #a6e22e;
+  --ansi-red: #f92672;
+  --ansi-green: #a6e22e;
+  --ansi-yellow: #e6db74;
+  --ansi-blue: #66d9ef;
+  --ansi-magenta: #ae81ff;
+  --ansi-cyan: #a1efe4;
+  --selection: #49483e;
+  --floor: #2f302a;
+  --floor-stroke: rgba(102, 217, 239, 0.55);
+  --stage: #1e1f1c;
+  --glass-bg: rgba(52, 53, 46, 0.6);
+  --glass: rgba(52, 53, 46, 0.6);
+  --halo: #272822d9;
+  --halo-soft: #27282273;
+  --floor-hover: #49483e;
+  --warn-text: #e6db74;
+  --glow-lit: #ae81ff2e;
+  --done-text: #a6e22e;
+}
+
+/* Dracula (MIT). Comment #6272a4 stays a line colour. */
+:root[data-theme="dracula"] {
+  --bg: #282a36;
+  --bg-2: #21222c;
+  --text: #f8f8f2;
+  --text-2: #c9cbd6;
+  --text-3: #9aa5ce;
+  --accent: #bd93f9;
+  --accent-2: #8be9fd;
+  --accent-strong: #bd93f9;
+  --accent-gradient: linear-gradient(135deg, #bd93f9 0%, #8be9fd 100%);
+  --danger: #ff5555;
+  --warn: #f1fa8c;
+  --ok: #50fa7b;
+  --ansi-red: #ff5555;
+  --ansi-green: #50fa7b;
+  --ansi-yellow: #f1fa8c;
+  --ansi-blue: #bd93f9;
+  --ansi-magenta: #ff79c6;
+  --ansi-cyan: #8be9fd;
+  --selection: #44475a;
+  --floor: #2f3241;
+  --floor-stroke: rgba(189, 147, 249, 0.55);
+  --stage: #21222c;
+  --glass-bg: rgba(52, 55, 70, 0.6);
+  --glass: rgba(52, 55, 70, 0.6);
+  --halo: #282a36d9;
+  --halo-soft: #282a3673;
+  --floor-hover: #44475a;
+  --warn-text: #f1fa8c;
+  --glow-lit: #ff79c62e;
+  --done-text: #50fa7b;
+}
+
+/* Nord (MIT). Polar Night backgrounds, Snow Storm text, Frost accents. */
+:root[data-theme="nord"] {
+  --bg: #2e3440;
+  --bg-2: #272c36;
+  --text: #eceff4;
+  --text-2: #d8dee9;
+  --text-3: #a3acbd;
+  --accent: #88c0d0;
+  --accent-2: #81a1c1;
+  --accent-strong: #88c0d0;
+  --accent-gradient: linear-gradient(135deg, #88c0d0 0%, #81a1c1 100%);
+  --danger: #bf616a;
+  --warn: #ebcb8b;
+  --ok: #a3be8c;
+  --ansi-red: #bf616a;
+  --ansi-green: #a3be8c;
+  --ansi-yellow: #ebcb8b;
+  --ansi-blue: #81a1c1;
+  --ansi-magenta: #b48ead;
+  --ansi-cyan: #88c0d0;
+  --selection: #434c5e;
+  --floor: #353c4a;
+  --floor-stroke: rgba(136, 192, 208, 0.55);
+  --stage: #272c36;
+  --glass-bg: rgba(59, 66, 82, 0.6);
+  --glass: rgba(59, 66, 82, 0.6);
+  --halo: #2e3440d9;
+  --halo-soft: #2e344073;
+  --floor-hover: #434c5e;
+  --warn-text: #ebcb8b;
+  --glow-lit: #b48ead2e;
+  --done-text: #a3be8c;
+}
+
+/* Graphite: the original dark look, kept as a theme. */
+:root[data-theme="graphite"] {
+  --bg: #0b0a12;
+  --bg-2: #12101c;
   --text: #ecebf5;
   --text-2: #a9a6bf;
-  --text-3: #75728c;
+  --text-3: #85829c;
   --accent: #a78bfa;
   --accent-2: #60a5fa;
   --accent-strong: #8b5cf6;
@@ -18,43 +184,91 @@
   --danger: #f87171;
   --warn: #fbbf24;
   --ok: #34d399;
-  --radius-xl: 28px;
-  --radius-l: 20px;
-  --radius-m: 14px;
-  --radius-s: 10px;
-  --shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.7), 0 0 0 1px var(--border);
+  --ansi-red: #f87171;
+  --ansi-green: #34d399;
+  --ansi-yellow: #fbbf24;
+  --ansi-blue: #60a5fa;
+  --ansi-magenta: #c084fc;
+  --ansi-cyan: #22d3ee;
+  --selection: #2a2540;
   --floor: #1a1828;
   --floor-stroke: rgba(196, 181, 253, 0.65);
   --furniture: rgba(148, 140, 190, 0.16);
   --furniture-stroke: rgba(196, 190, 230, 0.45);
-  --grid: rgba(255, 255, 255, 0.05);
-  --font: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   --glass: rgba(20, 18, 32, 0.55);
   --glass-strong: rgba(20, 18, 32, 0.75);
+  --glass-bg: rgba(20, 18, 32, 0.55);
   --stage: rgba(14, 12, 24, 0.6);
-  --panel-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025));
-  --inset: rgba(0, 0, 0, 0.3);
-  --hairline: rgba(255, 255, 255, 0.08);
-  --soft-shadow: rgba(0, 0, 0, 0.4);
   --halo: rgba(11, 10, 18, 0.85);
   --halo-soft: rgba(11, 10, 18, 0.45);
   --floor-hover: #201d33;
-  --hover-stroke: #fff;
   --toast-bg: rgba(30, 27, 46, 0.92);
   --warn-text: #fde68a;
-  --glow-1: rgba(139, 92, 246, 0.28);
-  --glow-2: rgba(59, 130, 246, 0.22);
-  --glow-3: rgba(236, 72, 153, 0.12);
-  --lit: #ffd98a;
-  --handle-stroke: #fff;
-  --swatch-ring: rgba(255, 255, 255, 0.12);
-  --swatch-active: #fff;
+  --glow-lit: rgba(139, 92, 246, 0.22);
   --done-text: #6ee7b7;
-  color-scheme: dark;
 }
 
-/* Light theme. "system" is resolved to light or dark in lib/theme.ts, so this is the only light set. */
+/* Solarized Light. Base01 and base1 are too dim for text on base3, so text uses darker greys. */
+:root[data-theme="solarized-light"] {
+  --bg: #fdf6e3;
+  --bg-2: #eee8d5;
+  --surface: rgba(7, 54, 66, 0.04);
+  --surface-2: rgba(7, 54, 66, 0.07);
+  --surface-3: rgba(7, 54, 66, 0.1);
+  --border: rgba(7, 54, 66, 0.1);
+  --border-strong: rgba(7, 54, 66, 0.18);
+  --text: #073642;
+  --text-2: #3d5057;
+  --text-3: #50646b;
+  --accent: #268bd2;
+  --accent-2: #2aa198;
+  --accent-strong: #1f6fa8;
+  --accent-gradient: linear-gradient(135deg, #1f6fa8 0%, #2aa198 100%);
+  --danger: #dc322f;
+  --warn: #b58900;
+  --ok: #859900;
+  --ansi-red: #dc322f;
+  --ansi-green: #859900;
+  --ansi-yellow: #b58900;
+  --ansi-blue: #268bd2;
+  --ansi-magenta: #d33682;
+  --ansi-cyan: #2aa198;
+  --selection: #e4dcc4;
+  --shadow: 0 14px 40px -22px rgba(7, 54, 66, 0.35), 0 0 0 1px var(--border);
+  --floor: #f3ecd6;
+  --floor-stroke: rgba(38, 139, 210, 0.6);
+  --furniture: rgba(7, 54, 66, 0.1);
+  --furniture-stroke: rgba(7, 54, 66, 0.4);
+  --grid: rgba(7, 54, 66, 0.06);
+  --glass: rgba(255, 255, 255, 0.7);
+  --glass-strong: rgba(255, 255, 255, 0.9);
+  --glass-bg: rgba(255, 255, 255, 0.62);
+  --glass-border: rgba(7, 54, 66, 0.1);
+  --glass-highlight: rgba(255, 255, 255, 0.7);
+  --glow-lit: #1f6fa826;
+  --stage: #eee8d5;
+  --panel-bg: var(--glass-bg);
+  --inset: rgba(7, 54, 66, 0.05);
+  --hairline: rgba(7, 54, 66, 0.1);
+  --soft-shadow: rgba(7, 54, 66, 0.16);
+  --halo: #fdf6e3e6;
+  --halo-soft: #fdf6e399;
+  --floor-hover: #e4dcc4;
+  --hover-stroke: var(--accent-strong);
+  --toast-bg: rgba(255, 255, 255, 0.95);
+  --warn-text: #7a5c00;
+  --glow-1: transparent;
+  --glow-2: transparent;
+  --glow-3: transparent;
+  --lit: #d97706;
+  --handle-stroke: var(--accent-strong);
+  --swatch-ring: rgba(7, 54, 66, 0.18);
+  --swatch-active: var(--text);
+  --done-text: #5f6e00;
+  color-scheme: light;
+}
+
+/* Light: the original light look, kept as a theme. */
 :root[data-theme="light"] {
   --bg: #f6f5fb;
   --bg-2: #ecebf4;
@@ -65,35 +279,47 @@
   --border-strong: rgba(20, 16, 40, 0.18);
   --text: #1d1b2b;
   --text-2: #55526b;
-  --text-3: #7d7a93;
+  --text-3: #666380;
   --accent: #7c3aed;
   --accent-2: #2563eb;
   --accent-strong: #6d28d9;
+  --accent-gradient: linear-gradient(135deg, #6d28d9 0%, #2563eb 100%);
   --danger: #dc2626;
   --warn: #b45309;
   --ok: #059669;
-  --shadow: 0 18px 50px -24px rgba(40, 30, 90, 0.35), 0 0 0 1px var(--border);
+  --ansi-red: #dc2626;
+  --ansi-green: #059669;
+  --ansi-yellow: #b45309;
+  --ansi-blue: #2563eb;
+  --ansi-magenta: #c026d3;
+  --ansi-cyan: #0891b2;
+  --selection: #e2ddf3;
+  --shadow: 0 14px 40px -22px rgba(20, 16, 40, 0.35), 0 0 0 1px var(--border);
   --floor: #ebe8f5;
   --floor-stroke: rgba(109, 40, 217, 0.6);
-  --furniture: rgba(90, 80, 140, 0.12);
-  --furniture-stroke: rgba(90, 80, 140, 0.45);
+  --furniture: rgba(20, 16, 40, 0.1);
+  --furniture-stroke: rgba(20, 16, 40, 0.4);
   --grid: rgba(20, 16, 40, 0.06);
   --glass: rgba(255, 255, 255, 0.7);
-  --glass-strong: rgba(255, 255, 255, 0.88);
-  --stage: rgba(255, 255, 255, 0.6);
-  --panel-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.65));
+  --glass-strong: rgba(255, 255, 255, 0.9);
+  --glass-bg: rgba(255, 255, 255, 0.62);
+  --glass-border: rgba(20, 16, 40, 0.1);
+  --glass-highlight: rgba(255, 255, 255, 0.7);
+  --glow-lit: #6d28d926;
+  --stage: #ecebf4;
+  --panel-bg: var(--glass-bg);
   --inset: rgba(20, 16, 40, 0.05);
   --hairline: rgba(20, 16, 40, 0.1);
-  --soft-shadow: rgba(40, 30, 90, 0.18);
-  --halo: rgba(246, 245, 251, 0.9);
-  --halo-soft: rgba(246, 245, 251, 0.6);
+  --soft-shadow: rgba(20, 16, 40, 0.16);
+  --halo: #f6f5fbe6;
+  --halo-soft: #f6f5fb99;
   --floor-hover: #e2ddf3;
   --hover-stroke: var(--accent-strong);
   --toast-bg: rgba(255, 255, 255, 0.95);
   --warn-text: #92400e;
-  --glow-1: rgba(139, 92, 246, 0.12);
-  --glow-2: rgba(59, 130, 246, 0.1);
-  --glow-3: rgba(236, 72, 153, 0.06);
+  --glow-1: transparent;
+  --glow-2: transparent;
+  --glow-3: transparent;
   --lit: #d97706;
   --handle-stroke: var(--accent-strong);
   --swatch-ring: rgba(20, 16, 40, 0.18);
@@ -101,6 +327,7 @@
   --done-text: #047857;
   color-scheme: light;
 }
+
 
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; }
