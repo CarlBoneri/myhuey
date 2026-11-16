@@ -145,6 +145,9 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
   // The rail's inner edge: dragged with the pointer (live, snapping to icons on release), or moved by keys.
   const dragRail = (event: ReactPointerEvent<HTMLDivElement>) => {
     const bar = event.currentTarget;
+    // Claim the press: left alone, the browser starts a text selection and then a native drag of a tab, and cancels the resize.
+    event.preventDefault();
+    bar.focus();
     bar.setPointerCapture(event.pointerId);
     const before = useUi.getState().tabRail;
     const startX = event.clientX;

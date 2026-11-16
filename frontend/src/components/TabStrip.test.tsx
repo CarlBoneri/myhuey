@@ -160,3 +160,18 @@ describe('TabStrip screen-reader details and the narrow-window note', () => {
     expect(document.querySelector('.tab-menu-note')).toBeNull();
   });
 });
+
+describe('TabStrip rail handle drag', () => {
+  it('claims the press, so it starts no text selection or tab drag, and then resizes the rail', () => {
+    useUi.setState({ tabPlacement: 'left' });
+    strip({ placement: 'left' });
+    const handle = screen.getByRole('separator', { name: 'Resize the tab rail' });
+    handle.setPointerCapture = vi.fn();
+    expect(fireEvent.pointerDown(handle, { pointerId: 1, clientX: 205 })).toBe(false);
+    expect(document.activeElement).toBe(handle);
+    fireEvent.pointerMove(handle, { pointerId: 1, clientX: 245 });
+    expect(useUi.getState().tabRail.width).toBe(250);
+    fireEvent.pointerUp(handle, { pointerId: 1, clientX: 245 });
+    expect(useUi.getState().tabRail).toEqual({ width: 250, collapsed: false });
+  });
+});

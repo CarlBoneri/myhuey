@@ -42,6 +42,10 @@ describe('tab rail layout', () => {
     expect(rail).toMatch(/scroll-padding:\s*calc\(var\(--rail-top-pin\) \+ 4px\) 0 calc\(var\(--rail-bottom-pin\) \+ 4px\)/);
   });
 
+  it('keeps a press on the rail handle from selecting text', () => {
+    expect(bodies('.rail-shell .splitter.rail-handle').join('\n')).toMatch(/user-select:\s*none/);
+  });
+
   it('draws a right rail with its lane on the inner side', () => {
     expect(bodies('.rail-shell.right').join('\n')).toMatch(/flex-direction:\s*row-reverse/);
   });
