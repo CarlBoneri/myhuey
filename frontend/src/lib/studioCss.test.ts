@@ -39,6 +39,12 @@ describe('studio layout', () => {
     expect(bodiesIn(block, '.studio3d .splitter.row').join('\n')).toMatch(/display:\s*none/);
   });
 
+  it('gives the 3D view most of a narrow window when the glare table is folded', () => {
+    const body = bodiesIn(narrowStudioBlock(), '.studio3d.audit-folded .pane-body.stage').join('\n');
+    expect(body).toMatch(/height:\s*\S/);
+    expect(body).not.toMatch(/height:\s*clamp\(320px, 62vh, 620px\)/);
+  });
+
   it('keeps pane bars out of text selection', () => {
     expect(bodiesIn(css, '.splitter').join('\n')).toMatch(/user-select:\s*none/);
   });

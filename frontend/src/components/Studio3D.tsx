@@ -17,6 +17,7 @@ import { clamp } from '../lib/view3d';
 import type { Placement, Room } from '../types';
 import { Room3DStage, type Selection3D, type View3D } from './Room3DStage';
 import { isMac, isResizePress } from '../lib/pointer';
+import { inspectorAfterDrag, splitAfterDrag } from '../lib/paneDrag';
 import { Panel, Segmented, Sidebar, Slider } from './ui';
 
 const SIZES_KEY = 'myhuey.studio3d';
@@ -84,14 +85,18 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
     bar.addEventListener('pointerup', stop);
     bar.addEventListener('pointercancel', stop);
   };
-  const resizeRows = (event: ReactPointerEvent<HTMLDivElement>) => dragBar(event, (move) => {
-    const rect = column.current!.getBoundingClientRect();
-    setSizes((s) => ({ ...s, split: clamp((move.clientY - rect.top) / rect.height, [0.2, 0.85]) }));
-  });
-  const resizeInspector = (event: ReactPointerEvent<HTMLDivElement>) => dragBar(event, (move) => {
-    const rect = layout.current!.getBoundingClientRect();
-    setSizes((s) => ({ ...s, inspector: clamp(rect.right - move.clientX, [280, 680]) }));
-  });
+  // Each bar remembers where the press started and how big the pane was, so it follows the pointer by distance moved.
+  const resizeRows = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const startY = event.clientY;
+    const startSplit = sizes.split;
+    const height = column.current!.getBoundingClientRect().height;
+    dragBar(event, (move) => setSizes((s) => ({ ...s, split: splitAfterDrag(startSplit, startY, move.clientY, height) })));
+  };
+  const resizeInspector = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const startX = event.clientX;
+    const startWidth = sizes.inspector;
+    dragBar(event, (move) => setSizes((s) => ({ ...s, inspector: inspectorAfterDrag(startWidth, startX, move.clientX) })));
+  };
 
   const { report, scene, posed } = glare;
   const status = new Map(report.lights.map((light) => [light.light_id, light]));
@@ -105,7 +110,7 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
   const step = room.units === 'imperial' ? CM_PER_INCH * 2 : 5;
 
   return (
-    <div className="studio3d" ref={layout} style={{ gridTemplateColumns: collapsed.inspector ? 'minmax(0, 1fr) 40px' : `minmax(0, 1fr) 10px ${sizes.inspector}px` }}>
+    <div className={`studio3d${collapsed.audit ? ' audit-folded' : ''}`} ref={layout} style={{ gridTemplateColumns: collapsed.inspector ? 'minmax(0, 1fr) 40px' : `minmax(0, 1fr) 10px ${sizes.inspector}px` }}>
       <div className="studio3d-main" ref={column}>
         <section className="pane" style={{ flex: collapsed.view ? '0 0 auto' : collapsed.audit ? '1 1 0' : `0 0 calc(${sizes.split * 100}% - 5px)` }}>
           <PaneHead label="the 3D view" collapsed={collapsed.view} onToggle={() => fold('view')} command={`room posture ${quote(room.name)} ${posture}`}>
