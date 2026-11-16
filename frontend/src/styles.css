@@ -374,7 +374,7 @@ h1, h2, h3, h4 { margin: 0; font-weight: 600; letter-spacing: -0.01em; }
 
 /* Shell */
 
-.shell { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto auto; height: 100%; position: relative; overflow: hidden; }
+.shell { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto auto; height: 100%; position: relative; overflow: hidden; --rail-w: 210px; }
 .topbar {
   position: relative; z-index: 4; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; padding: 5px 12px;
   background: var(--glass-strong); border-bottom: 1px solid var(--border);
@@ -391,7 +391,7 @@ h1, h2, h3, h4 { margin: 0; font-weight: 600; letter-spacing: -0.01em; }
 }
 .brand-chip svg { color: var(--ansi-cyan); }
 .brand-chip small { color: var(--text-3); font-size: 12px; font-weight: 400; }
-.tabs { display: flex; align-items: center; gap: 3px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.tabs { display: flex; align-items: center; gap: 3px; min-width: 0; overflow-x: auto; scrollbar-width: none; scroll-padding-inline-end: 32px; }
 .tabs::-webkit-scrollbar { display: none; }
 .tab {
   position: relative; display: inline-flex; align-items: center; flex: none; border-radius: var(--radius-s); border: 1px solid transparent;
@@ -421,35 +421,47 @@ h1, h2, h3, h4 { margin: 0; font-weight: 600; letter-spacing: -0.01em; }
 .tab-menu span[role="none"] { display: contents; }
 .tab-menu.context { min-width: 190px; }
 .tab-menu p { margin: 0; padding: 7px 9px; color: var(--text-3); font-size: 12px; }
+/* The narrow-window note wraps to the width the menu's other rows give it and adds nothing to it. */
+.tab-menu p.tab-menu-note { width: 0; min-width: 100%; white-space: normal; }
 /* Tab placement: a strip above the prompt, or a rail down one side (the menu's own position is set inline) */
 .tab-menu-group { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; padding-top: 6px; border-top: 1px solid var(--border); }
 .tab-menu-label { padding: 2px 9px 4px; color: var(--text-3); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
 .tab-menu-mark { display: inline-block; width: 13px; text-align: center; color: var(--accent); font-size: 10px; flex: none; }
 .tab-menu button.checked { color: var(--text); }
-.tabs.bottom { padding: 4px 12px; position: relative; z-index: 4; background: var(--glass-strong); border-top: 1px solid var(--border); }
+.tabs.bottom { scroll-padding-inline-end: 40px; padding: 4px 12px; position: relative; z-index: 4; background: var(--glass-strong); border-top: 1px solid var(--border); }
 .tabs.rail {
-  flex: 1; min-width: 0; flex-direction: column; align-items: stretch; gap: 3px; padding: 8px 6px;
-  overflow-x: hidden; overflow-y: auto; position: relative; z-index: 3; background: var(--glass-strong); scrollbar-width: thin;
+  flex: 1; min-width: 0; flex-direction: column; align-items: stretch; gap: 3px; padding: 0 6px;
+  overflow-x: hidden; overflow-y: auto; position: relative; z-index: 3; scrollbar-width: thin;
+  /* The pinned rows' heights: the Tabs toggle (8px of rail above it) and the "+" row (4px above, 8px of rail below). Each is opaque, so tabs scroll out of sight behind them. */
+  --rail-top-pin: 36px; --rail-bottom-pin: 36px;
+  /* A tab scrolled into view stops short of both pinned rows by a 4px gap. */
+  scroll-padding: calc(var(--rail-top-pin) + 4px) 0 calc(var(--rail-bottom-pin) + 4px);
 }
-/* The rail's one width is --rail-w, set on the shell (210px is only the fallback). The handle sits on its inner edge. */
-.rail-shell { position: relative; display: flex; flex: none; width: var(--rail-w, 210px); z-index: 3; }
-.rail-handle { position: absolute; top: 0; bottom: 0; z-index: 4; }
-.rail-handle.left { right: -5px; }
-.rail-handle.right { left: -5px; }
+/* The rail's one width is --rail-w, set on the shell (the app overrides the default declared there). It takes in the handle's lane and the border. */
+/* One opaque surface for the rail and its pinned rows: the theme's glass laid over the page's own background, so a pinned row matches the rail exactly and hides what scrolls under it. */
+.rail-shell { --rail-bg: linear-gradient(var(--glass-strong), var(--glass-strong)), var(--bg); position: relative; display: flex; flex: none; width: var(--rail-w); z-index: 3; background: var(--rail-bg); }
+.rail-shell.left { border-right: 1px solid var(--border); }
+/* The lane sits on the rail's inner edge: after the tabs in the markup for a left rail, drawn before them for a right rail. */
+.rail-shell.right { flex-direction: row-reverse; border-left: 1px solid var(--border); }
+/* Spelled with .splitter so it outranks the generic bar's size, which is declared further down. */
+/* No user-select: a press on the handle must not start a text selection, which the browser turns into a native drag of a tab. */
+.rail-shell .splitter.rail-handle { flex: 0 0 7px; width: 7px; user-select: none; -webkit-user-select: none; }
+.rail-shell .splitter.rail-handle span { width: 3px; }
 .rail-handle:focus-visible { outline: none; }
 .rail-handle:focus-visible span { background: var(--accent); }
 .rail-toggle {
-  position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 8px; flex: none; padding: 5px 8px; border: 0; border-radius: var(--radius-s);
-  background: transparent; color: var(--text-3); font: inherit; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer;
+  position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 8px; flex: none; height: var(--rail-top-pin); padding: 8px 8px 0; border: 0; border-radius: 0;
+  background: var(--rail-bg); color: var(--text-3); font: inherit; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer;
 }
-.rail-toggle:hover { background: var(--surface); color: var(--text); }
-.tabs.rail.collapsed { padding: 8px 4px; }
-.tabs.rail.collapsed .rail-toggle { justify-content: center; padding: 5px 0; }
+.rail-toggle:hover { color: var(--text); }
+/* The hover highlight is its own rounded layer, under the label, so the opaque plane behind it stays square. */
+.rail-toggle::before { content: ""; position: absolute; inset: 8px 0 0; z-index: -1; border-radius: var(--radius-s); }
+.rail-toggle:hover::before { background: var(--surface); }
+.tabs.rail.collapsed { padding: 0 4px; }
+.tabs.rail.collapsed .rail-toggle { justify-content: center; padding: 8px 0 0; }
 .tabs.rail.collapsed .tab a { justify-content: center; padding: 7px 0; }
 .tabs.rail.collapsed .tab a span { display: none; }
 .tabs.rail::-webkit-scrollbar { display: block; width: 8px; }
-.tabs.rail.left { border-right: 1px solid var(--border); }
-.tabs.rail.right { border-left: 1px solid var(--border); }
 .rail .tab { display: flex; flex: none; min-width: 0; }
 .rail .tab a { flex: 1; min-width: 0; padding: 7px 4px 7px 10px; }
 .rail .tab a span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
@@ -457,9 +469,9 @@ h1, h2, h3, h4 { margin: 0; font-weight: 600; letter-spacing: -0.01em; }
 .rail.right .tab.active { box-shadow: inset -2px 0 0 var(--accent); }
 .rail .tab.drop-before::before { left: 6px; right: 6px; top: -3px; bottom: auto; width: auto; height: 2px; }
 .rail .tab-drop-end { align-self: auto; width: auto; height: 2px; margin: 0 6px; }
-.rail .tab-add { position: sticky; right: auto; bottom: 0; margin: 2px 0 0; padding-top: 2px; }
+.rail .tab-add { position: sticky; right: auto; bottom: 0; z-index: 1; margin: 0; height: var(--rail-bottom-pin); padding: 4px 0 8px; background: var(--rail-bg); }
 .shell.tabs-bottom .toasts { bottom: 140px; }
-.shell.tabs-right .toasts { right: calc(var(--rail-w, 210px) + 20px); }
+.shell.tabs-right .toasts { right: calc(var(--rail-w) + 20px); }
 .bridge-pill {
   display: inline-flex; align-items: center; gap: 7px; padding: 5px 10px; border-radius: var(--radius-s); text-decoration: none; white-space: nowrap;
   background: var(--inset); box-shadow: inset 0 0 0 1px var(--border); color: var(--danger-text); font-size: 12px;
@@ -1266,7 +1278,7 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .workflows .button { justify-content: center; }
 @media (max-width: 980px) {
   .workflows { position: absolute; right: 0; top: 0; bottom: 0; z-index: 5; box-shadow: var(--shadow); }
-  .shell.tabs-right .workflows { right: var(--rail-w, 210px); }
+  .shell.tabs-right .workflows { right: var(--rail-w); }
   .prompt-path { display: none; }
 }
 

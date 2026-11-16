@@ -30,6 +30,30 @@ export const normalizePlacement = (value: unknown): TabPlacement =>
 /** Rails run down the side; their tabs stack, so they move along the vertical axis. */
 export const isVertical = (placement: TabPlacement): boolean => placement === 'left' || placement === 'right';
 
+export const PLACE_LABELS: Record<TabPlacement, string> = { top: 'Top', bottom: 'Bottom', left: 'Left', right: 'Right' };
+
+/** Below this width a rail has no room beside the content, so it is drawn in the top bar instead. */
+export const NARROW_QUERY = '(max-width: 719.98px)';
+export const isNarrowWindow = (): boolean => typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia(NARROW_QUERY).matches;
+
+/** The one sentence that says a saved side rail is drawn at the top for now; null when the tabs are where they were saved. */
+export function narrowRailNote(saved: TabPlacement, narrow: boolean): string | null {
+  if (!narrow || !isVertical(saved)) return null;
+  return `This window is too narrow for a side rail, so the tabs are at the top for now. ${PLACE_LABELS[saved]} is saved and applies when the window is wider.`;
+}
+
+/** The reply to `tabs <place>`: the placement, and the narrow-window note when a saved side rail is drawn at the top. */
+export function tabsPlaceReply(placement: TabPlacement, narrow: boolean): string {
+  const note = narrowRailNote(placement, narrow);
+  return note ? `Tabs: ${placement}. ${note}` : `Tabs: ${placement}`;
+}
+
+/** The reply to a tab-rail command: what the rail is now, and, when it is not showing, the true reason why. */
+export function tabsRailReply(said: string, placement: TabPlacement, narrow: boolean): string {
+  if (!isVertical(placement)) return `${said}, saved. It applies when the tabs are on the left or right.`;
+  return narrow ? `${said}, saved. ${narrowRailNote(placement, narrow)}` : said;
+}
+
 export const openTabs = (state: TabState): TabId[] => state.order.filter((id) => !state.closed.includes(id));
 
 /** Move a tab to sit just before another, or to the end when `before` is null. */
@@ -108,9 +132,23 @@ export function settleRail(dragged: number, before: TabRail): TabRail {
   return dragged < RAIL_SNAP ? { width: before.width, collapsed: true } : { width: clampRail(dragged), collapsed: false };
 }
 
+/** The rail's width while its handle is dragged: the width it had, plus how far the pointer has moved toward the page. */
+export function dragWidth(startWidth: number, startX: number, x: number, side: 'left' | 'right'): number {
+  return side === 'left' ? startWidth + (x - startX) : startWidth - (x - startX);
+}
+
 /** After the tab menu closes: back where focus was, else the active tab, any tab, or the rail toggle. */
 export function focusAfterClose(has: { restore: boolean; active: boolean; any: boolean; toggle: boolean }): 'restore' | 'active' | 'any' | 'toggle' | 'none' {
   return has.restore ? 'restore' : has.active ? 'active' : has.any ? 'any' : has.toggle ? 'toggle' : 'none';
+}
+
+/** How long a focus claim waits for the tab that is about to become active before it gives up. */
+export const REFOCUS_WINDOW = 1500;
+/** Closing the active tab opens its neighbour, but the app only learns that on a later `hashchange`: wait for it, so focus lands on the tab that became active. */
+export function refocusReady(claim: { waitFor: TabId | null; at: number }, has: { restore: boolean }, activeTab: TabId, now: number): 'now' | 'wait' | 'drop' {
+  // A claim that waited too long is dropped even if its tab is active by now, or focus would be pulled there later.
+  if (claim.waitFor !== null && now - claim.at > REFOCUS_WINDOW) return 'drop';
+  return claim.waitFor === null || has.restore || activeTab === claim.waitFor ? 'now' : 'wait';
 }
 
 /** How long after a menu key goes down a `contextmenu` event still counts as coming from it. */

@@ -5,14 +5,14 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
 import { PanelLeftClose, PanelLeftOpen, Plus, RotateCcw, X, type LucideIcon } from 'lucide-react';
 import { href, go, type Route } from '../lib/router';
-import { DEFAULT_TABS, contextOrigin, focusAfterClose, RAIL_DEFAULT, RAIL_MAX, RAIL_MIN, RAIL_STEP, clampRail, closeTab, isVertical, moveTab, neighbour, reopenTab, settleRail, shiftTab, tabMenuItems, type TabId, type TabMenuItem, type TabPlacement, type TabState } from '../lib/tabs';
+import { DEFAULT_TABS, contextOrigin, dragWidth, focusAfterClose, refocusReady, RAIL_DEFAULT, RAIL_MAX, RAIL_MIN, RAIL_STEP, clampRail, closeTab, isVertical, moveTab, narrowRailNote, neighbour, reopenTab, settleRail, shiftTab, tabMenuItems, type TabId, type TabMenuItem, type TabPlacement, type TabState } from '../lib/tabs';
 import { useUi } from '../uiStore';
 import { TabContextMenu } from './TabContextMenu';
 
 export interface Tab { id: TabId; label: string; icon: LucideIcon; route: Route }
 const TAB_DRAG = 'application/x-myhuey-tab';
-/** Set when the tab menu closes by choice; the next render of any strip (a placement change builds a new one) takes it and moves focus. */
-let refocusAfterMenu: { restore: HTMLElement | null } | null = null;
+/** Set when the tab menu closes by choice; a render of any strip (a placement change builds a new one) takes it and moves focus. `waitFor` is the tab a close is about to make active: the claim stays until that tab is active (or `at` is too old). */
+let refocusAfterMenu: { restore: HTMLElement | null; waitFor: TabId | null; at: number } | null = null;
 
 interface Props {
   /** Where the strip is drawn right now (a rail falls back to top in a narrow window). */
@@ -39,7 +39,6 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
   const [dropAt, setDropAt] = useState<TabId | 'end' | null>(null);
   const dragging = useRef<TabId | null>(null);
   const nav = useRef<HTMLElement>(null);
-  const shell = useRef<HTMLDivElement>(null);
   const contextRef = useRef<Context | null>(null);
   contextRef.current = context;
   // A menu key that went down on a tab, so the `contextmenu` event that follows is known to be the keyboard's.
@@ -63,10 +62,15 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
   }, [activeTab, placement, collapsed, tabs.length]);
 
   // After the menu closes (and what it chose has been drawn, even in a strip that was rebuilt elsewhere), put focus back.
+  // No dependency list, so it runs after every render: a close that opens the neighbour is drawn twice, and the claim waits for the second.
   useEffect(() => {
     if (!refocusAfterMenu) return;
-    const { restore } = refocusAfterMenu;
+    const claim = refocusAfterMenu;
+    const { restore } = claim;
+    const ready = refocusReady(claim, { restore: !!restore?.isConnected }, activeTab, Date.now());
+    if (ready === 'wait') return;
     refocusAfterMenu = null;
+    if (ready === 'drop') return;
     const area = nav.current;
     const active = area?.querySelector<HTMLElement>('.tab.active a') ?? null;
     const any = area?.querySelector<HTMLElement>('.tab a') ?? null;
@@ -113,14 +117,24 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
     setContext({ x, y, tab, restore: active instanceof HTMLElement && active !== document.body ? active : null });
   };
   const shutContext = useCallback((restoreFocus: boolean) => {
-    if (restoreFocus) refocusAfterMenu = { restore: contextRef.current?.restore ?? null };
+    if (restoreFocus) refocusAfterMenu = { restore: contextRef.current?.restore ?? null, waitFor: null, at: Date.now() };
     setContext(null);
   }, []);
   const choose = (item: TabMenuItem) => {
     const tab = context?.tab ?? null;
     shutContext(true);
     switch (item.kind) {
-      case 'close': if (tab) close(tab); break;
+      case 'close':
+        if (tab) {
+          // Closing the active tab opens its neighbour; focus waits for that tab, and cannot go back to the tab being closed.
+          const to = tab === activeTab && closeTab(state, tab) !== state ? neighbour(state, tab, available) : null;
+          if (to && byId.get(to) && refocusAfterMenu) {
+            refocusAfterMenu.waitFor = to;
+            if (refocusAfterMenu.restore?.closest(`[data-tab="${tab}"]`)) refocusAfterMenu.restore = null;
+          }
+          close(tab);
+        }
+        break;
       case 'place': setTabPlacement(item.placement); break;
       case 'rail-fold': setTabRail({ ...tabRail, collapsed: !item.collapsed }); break;
       case 'rail-reset': setTabRail({ width: RAIL_DEFAULT, collapsed: tabRail.collapsed }); break;
@@ -131,12 +145,15 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
   // The rail's inner edge: dragged with the pointer (live, snapping to icons on release), or moved by keys.
   const dragRail = (event: ReactPointerEvent<HTMLDivElement>) => {
     const bar = event.currentTarget;
+    // Claim the press: left alone, the browser starts a text selection and then a native drag of a tab, and cancels the resize.
+    event.preventDefault();
+    bar.focus();
     bar.setPointerCapture(event.pointerId);
     const before = useUi.getState().tabRail;
+    const startX = event.clientX;
     let raw = before.width;
     const apply = (move: PointerEvent) => {
-      const rect = shell.current!.getBoundingClientRect();
-      raw = placement === 'left' ? move.clientX - rect.left : rect.right - move.clientX;
+      raw = dragWidth(before.width, startX, move.clientX, placement === 'left' ? 'left' : 'right');
       setTabRail({ width: clampRail(raw), collapsed: false });
     };
     const stop = () => {
@@ -160,7 +177,7 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
   };
 
   const strip = (
-    <nav ref={nav} className={`tabs ${placement}${vertical ? ' rail' : ''}${collapsed ? ' collapsed' : ''}`} aria-label="Main" aria-orientation={vertical ? 'vertical' : 'horizontal'}
+    <nav ref={nav} className={`tabs ${placement}${vertical ? ' rail' : ''}${collapsed ? ' collapsed' : ''}`} aria-label="Main"
       onPointerDown={() => { if (menuKey.current) { window.clearTimeout(menuKey.current.timer); menuKey.current = null; } }}
       onContextMenu={(event) => {
         event.preventDefault();
@@ -180,7 +197,7 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
       onDrop={(event) => { event.preventDefault(); dropOn(null); }}>
       {vertical && (
         <button type="button" className={`rail-toggle ${placement}`} aria-expanded={!collapsed}
-          aria-label={collapsed ? 'Expand the tab rail' : 'Collapse the tab rail'} title={collapsed ? 'Expand the tab rail' : 'Collapse the tab rail to icons'}
+          aria-label="Tabs" title={collapsed ? 'Expand the tab rail' : 'Collapse the tab rail to icons'}
           onClick={() => setTabRail({ ...tabRail, collapsed: !collapsed })}>
           {collapsed ? <PanelLeftOpen size={14} aria-hidden="true" /> : <PanelLeftClose size={14} aria-hidden="true" />}
           {!collapsed && <span>Tabs</span>}
@@ -259,7 +276,7 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
         )}
       </span>
       {context && (
-        <TabContextMenu at={{ x: context.x, y: context.y }} onClose={shutContext} onChoose={choose}
+        <TabContextMenu at={{ x: context.x, y: context.y }} note={narrowRailNote(tabPlacement, isVertical(tabPlacement) && !vertical)} onClose={shutContext} onChoose={choose}
           items={tabMenuItems({ closable: context.tab !== null && tabs.length > 1, tabPlacement, drawnAsRail: vertical, rail: tabRail })} />
       )}
     </nav>
@@ -267,7 +284,7 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
 
   if (!vertical) return strip;
   return (
-    <div ref={shell} className={`rail-shell ${placement}${collapsed ? ' collapsed' : ''}`}>
+    <div className={`rail-shell ${placement}${collapsed ? ' collapsed' : ''}`}>
       {strip}
       {!collapsed && (
         <div className={`splitter col rail-handle ${placement}`} role="separator" aria-orientation="vertical" aria-label="Resize the tab rail" tabIndex={0}

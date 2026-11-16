@@ -10,7 +10,7 @@ import { lightsToDim, roomGlare } from './roomGlare';
 import { STANDING_DESK_CM } from './rig';
 import { EYE_SEATED, EYE_STANDING } from './photo';
 import { THEMES } from './theme';
-import { DEFAULT_TABS } from './tabs';
+import { DEFAULT_TABS, isNarrowWindow, tabsPlaceReply, tabsRailReply } from './tabs';
 import { formatLength } from './units';
 
 export function snapshot(): Snapshot {
@@ -110,14 +110,13 @@ async function execute(intent: Intent): Promise<Outcome> {
     case 'tabs-rail': {
       ui.setTabRail({ ...ui.tabRail, ...(intent.collapsed !== undefined ? { collapsed: intent.collapsed } : {}), ...(intent.width !== undefined ? { width: intent.width } : {}) });
       const rail = useUi.getState().tabRail;
-      const narrow = typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 719.98px)').matches;
-      const inRail = (ui.tabPlacement === 'left' || ui.tabPlacement === 'right') && !narrow;
       const said = `Tab rail: ${rail.collapsed ? 'icons only' : `${rail.width} px wide`}`;
-      return { output: inRail ? said : `${said}, saved. It applies when the tabs are on the left or right.`, ok: true };
+      return { output: tabsRailReply(said, ui.tabPlacement, isNarrowWindow()), ok: true };
     }
-    case 'tabs-place':
+    case 'tabs-place': {
       ui.setTabPlacement(intent.placement);
-      return { output: `Tabs: ${intent.placement}`, ok: true };
+      return { output: tabsPlaceReply(intent.placement, isNarrowWindow()), ok: true };
+    }
     case 'scenes': {
       const list = store.scenes.filter((scene) => !intent.room || scene.room.toLowerCase() === intent.room.toLowerCase());
       return { output: list.map((scene) => `${scene.name} [${scene.room}] ${scene.id}`).join(' · ') || 'No scenes yet', ok: true };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { contextOrigin, focusAfterClose, RAIL_DEFAULT, RAIL_MAX, RAIL_MIN, RAIL_SNAP, tabMenuItems, clampRail, normalizeRail, settleRail, ALL_TABS, DEFAULT_TABS, TAB_PLACEMENTS, closeTab, isVertical, normalizePlacement, moveTab, neighbour, normalizeTabs, openTabs, reopenTab, shiftTab, tabForRoute, type TabState } from './tabs';
+import { contextOrigin, dragWidth, tabsPlaceReply, tabsRailReply, isNarrowWindow, narrowRailNote, focusAfterClose, refocusReady, REFOCUS_WINDOW, type TabId, RAIL_DEFAULT, RAIL_MAX, RAIL_MIN, RAIL_SNAP, tabMenuItems, clampRail, normalizeRail, settleRail, ALL_TABS, DEFAULT_TABS, TAB_PLACEMENTS, closeTab, isVertical, normalizePlacement, moveTab, neighbour, normalizeTabs, openTabs, reopenTab, shiftTab, tabForRoute, type TabState } from './tabs';
 
 const state = (order: string, closed = ''): TabState => normalizeTabs({ order: order.split(' ').filter(Boolean), closed: closed.split(' ').filter(Boolean) });
 
@@ -144,5 +144,79 @@ describe('the right-click menu on the tabs', () => {
     expect(items.find((item) => item.kind === 'rail-fold')).toEqual({ kind: 'rail-fold', collapsed: true });
     // saved as left in a narrow window: drawn at the top, so no rail items
     expect(kinds(tabMenuItems({ closable: false, tabPlacement: 'left', drawnAsRail: false, rail }))).not.toContain('rail-fold');
+  });
+});
+
+describe('refocusReady', () => {
+  const claim = { waitFor: 'scenes' as TabId, at: 1000 };
+  it('places focus now when nothing is awaited', () => {
+    expect(refocusReady({ waitFor: null, at: 1000 }, { restore: false }, 'home', 1001)).toBe('now');
+  });
+  it('places focus now when what had focus before can take it back', () => {
+    expect(refocusReady(claim, { restore: true }, 'home', 1001)).toBe('now');
+  });
+  it('waits while the awaited tab is not yet the active one', () => {
+    expect(refocusReady(claim, { restore: false }, 'home', 1001)).toBe('wait');
+  });
+  it('places focus once the awaited tab is active', () => {
+    expect(refocusReady(claim, { restore: false }, 'scenes', 1200)).toBe('now');
+  });
+  it('gives up on an expired claim even if the awaited tab is active by then', () => {
+    expect(refocusReady(claim, { restore: false }, 'scenes', 1000 + REFOCUS_WINDOW + 1)).toBe('drop');
+  });
+  it('gives up when the awaited tab has not arrived within the window', () => {
+    expect(refocusReady(claim, { restore: false }, 'home', 1000 + REFOCUS_WINDOW + 1)).toBe('drop');
+  });
+});
+
+describe('narrowRailNote', () => {
+  it('says the saved side still applies when a rail is drawn at the top', () => {
+    expect(narrowRailNote('left', true)).toBe('This window is too narrow for a side rail, so the tabs are at the top for now. Left is saved and applies when the window is wider.');
+    expect(narrowRailNote('right', true)).toBe('This window is too narrow for a side rail, so the tabs are at the top for now. Right is saved and applies when the window is wider.');
+  });
+  it('says nothing in a wide window', () => {
+    for (const place of TAB_PLACEMENTS) expect(narrowRailNote(place, false)).toBeNull();
+  });
+  it('says nothing for top or bottom tabs, however narrow', () => {
+    expect(narrowRailNote('top', true)).toBeNull();
+    expect(narrowRailNote('bottom', true)).toBeNull();
+  });
+});
+it('isNarrowWindow is false in Node, where there is no window', () => { expect(isNarrowWindow()).toBe(false); });
+
+describe('dragWidth', () => {
+  it('adds the pointer travel to a left rail and takes it from a right rail', () => {
+    expect(dragWidth(210, 205, 245, 'left')).toBe(250);
+    expect(dragWidth(210, 894, 854, 'right')).toBe(250);
+  });
+  it('is the starting width when the pointer has not moved', () => {
+    expect(dragWidth(210, 205, 205, 'left')).toBe(210);
+    expect(dragWidth(210, 894, 894, 'right')).toBe(210);
+  });
+  it('is not clamped, so a drag toward the edge goes below the fold point', () => {
+    expect(dragWidth(210, 205, 85, 'left')).toBe(90);
+    expect(dragWidth(210, 205, 85, 'left')).toBeLessThan(RAIL_SNAP);
+  });
+});
+
+describe('tabsPlaceReply', () => {
+  it('names the placement, and adds the narrow-window note for a saved side rail', () => {
+    expect(tabsPlaceReply('left', true)).toBe('Tabs: left. This window is too narrow for a side rail, so the tabs are at the top for now. Left is saved and applies when the window is wider.');
+    expect(tabsPlaceReply('left', false)).toBe('Tabs: left');
+    expect(tabsPlaceReply('bottom', true)).toBe('Tabs: bottom');
+  });
+});
+
+describe('tabsRailReply', () => {
+  const said = 'Tab rail: 300 px wide';
+  it('says nothing more when the rail is showing', () => {
+    expect(tabsRailReply(said, 'left', false)).toBe(said);
+  });
+  it('blames the narrow window, not the placement, when a side is saved', () => {
+    expect(tabsRailReply(said, 'right', true)).toBe(`${said}, saved. ${narrowRailNote('right', true)}`);
+  });
+  it('says it applies on the left or right when the tabs are on top or bottom', () => {
+    expect(tabsRailReply(said, 'top', false)).toBe(`${said}, saved. It applies when the tabs are on the left or right.`);
+    expect(tabsRailReply(said, 'bottom', true)).toBe(`${said}, saved. It applies when the tabs are on the left or right.`);
   });
 });
