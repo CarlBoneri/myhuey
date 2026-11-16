@@ -109,6 +109,18 @@ describe('TabStrip menu keys', () => {
   };
   it('opens one menu from Shift+F10 whether or not the browser follows with a contextmenu event', () => one('F10', true));
   it('opens one menu from the Menu key', () => one('ContextMenu', false));
+  it('gives focus back to the tab it was opened from after Escape, and after Tab', () => {
+    vi.useFakeTimers();
+    strip();
+    for (const key of ['Escape', 'Tab']) {
+      link('Home').focus();
+      press('F10', true, true);
+      const menu = screen.getByRole('menu', { name: 'Tabs' });
+      fireEvent.keyDown(menu, { key });
+      expect(screen.queryByRole('menu', { name: 'Tabs' })).toBeNull();
+      expect(document.activeElement).toBe(link('Home'));
+    }
+  });
 });
 
 describe('TabStrip screen-reader details and the narrow-window note', () => {

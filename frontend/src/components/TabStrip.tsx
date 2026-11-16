@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
 import { PanelLeftClose, PanelLeftOpen, Plus, RotateCcw, X, type LucideIcon } from 'lucide-react';
 import { href, go, type Route } from '../lib/router';
-import { DEFAULT_TABS, contextOrigin, focusAfterClose, refocusReady, RAIL_DEFAULT, RAIL_MAX, RAIL_MIN, RAIL_STEP, clampRail, closeTab, isVertical, moveTab, narrowRailNote, neighbour, reopenTab, settleRail, shiftTab, tabMenuItems, type TabId, type TabMenuItem, type TabPlacement, type TabState } from '../lib/tabs';
+import { DEFAULT_TABS, contextOrigin, dragWidth, focusAfterClose, refocusReady, RAIL_DEFAULT, RAIL_MAX, RAIL_MIN, RAIL_STEP, clampRail, closeTab, isVertical, moveTab, narrowRailNote, neighbour, reopenTab, settleRail, shiftTab, tabMenuItems, type TabId, type TabMenuItem, type TabPlacement, type TabState } from '../lib/tabs';
 import { useUi } from '../uiStore';
 import { TabContextMenu } from './TabContextMenu';
 
@@ -39,7 +39,6 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
   const [dropAt, setDropAt] = useState<TabId | 'end' | null>(null);
   const dragging = useRef<TabId | null>(null);
   const nav = useRef<HTMLElement>(null);
-  const shell = useRef<HTMLDivElement>(null);
   const contextRef = useRef<Context | null>(null);
   contextRef.current = context;
   // A menu key that went down on a tab, so the `contextmenu` event that follows is known to be the keyboard's.
@@ -148,10 +147,10 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
     const bar = event.currentTarget;
     bar.setPointerCapture(event.pointerId);
     const before = useUi.getState().tabRail;
+    const startX = event.clientX;
     let raw = before.width;
     const apply = (move: PointerEvent) => {
-      const rect = shell.current!.getBoundingClientRect();
-      raw = placement === 'left' ? move.clientX - rect.left : rect.right - move.clientX;
+      raw = dragWidth(before.width, startX, move.clientX, placement === 'left' ? 'left' : 'right');
       setTabRail({ width: clampRail(raw), collapsed: false });
     };
     const stop = () => {
@@ -282,7 +281,7 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
 
   if (!vertical) return strip;
   return (
-    <div ref={shell} className={`rail-shell ${placement}${collapsed ? ' collapsed' : ''}`}>
+    <div className={`rail-shell ${placement}${collapsed ? ' collapsed' : ''}`}>
       {strip}
       {!collapsed && (
         <div className={`splitter col rail-handle ${placement}`} role="separator" aria-orientation="vertical" aria-label="Resize the tab rail" tabIndex={0}

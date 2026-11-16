@@ -6,7 +6,7 @@ import { Field, HueIcon, Panel, Segmented, TextInput, Toggle } from '../componen
 import type { Preferences } from '../types';
 import { THEMES, themeGroups, type Theme, type ThemeId } from '../lib/theme';
 import { useUi } from '../uiStore';
-import { TAB_PLACEMENTS, narrowRailNote, type TabPlacement } from '../lib/tabs';
+import { PLACE_LABELS, TAB_PLACEMENTS, narrowRailNote, type TabPlacement } from '../lib/tabs';
 import { useNarrow } from '../lib/useNarrow';
 import { MCP_CONFIG } from '../lib/helpDocs';
 import { quarterHours, scheduleWarning } from '../lib/suggest';
@@ -170,7 +170,7 @@ function PreferencesPanel() {
       )}
       <PreferenceRow label="Tab position" hint={`Where the window tabs sit: in the top bar, above the prompt, or in a rail down the left or right.${railNote ? ` ${railNote}` : ''}`}>
         <Segmented<TabPlacement> label="Tab position" value={tabPlacement} onChange={setTabPlacement}
-          options={TAB_PLACEMENTS.map((place) => ({ value: place, label: place[0].toUpperCase() + place.slice(1) }))} />
+          options={TAB_PLACEMENTS.map((place) => ({ value: place, label: PLACE_LABELS[place] }))} />
       </PreferenceRow>
       <PreferenceRow label="Reduce transparency" hint="Solid panels instead of frosted glass, and no glow. Auto follows your computer's setting.">
         {choice('reduce_transparency', ['auto', 'on', 'off'], (v) => ({ auto: 'Auto', on: 'On', off: 'Off' })[v])}

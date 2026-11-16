@@ -42,6 +42,18 @@ export function narrowRailNote(saved: TabPlacement, narrow: boolean): string | n
   return `This window is too narrow for a side rail, so the tabs are at the top for now. ${PLACE_LABELS[saved]} is saved and applies when the window is wider.`;
 }
 
+/** The reply to `tabs <place>`: the placement, and the narrow-window note when a saved side rail is drawn at the top. */
+export function tabsPlaceReply(placement: TabPlacement, narrow: boolean): string {
+  const note = narrowRailNote(placement, narrow);
+  return note ? `Tabs: ${placement}. ${note}` : `Tabs: ${placement}`;
+}
+
+/** The reply to a tab-rail command: what the rail is now, and, when it is not showing, the true reason why. */
+export function tabsRailReply(said: string, placement: TabPlacement, narrow: boolean): string {
+  if (!isVertical(placement)) return `${said}, saved. It applies when the tabs are on the left or right.`;
+  return narrow ? `${said}, saved. ${narrowRailNote(placement, narrow)}` : said;
+}
+
 export const openTabs = (state: TabState): TabId[] => state.order.filter((id) => !state.closed.includes(id));
 
 /** Move a tab to sit just before another, or to the end when `before` is null. */
@@ -118,6 +130,11 @@ export function normalizeRail(saved: unknown): TabRail {
 /** Where a drag of the rail's edge ends: too narrow folds it (and keeps the width it had), otherwise it opens at the clamped width. */
 export function settleRail(dragged: number, before: TabRail): TabRail {
   return dragged < RAIL_SNAP ? { width: before.width, collapsed: true } : { width: clampRail(dragged), collapsed: false };
+}
+
+/** The rail's width while its handle is dragged: the width it had, plus how far the pointer has moved toward the page. */
+export function dragWidth(startWidth: number, startX: number, x: number, side: 'left' | 'right'): number {
+  return side === 'left' ? startWidth + (x - startX) : startWidth - (x - startX);
 }
 
 /** After the tab menu closes: back where focus was, else the active tab, any tab, or the rail toggle. */
