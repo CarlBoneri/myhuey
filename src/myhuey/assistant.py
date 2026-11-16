@@ -314,23 +314,12 @@ WRITES_LAYOUT = ("add_room", "update_room", "remove_room", "set_openings", "set_
 _NEEDS_SANDBOX = "Layouts are built in a sandbox, never in the active home. Call create_sandbox first, then pass its id as layout."
 
 
-class _Sandbox(str):
-    """A sandbox's ID, which can check it is still not the active layout."""
-
-    def __new__(cls, service: HueRoomService, layout_id: str) -> _Sandbox:
-        box = super().__new__(cls, layout_id)
-        box.service = service
-        return box
-
-    def still_a_sandbox(self) -> None:
-        """Called right before each write: a sandbox made active since the guard is refused."""
-        if self.service.sandbox_id(str(self)) is None:
-            raise Refused(_NEEDS_SANDBOX)
-
-
 @contextmanager
-def sandbox(service: HueRoomService, layout: str | None) -> Iterator[_Sandbox]:
-    """Like in_layout, but only for a sandbox: a missing, unknown, or active layout is refused."""
+def sandbox(service: HueRoomService, layout: str | None) -> Iterator[str]:
+    """Like in_layout, but only for a sandbox: a missing, unknown, or active layout is refused.
+
+    Inside, the service runs strict: if the sandbox is made active before a load or save, that raises
+    LayoutChanged instead of quietly reading or writing the active home."""
     if not layout or not str(layout).strip():
         raise Refused(_NEEDS_SANDBOX)
     try:
@@ -339,9 +328,8 @@ def sandbox(service: HueRoomService, layout: str | None) -> Iterator[_Sandbox]:
         raise Refused(f'There is no layout "{layout}". {_NEEDS_SANDBOX}') from None
     if layout_id is None:
         raise Refused(_NEEDS_SANDBOX)
-    box = _Sandbox(service, layout_id)
-    with using_layout(layout_id):
-        yield box
+    with using_layout(layout_id, strict=True):
+        yield layout_id
 
 
 def _plan_cm(value: float | int | str, what: str) -> float:
@@ -384,7 +372,7 @@ def add_room(
     ceiling: float | int | str | None = None, units: str | None = None,
 ) -> dict[str, Any]:
     """Add a room to a sandbox: a width by depth rectangle, or an outline of [x, y] corners in cm."""
-    with sandbox(service, layout) as box:
+    with sandbox(service, layout) as layout_id:
         sizes: dict[str, Any] = {}
         if width is not None:
             sizes["width"] = cm(width, "width")
@@ -393,10 +381,13 @@ def add_room(
         height = cm(ceiling, "ceiling") if ceiling is not None else None
         if units is not None and units not in UNIT_SYSTEMS:
             raise ValueError(f"units must be one of {', '.join(UNIT_SYSTEMS)}.")
-        box.still_a_sandbox()
         created = service.add_room(name, outline=outline, **sizes)
         if height is not None or units is not None:
-            service.update_room(created.name, ceiling=height, units=units)
+            try:
+                service.update_room(created.name, ceiling=height, units=units)
+            except Exception:
+                service.remove_room(created.name)  # one call, one outcome: no half-made room
+                raise
         return _room_dict(service, created.name)
 
 
@@ -406,7 +397,7 @@ def update_room(
     ceiling: float | int | str | None = None,
 ) -> dict[str, Any]:
     """Resize a room (the outline stretches to width by depth), replace its outline, or set its ceiling."""
-    with sandbox(service, layout) as box:
+    with sandbox(service, layout) as layout_id:
         name = _room_name(service, room)
         changes: dict[str, Any] = {}
         if width is not None:
@@ -415,22 +406,20 @@ def update_room(
             changes["height"] = cm(depth, "depth")
         if ceiling is not None:
             changes["ceiling"] = cm(ceiling, "ceiling")
-        box.still_a_sandbox()
         service.update_room(name, outline=outline, **changes)
         return _room_dict(service, name)
 
 
 def remove_room(service: HueRoomService, layout: str | None, room: str) -> dict[str, Any]:
-    with sandbox(service, layout) as box:
+    with sandbox(service, layout) as layout_id:
         name = _room_name(service, room)
-        box.still_a_sandbox()
         service.remove_room(name)
         return {"removed": name}
 
 
 def set_openings(service: HueRoomService, layout: str | None, room: str, openings: list[dict]) -> dict[str, Any]:
     """Replace a room's doors and windows. `wall` counts the outline's edges from 0."""
-    with sandbox(service, layout) as box:
+    with sandbox(service, layout) as layout_id:
         name = _room_name(service, room)
         if not isinstance(openings, list):
             raise ValueError("openings must be a list of {kind, wall, offset, width} objects.")
@@ -444,14 +433,13 @@ def set_openings(service: HueRoomService, layout: str | None, room: str, opening
                 if item.get(key) is not None:
                     data[key] = _plan_cm(item[key], key)
             built.append(data)
-        box.still_a_sandbox()
         service.update_room(name, openings=built)
         return _room_dict(service, name)
 
 
 def set_furniture(service: HueRoomService, layout: str | None, room: str, furniture: list[dict]) -> dict[str, Any]:
     """Replace a room's furniture. Missing width, depth, shape, and label come from the catalog's size for the kind."""
-    with sandbox(service, layout) as box:
+    with sandbox(service, layout) as layout_id:
         name = _room_name(service, room)
         if not isinstance(furniture, list):
             raise ValueError("furniture must be a list of {kind, x, y} objects.")
@@ -472,7 +460,6 @@ def set_furniture(service: HueRoomService, layout: str | None, room: str, furnit
             if item.get("rotation") is not None:
                 data["rotation"] = item["rotation"]
             built.append(data)
-        box.still_a_sandbox()
         service.update_room(name, furniture=built)
         return _room_dict(service, name)
 
@@ -484,7 +471,7 @@ def place_light(
     role: str | None = None, label: str | None = None,
 ) -> dict[str, Any]:
     """Place a paired light (by `light_id`; one already placed moves) or a planned `catalog` light."""
-    with sandbox(service, layout) as box:
+    with sandbox(service, layout) as layout_id:
         name = _room_name(service, room)
         if (light_id is None) == (catalog is None):
             raise ValueError("Give exactly one of light_id or catalog.")
@@ -493,23 +480,25 @@ def place_light(
         size = cm(length, "length") if length is not None else None
         if catalog is not None:
             catalog_item(catalog)
-        box.still_a_sandbox()
         if catalog is not None:
             placed = service.add_planned_light(name, catalog, label=label, rotation=rotation, elevation=elevation, role=role, **spot)
             if size is not None:
-                placed = service.assign_light(name, placed.light_id, length=size, **spot)
+                try:
+                    placed = service.assign_light(name, placed.light_id, length=size, **spot)
+                except Exception:
+                    service.remove_light(name, placed.light_id)  # no half-placed light
+                    raise
         else:
             placed = service.assign_light(name, str(light_id), label=label, rotation=rotation, length=size, elevation=elevation, role=role, **spot)
         return placed.to_dict()
 
 
 def remove_light(service: HueRoomService, layout: str | None, room: str, light_id: str) -> dict[str, Any]:
-    with sandbox(service, layout) as box:
+    with sandbox(service, layout) as layout_id:
         name = _room_name(service, room)
         placed = [light.light_id for light in service.get_room(name).lights]
         if str(light_id) not in placed:
             raise ValueError(f'Light "{light_id}" is not in {name}. Lights in {name}: {", ".join(placed) or "none"}.')
-        box.still_a_sandbox()
         service.remove_light(name, str(light_id))
         return {"removed": str(light_id)}
 
@@ -524,7 +513,7 @@ def _app_answers(app_url: str) -> bool:
 
 def open_in_app(service: HueRoomService, layout: str | None, room: str, app_url: str = "http://127.0.0.1:8000") -> dict[str, Any]:
     """A link that opens a sandbox's room in the 3D view, and whether the app is running to answer it."""
-    with sandbox(service, layout) as box:
+    with sandbox(service, layout) as layout_id:
         name = _room_name(service, room)
     base = str(app_url).rstrip("/")
     answering = _app_answers(base)
@@ -532,4 +521,4 @@ def open_in_app(service: HueRoomService, layout: str | None, room: str, app_url:
         "Open the link to see the room in 3D." if answering
         else f"The app is not answering at {base}. Start it with `myhuey serve`, or give the address it runs at with --app-url."
     )
-    return {"url": f"{base}/?layout={box}#/studio/room/{quote(name, safe='')}/3d", "answering": answering, "note": note}
+    return {"url": f"{base}/?layout={layout_id}#/studio/room/{quote(name, safe='')}/3d", "answering": answering, "note": note}

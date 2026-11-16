@@ -6,7 +6,8 @@ from myhuey.assistant import (
     WRITES_LAYOUT, Refused, add_room, check_layout, create_sandbox, get_room, open_in_app, place_light,
     remove_light, remove_room, set_furniture, set_openings, update_room,
 )
-from myhuey.errors import LayoutNotFound
+from myhuey.errors import LayoutChanged, LayoutNotFound
+from myhuey.layouts import using_layout
 
 
 def test_build_a_room_from_a_description(service):
@@ -56,13 +57,83 @@ def test_the_refusal_says_what_to_do(service):
         add_room(service, "nope", "X", width=300, depth=300)
 
 
-def test_a_sandbox_made_active_mid_call_is_not_written(service):
+def _writers(service, box):
+    id_ = box["id"]
+    return {
+        "add_room": lambda: add_room(service, id_, "New", width=300, depth=300, ceiling=260),
+        "update_room": lambda: update_room(service, id_, "Den", ceiling=260),
+        "remove_room": lambda: remove_room(service, id_, "Den"),
+        "set_openings": lambda: set_openings(service, id_, "Den", []),
+        "set_furniture": lambda: set_furniture(service, id_, "Den", []),
+        "place_light": lambda: place_light(service, id_, "Den", 10, 10, catalog="go", length=50),
+        "remove_light": lambda: remove_light(service, id_, "Den", "1"),
+    }
+
+
+@pytest.mark.parametrize("tool", WRITES_LAYOUT)
+def test_a_sandbox_made_active_after_the_guard_is_never_written(service, monkeypatch, tool):
+    """The guard passed; then the sandbox was made active. The service must refuse the write."""
     box = create_sandbox(service, copy_from="active")
-    service.activate_layout(box["id"])  # what the owner could do between the guard and the write
-    before = service.get_room("Den").to_dict()
-    with pytest.raises(Refused, match="create_sandbox"):
-        update_room(service, box["id"], "Den", ceiling=260)
-    assert service.get_room("Den").to_dict() == before
+    call = _writers(service, box)[tool]
+    guard = service.sandbox_id
+
+    def then_activate(layout_id):
+        found = guard(layout_id)
+        service.activate_layout(box["id"])
+        return found
+
+    monkeypatch.setattr(service, "sandbox_id", then_activate)
+    before = service._load_active()["rooms"]
+    with pytest.raises(LayoutChanged):
+        call()
+    assert service._load_active()["rooms"] == before
+
+
+@pytest.mark.parametrize("tool", ["add_room", "place_light"])
+def test_the_second_write_is_guarded_too(service, monkeypatch, tool):
+    box = create_sandbox(service, copy_from="active")
+    method = "update_room" if tool == "add_room" else "assign_light"
+    original = getattr(service, method)
+
+    def activating(*args, **kwargs):
+        service.activate_layout(box["id"])
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(service, method, activating)
+    with pytest.raises(LayoutChanged):
+        _writers(service, box)[tool]()
+    if tool == "add_room":
+        assert service.get_room("New").ceiling != 260  # the follow-up write never reached the now-active home
+    else:
+        assert all(light.length is None for light in service.get_room("Den").lights)
+
+
+def test_a_bad_ceiling_leaves_no_room_behind(service):
+    box = create_sandbox(service)
+    with pytest.raises(ValueError, match="ceiling must be between"):
+        add_room(service, box["id"], "LowCeil", width=300, depth=300, ceiling="1m")
+    assert create_sandbox_rooms(service, box) == []
+    assert add_room(service, box["id"], "LowCeil", width=300, depth=300, ceiling="2.5m")["ceiling"] == 250
+
+
+def test_a_bad_length_leaves_no_light_behind(service):
+    box = create_sandbox(service, copy_from="active")
+    with pytest.raises(ValueError, match="length"):
+        place_light(service, box["id"], "Den", 10, 10, catalog="go", length="100m")
+    assert [l["light_id"] for l in get_room(service, "Den", layout=box["id"])["lights"]] == ["1", "2", "3"]
+
+
+def create_sandbox_rooms(service, box):
+    with using_layout(box["id"]):
+        return service.list_rooms()
+
+
+def test_a_plain_layout_naming_the_active_one_still_reads_the_active_home(service):
+    active = next(l for l in service.layouts() if l["active"])["id"]
+    with using_layout(active):
+        assert service.list_rooms() == ["Den"]
+        service.update_room("Den", ceiling=250)
+    assert service.get_room("Den").ceiling == 250
 
 
 def test_every_writer_is_listed():
