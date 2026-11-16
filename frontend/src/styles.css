@@ -428,15 +428,18 @@ h1, h2, h3, h4 { margin: 0; font-weight: 600; letter-spacing: -0.01em; }
 .tab-menu-label { padding: 2px 9px 4px; color: var(--text-3); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
 .tab-menu-mark { display: inline-block; width: 13px; text-align: center; color: var(--accent); font-size: 10px; flex: none; }
 .tab-menu button.checked { color: var(--text); }
-.tabs.bottom { padding: 4px 12px; position: relative; z-index: 4; background: var(--glass-strong); border-top: 1px solid var(--border); }
+.tabs.bottom { scroll-padding-inline-end: 40px; padding: 4px 12px; position: relative; z-index: 4; background: var(--glass-strong); border-top: 1px solid var(--border); }
 .tabs.rail {
-  flex: 1; min-width: 0; flex-direction: column; align-items: stretch; gap: 3px; padding: 8px 6px;
+  flex: 1; min-width: 0; flex-direction: column; align-items: stretch; gap: 3px; padding: 0 6px;
   overflow-x: hidden; overflow-y: auto; position: relative; z-index: 3; scrollbar-width: thin;
-  /* The pinned Tabs toggle sits above the tabs and the pinned "+" below them, so a tab scrolled into view stops short of both. */
-  scroll-padding: 34px 0 32px;
+  /* The pinned rows' heights: the Tabs toggle (8px of rail above it) and the "+" row (4px above, 8px of rail below). Each is opaque, so tabs scroll out of sight behind them. */
+  --rail-top-pin: 36px; --rail-bottom-pin: 36px;
+  /* A tab scrolled into view stops short of both pinned rows by a 4px gap. */
+  scroll-padding: calc(var(--rail-top-pin) + 4px) 0 calc(var(--rail-bottom-pin) + 4px);
 }
 /* The rail's one width is --rail-w, set on the shell (the app overrides the default declared there). It takes in the handle's lane and the border. */
-.rail-shell { position: relative; display: flex; flex: none; width: var(--rail-w); z-index: 3; background: var(--glass-strong); }
+/* One opaque surface for the rail and its pinned rows: the theme's glass laid over the page's own background, so a pinned row matches the rail exactly and hides what scrolls under it. */
+.rail-shell { --rail-bg: linear-gradient(var(--glass-strong), var(--glass-strong)), var(--bg); position: relative; display: flex; flex: none; width: var(--rail-w); z-index: 3; background: var(--rail-bg); }
 .rail-shell.left { border-right: 1px solid var(--border); }
 /* The lane sits on the rail's inner edge: after the tabs in the markup for a left rail, drawn before them for a right rail. */
 .rail-shell.right { flex-direction: row-reverse; border-left: 1px solid var(--border); }
@@ -446,12 +449,15 @@ h1, h2, h3, h4 { margin: 0; font-weight: 600; letter-spacing: -0.01em; }
 .rail-handle:focus-visible { outline: none; }
 .rail-handle:focus-visible span { background: var(--accent); }
 .rail-toggle {
-  position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 8px; flex: none; padding: 5px 8px; border: 0; border-radius: var(--radius-s);
-  background: transparent; color: var(--text-3); font: inherit; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer;
+  position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 8px; flex: none; height: var(--rail-top-pin); padding: 8px 8px 0; border: 0; border-radius: 0;
+  background: var(--rail-bg); color: var(--text-3); font: inherit; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer;
 }
-.rail-toggle:hover { background: var(--surface); color: var(--text); }
-.tabs.rail.collapsed { padding: 8px 4px; }
-.tabs.rail.collapsed .rail-toggle { justify-content: center; padding: 5px 0; }
+.rail-toggle:hover { color: var(--text); }
+/* The hover highlight is its own rounded layer, under the label, so the opaque plane behind it stays square. */
+.rail-toggle::before { content: ""; position: absolute; inset: 8px 0 0; z-index: -1; border-radius: var(--radius-s); }
+.rail-toggle:hover::before { background: var(--surface); }
+.tabs.rail.collapsed { padding: 0 4px; }
+.tabs.rail.collapsed .rail-toggle { justify-content: center; padding: 8px 0 0; }
 .tabs.rail.collapsed .tab a { justify-content: center; padding: 7px 0; }
 .tabs.rail.collapsed .tab a span { display: none; }
 .tabs.rail::-webkit-scrollbar { display: block; width: 8px; }
@@ -462,7 +468,7 @@ h1, h2, h3, h4 { margin: 0; font-weight: 600; letter-spacing: -0.01em; }
 .rail.right .tab.active { box-shadow: inset -2px 0 0 var(--accent); }
 .rail .tab.drop-before::before { left: 6px; right: 6px; top: -3px; bottom: auto; width: auto; height: 2px; }
 .rail .tab-drop-end { align-self: auto; width: auto; height: 2px; margin: 0 6px; }
-.rail .tab-add { position: sticky; right: auto; bottom: 0; margin: 2px 0 0; padding-top: 2px; }
+.rail .tab-add { position: sticky; right: auto; bottom: 0; z-index: 1; margin: 0; height: var(--rail-bottom-pin); padding: 4px 0 8px; background: var(--rail-bg); }
 .shell.tabs-bottom .toasts { bottom: 140px; }
 .shell.tabs-right .toasts { right: calc(var(--rail-w) + 20px); }
 .bridge-pill {

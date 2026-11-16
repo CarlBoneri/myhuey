@@ -34,6 +34,24 @@ describe('tab rail layout', () => {
 
   it('stops scrolling short of the pinned buttons', () => {
     expect(bodies('.tabs').join('\n')).toMatch(/scroll-padding-inline-end:\s*32px/);
-    expect(bodies('.tabs.rail').join('\n')).toMatch(/scroll-padding:\s*34px 0 32px/);
+    expect(bodies('.tabs.bottom').join('\n')).toMatch(/scroll-padding-inline-end:\s*40px/);
+    // The pinned rows' heights (36px each) plus a 4px gap, written from their parts.
+    const rail = bodies('.tabs.rail').join('\n');
+    expect(rail).toMatch(/--rail-top-pin:\s*36px/);
+    expect(rail).toMatch(/--rail-bottom-pin:\s*36px/);
+    expect(rail).toMatch(/scroll-padding:\s*calc\(var\(--rail-top-pin\) \+ 4px\) 0 calc\(var\(--rail-bottom-pin\) \+ 4px\)/);
+  });
+
+  it('draws a right rail with its lane on the inner side', () => {
+    expect(bodies('.rail-shell.right').join('\n')).toMatch(/flex-direction:\s*row-reverse/);
+  });
+
+  it('paints the pinned rows with the one opaque rail surface, so no tab shows through', () => {
+    expect(bodies('.rail-shell').join('\n')).toMatch(/--rail-bg:\s*linear-gradient\(var\(--glass-strong\), var\(--glass-strong\)\), var\(--bg\)/);
+    expect(bodies('.rail-shell').join('\n')).toMatch(/background:\s*var\(--rail-bg\)/);
+    expect(bodies('.rail-toggle').join('\n')).toMatch(/background:\s*var\(--rail-bg\)/);
+    expect(bodies('.rail .tab-add').join('\n')).toMatch(/background:\s*var\(--rail-bg\)/);
+    // No vertical padding on the nav: the pinned rows run to its very top and bottom edges.
+    for (const body of [...bodies('.tabs.rail'), ...bodies('.tabs.rail.collapsed')]) expect(body).not.toMatch(/padding:\s*8px/);
   });
 });
