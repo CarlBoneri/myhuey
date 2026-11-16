@@ -161,6 +161,9 @@ describe('refocusReady', () => {
   it('places focus once the awaited tab is active', () => {
     expect(refocusReady(claim, { restore: false }, 'scenes', 1200)).toBe('now');
   });
+  it('gives up on an expired claim even if the awaited tab is active by then', () => {
+    expect(refocusReady(claim, { restore: false }, 'scenes', 1000 + REFOCUS_WINDOW + 1)).toBe('drop');
+  });
   it('gives up when the awaited tab has not arrived within the window', () => {
     expect(refocusReady(claim, { restore: false }, 'home', 1000 + REFOCUS_WINDOW + 1)).toBe('drop');
   });

@@ -2,7 +2,7 @@
 import { Home, Lightbulb, Palette, Settings, Map as MapIcon } from 'lucide-react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen } from '../test/dom';
-import { normalizeTabs, openTabs, type TabId, type TabState } from '../lib/tabs';
+import { REFOCUS_WINDOW, normalizeTabs, openTabs, type TabId, type TabState } from '../lib/tabs';
 import { useUi } from '../uiStore';
 import { TabStrip, type Tab } from './TabStrip';
 
@@ -63,6 +63,19 @@ describe('TabStrip focus after the menu closes', () => {
     fireEvent.click(screen.getByRole('menuitem', { name: 'Close tab' }));
     rerender({ state: setTabs.mock.calls[0][0] as TabState });
     expect(document.activeElement).toBe(link('Home'));
+  });
+
+  it('does not pull focus onto the awaited tab if it only becomes active after the claim expired', () => {
+    vi.useFakeTimers();
+    const { setTabs, rerender } = strip();
+    link('Home').focus();
+    fireEvent.contextMenu(link('Home'));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Close tab' }));
+    const next = setTabs.mock.calls[0][0] as TabState;
+    rerender({ state: next, activeTab: 'home' });
+    vi.setSystemTime(Date.now() + REFOCUS_WINDOW + 1);
+    rerender({ state: next, activeTab: 'studio' });
+    expect(document.activeElement).not.toBe(link('Studio'));
   });
 
   it('puts focus back in the page at once when that is where it was', () => {

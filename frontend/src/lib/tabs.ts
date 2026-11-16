@@ -117,8 +117,9 @@ export function focusAfterClose(has: { restore: boolean; active: boolean; any: b
 export const REFOCUS_WINDOW = 1500;
 /** Closing the active tab opens its neighbour, but the app only learns that on a later `hashchange`: wait for it, so focus lands on the tab that became active. */
 export function refocusReady(claim: { waitFor: TabId | null; at: number }, has: { restore: boolean }, activeTab: TabId, now: number): 'now' | 'wait' | 'drop' {
-  if (claim.waitFor === null || has.restore || activeTab === claim.waitFor) return 'now';
-  return now - claim.at > REFOCUS_WINDOW ? 'drop' : 'wait';
+  // A claim that waited too long is dropped even if its tab is active by now, or focus would be pulled there later.
+  if (claim.waitFor !== null && now - claim.at > REFOCUS_WINDOW) return 'drop';
+  return claim.waitFor === null || has.restore || activeTab === claim.waitFor ? 'now' : 'wait';
 }
 
 /** How long after a menu key goes down a `contextmenu` event still counts as coming from it. */
