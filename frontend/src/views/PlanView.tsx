@@ -1,14 +1,14 @@
 // The whole home over a scanned floor plan. Set the plan's scale from a printed dimension,
 // then click inside a room to trace it, or draw rooms by hand with snapping.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Check, Hand, ImagePlus, PenLine, Ruler, ScanLine, Square, Trash2 } from 'lucide-react';
+import { Check, Download, Hand, ImagePlus, PenLine, Plus, Ruler, ScanLine, Square, Trash2 } from 'lucide-react';
 import { api } from '../api';
 import { attempt, useStore } from '../store';
 import { area, bounds, pathOf, rectPoints, round1 } from '../lib/geometry';
 import { calibrate, imageToPlan, lightsOutside, planToImage, snapCorner, snapPoint } from '../lib/plan';
-import { href } from '../lib/router';
+import { go, href } from '../lib/router';
 import { OutlineHandles } from '../components/OutlineHandles';
-import { TRACE_MESSAGES, scaleToFit, simplifyPolygon, toGray, traceRoom, type Gray } from '../lib/trace';
+import { scaleToFit, simplifyPolygon, toGray, traceHint, traceRoom, type Gray } from '../lib/trace';
 import { formatArea, formatLength, parseLength } from '../lib/units';
 import type { HomePlan, Pt, Room, Units } from '../types';
 import { PlanCanvas, usePlan } from '../components/PlanCanvas';
@@ -62,10 +62,12 @@ function lShape(a: Pt, b: Pt): Pt[] {
 
 /** Everything that listens to the pointer for the active tool. Lives inside PlanCanvas for its coordinates. */
 function ToolLayer({
-  tool, shape, units, rooms, plan, pixels, gap, onOutline, onScaleLine, onTraceMessage,
+  tool, shape, units, rooms, plan, pixels, gap, onOutline, onScaleLine, onTraceNote,
 }: {
   tool: Tool; shape: DrawShape; units: Units; rooms: Room[]; plan: HomePlan | null; pixels: { gray: Gray; factor: number } | null; gap: number;
-  onOutline: (outline: Pt[]) => void; onScaleLine: (a: Pt, b: Pt) => void; onTraceMessage: (message: string) => void;
+  onOutline: (outline: Pt[]) => void; onScaleLine: (a: Pt, b: Pt) => void;
+  /** Why the spot under the pointer will not trace (null when it will, or nothing is tried). */
+  onTraceNote: (note: string | null) => void;
 }) {
   const { toPlan, cmPerPx } = usePlan();
   const [line, setLine] = useState<[Pt, Pt] | null>(null);
@@ -127,9 +129,10 @@ function ToolLayer({
       dragFrom(point, (p) => setLine([point, p]), (p) => { setLine(null); onScaleLine(point, p); });
     } else if (tool === 'trace') {
       const result = trace(point);
-      if (!result) onTraceMessage('Upload a floor-plan image to trace rooms.');
-      else if (!result.ok) onTraceMessage(TRACE_MESSAGES[result.reason]);
-      else onOutline(result.outline);
+      // A spot that will not trace explains itself in the hint, never as an error toast.
+      if (!result) onTraceNote('Upload a floor-plan image to trace rooms.');
+      else if (!result.ok) onTraceNote(traceHint(result));
+      else { onTraceNote(null); onOutline(result.outline); }
     } else if (shape === 'points') {
       const p = snapped(point);
       if (points.length >= 3 && Math.hypot(p[0] - points[0][0], p[1] - points[0][1]) < 10 * cmPerPx) finishPoints(points);
@@ -153,6 +156,7 @@ function ToolLayer({
       traceTimer.current = window.setTimeout(() => {
         const result = trace(point);
         setPreview(result?.ok ? result.outline : null);
+        onTraceNote(traceHint(result));
       }, 120);
     }
   };
@@ -161,7 +165,7 @@ function ToolLayer({
   return (
     <g className="tool-layer">
       <rect x={-1e6} y={-1e6} width={2e6} height={2e6} fill="transparent" style={{ cursor: 'crosshair' }}
-        onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerLeave={() => { setHover(null); if (tool === 'trace') setPreview(null); }}
+        onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerLeave={() => { setHover(null); if (tool === 'trace') { window.clearTimeout(traceTimer.current); setPreview(null); onTraceNote(null); } }}
         onDoubleClick={() => tool === 'draw' && shape === 'points' && finishPoints(points)} />
       <g pointerEvents="none">
         {preview && <path d={pathOf(preview)} className="trace-preview" strokeWidth={2 * s} strokeDasharray={`${6 * s} ${4 * s}`} />}
@@ -192,7 +196,7 @@ function Backdrop({ plan }: { plan: HomePlan }) {
 }
 
 export function PlanView({ focus }: { focus?: string } = {}) {
-  const { rooms, plan, setPlan, refreshRooms, replaceRoom, toast, layout } = useStore();
+  const { rooms, plan, setPlan, refreshRooms, replaceRoom, toast, layout, setup } = useStore();
   const [tool, setTool] = useState<Tool>('select');
   const [shape, setShape] = useState<DrawShape>('rect');
   const [gap, setGap] = useState(3);
@@ -205,6 +209,11 @@ export function PlanView({ focus }: { focus?: string } = {}) {
   const movingRef = useRef(moving);
   const setMoving = (next: typeof moving) => { movingRef.current = next; setMovingState(next); };
   const pixels = usePlanPixels(plan);
+  const [traceNote, setTraceNote] = useState<string | null>(null);
+  useEffect(() => setTraceNote(null), [tool]);
+  const [roomName, setRoomName] = useState('');
+  const [roomWidth, setRoomWidth] = useState(`14' 9"`);
+  const [roomDepth, setRoomDepth] = useState(`9' 10"`);
   // Reshaping a room in place, over the plan image: the selected room and its outline mid-drag.
   const [selected, setSelected] = useState<string | null>(focus ?? null);
   const [draft, setDraft] = useState<Pt[] | null>(null);
@@ -311,6 +320,29 @@ export function PlanView({ focus }: { focus?: string } = {}) {
         : snapCorner(target, neighbors, { units, radius, corners, edges }, false);
   };
 
+  const addRoomBySize = async () => {
+    const w = parseLength(roomWidth);
+    const d = parseLength(roomDepth);
+    if (!roomName.trim() || !w || !d) {
+      toast('Give the room a name, a width, and a depth.');
+      return;
+    }
+    const room = await attempt(() => api.createRoom(roomName.trim(), w, d));
+    if (room) {
+      setRoomName('');
+      await refreshRooms();
+      go({ view: 'design', room: room.name, tab: 'plan' });
+    }
+  };
+
+  const importRooms = async () => {
+    const result = await attempt(() => api.importRooms());
+    if (result) {
+      toast(result.added.length ? `Imported ${result.added.join(', ')}` : 'No new rooms to import.', false);
+      await refreshRooms();
+    }
+  };
+
   const hint = {
     select: selectedRoom
       ? `Reshaping ${selectedRoom.name}: drag a corner, drag a + to add one, double-click a corner to remove it. Corners snap to other rooms; hold Alt to place freely.`
@@ -324,7 +356,7 @@ export function PlanView({ focus }: { focus?: string } = {}) {
     <div className="page plan-page">
       <header className="page-head">
         <div>
-          <p className="eyebrow">Home</p>
+          <p className="eyebrow">Studio</p>
           <h1>Floor plan</h1>
         </div>
       </header>
@@ -364,13 +396,27 @@ export function PlanView({ focus }: { focus?: string } = {}) {
             <ToolLayer tool={tool} shape={shape} units={units} rooms={rooms} plan={plan} pixels={pixels} gap={gap}
               onOutline={(outline) => { setPending(outline); setNewName(''); }}
               onScaleLine={(a, b) => setScaleLine({ a, b })}
-              onTraceMessage={(message) => toast(message)} />
+              onTraceNote={setTraceNote} />
           </PlanCanvas>
-          <p className="stage-hint">{hint}</p>
+          <p className={`stage-hint${traceNote ? ' warn' : ''}`} role={traceNote ? 'status' : undefined}>{traceNote ?? hint}</p>
         </div>
 
         <aside className="inspector">
           <LayoutsPanel />
+          {!pending && !scaleLine && !(tool === 'select' && selectedRoom) && (
+            <Panel title="Add a room">
+              <Field label="Name"><TextInput value={roomName} onChange={(e) => setRoomName(e.target.value)} placeholder="Living room" /></Field>
+              <div className="field-row">
+                <Field label="Width"><TextInput value={roomWidth} onChange={(e) => setRoomWidth(e.target.value)} /></Field>
+                <Field label="Depth"><TextInput value={roomDepth} onChange={(e) => setRoomDepth(e.target.value)} /></Field>
+              </div>
+              <div className="button-row">
+                <button type="button" className="button primary" onClick={addRoomBySize}><Plus size={16} /> Add room</button>
+                {setup?.configured && <button type="button" className="button" onClick={importRooms}><Download size={16} /> Import from Hue</button>}
+              </div>
+              <p className="hint">Or trace and draw rooms over a plan image with the tools on the left.</p>
+            </Panel>
+          )}
           {tool === 'select' && selectedRoom && (
             <Panel title={selectedRoom.name} actions={<IconButton label="Done reshaping" onClick={() => setSelected(null)}><Check size={16} /></IconButton>}>
               <p className="hint">{formatLength(selectedRoom.width, selectedRoom.units)} × {formatLength(selectedRoom.height, selectedRoom.units)} · {selectedRoom.outline.length} corners</p>
