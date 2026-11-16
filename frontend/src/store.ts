@@ -137,13 +137,18 @@ export const useStore = create<State>((set, get) => ({
     } catch (error) {
       get().toast((error as Error).message);
     }
-    // A link such as ?layout=<id> opens that sandbox once; a missing one falls through to "layout gone".
+    // A link such as ?layout=<id> opens that sandbox once. One made active since (the usual end of
+    // an assistant's layout job) is the home already: opening it as a sandbox would offer "Make
+    // active" while every edit landed in the real home. A missing one is reported as gone.
     const requested = layoutFromUrl(location.search);
     if (requested) {
       const url = new URL(location.href);
       url.searchParams.delete('layout');
       history.replaceState(history.state, '', url.pathname + url.search + url.hash);
-      await get().openLayout(requested);
+      const item = get().layouts.find((entry) => entry.id === requested);
+      if (!item) await get().layoutGone();
+      else if (item.active) get().toast(`"${item.name}" is now your active home, so that is what is open.`, false);
+      else await get().openLayout(requested);
     }
     set({ ready: true });
   },
