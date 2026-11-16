@@ -873,6 +873,14 @@ class HueRoomService:
                 return entry
         raise LayoutNotFound(layout_id)
 
+    def sandbox_id(self, layout_id: str | None) -> str | None:
+        """The ID to open for a request: None for Active (or none named). Unknown IDs raise LayoutNotFound."""
+        if not layout_id or layout_id == self._load_active()["layout"]["id"]:
+            return None
+        if load_layout(layout_id, self.storage_path) is None:
+            raise LayoutNotFound(layout_id)
+        return layout_id
+
     def resolve_layout(self, name_or_id: str) -> str:
         """A layout's ID from its ID or its name (any case)."""
         listed = self.layouts()
