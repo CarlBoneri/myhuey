@@ -6,6 +6,7 @@ The CLI and the web API both go through this class; neither talks to the bridge 
 
 from __future__ import annotations
 
+import copy
 import functools
 import threading
 import time
@@ -15,7 +16,7 @@ from typing import Any, Callable
 
 from .color import hex_to_rgb, light_state_to_hex, mired_to_color_temperature, rgb_to_xy, xy_to_hex, xy_to_kelvin
 from .discovery import discover
-from .errors import BridgeNotConfigured, BridgeUnreachable, HueError, RoomNotFound, SceneNotFound
+from .errors import BridgeNotConfigured, BridgeUnreachable, HueError, LayoutChanged, LayoutNotFound, RoomNotFound, SceneNotFound
 from .geometry import rectangle
 from .hue import HueBridgeClient
 from .images import ImageSampler, extract_palette, image_path, prune_unreferenced, store_image
@@ -27,6 +28,9 @@ from .preferences import chosen as chosen_preferences, merged as merged_preferen
 from .scenes import Scene, evaluate
 from .suggest import suggest as suggest_scenes
 from .shapes import profile_for
+from .layout_store import backup_layout, delete_layout, list_layouts, load_layout, save_layout, swap_active
+from .layouts import HOME_KEYS, clean_name, current_layout, ensure_identity, using_layout
+from .migrations import CURRENT_VERSION, migrate
 from .storage import DEFAULT_STORAGE_PATH, load_config, save_config, uploads_dir
 from .tls import pin_certificate, pinned_bridge_id
 from .units import UNIT_SYSTEMS
@@ -140,11 +144,60 @@ class HueRoomService:
         self._relocate_after = 0.0
         self._bridge_writes = threading.Lock()
 
+    def _load_active(self) -> dict[str, Any]:
+        """The main document, with the Active layout's identity (given one on first use)."""
+        config = load_config(self.storage_path)
+        if ensure_identity(config):
+            save_config(config, self.storage_path)
+        return config
+
+    def _open_sandbox(self, config: dict[str, Any]) -> str | None:
+        """The open layout's ID when it is a sandbox; None when it is Active."""
+        layout_id = current_layout.get()
+        return layout_id if layout_id and layout_id != config["layout"]["id"] else None
+
     def _load(self) -> dict[str, Any]:
-        return load_config(self.storage_path)
+        """The document for the open layout: global data plus that layout's rooms, scenes, and home."""
+        config = self._load_active()
+        layout_id = self._open_sandbox(config)
+        if not layout_id:
+            return config
+        record = load_layout(layout_id, self.storage_path)
+        if record is None:
+            raise LayoutNotFound(layout_id)
+        merged = {**config, "schema_version": record.get("schema_version", CURRENT_VERSION)}
+        merged.update({key: record.get(key) for key in HOME_KEYS})
+        upgraded, start = migrate(merged)
+        if start < CURRENT_VERSION:
+            backup_layout(record, start, self.storage_path)
+            self._save_record(record, upgraded)
+        return upgraded
+
+    def _save_record(self, record: dict[str, Any], config: dict[str, Any]) -> None:
+        updated = {**record, **{key: config[key] for key in HOME_KEYS}}
+        updated.update(updated=time.time(), schema_version=CURRENT_VERSION)
+        save_layout(updated, self.storage_path)
 
     def _save(self, config: dict[str, Any]) -> None:
-        save_config(config, self.storage_path)
+        stored = self._load_active()
+        # The document must still belong to the layout it was read from. Make active may have
+        # swapped layouts between this call's load and save; writing on would duplicate one layout
+        # and lose another.
+        read_from = (config.get("layout") or {}).get("id")
+        if read_from and read_from != stored["layout"]["id"]:
+            raise LayoutChanged()
+        layout_id = self._open_sandbox(stored)
+        if not layout_id:
+            save_config(config, self.storage_path)
+            return
+        record = load_layout(layout_id, self.storage_path)
+        if record is None:
+            raise LayoutNotFound(layout_id)
+        self._save_record(record, config)
+        # Everything else (bridge, preferences) is global; the Active layout's home data stays put.
+        stored.update({key: value for key, value in config.items() if key not in HOME_KEYS and key != "layout"})
+        stored["schema_version"] = CURRENT_VERSION
+        save_config(stored, self.storage_path)
 
     @staticmethod
     def _room_data(config: dict[str, Any], name: str) -> dict[str, Any]:
@@ -763,12 +816,12 @@ class HueRoomService:
         return home["plan"]
 
     def update_plan(self, **changes: Any) -> dict[str, Any]:
-        """Change the plan's scale (cm_per_px), offset, rotation, or opacity."""
+        """Change the plan's scale (cm_per_px), offset, rotation, opacity, or room_opacity."""
         config = self._load()
         home = config.setdefault("home", {})
         if not home.get("plan"):
             raise ValueError("Upload a floor-plan image first")
-        allowed = {key: value for key, value in changes.items() if key in ("cm_per_px", "offset", "rotation", "opacity")}
+        allowed = {key: value for key, value in changes.items() if key in ("cm_per_px", "offset", "rotation", "opacity", "room_opacity")}
         home["plan"] = HomePlan.from_dict({**home["plan"], **allowed}).to_dict()
         self._save(config)
         return home["plan"]
@@ -794,14 +847,134 @@ class HueRoomService:
         return extract_palette(self.image_file(name), count, mood)
 
     def referenced_images(self) -> set[str]:
-        config = self._load()
-        names = {(room.get("photo") or {}).get("file") for room in config["rooms"]}
-        names |= {(scene.get("image") or {}).get("file") for scene in config["scenes"]}
-        names.add(((config.get("home") or {}).get("plan") or {}).get("file"))
-        return {name for name in names if name}
+        """Every image any layout uses, whichever layout is open, so pruning never takes one."""
+        names: set[str] = set()
+        for document in [load_config(self.storage_path), *list_layouts(self.storage_path)]:
+            names |= _images_in(document)
+        return names
 
     def prune_uploads(self, min_age_seconds: float = 3600) -> list[str]:
         return prune_unreferenced(self.uploads, self.referenced_images(), min_age_seconds)
+
+    # Layouts: the Active one runs the app; sandboxes are tried out and can be made active.
+
+    def _layout_entry(self, data: dict[str, Any], *, active: bool) -> dict[str, Any]:
+        identity = data["layout"] if active else data
+        return {
+            "id": identity["id"], "name": identity["name"], "active": active,
+            "rooms": len(data.get("rooms") or []), "scenes": len(data.get("scenes") or []),
+            "updated": None if active else data.get("updated"),
+        }
+
+    def layouts(self) -> list[dict[str, Any]]:
+        """Every saved layout, the Active one first."""
+        active = self._load_active()
+        return [self._layout_entry(active, active=True)] + [
+            self._layout_entry(record, active=False) for record in list_layouts(self.storage_path)
+        ]
+
+    def _layout_entry_by_id(self, layout_id: str) -> dict[str, Any]:
+        for entry in self.layouts():
+            if entry["id"] == layout_id:
+                return entry
+        raise LayoutNotFound(layout_id)
+
+    def sandbox_id(self, layout_id: str | None) -> str | None:
+        """The ID to open for a request: None for Active (or none named). Unknown IDs raise LayoutNotFound."""
+        if not layout_id or layout_id == self._load_active()["layout"]["id"]:
+            return None
+        if load_layout(layout_id, self.storage_path) is None:
+            raise LayoutNotFound(layout_id)
+        return layout_id
+
+    def resolve_layout(self, name_or_id: str) -> str:
+        """A layout's ID from its ID or its name (any case)."""
+        listed = self.layouts()
+        for entry in listed:
+            if entry["id"] == name_or_id:
+                return entry["id"]
+        wanted = str(name_or_id).strip().casefold()
+        for entry in listed:
+            if entry["name"].casefold() == wanted:
+                return entry["id"]
+        raise LayoutNotFound(name_or_id)
+
+    def _unique_name(self, name: str | None, *, keep: str | None = None) -> str:
+        taken = {entry["name"].casefold() for entry in self.layouts() if entry["id"] != keep}
+        if name is None or not str(name).strip():
+            if name is not None:
+                clean_name(name)  # a blank name is a mistake, not a request for a default
+            number = 2
+            while f"Layout {number}".casefold() in taken:
+                number += 1
+            return f"Layout {number}"
+        cleaned = clean_name(name)
+        if cleaned.casefold() in taken:
+            raise ValueError(f"There is already a layout called {cleaned}")
+        return cleaned
+
+    def _home_data(self, layout_id: str) -> dict[str, Any]:
+        active = self._load_active()
+        if layout_id == active["layout"]["id"]:
+            return {key: active.get(key) for key in HOME_KEYS}
+        with using_layout(layout_id):
+            opened = self._load()  # migrates an old record on the way
+        return {key: opened.get(key) for key in HOME_KEYS}
+
+    def new_layout(self, name: str | None = None, from_layout: str | None = None) -> dict[str, Any]:
+        """Start fresh (empty, with the Active plan image) or duplicate a layout, as a new sandbox."""
+        chosen = self._unique_name(name)
+        if from_layout:
+            home = copy.deepcopy(self._home_data(from_layout))
+        else:
+            plan = (self._load_active().get("home") or {}).get("plan")
+            home = {"rooms": [], "scenes": [], "home": {"plan": copy.deepcopy(plan)}}
+        now = time.time()
+        record = {"id": new_id(), "name": chosen, "created": now, "updated": now,
+                  "schema_version": CURRENT_VERSION, **home}
+        save_layout(record, self.storage_path)
+        return self._layout_entry(record, active=False)
+
+    def rename_layout(self, layout_id: str, name: str) -> dict[str, Any]:
+        chosen = self._unique_name(name, keep=layout_id)
+        active = self._load_active()
+        if layout_id == active["layout"]["id"]:
+            active["layout"] = {**active["layout"], "name": chosen}
+            save_config(active, self.storage_path)
+            return self._layout_entry(active, active=True)
+        record = load_layout(layout_id, self.storage_path)
+        if record is None:
+            raise LayoutNotFound(layout_id)
+        record = {**record, "name": chosen, "updated": time.time()}
+        save_layout(record, self.storage_path)
+        return self._layout_entry(record, active=False)
+
+    def activate_layout(self, layout_id: str) -> dict[str, Any]:
+        """Make a sandbox the Active layout. The layout that was Active becomes a sandbox."""
+        active = self._load_active()
+        if layout_id == active["layout"]["id"]:
+            return self._layout_entry(active, active=True)
+        incoming = self._home_data(layout_id)  # also upgrades an old record first
+        record = load_layout(layout_id, self.storage_path)
+        if record is None:
+            raise LayoutNotFound(layout_id)
+        now = time.time()
+        identity = active["layout"]
+        old_record = {"id": identity["id"], "name": identity["name"], "created": identity.get("created", now),
+                      "updated": now, "schema_version": CURRENT_VERSION,
+                      **{key: active.get(key) for key in HOME_KEYS}}
+        config = {**active, **incoming,
+                  "layout": {"id": record["id"], "name": record["name"], "created": record.get("created", now)}}
+        swap_active(config, old_record, layout_id, self.storage_path)
+        return self._layout_entry(config, active=True)
+
+    def delete_layout(self, layout_id: str) -> None:
+        if layout_id == self._load_active()["layout"]["id"]:
+            raise ValueError("The active layout can't be deleted. Make another layout active first.")
+        if load_layout(layout_id, self.storage_path) is None:
+            raise LayoutNotFound(layout_id)
+        delete_layout(layout_id, self.storage_path)
+        self.prune_uploads(min_age_seconds=0)
 
     # Scenes
 
@@ -959,6 +1132,13 @@ class HueRoomService:
                 self.sleep(pause)  # the bridge handles about ten light commands a second
         self._v2_loaded = 0.0  # gradients and effects just changed
         return results
+
+
+def _images_in(document: dict[str, Any]) -> set[str]:
+    names = {(room.get("photo") or {}).get("file") for room in document.get("rooms") or []}
+    names |= {(scene.get("image") or {}).get("file") for scene in document.get("scenes") or []}
+    names.add(((document.get("home") or {}).get("plan") or {}).get("file"))
+    return {name for name in names if name}
 
 
 def _not_planned(light_id: str) -> None:

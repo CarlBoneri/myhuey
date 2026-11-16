@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { House, LayoutGrid, Lightbulb, Map as MapIcon, Palette, Settings, X } from 'lucide-react';
+import { House, LayoutGrid, Lightbulb, Map as MapIcon, Moon, Palette, Settings, Sun, X } from 'lucide-react';
+import { applyTheme, followSystemTheme, systemPrefersDark, toggledTheme } from './lib/theme';
 import { useStore } from './store';
 import { href, useRoute, type Route } from './lib/router';
 import { HomeView } from './views/HomeView';
@@ -11,6 +12,7 @@ import { ScenesView } from './views/ScenesView';
 import { SceneEditor } from './views/SceneEditor';
 import { LightsView } from './views/LightsView';
 import { SettingsView } from './views/SettingsView';
+import { SandboxBanner } from './components/SandboxBanner';
 
 const NAV: { route: Route; label: string; icon: typeof House; match: Route['view'][] }[] = [
   { route: { view: 'home' }, label: 'Home', icon: House, match: ['home', 'room'] },
@@ -22,7 +24,13 @@ const NAV: { route: Route; label: string; icon: typeof House; match: Route['view
 
 export function App() {
   const route = useRoute();
-  const { ready, setup, load, refreshLights, toasts, dismiss, lightsError, serverStale, preferences } = useStore();
+  const { ready, setup, load, refreshLights, toasts, dismiss, lightsError, serverStale, preferences, setPreferences } = useStore();
+
+  useEffect(() => {
+    applyTheme(preferences.theme);
+    return followSystemTheme(preferences.theme);
+  }, [preferences.theme]);
+  const nextTheme = toggledTheme(preferences.theme, systemPrefersDark());
 
   useEffect(() => {
     void load();
@@ -84,6 +92,10 @@ export function App() {
             </a>
           );
         })}
+        <button type="button" className="rail-link theme-toggle" onClick={() => void setPreferences({ theme: nextTheme })}
+          aria-label={`Switch to ${nextTheme} mode`} title={`Switch to ${nextTheme} mode`}>
+          {nextTheme === 'light' ? <Sun size={20} strokeWidth={1.5} /> : <Moon size={20} strokeWidth={1.5} />}
+        </button>
         <div className={`bridge-dot${setup?.configured && !lightsError ? ' ok' : ''}`} title={setup?.configured ? (lightsError || `Bridge ${setup.bridge.ip}`) : 'No bridge paired'} />
       </nav>
       <main className="main">
@@ -92,6 +104,7 @@ export function App() {
             The MyHuey server is older than this page, so newer features will fail. Stop it and run <code>myhuey serve</code> again.
           </p>
         )}
+        {ready && <SandboxBanner />}
         {view}
       </main>
       <div className="toasts" role="status" aria-live="polite">

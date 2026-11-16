@@ -11,9 +11,11 @@ from typing import Any, Literal
 from fastapi import FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field, StrictInt
 
-from .errors import BridgeNotConfigured, HueError, LinkButtonNotPressed, PairingInProgress, RoomNotFound, SceneNotFound
+from .errors import BridgeNotConfigured, HueError, LayoutChanged, LayoutNotFound, LinkButtonNotPressed, PairingInProgress, RoomNotFound, SceneNotFound
+from .layouts import MAX_NAME, using_layout
 from .hue import COLLECTIONS, PAIRING_WINDOW, HueBridgeClient
 from .images import MAX_UPLOAD_BYTES, media_type
 from .catalog import CATALOG
@@ -35,7 +37,7 @@ APP_DIR = BASE_DIR / "static" / "app"
 CM = Field(None, ge=-10000, le=10000)
 # What the web app expects of this server. Raise it when routes are added, so a page
 # served from a newer build tells a person to restart an older running server.
-API_REVISION = 4
+API_REVISION = 5
 
 _NOT_BUILT = """<!doctype html><meta charset="utf-8"><title>MyHuey</title>
 <body style="font-family:system-ui;background:#0f0e17;color:#e8e6f0;padding:3rem">
@@ -79,11 +81,50 @@ class OpeningItem(Body):
     top: float | None = Field(None, ge=0, le=1000)
 
 
+class LayoutCreate(Body):
+    model_config = ConfigDict(allow_inf_nan=False, populate_by_name=True)
+
+    name: str | None = Field(None, max_length=MAX_NAME + 20)  # trimmed and checked by the service
+    from_layout: str | None = Field(None, alias="from", max_length=64)
+
+
+class LayoutRename(Body):
+    name: str = Field(..., max_length=MAX_NAME + 20)
+
+
+class LayoutMiddleware:
+    """Open the layout named by the X-Myhuey-Layout header for the rest of the request.
+
+    A plain ASGI middleware, so the context variable it sets is seen by the endpoint, which runs
+    in the same task (sync endpoints get a copy of the context in their worker thread). The layout
+    endpoints manage layouts by ID themselves and never read the header.
+    """
+
+    def __init__(self, app: Any, service: HueRoomService) -> None:
+        self.app = app
+        self.service = service
+
+    async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
+        path = scope.get("path", "") if scope["type"] == "http" else ""
+        if not path.startswith("/api/") or path.startswith("/api/layouts"):
+            await self.app(scope, receive, send)
+            return
+        named = dict(scope.get("headers") or []).get(b"x-myhuey-layout", b"").decode("latin-1").strip()
+        try:
+            layout_id = await run_in_threadpool(self.service.sandbox_id, named or None)
+        except LayoutNotFound as exc:
+            await JSONResponse(status_code=404, content={"detail": str(exc)})(scope, receive, send)
+            return
+        with using_layout(layout_id):
+            await self.app(scope, receive, send)
+
+
 class PlanUpdate(Body):
     cm_per_px: float | None = Field(None, gt=0, le=100)
     offset: list[float] | None = Field(None, min_length=2, max_length=2)
     rotation: float | None = None
     opacity: float | None = Field(None, ge=0, le=1)
+    room_opacity: float | None = Field(None, ge=0, le=1)
 
 
 class FurnitureItem(Body):
@@ -194,9 +235,9 @@ class EffectChange(BaseModel):
 
 
 def _status_for(exc: Exception) -> int:
-    if isinstance(exc, (RoomNotFound, SceneNotFound)):
+    if isinstance(exc, (RoomNotFound, SceneNotFound, LayoutNotFound)):
         return 404
-    if isinstance(exc, (LinkButtonNotPressed, PairingInProgress)):
+    if isinstance(exc, (LinkButtonNotPressed, PairingInProgress, LayoutChanged)):
         return 409
     if isinstance(exc, (BridgeNotConfigured, ValueError)):
         return 400
@@ -231,6 +272,7 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
     service = HueRoomService(storage_path)
     app = FastAPI(title="MyHuey")
     app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static"), check_dir=False), name="static")
+    app.add_middleware(LayoutMiddleware, service=service)
 
     @app.exception_handler(HueError)
     @app.exception_handler(ValueError)
@@ -280,6 +322,29 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
         return pair_bridge(body.bridge_ip, service=service, app_name=body.app_name, window=pairing_window)
 
     # Rooms
+
+    # Layouts
+
+    @app.get("/api/layouts")
+    def list_layouts() -> list[dict[str, Any]]:
+        return service.layouts()
+
+    @app.post("/api/layouts")
+    def create_layout(body: LayoutCreate) -> dict[str, Any]:
+        return service.new_layout(body.name, from_layout=body.from_layout)
+
+    @app.patch("/api/layouts/{layout_id}")
+    def rename_layout(layout_id: str, body: LayoutRename) -> dict[str, Any]:
+        return service.rename_layout(layout_id, body.name)
+
+    @app.post("/api/layouts/{layout_id}/activate")
+    def activate_layout(layout_id: str) -> dict[str, Any]:
+        return service.activate_layout(layout_id)
+
+    @app.delete("/api/layouts/{layout_id}")
+    def delete_layout(layout_id: str) -> dict[str, str]:
+        service.delete_layout(layout_id)
+        return {"deleted": layout_id}
 
     @app.get("/api/rooms")
     def list_rooms() -> list[dict[str, Any]]:

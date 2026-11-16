@@ -12,6 +12,8 @@ from typing import Any
 QUARTER_HOURS = tuple(f"{hour:02d}:{minute:02d}" for hour in range(24) for minute in (0, 15, 30, 45))
 
 PREFERENCES: dict[str, tuple[Any, Any]] = {
+    # Look
+    "theme": ("dark", ("dark", "light", "system")),  # "system" follows the operating system
     # Home screen
     "room_sliders": (True, bool),  # a brightness slider on each room
     "room_sliders_when_on_only": (True, bool),  # show it only while some of the room's lights are on

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { calibrate, imageToPlan, lightsOutside, openingAt, openingSegment, planToImage, reanchorOpenings, snapPoint } from './plan';
 import type { HomePlan, Opening, Placement, Pt } from '../types';
 
-const plan: HomePlan = { file: 'x.png', cm_per_px: 2, offset: [100, 50], rotation: 90, opacity: 0.5, width: 800, height: 600 };
+const plan: HomePlan = { file: 'x.png', cm_per_px: 2, offset: [100, 50], rotation: 90, opacity: 0.5, width: 800, height: 600, room_opacity: 0.4 };
 const SQUARE: Pt[] = [[0, 0], [400, 0], [400, 300], [0, 300]];
 
 describe('plan transforms', () => {

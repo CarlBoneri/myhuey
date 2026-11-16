@@ -105,6 +105,8 @@ export interface HomePlan {
   opacity: number;
   width: number;
   height: number;
+  /** How solid room shapes are drawn over the plan image (0 to 1). */
+  room_opacity: number;
 }
 
 export interface PhotoSpot {
@@ -263,6 +265,7 @@ export interface SceneResult {
 }
 
 export interface Preferences {
+  theme: 'dark' | 'light' | 'system';
   room_sliders: boolean;
   room_sliders_when_on_only: boolean;
   show_light_glow: boolean;
@@ -284,4 +287,14 @@ export interface ProfileTable {
   archetype: Record<string, Profile>;
   product: Record<string, Profile>;
   model: Record<string, Profile>;
+}
+
+/** A saved layout. One is Active and runs the app; the others are sandboxes. */
+export interface LayoutSummary {
+  id: string;
+  name: string;
+  active: boolean;
+  rooms: number;
+  scenes: number;
+  updated: number | null;
 }

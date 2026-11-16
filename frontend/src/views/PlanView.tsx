@@ -13,6 +13,7 @@ import { formatArea, formatLength, parseLength } from '../lib/units';
 import type { HomePlan, Pt, Room, Units } from '../types';
 import { PlanCanvas, usePlan } from '../components/PlanCanvas';
 import { Empty, Field, IconButton, LengthInput, Panel, Segmented, Slider, TextInput } from '../components/ui';
+import { LayoutsPanel } from '../components/LayoutsPanel';
 import { RoomOnPlan } from './HomeView';
 
 type Tool = 'select' | 'scale' | 'trace' | 'draw';
@@ -196,7 +197,7 @@ function Backdrop({ plan }: { plan: HomePlan }) {
 }
 
 export function PlanView({ focus }: { focus?: string } = {}) {
-  const { rooms, plan, setPlan, refreshRooms, replaceRoom, toast } = useStore();
+  const { rooms, plan, setPlan, refreshRooms, replaceRoom, toast, layout } = useStore();
   const [tool, setTool] = useState<Tool>('select');
   const [shape, setShape] = useState<DrawShape>('rect');
   const [gap, setGap] = useState(3);
@@ -213,6 +214,13 @@ export function PlanView({ focus }: { focus?: string } = {}) {
   const [selected, setSelected] = useState<string | null>(focus ?? null);
   const [draft, setDraft] = useState<Pt[] | null>(null);
   useEffect(() => { if (focus) { setSelected(focus); setTool('select'); } }, [focus]);
+  // Another layout was opened: drop what was selected or half-drawn in the last one.
+  const firstLayout = useRef(layout);
+  useEffect(() => {
+    if (firstLayout.current === layout) return;
+    firstLayout.current = layout;
+    setSelected(null); setDraft(null); setPending(null); setScaleLine(null); setMoving(null);
+  }, [layout]); // eslint-disable-line react-hooks/exhaustive-deps
   const selectedRoom = rooms.find((room) => room.name === selected) ?? null;
   const units: Units = rooms[0]?.units ?? 'imperial';
 
@@ -340,6 +348,7 @@ export function PlanView({ focus }: { focus?: string } = {}) {
                 <RoomOnPlan key={room.name} room={room.name === selected && draft ? { ...room, outline: draft } : room}
                   offset={moving?.name === room.name ? moving.delta : [0, 0]}
                   selected={room.name === selected} onSelect={() => setSelected(room.name)}
+                  fillOpacity={plan ? plan.room_opacity ?? 0.4 : undefined}
                   onMove={(delta) => setMoving({ name: room.name, delta })}
                   onDrop={async () => {
                     const delta = movingRef.current?.name === room.name ? movingRef.current.delta : null;
@@ -366,6 +375,7 @@ export function PlanView({ focus }: { focus?: string } = {}) {
         </div>
 
         <aside className="inspector">
+          <LayoutsPanel />
           {tool === 'select' && selectedRoom && (
             <Panel title={selectedRoom.name} actions={<IconButton label="Done reshaping" onClick={() => setSelected(null)}><Check size={16} /></IconButton>}>
               <p className="hint">{formatLength(selectedRoom.width, selectedRoom.units)} × {formatLength(selectedRoom.height, selectedRoom.units)} · {selectedRoom.outline.length} corners</p>
@@ -433,6 +443,8 @@ export function PlanView({ focus }: { focus?: string } = {}) {
                 <p className="hint">{plan.width} × {plan.height} px · 100 px = {formatLength(plan.cm_per_px * 100, units)}</p>
                 <Slider label="Opacity" value={Math.round(plan.opacity * 100)} min={5} max={100} format={(v) => `${v}%`}
                   onChange={(v) => setPlan({ ...plan, opacity: v / 100 })} onCommit={(v) => savePlan({ opacity: v / 100 })} />
+                <Slider label="Room fill" value={Math.round((plan.room_opacity ?? 0.4) * 100)} min={0} max={100} format={(v) => `${v}%`}
+                  onChange={(v) => setPlan({ ...plan, room_opacity: v / 100 })} onCommit={(v) => savePlan({ room_opacity: v / 100 })} />
                 <Slider label="Rotation" value={plan.rotation} min={0} max={359} format={(v) => `${Math.round(v)}°`}
                   onChange={(rotation) => setPlan({ ...plan, rotation })} onCommit={(rotation) => savePlan({ rotation })} />
                 <div className="field-row">

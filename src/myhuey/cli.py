@@ -7,11 +7,12 @@ import json
 import math
 import socket
 import sys
-from typing import Sequence, TextIO
+from typing import Any, Sequence, TextIO
 
 from .errors import HueError
 from .hue import PAIRING_WINDOW, HueBridgeClient
 from .modes import MODES
+from .layouts import using_layout
 from .service import HueRoomService
 from .setup import run_setup
 from .tls import fingerprint, load_pin
@@ -31,6 +32,8 @@ def _parse_bool(value: str) -> bool:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="myhuey", description="Philips Hue room planner and control client")
     parser.add_argument("--db", metavar="PATH", help="Storage file (default: ~/.myhuey/myhuey.db)")
+    parser.add_argument("--layout", metavar="NAME_OR_ID",
+                        help="Work on this saved layout instead of the active one (see `myhuey layouts`)")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     discover = subparsers.add_parser("discover", help="List the Hue bridges on this network")
@@ -86,6 +89,15 @@ def build_parser() -> argparse.ArgumentParser:
     room.add_argument("--file", help="Photo of the room, for photo")
     room.add_argument("--level", type=float, help="Brightness 1 to 100 percent, for dim (lights that are off stay off)")
     room.set_defaults(handler=handle_room)
+
+    layouts = subparsers.add_parser(
+        "layouts", help="Saved layouts: one is active and runs the app, the others are sandboxes to try out"
+    )
+    layouts.add_argument("action", choices=["list", "new", "duplicate", "rename", "activate", "delete"])
+    layouts.add_argument("layout", nargs="?", metavar="NAME_OR_ID",
+                         help="The layout (name or ID); for new, the new layout's name")
+    layouts.add_argument("--name", help="Name for duplicate and rename")
+    layouts.set_defaults(handler=handle_layouts)
 
     prefs = subparsers.add_parser("prefs", help="Show or change app preferences (shared with the web app)")
     prefs.add_argument("action", choices=["show", "set"])
@@ -269,6 +281,38 @@ def _outline(text: str, units: str) -> list[list[float]]:
 def _describe_room(room) -> str:
     size = f"{format_length(room.width, room.units)} x {format_length(room.height, room.units)}"
     return f"{room.name}: {size}, {len(room.outline)} corners, {len(room.lights)} lights, {len(room.furniture)} furniture"
+
+
+def _layout_line(entry: dict[str, Any]) -> str:
+    mark, active = ("* ", " (active)") if entry["active"] else ("  ", "")
+    return f"{mark}{entry['name']}{active} · {entry['rooms']} rooms · {entry['scenes']} scenes · {entry['id']}"
+
+
+def handle_layouts(args: argparse.Namespace) -> int:
+    service = HueRoomService(args.db)
+    if args.action == "list":
+        for entry in service.layouts():
+            print(_layout_line(entry))
+        return 0
+    if args.action == "new":
+        print(f"Started {service.new_layout(args.layout)['name']}, a sandbox. Open it with --layout.")
+        return 0
+    if not args.layout:
+        raise ValueError(f"`layouts {args.action}` needs a layout name or ID")
+    layout_id = service.resolve_layout(args.layout)
+    if args.action == "duplicate":
+        print(f"Copied into {service.new_layout(args.name, from_layout=layout_id)['name']}, a sandbox.")
+    elif args.action == "rename":
+        if not args.name:
+            raise ValueError("`layouts rename` needs --name")
+        print(f"Renamed to {service.rename_layout(layout_id, args.name)['name']}.")
+    elif args.action == "activate":
+        print(f"{service.activate_layout(layout_id)['name']} is now the active layout.")
+    else:
+        name = next(entry["name"] for entry in service.layouts() if entry["id"] == layout_id)
+        service.delete_layout(layout_id)
+        print(f"Deleted {name}.")
+    return 0
 
 
 def handle_prefs(args: argparse.Namespace) -> int:
@@ -689,7 +733,12 @@ def _elevation_arg(text: str | None, units: str) -> float | str | None:
 def main(argv: Sequence[str] | None = None) -> None:
     args = build_parser().parse_args(argv)
     try:
-        code = args.handler(args)
+        if args.layout and args.command != "layouts":
+            service = HueRoomService(args.db)
+            with using_layout(service.sandbox_id(service.resolve_layout(args.layout))):
+                code = args.handler(args)
+        else:
+            code = args.handler(args)
     except KeyboardInterrupt:
         print("\nmyhuey: interrupted", file=sys.stderr)
         code = 130
