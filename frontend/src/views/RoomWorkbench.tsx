@@ -35,7 +35,7 @@ export function RoomWorkbench({ name }: { name: string }) {
       <header className="page-head">
         <div>
           <p className="eyebrow"><a href="#/">Home</a> / Room</p>
-          <h1>{room.name}</h1>
+          <h1 className="as-typed">{room.name}</h1>
         </div>
         <div className="head-tools">
           {summary.known > 0 && (

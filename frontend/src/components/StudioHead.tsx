@@ -117,7 +117,7 @@ export function StudioHead({ view, room, onPick, children }: {
     <header ref={header} className="page-head studio-head">
       <div>
         <p className="eyebrow">Studio</p>
-        <h1>{view === 'home' || !known ? 'Whole home' : room}</h1>
+        <h1 className={view === 'home' || !known ? undefined : 'as-typed'}>{view === 'home' || !known ? 'Whole home' : room}</h1>
       </div>
       <div className="head-tools">
         <label className="studio-room">

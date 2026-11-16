@@ -311,9 +311,10 @@ export function SceneEditor({ id }: { id: string }) {
     <div className="page scene-editor">
       <header className="page-head">
         <div>
-          <p className="eyebrow"><a href="#/scenes">Scenes</a> / {draft.room}</p>
-          <input className="title-input" value={draft.name} aria-label="Scene name" onChange={(e) => change({ ...draft, name: e.target.value || draft.name })} />
-          {draft.origin?.mode && <OriginLabel origin={draft.origin} />}
+          <p className="eyebrow"><a href="#/scenes">Scenes</a> / <span className="as-typed">{draft.room}</span></p>
+          <h1 className="as-typed">
+            <input className="title-input" size={Math.max(4, draft.name.length)} value={draft.name} aria-label="Scene name" onChange={(e) => change({ ...draft, name: e.target.value || draft.name })} />
+          </h1>
         </div>
         <div className="head-tools">
           <span className={`save-state ${status}`}>{status === 'saved' ? 'Saved' : status === 'saving' ? 'Saving…' : 'Unsaved'}</span>
@@ -324,6 +325,7 @@ export function SceneEditor({ id }: { id: string }) {
           <button type="button" className="button primary" onClick={apply}><Play size={16} /> Apply to lights</button>
         </div>
       </header>
+      {draft.origin?.mode && <OriginLabel origin={draft.origin} />}
 
       <div className="split">
         <div className="stage">

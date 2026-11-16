@@ -520,8 +520,13 @@ a.chrome-button { text-decoration: none; }
   .studio-head .head-tools { flex: 1 1 100%; }
 }
 .loading { display: grid; place-items: center; height: 100%; color: var(--text-2); }
-.title-input { background: transparent; border: 0; font-size: 28px; font-weight: 650; letter-spacing: -0.02em; padding: 0; width: min(520px, 60vw); border-bottom: 1px dashed transparent; }
-.title-input:hover, .title-input:focus { border-bottom-color: var(--border-strong); outline: none; }
+/* Names keep the case they were typed in; the fixed words around them stay lowercase. */
+.page-head .as-typed { text-transform: none; }
+/* The scene name is heading text you can edit: it takes the heading's font and never grows past its row. */
+.page-head .title-input { font: inherit; color: inherit; background: transparent; border: 0; border-bottom: 1px dashed transparent; padding: 0; max-width: 100%; min-width: 0; outline: none; }
+.page-head .title-input:hover { border-bottom-color: var(--border-strong); }
+.page-head .title-input:focus-visible { border-bottom-color: var(--accent); }
+.page-head h1:has(.title-input) { min-width: 0; max-width: 100%; }
 
 .split { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; flex: 1; min-height: 0; }
 .stage {
