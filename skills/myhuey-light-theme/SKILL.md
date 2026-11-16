@@ -11,8 +11,10 @@ first: the roles and the five eye-comfort rules decide most of the numbers.
 
 ## Steps
 
-1. **Read the room.** `list_rooms` if you do not know its exact name. Then `get_room`: each
-   light's id, label, product, x and y, height, and `resolved_roles`. Add `list_lights` when you
+1. **Read the room.** `list_rooms` if you do not know its exact name. Then `get_room`: for each
+   light, `light_id` (the key you use in `lights` below), `label`, `product` (an object; its
+   `productname` says what the light is), `x` and `y`, `resolved_elevation` (its height in cm;
+   `elevation` is null unless someone set one), and `resolved_roles`. Add `list_lights` when you
    need to know which lights are on now or whether the bridge answers. You assign lights by
    role, so you cannot design without this.
 2. **Get a baseline when the request names an activity** (coding, work, study, reading, a
@@ -56,7 +58,9 @@ first: the roles and the five eye-comfort rules decide most of the numbers.
      failures and warnings plainly (a failure is usually a light that is unplugged or out of
      reach); never say a light shows an effect its `warning` says it skipped.
    - Save: `save_scene` with the same arguments returns the scene's id. To change a saved scene
-     later, pass that id as `scene_id`; `list_scenes` shows what exists.
+     later, pass that id as `scene_id`; `list_scenes` shows what exists. Pass `scene_id` only to
+     replace a scene you made in this conversation, or one the person asked you to replace:
+     replacing overwrites it, and the person may rely on the scene that is there.
 7. **Planned lights** (`planned: true`) are not installed yet. They appear in the preview so the
    person sees the whole plan, and they are never sent. Say they will take the scene once installed.
 
@@ -70,12 +74,12 @@ nothing bright behind me."
 
 `get_room` with `{"room": "Office"}` returns four lights (abridged):
 
-| id | label | product | x, y | resolved_roles.desk |
-|---|---|---|---|---|
-| 4 | Monitor strip | Hue gradient lightstrip | 183, 8 | bias |
-| 7 | Signe | Signe gradient floor | 335, 30 | ambient |
-| 9 | Ceiling | Hue white ambiance ceiling | 183, 213 | ambient |
-| 12 | Shelf lamp | Hue color lamp | 150, 412 | behind |
+| light_id | label | product.productname | x, y | resolved_elevation | resolved_roles.desk |
+|---|---|---|---|---|---|
+| 4 | Monitor strip | Hue gradient lightstrip | 183, 8 | 95 | bias |
+| 7 | Signe | Signe gradient floor | 335, 30 | 150 | ambient |
+| 9 | Ceiling | Hue white ambiance ceiling | 183, 213 | 244 | ambient |
+| 12 | Shelf lamp | Hue color lamp | 150, 412 | 120 | behind |
 
 Coding names an activity, so get a baseline:
 
