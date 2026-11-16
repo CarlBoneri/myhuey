@@ -22,7 +22,7 @@ from .models import DEFAULT_FURNITURE_HEIGHT, FURNITURE_HEIGHTS, FURNITURE_SIZES
 from .room_text import draw_room, layout_problems
 from .room_view import room_json
 from .scenes import Scene
-from .service import HueRoomService
+from .service import PRODUCT_KEYS, HueRoomService
 from .skills import TOPICS, skill
 from .units import UNIT_SYSTEMS, parse_length
 
@@ -127,9 +127,9 @@ def check_layout(service: HueRoomService, room: str, layout: str | None = None) 
 
 
 def list_lights(service: HueRoomService) -> dict[str, Any]:
-    """Every light on the bridge, or why the bridge cannot say."""
+    """Every light on the bridge, or why the bridge cannot say. One read of the bridge; nothing is saved."""
     try:
-        found = service.lights()
+        found = service.read_lights()
     except BridgeNotConfigured as error:
         return {"bridge": "not paired", "detail": str(error), "lights": []}
     except HueError as error:
@@ -511,7 +511,13 @@ def place_light(
     height: float | int | str | None = None, length: float | int | str | None = None,
     role: str | None = None, label: str | None = None,
 ) -> dict[str, Any]:
-    """Place a paired light (by `light_id`; one already placed moves) or a planned `catalog` light."""
+    """Place a paired light (by `light_id`) or a planned `catalog` light; a light already in the room moves.
+
+    A new `light_id` is checked against one read of the bridge's light list and placed with the
+    bridge's name (unless `label` is given) and product, so its height and roles can be worked
+    out. An id the bridge does not have is refused. With no bridge paired or answering, only a
+    light already placed in a room of this sandbox or the active home can be placed; its label
+    and product are copied. Anything else is planned with `catalog`."""
     with sandbox(service, layout) as layout_id:
         name = _room_name(service, room)
         if (light_id is None) == (catalog is None):
@@ -530,8 +536,44 @@ def place_light(
                     service.remove_light(name, placed.light_id)  # no half-placed light
                     raise
         else:
-            placed = service.assign_light(name, str(light_id), label=label, rotation=rotation, length=size, elevation=elevation, role=role, **spot)
+            light_id = str(light_id).strip()
+            here = [light.light_id for light in service.get_room(name).lights]
+            product = None
+            if light_id not in here:  # a light already in the room just moves, with no bridge call
+                known_label, product = _light_to_place(service, name, light_id, here)
+                label = label or known_label
+            placed = service.assign_light(name, light_id, label=label, rotation=rotation, length=size, elevation=elevation,
+                                          role=role, product=product, **spot)
         return placed.to_dict()
+
+
+def _light_to_place(service: HueRoomService, room: str, light_id: str, here: list[str]) -> tuple[str, dict[str, Any]]:
+    """The label and product for a light new to this room, or Refused when it cannot be checked."""
+    if light_id.startswith("planned-"):
+        raise Refused(f"There is no planned light {light_id} in {room}. Lights here: {', '.join(here) or 'none'}. "
+                      "To plan a new one, pass catalog.")
+    try:
+        paired = service.read_lights()  # one plain read: no relocation, no discovery, no v2 call, no save
+    except BridgeNotConfigured:
+        why = "No bridge is paired"
+    except (HueError, requests.RequestException):
+        why = "The bridge is not answering"
+    else:
+        for light in paired:
+            if light["id"] == light_id:
+                return light["name"], {key: light[key] for key in PRODUCT_KEYS}
+        listed = ", ".join(f"{light['id']} ({light['name']})" for light in paired) or "none"
+        raise Refused(f"Light {light_id} is not on the bridge. Paired lights: {listed}. "
+                      "To plan a light that is not paired, pass catalog instead.")
+    # The bridge cannot say, so trust only a light already placed somewhere: this sandbox first, then the home.
+    rooms = service.rooms()
+    with using_layout(None):
+        rooms += service.rooms()
+    for other in rooms:
+        for light in other.lights:
+            if light.light_id == light_id and not light.planned:
+                return light.label, dict(light.product)
+    raise Refused(f"{why}, so light {light_id} cannot be checked. Plan it with catalog instead.")
 
 
 def remove_light(service: HueRoomService, layout: str | None, room: str, light_id: str) -> dict[str, Any]:

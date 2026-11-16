@@ -1,6 +1,7 @@
 """The assistant's layout tools build only in a sandbox, never in the active home."""
 
 import pytest
+import requests
 
 from myhuey.assistant import (
     WRITES_LAYOUT, Refused, add_room, check_layout, create_sandbox, get_room, open_in_app, place_light,
@@ -8,6 +9,9 @@ from myhuey.assistant import (
 )
 from myhuey.errors import LayoutChanged, LayoutNotFound
 from myhuey.layouts import using_layout
+from myhuey.service import HueRoomService
+
+from conftest import USERNAME
 
 
 def test_build_a_room_from_a_description(service):
@@ -180,4 +184,86 @@ def test_nothing_reaches_the_bridge(service, session):
     update_room(service, box["id"], "Den", ceiling=260)
     set_furniture(service, box["id"], "Den", [])
     check_layout(service, "Den", layout=box["id"])
+    assert session.calls == [] and session.clip_calls == []
+
+
+# A paired light as the bridge lists it, with the product fields the service stores for a placement.
+STRIP_21 = {
+    "21": {
+        "name": "Desk strip", "type": "Extended color light", "productname": "Hue lightstrip plus", "modelid": "LCL001",
+        "config": {"archetype": "huelightstrip"}, "state": {"on": True, "bri": 100, "xy": [0.4, 0.4], "reachable": True},
+    },
+}
+STRIP_PRODUCT = {"archetype": "huelightstrip", "productname": "Hue lightstrip plus", "modelid": "LCL001"}
+
+
+def _office(service):
+    box = create_sandbox(service, "Office idea")
+    add_room(service, box["id"], "Office", width=400, depth=400)
+    return box
+
+
+def _office_lights(service, box):
+    with using_layout(box["id"]):
+        return service.get_room("Office").lights
+
+
+@pytest.fixture
+def no_discovery(monkeypatch):
+    monkeypatch.setattr("myhuey.service.discover", lambda **kwargs: pytest.fail("place_light looked for the bridge"))
+
+
+def test_a_paired_light_gets_its_name_and_product_from_the_bridge(service, fake_bridge, no_discovery):
+    box = _office(service)
+    session = fake_bridge(STRIP_21)
+    placed = place_light(service, box["id"], "Office", 200, 100, light_id="21")
+    assert (placed["label"], placed["product"], placed["planned"]) == ("Desk strip", STRIP_PRODUCT, False)
+    assert "height_unknown" not in {problem["kind"] for problem in check_layout(service, "Office", layout=box["id"])["problems"]}
+    assert place_light(service, box["id"], "Office", 210, 100, light_id="21", label="Strip")["label"] == "Strip"
+    assert [call["method"] for call in session.calls] == ["GET"] and session.clip_calls == []  # the move asked nothing
+
+
+def test_an_id_the_bridge_does_not_have_is_refused_and_nothing_is_written(service, fake_bridge, no_discovery):
+    box = _office(service)
+    session = fake_bridge(STRIP_21)
+    with pytest.raises(Refused, match=r"Light 99 is not on the bridge\. Paired lights: 21 \(Desk strip\)\..*catalog"):
+        place_light(service, box["id"], "Office", 200, 100, light_id="99")
+    calls = len(session.calls)
+    with pytest.raises(Refused) as refused:
+        place_light(service, box["id"], "Office", 200, 100, light_id="planned-bogus0000")
+    assert str(refused.value) == (
+        "There is no planned light planned-bogus0000 in Office. Lights here: none. To plan a new one, pass catalog."
+    )
+    assert len(session.calls) == calls and _office_lights(service, box) == []
+
+
+def test_without_a_bridge_only_a_light_placed_before_can_be_placed(db_path):
+    service = HueRoomService(db_path)
+    service.add_room("Den", 400, 400)
+    service.assign_light("Den", "5", x=100, y=100, label="Reading lamp", product=STRIP_PRODUCT)
+    box = _office(service)
+    placed = place_light(service, box["id"], "Office", 200, 100, light_id="5")
+    assert (placed["label"], placed["product"]) == ("Reading lamp", STRIP_PRODUCT)
+    with pytest.raises(Refused) as refused:
+        place_light(service, box["id"], "Office", 200, 100, light_id="6")
+    assert str(refused.value) == "No bridge is paired, so light 6 cannot be checked. Plan it with catalog instead."
+    assert [light.light_id for light in _office_lights(service, box)] == ["5"]
+
+
+def test_a_silent_bridge_falls_back_to_a_light_placed_before(service, fake_bridge, no_discovery):
+    service.set_bridge("10.0.0.77", USERNAME, "001788fffe000001")  # its ID is known, but it is not looked for
+    service.assign_light("Den", "1", x=260, y=160, label="Desk lamp")
+    box = _office(service)
+    fake_bridge(requests.exceptions.ConnectTimeout("no answer"))
+    placed = place_light(service, box["id"], "Office", 200, 100, light_id="1")
+    assert (placed["label"], placed["product"]) == ("Desk lamp", service.get_room("Den").lights[0].product)
+    with pytest.raises(Refused) as refused:
+        place_light(service, box["id"], "Office", 200, 100, light_id="7")
+    assert str(refused.value) == "The bridge is not answering, so light 7 cannot be checked. Plan it with catalog instead."
+    assert [light.light_id for light in _office_lights(service, box)] == ["1"]
+
+
+def test_moving_a_light_already_in_the_room_asks_the_bridge_nothing(service, session):
+    box = create_sandbox(service, copy_from="active")
+    place_light(service, box["id"], "Den", 100, 100, light_id="2")
     assert session.calls == [] and session.clip_calls == []

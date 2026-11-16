@@ -49,7 +49,11 @@ You never make the sandbox active; the person does that in the app once they lik
    floor lamps at 150, table lamps and strips on the furniture under them), `length` for
    strips, `role` ("auto", "bias", "task", "view"), and `label`. It returns the placed light
    with its `light_id`; planned ones start "planned-". Calling it again with that `light_id`
-   moves the light. A bias strip goes between the monitors and the wall, at about the middle of
+   moves the light. A paired light new to the room is checked against the bridge and takes its
+   name and product from there, which is what gives it a default height and roles; an id the
+   bridge does not have is refused, with the paired ids listed. When no bridge is paired or it
+   is not answering, only a light already placed in some room can be placed (its name and
+   product are copied); plan anything else with `catalog`. A bias strip goes between the monitors and the wall, at about the middle of
    the screens' height (95 cm on a 75 cm desk).
 7. **Look at it.** `describe_room` returns a text drawing: each character is `cm_per_column`
    wide and `cm_per_row` tall (rows are twice as tall as columns), "." is floor, capital letters

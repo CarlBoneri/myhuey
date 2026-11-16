@@ -66,6 +66,25 @@ def test_lights_with_no_bridge_or_a_silent_one(db_path, fake_bridge):
     assert USERNAME not in json.dumps(result)
 
 
+def test_list_lights_only_reads_the_bridge(db_path, fake_bridge, monkeypatch):
+    """No relocation (mDNS, then Hue's cloud discovery), no v2 call, and no save, answered or not."""
+    looked = []
+    monkeypatch.setattr("myhuey.service.discover", lambda **kwargs: looked.append(kwargs) or [])
+    service = HueRoomService(db_path)
+    service.sleep = lambda seconds: None
+    service.set_bridge("10.0.0.77", USERNAME, "001788fffe000001")  # its ID is known, so it could be looked for
+    service.add_room("Den", 400, 400)
+    service.assign_light("Den", "1", x=100, y=100, product=TABLE)  # differs from what the bridge says
+    saved = []
+    monkeypatch.setattr(service, "_save", lambda config: saved.append(config))
+
+    session = fake_bridge(requests.exceptions.ConnectTimeout("no answer"), LIGHTS)  # silent, then answering
+    assert list_lights(service)["bridge"] == "not answering"
+    assert list_lights(service)["bridge"] == "ok"
+    assert looked == [] and saved == [] and session.clip_calls == []
+    assert [call["method"] for call in session.calls] == ["GET", "GET"]
+
+
 def test_layout_scope_and_secrets(service):
     sandbox = service.new_layout("Try")
     with in_layout(service, "try"):

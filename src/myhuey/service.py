@@ -326,6 +326,16 @@ class HueRoomService:
         self._remember_products(raw)
         return [light_snapshot(light_id, raw[light_id], index.get(light_id)) for light_id in sorted(raw, key=_light_order)]
 
+    def read_lights(self) -> list[dict[str, Any]]:
+        """Every light on the bridge from one plain read of its light list, and nothing else.
+
+        Unlike lights(), this never looks for a bridge that stopped answering (no mDNS, no cloud
+        discovery), makes no v2 call, and saves nothing, so it is safe from a read-only caller.
+        Gradient and effect state are not included.
+        """
+        raw = self.client().get_lights()
+        return [light_snapshot(light_id, raw[light_id]) for light_id in sorted(raw, key=_light_order)]
+
     def _remember_products(self, raw: dict[str, Any]) -> None:
         """Copy archetype, product name, and model ID into placements that lack them, so
         scenes can draw and compute lights without asking the bridge."""
