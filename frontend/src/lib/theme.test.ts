@@ -57,3 +57,25 @@ describe('the cached theme', () => {
     expect(readCachedTheme()).toEqual({ theme: 'neon', theme_dark: 'neon', theme_light: 'light' });
   });
 });
+
+describe('reduce transparency', () => {
+  const page = () => {
+    const attrs: Record<string, string> = {};
+    vi.stubGlobal('document', { documentElement: { dataset: attrs } });
+    return attrs;
+  };
+  it('reduces when on, never when off, and follows the system when auto', async () => {
+    const { applyTransparency } = await import('./theme');
+    const attrs = page();
+    vi.stubGlobal('matchMedia', (q: string) => ({ matches: q.includes('reduced-transparency') }));
+    applyTransparency('on');
+    expect(attrs.transparency).toBe('reduced');
+    applyTransparency('off');
+    expect(attrs.transparency).toBeUndefined();
+    applyTransparency('auto');
+    expect(attrs.transparency).toBe('reduced');
+    vi.stubGlobal('matchMedia', () => ({ matches: false }));
+    applyTransparency('auto');
+    expect(attrs.transparency).toBeUndefined();
+  });
+});

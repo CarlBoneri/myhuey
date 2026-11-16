@@ -86,3 +86,11 @@ export function followSystemTheme(prefs: ThemePrefs): () => void {
   query.addEventListener('change', update);
   return () => query.removeEventListener('change', update);
 }
+
+/** Solid panels instead of glass: "on" always, "off" never, "auto" when the system asks for less transparency. */
+export function applyTransparency(setting: 'auto' | 'on' | 'off'): void {
+  const system = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-transparency: reduce)').matches;
+  const reduce = setting === 'on' || (setting === 'auto' && system);
+  if (reduce) document.documentElement.dataset.transparency = 'reduced';
+  else delete document.documentElement.dataset.transparency;
+}

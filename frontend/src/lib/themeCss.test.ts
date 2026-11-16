@@ -26,6 +26,8 @@ describe('quick settings menu', () => {
     // Each tile is its own stacking layer, so without this the next tiles paint over the open menu.
     expect(rule('.room-tile:has(.quick-menu)')).toContain('z-index');
     expect(rule('.quick-menu')).toContain('var(--bg-2)');
+    // A colour can only be the last background layer; "var(--panel-bg), var(--bg-2)" is now invalid and left it see-through.
+    expect(rule('.quick-menu')).not.toMatch(/background:[^;]*var\(--[\w-]+\),/);
   });
 });
 
@@ -71,5 +73,30 @@ describe('theme token sets', () => {
   it('graphite and light keep today\'s backgrounds', () => {
     expect(tokens(':root[data-theme="graphite"]')['--bg']).toBe('#0b0a12');
     expect(tokens(':root[data-theme="light"]')['--bg']).toBe('#f6f5fb');
+  });
+});
+
+describe('glass and reduce transparency', () => {
+  it('never blurs the canvases (plans, photos, scenes draw inside .stage)', () => {
+    expect(rule('.stage')).not.toContain('backdrop-filter');
+    expect(rule('.photo-stage')).not.toContain('backdrop-filter');
+  });
+  it('panels are glass blocks built from the glass tokens', () => {
+    expect(rule('.panel')).toContain('var(--glass-bg)');
+    expect(rule('.panel')).toContain('blur(var(--glass-blur))');
+    expect(rule('.panel')).toContain('var(--glass-highlight)');
+  });
+  it('reduce transparency turns every blur off and makes panels solid', () => {
+    const reduced = tokens(':root[data-transparency="reduced"]');
+    expect(reduced['--glass-blur']).toBe('0px');
+    expect(reduced['--glass-bg']).toBe('var(--bg-2)');
+    expect(reduced['--glow-lit']).toBe('transparent');
+    expect(rule(':root[data-transparency="reduced"] *')).toMatch(/backdrop-filter:\s*none !important/);
+  });
+  it('the flat editor background has no colour wash', () => {
+    expect(css).not.toMatch(/\.backdrop\s*\{/);
+  });
+  it('uses JetBrains Mono everywhere', () => {
+    expect(root['--font'].startsWith("'JetBrains Mono Variable'")).toBe(true);
   });
 });

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { House, LayoutGrid, Lightbulb, Map as MapIcon, Moon, Palette, Settings, Sun, X } from 'lucide-react';
-import { THEMES, applyTheme, followSystemTheme, resolveTheme, systemPrefersDark, themeToggle } from './lib/theme';
+import { THEMES, applyTheme, applyTransparency, followSystemTheme, resolveTheme, systemPrefersDark, themeToggle } from './lib/theme';
 import { useStore } from './store';
 import { href, useRoute, type Route } from './lib/router';
 import { HomeView } from './views/HomeView';
@@ -33,6 +33,7 @@ export function App() {
     applyTheme(prefs);
     return followSystemTheme(prefs);
   }, [theme, theme_dark, theme_light]);
+  useEffect(() => applyTransparency(preferences.reduce_transparency), [preferences.reduce_transparency]);
   const toggle = themeToggle(preferences, systemPrefersDark());
   const next = THEMES.find((t) => t.id === resolveTheme({ ...preferences, ...toggle }, systemPrefersDark()))!;
 
@@ -83,7 +84,6 @@ export function App() {
 
   return (
     <div className={`shell${preferences.show_light_glow ? '' : ' no-glow'}`}>
-      <div className="backdrop" aria-hidden="true" />
       <nav className="rail" aria-label="Main">
         <a className="brand" href="#/" aria-label="MyHuey home">
           <LayoutGrid size={22} strokeWidth={1.5} />
