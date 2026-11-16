@@ -55,7 +55,8 @@ let toastId = 0;
 
 /** Mirrors the defaults in myhuey/preferences.py, used until the server answers. */
 export const DEFAULT_PREFERENCES: Preferences = {
-  theme: readCachedTheme(),
+  ...readCachedTheme(),
+  reduce_transparency: 'auto',
   room_sliders: true, room_sliders_when_on_only: true, show_light_glow: true, poll_seconds: 5, command_gap_ms: 100, default_units: 'imperial',
   wake_time: '07:00', bed_time: '23:00',
 };

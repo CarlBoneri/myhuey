@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { House, LayoutGrid, Lightbulb, Map as MapIcon, Moon, Palette, Settings, Sun, X } from 'lucide-react';
-import { applyTheme, followSystemTheme, systemPrefersDark, toggledTheme } from './lib/theme';
+import { THEMES, applyTheme, followSystemTheme, resolveTheme, systemPrefersDark, themeToggle } from './lib/theme';
 import { useStore } from './store';
 import { href, useRoute, type Route } from './lib/router';
 import { HomeView } from './views/HomeView';
@@ -27,11 +27,14 @@ export function App() {
   const route = useRoute();
   const { ready, setup, load, refreshLights, toasts, dismiss, lightsError, serverStale, preferences, setPreferences } = useStore();
 
+  const { theme, theme_dark, theme_light } = preferences;
   useEffect(() => {
-    applyTheme(preferences.theme);
-    return followSystemTheme(preferences.theme);
-  }, [preferences.theme]);
-  const nextTheme = toggledTheme(preferences.theme, systemPrefersDark());
+    const prefs = { theme, theme_dark, theme_light };
+    applyTheme(prefs);
+    return followSystemTheme(prefs);
+  }, [theme, theme_dark, theme_light]);
+  const toggle = themeToggle(preferences, systemPrefersDark());
+  const next = THEMES.find((t) => t.id === resolveTheme({ ...preferences, ...toggle }, systemPrefersDark()))!;
 
   useEffect(() => {
     void load();
@@ -95,9 +98,9 @@ export function App() {
             </a>
           );
         })}
-        <button type="button" className="rail-link theme-toggle" onClick={() => void setPreferences({ theme: nextTheme })}
-          aria-label={`Switch to ${nextTheme} mode`} title={`Switch to ${nextTheme} mode`}>
-          {nextTheme === 'light' ? <Sun size={20} strokeWidth={1.5} /> : <Moon size={20} strokeWidth={1.5} />}
+        <button type="button" className="rail-link theme-toggle" onClick={() => void setPreferences(toggle)}
+          aria-label={`Switch to ${next.label}`} title={`Switch to ${next.label}`}>
+          {next.kind === 'light' ? <Sun size={20} strokeWidth={1.5} /> : <Moon size={20} strokeWidth={1.5} />}
         </button>
         <div className={`bridge-dot${setup?.configured && !lightsError ? ' ok' : ''}`} title={setup?.configured ? (lightsError || `Bridge ${setup.bridge.ip}`) : 'No bridge paired'} />
       </nav>
