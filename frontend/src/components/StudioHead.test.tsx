@@ -107,6 +107,36 @@ describe('StudioHead', () => {
     expect(go).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps a pending room for the view switch when a press in the header blurs the picker without focusing anything (Safari, Firefox)', () => {
+    render(<StudioHead view="plan" room="Office" />);
+    byKey('Den');
+    fireEvent.pointerDown(radio('3D'));
+    fireEvent.blur(picker(), { relatedTarget: null });
+    expect(go).not.toHaveBeenCalled();
+    fireEvent.click(radio('3D'));
+    expect(go).toHaveBeenCalledTimes(1);
+    expect(go).toHaveBeenCalledWith({ view: 'design', room: 'Den', tab: '3d' });
+  });
+
+  it('still opens the pending room after the pause when the press was on the heading, not a control', () => {
+    render(<StudioHead view="plan" room="Office" />);
+    byKey('Den');
+    fireEvent.pointerDown(screen.getByRole('heading'));
+    fireEvent.blur(picker(), { relatedTarget: null });
+    expect(go).not.toHaveBeenCalled();
+    wait(PICK_SETTLE_MS);
+    expect(go).toHaveBeenCalledTimes(1);
+    expect(go).toHaveBeenCalledWith({ view: 'design', room: 'Den', tab: 'plan' });
+  });
+
+  it('opens the pending room at once when a press outside the header blurs the picker', () => {
+    render(<StudioHead view="plan" room="Office" />);
+    byKey('Den');
+    fireEvent.blur(picker(), { relatedTarget: null });
+    expect(go).toHaveBeenCalledTimes(1);
+    expect(go).toHaveBeenCalledWith({ view: 'design', room: 'Den', tab: 'plan' });
+  });
+
   it('opens nothing after it unmounts with a choice pending', () => {
     const { unmount } = render(<StudioHead view="3d" room="Office" />);
     byKey('Den');
