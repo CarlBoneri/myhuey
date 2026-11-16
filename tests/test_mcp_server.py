@@ -102,6 +102,8 @@ def test_malformed_furniture_says_the_shape(service):
     assert result.is_error is True and '{"kind": "desk", "x": 120, "y": 60}' in result.content[0].text
     with pytest.raises(ValueError, match=re.escape('[{"kind": "desk", "x": 120, "y": 60}]')):
         set_furniture(service, box["id"], "Office", ["desk"])  # the schema stops this one; the tool checks too
+    with pytest.raises(ValueError, match=re.escape('[{"kind": "desk", "x": 120, "y": 60}]')):
+        set_furniture(service, box["id"], "Office", [{"kind": "desk", "x": 10, "y": 10}, {"kind": ["chair"], "x": 10, "y": 10}])
 
 
 def test_parallel_calls_into_one_sandbox_all_land(service):
