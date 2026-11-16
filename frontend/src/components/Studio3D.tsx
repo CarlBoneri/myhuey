@@ -74,6 +74,8 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
 
   const dragBar = (event: ReactPointerEvent<HTMLDivElement>, apply: (move: PointerEvent) => void) => {
     const bar = event.currentTarget;
+    // Claim the press: left alone, the browser starts a text selection and cancels the resize.
+    event.preventDefault();
     bar.setPointerCapture(event.pointerId);
     const stop = () => { bar.removeEventListener('pointermove', apply); bar.removeEventListener('pointerup', stop); bar.removeEventListener('pointercancel', stop); };
     bar.addEventListener('pointermove', apply);
