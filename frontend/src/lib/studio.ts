@@ -69,3 +69,10 @@ export function resolveStudioRoute(route: Route, rooms: Named, current: string |
   const room = studioRoom(rooms, current);
   return room ? { view: 'design', room, tab: route.tab } : { view: 'studio' };
 }
+
+/**
+ * How long the Room picker waits after the last keyboard change before it opens that room. A closed
+ * native select changes on every arrow key, and opening a room rebuilds the whole designer, so the
+ * keys are given time to land on the room the person means.
+ */
+export const PICK_SETTLE_MS = 350;
