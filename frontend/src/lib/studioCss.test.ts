@@ -43,6 +43,7 @@ describe('studio layout', () => {
     const body = bodiesIn(narrowStudioBlock(), '.studio3d.audit-folded .pane-body.stage').join('\n');
     expect(body).toMatch(/height:\s*\S/);
     expect(body).not.toMatch(/height:\s*clamp\(320px, 62vh, 620px\)/);
+    expect(body).toContain('clamp(320px, calc(100dvh - 190px), 1200px)');
   });
 
   it('keeps pane bars out of text selection', () => {

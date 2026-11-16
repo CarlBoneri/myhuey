@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { inspectorAfterDrag, splitAfterDrag } from './paneDrag';
+import { inspectorAfterDrag, shouldScrollOnFold, splitAfterDrag } from './paneDrag';
 
 describe('splitAfterDrag', () => {
   it('does not jump when the bar is pressed and not moved', () => {
@@ -21,5 +21,14 @@ describe('inspectorAfterDrag', () => {
   it('clamps at both ends', () => {
     expect(inspectorAfterDrag(380, 1000, 0)).toBe(680);
     expect(inspectorAfterDrag(380, 1000, 5000)).toBe(280);
+  });
+});
+
+describe('shouldScrollOnFold', () => {
+  it('scrolls only when the click folds the glare table in a narrow window', () => {
+    expect(shouldScrollOnFold(true, true)).toBe(true);
+    expect(shouldScrollOnFold(false, true)).toBe(false);
+    expect(shouldScrollOnFold(true, false)).toBe(false);
+    expect(shouldScrollOnFold(false, false)).toBe(false);
   });
 });

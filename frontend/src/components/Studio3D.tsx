@@ -17,7 +17,7 @@ import { clamp } from '../lib/view3d';
 import type { Placement, Room } from '../types';
 import { Room3DStage, type Selection3D, type View3D } from './Room3DStage';
 import { isMac, isResizePress } from '../lib/pointer';
-import { inspectorAfterDrag, splitAfterDrag } from '../lib/paneDrag';
+import { inspectorAfterDrag, shouldScrollOnFold, splitAfterDrag } from '../lib/paneDrag';
 import { Panel, Segmented, Sidebar, Slider } from './ui';
 
 const SIZES_KEY = 'myhuey.studio3d';
@@ -72,6 +72,7 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
   useEffect(() => {
     try { localStorage.setItem(SIZES_KEY, JSON.stringify(sizes)); } catch { /* storage blocked: sizes just reset next time */ }
   }, [sizes]);
+  const viewPane = useRef<HTMLElement>(null);
   const fold = (key: keyof Sizes['collapsed']) => setSizes((s) => ({ ...s, collapsed: { ...s.collapsed, [key]: !s.collapsed[key] } }));
 
   const dragBar = (event: ReactPointerEvent<HTMLDivElement>, apply: (move: PointerEvent) => void) => {
@@ -112,14 +113,19 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
   return (
     <div className={`studio3d${collapsed.audit ? ' audit-folded' : ''}`} ref={layout} style={{ gridTemplateColumns: collapsed.inspector ? 'minmax(0, 1fr) 40px' : `minmax(0, 1fr) 10px ${sizes.inspector}px` }}>
       <div className="studio3d-main" ref={column}>
-        <section className="pane" style={{ flex: collapsed.view ? '0 0 auto' : collapsed.audit ? '1 1 0' : `0 0 calc(${sizes.split * 100}% - 5px)` }}>
+        <section className="pane" ref={viewPane} style={{ flex: collapsed.view ? '0 0 auto' : collapsed.audit ? '1 1 0' : `0 0 calc(${sizes.split * 100}% - 5px)` }}>
           <PaneHead label="the 3D view" collapsed={collapsed.view} onToggle={() => fold('view')} command={`room posture ${quote(room.name)} ${posture}`}>
             <span className={`pane-badge${report.hazards ? ' flagged' : ''}`}>{scene.eye ? summary(report) : 'No desk to check from'}</span>
             <Segmented label="Camera" value={view} onChange={setView} options={[
               { value: 'orbit', label: <><Box size={13} /> Isometric cutaway</>, title: 'Look at the room from outside' },
               { value: 'seat', label: <><ScanEye size={13} /> Desk eye-level</>, title: scene.eye ? 'Sit at the desk and look at the screen' : 'Add a desk or a screen to sit here' },
             ]} />
-            <button type="button" className="pane-fold" onClick={() => setSizes((s) => ({ ...s, collapsed: { ...s.collapsed, view: false, audit: !s.collapsed.audit } }))}
+            <button type="button" className="pane-fold" onClick={() => {
+              const folding = !collapsed.audit;
+              setSizes((s) => ({ ...s, collapsed: { ...s.collapsed, view: false, audit: !s.collapsed.audit } }));
+              // In a narrow window the folded view is a tall column: bring its top into view once it has been redrawn.
+              if (shouldScrollOnFold(folding, window.matchMedia('(max-width: 980px)').matches)) requestAnimationFrame(() => viewPane.current?.scrollIntoView({ block: 'start' }));
+            }}
               aria-label="Give the 3D view the whole column" title="Give the 3D view the whole column"><Maximize2 size={12} /></button>
           </PaneHead>
           {!collapsed.view && (

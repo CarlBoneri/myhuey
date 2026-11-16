@@ -7,3 +7,6 @@ export const splitAfterDrag = (startSplit: number, startY: number, y: number, he
 /** The inspector's width after dragging its bar: the inspector is on the right, so moving left widens it. */
 export const inspectorAfterDrag = (startWidth: number, startX: number, x: number) =>
   clamp(startWidth + (startX - x), [280, 680]);
+
+/** Folding the glare table in a narrow window leaves the 3D view in a long column: bring it to the top. Unfolding, or a wide window, scrolls nothing. */
+export const shouldScrollOnFold = (folding: boolean, narrow: boolean) => folding && narrow;
