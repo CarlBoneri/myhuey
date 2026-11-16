@@ -7,7 +7,8 @@ import { HomeView } from './views/HomeView';
 import { PlanView } from './views/PlanView';
 import { SETUP_SKIPPED_KEY, SetupView } from './views/SetupView';
 import { go } from './lib/router';
-import { RoomView } from './views/RoomView';
+import { RoomDesigner } from './views/RoomDesigner';
+import { RoomWorkbench } from './views/RoomWorkbench';
 import { ScenesView } from './views/ScenesView';
 import { SceneEditor } from './views/SceneEditor';
 import { LightsView } from './views/LightsView';
@@ -16,10 +17,10 @@ import { SandboxBanner } from './components/SandboxBanner';
 
 const NAV: { route: Route; label: string; icon: typeof House; match: Route['view'][] }[] = [
   { route: { view: 'home' }, label: 'Home', icon: House, match: ['home', 'room'] },
-  { route: { view: 'plan' }, label: 'Plan', icon: MapIcon, match: ['plan'] },
+  { route: { view: 'studio' }, label: 'Studio', icon: MapIcon, match: ['studio', 'design'] },
   { route: { view: 'scenes' }, label: 'Scenes', icon: Palette, match: ['scenes', 'scene'] },
   { route: { view: 'lights' }, label: 'Lights', icon: Lightbulb, match: ['lights'] },
-  { route: { view: 'settings' }, label: 'Bridge', icon: Settings, match: ['settings', 'setup'] },
+  { route: { view: 'settings' }, label: 'Settings', icon: Settings, match: ['settings', 'setup'] },
 ];
 
 export function App() {
@@ -57,17 +58,19 @@ export function App() {
     if (!ready) return <div className="loading">Loading your home…</div>;
     switch (route.view) {
       case 'room':
-        return <RoomView name={route.room} tab={route.tab} />;
+        return <RoomWorkbench name={route.room} />;
+      case 'design':
+        return <RoomDesigner name={route.room} tab={route.tab} />;
       case 'scenes':
         return <ScenesView />;
       case 'scene':
         return <SceneEditor id={route.id} />;
-      case 'lights':
-        return <LightsView />;
-      case 'plan':
-        return <PlanView focus={route.room} />;
+      case 'studio':
+        return <PlanView focus={route.focus} />;
       case 'setup':
         return <SetupView />;
+      case 'lights':
+        return <LightsView />;
       case 'settings':
         return <SettingsView />;
       default:

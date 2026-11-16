@@ -2,9 +2,13 @@ import { useEffect, useState } from 'react';
 
 export type Route =
   | { view: 'home' }
-  | { view: 'plan'; room?: string }
+  /** A room's workbench: use and tune it. */
+  | { view: 'room'; room: string }
+  /** The whole-home floor plan; `focus` selects a room for reshaping. */
+  | { view: 'studio'; focus?: string }
+  /** One room's designer in the Studio: outline, furniture, light placement, photo. */
+  | { view: 'design'; room: string; tab: 'plan' | 'photo' }
   | { view: 'setup' }
-  | { view: 'room'; room: string; tab: 'plan' | 'photo' }
   | { view: 'scenes' }
   | { view: 'scene'; id: string }
   | { view: 'lights' }
@@ -12,24 +16,37 @@ export type Route =
 
 export function parseRoute(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').map(decodeURIComponent);
-  if (parts[0] === 'room' && parts[1]) return { view: 'room', room: parts[1], tab: parts[2] === 'photo' ? 'photo' : 'plan' };
-  if (parts[0] === 'scenes' && parts[1]) return { view: 'scene', id: parts[1] };
-  if (parts[0] === 'scenes') return { view: 'scenes' };
-  if (parts[0] === 'lights') return { view: 'lights' };
-  if (parts[0] === 'plan') return parts[1] ? { view: 'plan', room: parts[1] } : { view: 'plan' };
-  if (parts[0] === 'setup') return { view: 'setup' };
-  if (parts[0] === 'settings') return { view: 'settings' };
+  const [first, second, third, fourth] = parts;
+  if (first === 'room' && second) {
+    // Old links: the room page's photo tab now lives in the Studio.
+    return third === 'photo' ? { view: 'design', room: second, tab: 'photo' } : { view: 'room', room: second };
+  }
+  if (first === 'studio') {
+    if (second === 'room' && third) return { view: 'design', room: third, tab: fourth === 'photo' ? 'photo' : 'plan' };
+    if (second === 'plan' && third) return { view: 'studio', focus: third };
+    return { view: 'studio' };
+  }
+  if (first === 'plan') return second ? { view: 'studio', focus: second } : { view: 'studio' };
+  if (first === 'scenes' && second) return { view: 'scene', id: second };
+  if (first === 'scenes') return { view: 'scenes' };
+  if (first === 'lights') return { view: 'lights' };
+  if (first === 'setup') return { view: 'setup' };
+  if (first === 'settings') return second === 'lights' ? { view: 'lights' } : { view: 'settings' };
   return { view: 'home' };
 }
+
+const part = encodeURIComponent;
 
 export function href(route: Route): string {
   switch (route.view) {
     case 'room':
-      return `#/room/${encodeURIComponent(route.room)}${route.tab === 'photo' ? '/photo' : ''}`;
+      return `#/room/${part(route.room)}`;
+    case 'design':
+      return `#/studio/room/${part(route.room)}${route.tab === 'photo' ? '/photo' : ''}`;
+    case 'studio':
+      return route.focus ? `#/studio/plan/${part(route.focus)}` : '#/studio';
     case 'scene':
-      return `#/scenes/${encodeURIComponent(route.id)}`;
-    case 'plan':
-      return route.room ? `#/plan/${encodeURIComponent(route.room)}` : '#/plan';
+      return `#/scenes/${part(route.id)}`;
     case 'home':
       return '#/';
     default:

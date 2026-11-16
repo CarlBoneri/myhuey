@@ -132,7 +132,7 @@ export const api = {
     call<{ mood: Mood; theme: Swatch[] }>(`/api/images/${file}/theme?mood=${mood}&count=${count}`),
   imageUrl: (file: string) => `/api/images/${file}`,
 
-  scenes: () => call<Scene[]>('/api/scenes'),
+  scenes: (activeOnly = false) => call<Scene[]>('/api/scenes', { activeOnly }),
   createScene: (scene: Partial<Scene>) => call<Scene>('/api/scenes', { method: 'POST', json: scene }),
   saveScene: (scene: Scene) => call<Scene>(`/api/scenes/${scene.id}`, { method: 'PUT', json: scene }),
   deleteScene: (id: string) => call(`/api/scenes/${id}`, { method: 'DELETE' }),
@@ -150,13 +150,14 @@ export const api = {
   addSetup: (name: string, index: number) => call<Placement[]>(`${room(name)}/setups/apply`, { method: 'POST', json: { index } }),
   setFloor: (name: string, photo: Pt[], plan: Pt[]) => call<Room>(`${room(name)}/photo/floor`, { method: 'PUT', json: { photo, plan } }),
   clearFloor: (name: string) => call<Room>(`${room(name)}/photo/floor`, { method: 'DELETE' }),
-  suggest: (name: string, body: { mode: string; at?: string; palette_id?: string; count?: number; seed?: number }) =>
-    call<Suggestion[]>(`${room(name)}/suggest`, { method: 'POST', json: body }),
-  applySuggestion: (name: string, scene: Scene) =>
-    call<{ scene: string; results: SceneResult[] }>(`${room(name)}/suggest/apply`, { method: 'POST', json: scene }),
+  suggest: (name: string, body: { mode: string; at?: string; palette_id?: string; count?: number; seed?: number }, activeOnly = false) =>
+    call<Suggestion[]>(`${room(name)}/suggest`, { method: 'POST', json: body, activeOnly }),
+  applySuggestion: (name: string, scene: Scene, activeOnly = false) =>
+    call<{ scene: string; results: SceneResult[] }>(`${room(name)}/suggest/apply`, { method: 'POST', json: scene, activeOnly }),
   palettes: (params: { tag?: string; q?: string; limit?: number } = {}) => {
     const query = new URLSearchParams(Object.entries(params).filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => [k, String(v)]));
     return call<PaletteEntry[]>(`/api/palettes?${query}`);
   },
-  applyScene: (id: string) => call<{ results: SceneResult[]; failed: number }>(`/api/scenes/${id}/apply`, { method: 'POST' }),
+  applyScene: (id: string, activeOnly = false) =>
+    call<{ results: SceneResult[]; failed: number }>(`/api/scenes/${id}/apply`, { method: 'POST', activeOnly }),
 };

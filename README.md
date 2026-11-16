@@ -28,9 +28,17 @@ myhuey serve --port 8000             # open http://127.0.0.1:8000
 
 For UI development, run `myhuey serve` and `npm --prefix frontend run dev` together. The Vite dev server proxies `/api` to port 8000.
 
+## Finding your way
+
+- **Home** is for everyday control: on/off and brightness for every room, and a tile per room showing what's on and its colours. The **⋮** on a tile offers eye-comfort suggestions for right now and the room's saved scenes, one tap each. Click a tile to open that room's **workbench** (each light, the room's scenes, and the full suggestions).
+- **Studio** is for building: saved layouts and sandboxes, the floor-plan image, tracing and drawing rooms, and each room's designer (outline, furniture, doors and windows, light placement, and the room photo).
+- **Scenes** lists every scene and makes new ones from images, colours, or the Hue gallery.
+- **Lights** lists every light. Tick several, or Cmd/Ctrl-click them, to change them together.
+- **Settings** holds the bridge pairing and your preferences.
+
 ## Suggested scenes
 
-Open a room and press **Suggest** (or run `myhuey suggest --room Office --mode code`). Pick what you are doing: **code**, **work**, **study**, **read**, or **relax**. MyHuey suggests scenes from a palette library, the time of day, and where each light sits in the room:
+Open a room's ⋮ menu on Home, or its workbench (or run `myhuey suggest --room Office --mode code`). Pick what you are doing: **code**, **work**, **study**, **read**, or **relax**. MyHuey suggests scenes from a palette library, the time of day, and where each light sits in the room:
 
 - **The clock**: white light cools and brightens after your wake time and warms and dims over the four hours before your bedtime (set both in Settings). Blue-heavy palettes are left out from three hours before bed until you wake.
 - **Your eyes**: lights by the desk stay white (task), a light just behind the monitor stays dim (bias), and lights in your line of sight or behind your chair are dimmed and kept near white, so the screen doesn't fight glare or reflections. The palette colors the rest of the room.

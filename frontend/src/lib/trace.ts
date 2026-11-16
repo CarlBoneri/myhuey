@@ -194,3 +194,15 @@ export function traceRoom(gray: Gray, seed: Pt, { gap = 3, epsilon = 1.5 }: { ga
   const outline = simplifyPolygon(corners, epsilon);
   return outline.length >= 3 ? { ok: true, outline } : { ok: false, reason: 'tiny' };
 }
+
+/** Why a spot will not trace, in the user's terms. */
+export const TRACE_MESSAGES = {
+  wall: 'That spot is on a wall. Point inside the room.',
+  leak: 'The outline would escape this room through a gap. Raise “Close door gaps”, or draw this room by hand.',
+  tiny: 'That area is too small to be a room.',
+} as const;
+
+/** The hint for a trace attempt: the reason it failed, or null when it worked (or nothing was tried). */
+export function traceHint(result: { ok: true } | { ok: false; reason: keyof typeof TRACE_MESSAGES } | null): string | null {
+  return result && !result.ok ? TRACE_MESSAGES[result.reason] : null;
+}

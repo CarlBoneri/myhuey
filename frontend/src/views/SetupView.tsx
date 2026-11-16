@@ -249,7 +249,7 @@ export function SetupView() {
               {' '}Next, lay out your home so lights can be placed where they really are.
             </p>
             <div className="button-row">
-              <button type="button" className="button primary" onClick={() => go({ view: 'plan' })}><MapIcon size={14} /> Lay out the floor plan</button>
+              <button type="button" className="button primary" onClick={() => go({ view: 'studio' })}><MapIcon size={14} /> Lay out the floor plan</button>
               <button type="button" className="button" onClick={() => go({ view: 'lights' })}>See {Object.keys(lights).length} lights</button>
             </div>
           </>

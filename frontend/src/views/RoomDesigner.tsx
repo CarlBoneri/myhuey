@@ -1,9 +1,10 @@
-// One room, drawn to scale: its outline, furniture, and lights at their physical sizes.
+// The Studio's room designer: one room drawn to scale, with its outline, furniture, doors and
+// windows, and lights at their physical sizes; plus the room photo. Using the room is the workbench's job.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Armchair, Camera, Copy, DoorOpen, Hand, Map as MapIcon, PenLine, Plus, RotateCw, Sparkles, Trash2 } from 'lucide-react';
+import { Armchair, Camera, Copy, DoorOpen, Hand, Lightbulb, Map as MapIcon, PenLine, Plus, RotateCw, Trash2 } from 'lucide-react';
 import { api } from '../api';
 import { attempt, useStore } from '../store';
-import { go } from '../lib/router';
+import { go, href } from '../lib/router';
 import { area, bounds, pathOf, round1 } from '../lib/geometry';
 import { formatArea, formatLength, snap } from '../lib/units';
 import { effectiveLength, liveColors, placedProfile } from '../lib/lights';
@@ -14,8 +15,6 @@ import { FURNITURE_CATALOG, FurnitureShape, LightSilhouette, OpeningShape } from
 import { LightControls } from '../components/LightControls';
 import { Empty, Field, HueIcon, IconButton, LengthInput, Panel, Segmented, Slider, TextInput } from '../components/ui';
 import { PhotoView } from './PhotoView';
-import { RoomDimmer } from '../components/RoomDimmer';
-import { SuggestPanel } from '../components/SuggestPanel';
 import { OutlineHandles } from '../components/OutlineHandles';
 import { PlanLightsPanel } from '../components/PlanLightsPanel';
 import { autoRoleLabel, placementNeedsRefresh } from '../lib/suggest';
@@ -200,13 +199,12 @@ function PlacedFurniture({ item, selected, onSelect, onChange, onCommit, units }
   );
 }
 
-export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' }) {
-  const { rooms, lights, replaceRoom, refreshRooms, scenes } = useStore();
+export function RoomDesigner({ name, tab }: { name: string; tab: 'plan' | 'photo' }) {
+  const { rooms, lights, replaceRoom, refreshRooms } = useStore();
   const source = rooms.find((room) => room.name === name);
   const [draft, setDraft, draftRef] = useDraft(source);
   const [selection, setSelection] = useState<Selection>(null);
   const [tool, setTool] = useState<Tool>('select');
-  const [suggesting, setSuggesting] = useState(false);
   const [openingKind, setOpeningKind] = useState<Opening['kind']>('window');
 
   const fit = useMemo(() => {
@@ -221,7 +219,7 @@ export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' })
     const updated = await attempt(() => api.updateRoom(current.name, changes));
     if (updated) {
       replaceRoom(current.name, updated);
-      if (changes.name && changes.name !== current.name) go({ view: 'room', room: updated.name, tab });
+      if (changes.name && changes.name !== current.name) go({ view: 'design', room: updated.name, tab });
     } else {
       setDraft(source);
     }
@@ -356,7 +354,7 @@ export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' })
   });
 
   if (!source || !draft) {
-    return <div className="page"><Empty title={`No room named “${name}”`}><a className="button" href="#/">Back to the floor plan</a></Empty></div>;
+    return <div className="page"><Empty title={`No room named “${name}”`}><a className="button" href="#/studio">Back to the Studio</a></Empty></div>;
   }
 
   const placedIds = new Set(draft.lights.map((l) => l.light_id));
@@ -365,25 +363,20 @@ export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' })
   const selectedLight = selection?.type === 'light' ? draft.lights.find((l) => l.light_id === selection.id) : undefined;
   const selectedFurniture = selection?.type === 'furniture' ? draft.furniture.find((f) => f.id === selection.id) : undefined;
   const selectedOpening = selection?.type === 'opening' ? draft.openings.find((o) => o.id === selection.id) : undefined;
-  const roomScenes = scenes.filter((scene) => scene.room === draft.name);
 
   return (
     <div className="page room">
       <header className="page-head">
         <div>
-          <p className="eyebrow"><a href="#/">Home</a> / Room</p>
+          <p className="eyebrow"><a href="#/studio">Studio</a> / Room</p>
           <h1>{draft.name}</h1>
         </div>
         <div className="head-tools">
-          {tab === 'plan' && (
-            <button type="button" className={`button${suggesting ? ' active' : ''}`} onClick={() => setSuggesting(!suggesting)}>
-              <Sparkles size={15} /> Suggest
-            </button>
-          )}
+          <a className="button" href={href({ view: 'room', room: draft.name })}><Lightbulb size={15} /> Open workbench</a>
           <Segmented
             label="View"
             value={tab}
-            onChange={(next) => go({ view: 'room', room: draft.name, tab: next })}
+            onChange={(next) => go({ view: 'design', room: draft.name, tab: next })}
             options={[
               { value: 'plan', label: <><MapIcon size={15} /> Plan</> },
               { value: 'photo', label: <><Camera size={15} /> Photo</> },
@@ -456,8 +449,6 @@ export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' })
           </div>
 
           <aside className="inspector">
-            {/* The saved room, so suggestions reload when a change is committed, not on every drag step. */}
-            {suggesting && <SuggestPanel room={source ?? draft} onClose={() => setSuggesting(false)} />}
             {selectedLight && (
               <Panel title={selectedLight.planned ? 'Planned light' : 'Light'} actions={<IconButton label="Remove from room" danger onClick={removeSelected}><Trash2 size={16} /></IconButton>}>
                 {selectedLight.planned ? (
@@ -511,7 +502,7 @@ export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' })
                 if (!confirm(`Delete ${draft.name}, its layout, and its scenes?`)) return;
                 if (await attempt(() => api.deleteRoom(draft.name))) {
                   await refreshRooms();
-                  go({ view: 'home' });
+                  go({ view: 'studio' });
                 }
               }} />
             )}
@@ -547,13 +538,6 @@ export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' })
               )}
             </Panel>
 
-            {roomScenes.length > 0 && (
-              <Panel title="Scenes">
-                <div className="chip-list">
-                  {roomScenes.map((scene) => <a key={scene.id} className="pill" href={`#/scenes/${scene.id}`}>{scene.name}</a>)}
-                </div>
-              </Panel>
-            )}
           </aside>
         </div>
       )}
@@ -615,7 +599,6 @@ function RoomFields({ room, onSave, onDelete }: { room: Room; onSave: (changes: 
   };
   return (
     <Panel title="Room">
-      <RoomDimmer room={room} />
       <Field label="Name">
         <TextInput value={name} onChange={(e) => setName(e.target.value)} onBlur={() => name.trim() && name !== room.name && onSave({ name: name.trim() })} />
       </Field>
@@ -630,7 +613,7 @@ function RoomFields({ room, onSave, onDelete }: { room: Room; onSave: (changes: 
       <div className="button-row">
         <button type="button" className="button subtle" onClick={() => onSave({ outline: [[box.minX, box.minY], [box.maxX, box.minY], [box.maxX, box.maxY], [box.minX, box.maxY]] })}>Rectangle</button>
         <button type="button" className="button subtle" onClick={() => onSave({ outline: lShape() })}>L-shape</button>
-        <a className="button subtle" href={`#/plan/${encodeURIComponent(room.name)}`} title="Edit the corners over your floor plan image">Reshape on the floor plan</a>
+        <a className="button subtle" href={href({ view: 'studio', focus: room.name })} title="Edit the corners over your floor plan image">Reshape on the floor plan</a>
         <button type="button" className="button danger subtle" onClick={onDelete}><Trash2 size={14} /> Delete</button>
       </div>
     </Panel>
