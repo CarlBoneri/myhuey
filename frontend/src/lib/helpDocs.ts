@@ -167,7 +167,7 @@ export const TOPICS: Topic[] = [
   {
     id: 'assistant', title: 'Your assistant', summary: 'Let the AI assistant you already use read your home and design lights.',
     blocks: [
-      { p: 'MyHuey has no AI of its own. `myhuey mcp` is a tool server that your own assistant (Claude Code, Claude Desktop, Cursor, VS Code, or any MCP client) starts on this computer, so it can read your rooms and lights and design scenes and layouts for you. There is no account or API key, and nothing leaves your computer.' },
+      { p: 'MyHuey has no AI of its own. `myhuey mcp` is a tool server that your own assistant (Claude Code, Claude Desktop, Cursor, VS Code, or any MCP client) starts on this computer, so it can read your rooms and lights and design scenes and layouts for you. MyHuey needs no account or API key, and its server sends nothing to the internet. But the assistant reads what the tools return (your room names, layouts, and light states), and that goes wherever the assistant sends its conversations, so it falls under that assistant’s privacy terms, not MyHuey’s. The tools never return the bridge key.' },
       { p: 'In the MyHuey folder, put this in the project’s `.mcp.json` (Claude Code finds it there already). Settings has the same text under Command line, with a Copy button. For another tool, add `"--directory", "/path/to/myhuey"` after `"run"`.' },
       { code: MCP_CONFIG },
       { p: 'If your editor runs on another machine over ssh, add `"--app-url", "http://localhost:8000"` after `"mcp"` so the link to the 3D view opens in your browser.' },

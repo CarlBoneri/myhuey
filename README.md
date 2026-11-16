@@ -211,6 +211,8 @@ Gradient lights take 2 to 5 colors, spaced evenly from start to end, and Hue fix
 
 MyHuey ships no AI of its own. `myhuey mcp` is a small tool server that the assistant you already use (Claude Code, Claude Desktop, Cursor, VS Code, or any other that speaks MCP) starts on your own machine, and the skills in `skills/` teach that assistant how to use it well. It runs locally, needs no account or API key, and makes no requests to the internet.
 
+The server sends nothing to the internet, but the assistant sees what the tools return (your room names, layouts, and light states), and what it does with that is governed by the assistant you chose, not by MyHuey. The tools never return the bridge key.
+
 In this repo, Claude Code needs nothing: `.mcp.json` starts the server and `.claude/skills/` holds the skills. Other agents are pointed at them by `AGENTS.md`. The same config goes into other tools. Where it says `/path/to/myhuey`, put the folder you cloned:
 
 ```json

@@ -73,4 +73,9 @@ describe('the assistant help page', () => {
   it('shows a config that starts the tool server', () => {
     expect(JSON.parse(MCP_CONFIG).mcpServers.myhuey.args).toEqual(['run', 'myhuey', 'mcp']);
   });
+  it('says the assistant sees what the tools return, and does not claim nothing leaves', () => {
+    const text = TOPICS.find((item) => item.id === 'assistant')!.blocks.map((block) => ('p' in block ? block.p : 'list' in block ? block.list.join(' ') : '')).join(' ');
+    expect(text).not.toContain('nothing leaves your computer');
+    expect(text).toContain('reads what the tools return');
+  });
 });
