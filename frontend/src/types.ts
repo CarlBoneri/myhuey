@@ -265,6 +265,7 @@ export interface SceneResult {
 }
 
 export interface Preferences {
+  theme: 'dark' | 'light' | 'system';
   room_sliders: boolean;
   room_sliders_when_on_only: boolean;
   show_light_glow: boolean;

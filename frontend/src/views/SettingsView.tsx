@@ -111,6 +111,10 @@ function PreferencesPanel() {
   const scheduleNote = scheduleWarning(p.wake_time, p.bed_time); // a hint only; saving is never blocked
   return (
     <Panel title="Preferences">
+      <h3 className="pref-group">Look</h3>
+      <PreferenceRow label="Theme" hint="System follows your computer's light or dark setting.">
+        {choice('theme', ['dark', 'light', 'system'], (v) => ({ dark: 'Dark', light: 'Light', system: 'System' })[v])}
+      </PreferenceRow>
       <h3 className="pref-group">Rooms</h3>
       <PreferenceRow label="Brightness slider on each room" hint="Dims or brightens every light that is on, in the room list and on the room page.">
         <Toggle checked={p.room_sliders} onChange={(room_sliders) => set({ room_sliders })} label="Brightness slider on each room" />

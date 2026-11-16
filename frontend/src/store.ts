@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { API_VERSION, api, setOpenLayout } from './api';
 import { isMissingLayout, readStoredLayout, storeLayout } from './lib/layout';
+import { readCachedTheme } from './lib/theme';
 import type { Preferences } from './types';
 import type { BridgeLight, HomePlan, LayoutSummary, ProfileTable, Room, Scene, SetupStatus } from './types';
 
@@ -46,6 +47,7 @@ let toastId = 0;
 
 /** Mirrors the defaults in myhuey/preferences.py, used until the server answers. */
 export const DEFAULT_PREFERENCES: Preferences = {
+  theme: readCachedTheme(),
   room_sliders: true, room_sliders_when_on_only: true, show_light_glow: true, poll_seconds: 5, command_gap_ms: 100, default_units: 'imperial',
   wake_time: '07:00', bed_time: '23:00',
 };
