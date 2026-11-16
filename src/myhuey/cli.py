@@ -801,7 +801,7 @@ def _elevation_arg(text: str | None, units: str) -> float | str | None:
 def main(argv: Sequence[str] | None = None) -> None:
     args = build_parser().parse_args(argv)
     try:
-        if args.layout and args.command not in ("layouts", "groups"):  # both are app-wide
+        if args.layout and args.command not in ("layouts", "groups", "mcp"):  # app-wide, or (mcp) each tool takes its own
             service = HueRoomService(args.db)
             with using_layout(service.sandbox_id(service.resolve_layout(args.layout))):
                 code = args.handler(args)

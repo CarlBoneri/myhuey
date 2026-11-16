@@ -86,3 +86,9 @@ def test_cli_lists_the_tools(db_path, capsys):
     assert done.value.code == 0
     out = capsys.readouterr().out
     assert out.count("\n") == len(TOOLS) and "apply_scene" in out and "Changes the real lights." in out
+
+
+def test_cli_mcp_ignores_the_global_layout_option(db_path, capsys):
+    with pytest.raises(SystemExit) as done:
+        main(["--db", db_path, "--layout", "nope", "mcp", "--list"])
+    assert done.value.code == 0 and capsys.readouterr().out.count("\n") == len(TOOLS)
