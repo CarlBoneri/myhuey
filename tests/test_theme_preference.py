@@ -39,6 +39,14 @@ def test_reduce_transparency_takes_auto_on_off(db_path):
         assert service.update_preferences({"reduce_transparency": value})["reduce_transparency"] == value
 
 
+def test_parse_value_matches_words_in_any_case():
+    assert parse_value("Auto", "reduce_transparency") == "auto"
+    assert parse_value(" NEON ", "theme") == "neon"
+    assert parse_value("VSCode-Abyss", "theme") == "vscode-abyss"
+    assert parse_value("Purple", "theme") == "Purple"   # unknown words pass through for validation to reject
+    assert parse_value("On", "room_sliders") is True     # booleans unchanged
+
+
 def test_the_cli_sets_words_as_words_for_word_preferences(db_path, capsys):
     assert parse_value("on", "reduce_transparency") == "on"
     assert parse_value("on", "room_sliders") is True

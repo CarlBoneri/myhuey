@@ -103,7 +103,8 @@ def parse_value(text: str, key: str | None = None) -> Any:
     if key in PREFERENCES:
         _, allowed = PREFERENCES[key]
         if allowed is not bool and isinstance(allowed[0], str):
-            return text.strip()
+            word = text.strip()
+            return next((item for item in allowed if item.lower() == word.lower()), word)
     if lowered in ("true", "on", "yes"):
         return True
     if lowered in ("false", "off", "no"):
