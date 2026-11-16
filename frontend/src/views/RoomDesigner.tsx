@@ -5,7 +5,7 @@ import { Armchair, Copy, DoorOpen, Hand, Lightbulb, PenLine, Plus, RotateCw, Tra
 import { api } from '../api';
 import { attempt, useStore } from '../store';
 import { go, href, parseRoute, type DesignTab } from '../lib/router';
-import { markRename } from '../lib/studio';
+import { designerRoom, markRename } from '../lib/studio';
 import { area, bounds, pathOf, round1 } from '../lib/geometry';
 import { formatArea, formatLength, snap } from '../lib/units';
 import { effectiveLength, liveColors, placedProfile } from '../lib/lights';
@@ -206,7 +206,9 @@ function PlacedFurniture({ item, selected, onSelect, onChange, onCommit, units }
 
 export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
   const { rooms, lights, profiles, replaceRoom, refreshRooms } = useStore();
-  const source = rooms.find((room) => room.name === name);
+  // The rename this designer just sent to the address; until the address catches up, the room is found under its new name.
+  const sentRename = useRef<{ from: string; to: string } | null>(null);
+  const source = designerRoom(rooms, name, sentRename.current);
   const [draft, setDraft, draftRef] = useDraft(source);
   const [selection, setSelection] = useState<Selection>(null);
   const [tool, setTool] = useState<Tool>('select');
@@ -229,6 +231,7 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
         // Follow the rename only if this room is still the one on screen; someone who has switched rooms since stays where they are.
         const here = parseRoute(window.location.hash);
         if (here.view === 'design' && here.room === current.name) {
+          sentRename.current = { from: current.name, to: updated.name };
           markRename(current.name, updated.name);
           go({ view: 'design', room: updated.name, tab: here.tab });
         }

@@ -53,6 +53,13 @@ export function nextDesignerKey(prev: { n: number; room: string }, room: string,
   return rename && rename.from === prev.room && rename.to === room ? { n: prev.n, room } : { n: prev.n + 1, room };
 }
 
+/** The room the designer shows: the one at its address, or, while a rename it made is on its way to the address, the room under its new name. */
+export function designerRoom<T extends { name: string }>(rooms: T[], name: string, rename: { from: string; to: string } | null): T | undefined {
+  const found = rooms.find((room) => room.name === name);
+  if (found || !rename || rename.from !== name) return found;
+  return rooms.find((room) => room.name === rename.to);
+}
+
 let renamed: { from: string; to: string } | null = null;
 /** The designer says: the room I am showing is being renamed, and I am about to go to its new address. */
 export const markRename = (from: string, to: string) => { renamed = { from, to }; };
@@ -83,3 +90,8 @@ export const PICK_SETTLE_MS = 350;
  * list arrives long after the key that opened it (or right after Enter), and must open at once.
  */
 export const PICK_KEY_WINDOW_MS = 80;
+
+/** Whether a picker change should wait: only when it directly follows a key press on the closed picker, and that key was not Enter. */
+export function pickSettles(lastKey: { key: string; at: number } | null, now: number): boolean {
+  return lastKey !== null && lastKey.key !== 'Enter' && now - lastKey.at < PICK_KEY_WINDOW_MS;
+}
