@@ -175,3 +175,59 @@ describe('TabStrip rail handle drag', () => {
     expect(useUi.getState().tabRail).toEqual({ width: 250, collapsed: false });
   });
 });
+
+describe('TabStrip "+" menu keys', () => {
+  const twoClosed = normalizeTabs({ order: ids, closed: ['lights', 'settings'] });
+  const plus = () => screen.getByRole('button', { name: 'Reopen or reset tabs' });
+  const items = () => screen.getAllByRole('menuitem');
+  const open = () => fireEvent.click(plus());
+  const key = (k: string) => fireEvent.keyDown(document.activeElement!, { key: k });
+
+  it('focuses the first item when the "+" menu opens', () => {
+    strip({ state: twoClosed });
+    open();
+    expect(document.activeElement).toBe(items()[0]);
+  });
+
+  it('moves through the items with the arrows, Home and End, and wraps', () => {
+    strip({ state: twoClosed });
+    open();
+    expect(items()).toHaveLength(3);
+    key('ArrowDown'); key('ArrowDown'); key('ArrowDown');
+    expect(document.activeElement).toBe(items()[0]);
+    key('End');
+    expect(document.activeElement).toBe(screen.getByRole('menuitem', { name: 'Reset the tabs' }));
+    key('Home');
+    expect(document.activeElement).toBe(items()[0]);
+    key('ArrowUp');
+    expect(document.activeElement).toBe(items()[2]);
+  });
+
+  it('stays on the only item when nothing is closed', () => {
+    strip();
+    open();
+    const only = screen.getByRole('menuitem', { name: 'Reset the tabs' });
+    expect(document.activeElement).toBe(only);
+    key('ArrowDown');
+    expect(document.activeElement).toBe(only);
+    key('ArrowUp');
+    expect(document.activeElement).toBe(only);
+    expect(document.activeElement?.tagName).toBe('BUTTON');
+  });
+
+  it.each(['Escape', 'Tab'])('closes on %s and gives focus back to "+"', (k) => {
+    strip({ state: twoClosed });
+    open();
+    key(k);
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(document.activeElement).toBe(plus());
+  });
+
+  it('still closes on Escape when focus is outside the menu', () => {
+    strip({ state: twoClosed });
+    open();
+    plus().focus();
+    fireEvent.keyDown(plus(), { key: 'Escape' });
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+});

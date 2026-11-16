@@ -2,10 +2,11 @@
 // (both horizontal), or in a rail down one side (vertical). Drag, close, reopen, reset, and the
 // keyboard moves all work the same in each; only the axis changes. A rail can also be resized by
 // its inner edge and folded to icons. Right-clicking the tabs opens a menu (TabContextMenu).
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
 import { PanelLeftClose, PanelLeftOpen, Plus, RotateCcw, X, type LucideIcon } from 'lucide-react';
 import { href, go, type Route } from '../lib/router';
 import { DEFAULT_TABS, contextOrigin, dragWidth, focusAfterClose, refocusReady, RAIL_DEFAULT, RAIL_MAX, RAIL_MIN, RAIL_STEP, clampRail, closeTab, isVertical, moveTab, narrowRailNote, neighbour, reopenTab, settleRail, shiftTab, tabMenuItems, type TabId, type TabMenuItem, type TabPlacement, type TabState } from '../lib/tabs';
+import { moveMenuFocus } from '../lib/menuKeys';
 import { useUi } from '../uiStore';
 import { TabContextMenu } from './TabContextMenu';
 
@@ -39,10 +40,20 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
   const [dropAt, setDropAt] = useState<TabId | 'end' | null>(null);
   const dragging = useRef<TabId | null>(null);
   const nav = useRef<HTMLElement>(null);
+  const plus = useRef<HTMLButtonElement>(null);
+  const plusMenu = useRef<HTMLDivElement>(null);
   const contextRef = useRef<Context | null>(null);
   contextRef.current = context;
   // A menu key that went down on a tab, so the `contextmenu` event that follows is known to be the keyboard's.
   const menuKey = useRef<{ at: number; tab: TabId; el: HTMLElement; timer?: number } | null>(null);
+
+  // The "+" menu takes focus when it opens, on its first item.
+  useLayoutEffect(() => { if (menu) plusMenu.current?.querySelector<HTMLElement>('button')?.focus(); }, [menu]);
+  // Escape or Tab from inside the menu close it and put focus back on "+". Escape from anywhere else (focus still on "+" after a click) is closed by the window listener below.
+  const plusKeys = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Escape' || event.key === 'Tab') { event.preventDefault(); setMenu(null); plus.current?.focus(); return; }
+    if (moveMenuFocus(event.currentTarget, event.key)) event.preventDefault();
+  };
 
   useEffect(() => {
     if (!menu) return;
@@ -258,10 +269,10 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
       })}
       {dropAt === 'end' && <span className="tab-drop-end" aria-hidden="true" />}
       <span className="tab-add" onPointerDown={(event) => event.stopPropagation()}>
-        <button type="button" className="tab-close always" aria-haspopup="menu" aria-expanded={!!menu} aria-label="Reopen or reset tabs"
+        <button ref={plus} type="button" className="tab-close always" aria-haspopup="menu" aria-expanded={!!menu} aria-label="Reopen or reset tabs"
           title={closed.length ? `Reopen a closed tab (${closed.length}), or reset the tabs` : 'Reset the tabs'} onClick={(event) => toggleMenu(event.currentTarget)}><Plus size={13} /></button>
         {menu && (
-          <div className="tab-menu" role="menu" style={menu}>
+          <div ref={plusMenu} className="tab-menu" role="menu" style={menu} onKeyDown={plusKeys}>
             {closed.map((tab) => {
               const Icon = tab.icon;
               return (
