@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { House, LayoutGrid, Lightbulb, Map as MapIcon, Moon, Palette, Settings, Sun, X } from 'lucide-react';
-import { applyTheme, systemPrefersDark, toggledTheme } from './lib/theme';
+import { applyTheme, followSystemTheme, systemPrefersDark, toggledTheme } from './lib/theme';
 import { useStore } from './store';
 import { href, useRoute, type Route } from './lib/router';
 import { HomeView } from './views/HomeView';
@@ -26,7 +26,10 @@ export function App() {
   const route = useRoute();
   const { ready, setup, load, refreshLights, toasts, dismiss, lightsError, serverStale, preferences, setPreferences } = useStore();
 
-  useEffect(() => applyTheme(preferences.theme), [preferences.theme]);
+  useEffect(() => {
+    applyTheme(preferences.theme);
+    return followSystemTheme(preferences.theme);
+  }, [preferences.theme]);
   const nextTheme = toggledTheme(preferences.theme, systemPrefersDark());
 
   useEffect(() => {

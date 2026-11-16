@@ -1,4 +1,4 @@
-// The app's colour theme. The page sets data-theme on <html>; styles.css holds both colour sets.
+// The app's colour theme. The page sets data-theme="dark" or "light" on <html>; styles.css holds both sets.
 // The choice is a preference (shared with the CLI); a copy in localStorage avoids a dark flash
 // before the preferences load.
 
@@ -18,8 +18,9 @@ export function systemPrefersDark(): boolean {
   return typeof matchMedia === 'function' ? matchMedia('(prefers-color-scheme: dark)').matches : true;
 }
 
+/** Show a theme: "system" is resolved here (styles.css holds only a dark and a light set). */
 export function applyTheme(theme: Theme): void {
-  document.documentElement.dataset.theme = theme;
+  document.documentElement.dataset.theme = resolveTheme(theme, systemPrefersDark());
   try {
     localStorage.setItem(CACHE_KEY, theme);
   } catch {
@@ -35,4 +36,13 @@ export function readCachedTheme(): Theme {
     // fall through
   }
   return 'dark';
+}
+
+/** Re-apply "system" when the operating system switches between light and dark. Returns a stop function. */
+export function followSystemTheme(theme: Theme): () => void {
+  if (theme !== 'system' || typeof matchMedia !== 'function') return () => {};
+  const query = matchMedia('(prefers-color-scheme: dark)');
+  const update = () => applyTheme('system');
+  query.addEventListener('change', update);
+  return () => query.removeEventListener('change', update);
 }
