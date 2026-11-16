@@ -7,7 +7,8 @@ import { brightnessToSend, roomBrightness, showRoomSlider } from '../lib/roomCon
 import type { Room } from '../types';
 import { Slider } from './ui';
 
-export function RoomDimmer({ room, compact = false }: { room: Room; compact?: boolean }) {
+/** `activeOnly`: the home screen's dimmers always work on the Active layout. */
+export function RoomDimmer({ room, compact = false, activeOnly = false }: { room: Room; compact?: boolean; activeOnly?: boolean }) {
   const { lights, preferences } = useStore();
   const live = roomBrightness(room, lights);
   const [value, setValue] = useState(live ?? 100);
@@ -30,7 +31,7 @@ export function RoomDimmer({ room, compact = false }: { room: Room; compact?: bo
         onCommit={async (v) => {
           setDragging(false);
           const level = brightnessToSend(v, live);
-          if (level !== null) await setRoomBrightness(room, level);
+          if (level !== null) await setRoomBrightness(room, level, activeOnly);
           else if (live !== null) setValue(live);
         }}
       />

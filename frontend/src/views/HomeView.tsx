@@ -13,10 +13,16 @@ import { LightSilhouette, OpeningShape } from '../components/Shapes';
 import { Empty, Field, Panel, TextInput } from '../components/ui';
 import { RoomDimmer } from '../components/RoomDimmer';
 
-export function RoomOnPlan({ room, offset, onMove, onDrop, onSelect, selected }: {
+export function RoomOnPlan({ room, offset, onMove, onDrop, onSelect, selected, readOnly = false, activeOnly = false, onOpen }: {
   room: Room; offset: Pt; onMove: (d: Pt) => void; onDrop: () => void;
   /** On the floor plan: a click selects the room for reshaping instead of opening it. */
   onSelect?: () => void; selected?: boolean;
+  /** No dragging: the home screen while a sandbox is open. */
+  readOnly?: boolean;
+  /** Power goes to the Active layout's room (the home screen). */
+  activeOnly?: boolean;
+  /** Replaces opening the room's page on a click. */
+  onOpen?: () => void;
 }) {
   const drag = useDrag();
   const { cmPerPx } = usePlan();
@@ -30,8 +36,14 @@ export function RoomOnPlan({ room, offset, onMove, onDrop, onSelect, selected }:
       transform={`translate(${room.x + offset[0]},${room.y + offset[1]})`}
       onPointerDown={(event) =>
         drag(event, {
-          move: (_, delta) => onMove([snap(delta[0], room.units), snap(delta[1], room.units)]),
-          end: (moved) => (moved ? onDrop() : onSelect ? onSelect() : go({ view: 'room', room: room.name, tab: 'plan' })),
+          move: (_, delta) => { if (!readOnly) onMove([snap(delta[0], room.units), snap(delta[1], room.units)]); },
+          end: (moved) => {
+            if (moved && !readOnly) onDrop();
+            else if (moved) return;
+            else if (onSelect) onSelect();
+            else if (onOpen) onOpen();
+            else go({ view: 'room', room: room.name, tab: 'plan' });
+          },
         })
       }
       role="button"
@@ -62,7 +74,7 @@ export function RoomOnPlan({ room, offset, onMove, onDrop, onSelect, selected }:
             className={`room-power${anyOn ? ' on' : ''}`}
             transform={`translate(${lx},${ly - fontSize - r * 1.2})`}
             onPointerDown={(event) => event.stopPropagation()}
-            onClick={(event) => { event.stopPropagation(); void setRoomPower(room, !anyOn); }}
+            onClick={(event) => { event.stopPropagation(); void setRoomPower(room, !anyOn, activeOnly); }}
             role="button"
             aria-label={`Turn every light in ${room.name} ${anyOn ? 'off' : 'on'}`}
           >
@@ -80,7 +92,14 @@ export function RoomOnPlan({ room, offset, onMove, onDrop, onSelect, selected }:
 }
 
 export function HomeView() {
-  const { rooms, setup, refreshRooms, replaceRoom, lights } = useStore();
+  const { setup, refreshRooms, replaceRoom, lights, layout, layouts, openLayout } = useStore();
+  // The home screen is the everyday control panel: it always shows the Active layout.
+  const rooms = useStore((state) => (state.layout ? state.activeRooms : state.rooms));
+  const sandboxName = layout ? (layouts.find((item) => item.id === layout)?.name ?? 'a sandbox') : null;
+  const openRoom = async (room: Room) => {
+    if (layout) await openLayout(null);
+    go({ view: 'room', room: room.name, tab: 'plan' });
+  };
   const [moving, setMovingState] = useState<{ name: string; delta: Pt } | null>(null);
   const movingRef = useRef<{ name: string; delta: Pt } | null>(null);
   const setMoving = (next: { name: string; delta: Pt } | null) => {
@@ -136,6 +155,9 @@ export function HomeView() {
                 <RoomOnPlan
                   key={room.name}
                   room={room}
+                  readOnly={!!layout}
+                  activeOnly
+                  onOpen={layout ? () => void openRoom(room) : undefined}
                   offset={moving?.name === room.name ? moving.delta : [0, 0]}
                   onMove={(delta) => setMoving({ name: room.name, delta })}
                   onDrop={async () => {
@@ -156,6 +178,11 @@ export function HomeView() {
           )}
         </div>
         <aside className="inspector">
+          {sandboxName && (
+            <p className="sandbox-note">
+              You're editing the sandbox {sandboxName}. This screen shows your active home. <a href="#/plan">Open sandbox</a>
+            </p>
+          )}
           <Panel title="Rooms">
             <ul className="room-list">
               {rooms.map((room) => {
@@ -163,7 +190,11 @@ export function HomeView() {
                 const onCount = known.filter((p) => lights[p.light_id].on).length;
                 return (
                   <li key={room.name} className="room-row">
-                    <a href={`#/room/${encodeURIComponent(room.name)}`}>
+                    <a href={`#/room/${encodeURIComponent(room.name)}`} onClick={(event) => {
+                      if (!layout) return;
+                      event.preventDefault();
+                      void openRoom(room);
+                    }}>
                       <span>{room.name}</span>
                       <small>
                         {known.length ? `${onCount} of ${known.length} on` : `${room.lights.length} lights`} · {formatArea(area(room.outline), room.units)}
@@ -171,21 +202,22 @@ export function HomeView() {
                     </a>
                     {known.length > 0 && (
                       <div className="room-power-buttons">
-                        <button type="button" className={`icon-button${onCount === known.length ? ' lit' : ''}`} title="All on" aria-label={`Turn on every light in ${room.name}`} onClick={() => setRoomPower(room, true)}>
+                        <button type="button" className={`icon-button${onCount === known.length ? ' lit' : ''}`} title="All on" aria-label={`Turn on every light in ${room.name}`} onClick={() => setRoomPower(room, true, true)}>
                           <Power size={16} strokeWidth={1.6} />
                         </button>
-                        <button type="button" className={`icon-button${onCount === 0 ? ' dim' : ''}`} title="All off" aria-label={`Turn off every light in ${room.name}`} onClick={() => setRoomPower(room, false)}>
+                        <button type="button" className={`icon-button${onCount === 0 ? ' dim' : ''}`} title="All off" aria-label={`Turn off every light in ${room.name}`} onClick={() => setRoomPower(room, false, true)}>
                           <PowerOff size={16} strokeWidth={1.6} />
                         </button>
                       </div>
                     )}
-                    <RoomDimmer room={room} compact />
+                    <RoomDimmer room={room} compact activeOnly />
                   </li>
                 );
               })}
             </ul>
           </Panel>
           <Panel title="Add a room">
+            <fieldset className="plain-fieldset" disabled={!!layout}>
             <Field label="Name"><TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="Living room" /></Field>
             <div className="field-row">
               <Field label="Width"><TextInput value={width} onChange={(e) => setWidth(e.target.value)} /></Field>
@@ -209,7 +241,10 @@ export function HomeView() {
                 </button>
               )}
             </div>
-            <p className="hint">Drag rooms to arrange the home. Scroll to zoom, drag the background to pan.</p>
+            </fieldset>
+            <p className="hint">{layout
+              ? 'Add rooms in the sandbox on the Plan screen.'
+              : 'Drag rooms to arrange the home. Scroll to zoom, drag the background to pan.'}</p>
           </Panel>
         </aside>
       </div>

@@ -11,6 +11,7 @@ import { ScenesView } from './views/ScenesView';
 import { SceneEditor } from './views/SceneEditor';
 import { LightsView } from './views/LightsView';
 import { SettingsView } from './views/SettingsView';
+import { SandboxBanner } from './components/SandboxBanner';
 
 const NAV: { route: Route; label: string; icon: typeof House; match: Route['view'][] }[] = [
   { route: { view: 'home' }, label: 'Home', icon: House, match: ['home', 'room'] },
@@ -92,6 +93,7 @@ export function App() {
             The MyHuey server is older than this page, so newer features will fail. Stop it and run <code>myhuey serve</code> again.
           </p>
         )}
+        {ready && <SandboxBanner />}
         {view}
       </main>
       <div className="toasts" role="status" aria-live="polite">
