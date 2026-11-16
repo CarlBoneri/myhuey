@@ -87,6 +87,12 @@ describe('glass and reduce transparency', () => {
     expect(rule('.stage')).not.toContain('backdrop-filter');
     expect(rule('.photo-stage')).not.toContain('backdrop-filter');
   });
+  it('writes only the standard backdrop-filter, so the build keeps it for Chrome', () => {
+    // With both spellings written, the CSS build merged them into the -webkit- one only, which
+    // Chrome ignores: panels lost their blur. The build adds the Safari prefix by itself.
+    expect(css).not.toMatch(/-webkit-backdrop-filter/);
+  });
+
   it('panels are glass blocks built from the glass tokens', () => {
     expect(rule('.panel')).toContain('var(--glass-bg)');
     expect(rule('.panel')).toContain('blur(var(--glass-blur))');
