@@ -36,10 +36,11 @@ export const TOPICS: Topic[] = [
     id: 'window', title: 'The window: tabs, prompt, and ⌘K', summary: 'Rearrange and close tabs, type commands, find anything.',
     blocks: [
       { p: 'Tabs along the top open each screen. Drag a tab to move it. The × on a tab closes it, and a middle click does too. The + at the end of the tabs brings closed tabs back and can reset them all. Opening a screen whose tab is closed reopens it.' },
+      { p: 'The tabs can sit in the top bar (the default), in a strip just above the prompt, or in a rail down the left or right side. Pick a place in the + menu, in Settings under Preferences, or type tabs top, tabs bottom, tabs left, or tabs right. In a rail, Alt-Shift-↑ ↓ moves the focused tab. In a window narrower than 720 px the tabs stay in the top bar.' },
       { p: 'The prompt at the bottom runs commands through the same API the screens use and shows what really happened. It understands a fixed list and nothing else: it never runs a shell. Click the line above it for the history.' },
       { p: '⌘K (Ctrl-K) opens the palette. Type a few letters of a room, scene, group, screen, theme, or help page and press Enter. Workflows, in the top bar, is a drawer of ready-made commands for the room you were last in.' },
       { p: 'Side panels fold. Click a panel title, or the triangle beside it, to hide its contents; Alt-click folds or opens every panel in that sidebar. What you fold stays folded next time.' },
-      { keys: [['⌘K / Ctrl-K', 'Command palette'], ['/', 'Jump to the prompt'], ['↑ ↓ in the prompt', 'Earlier and later commands'], ['Alt-Shift-← →', 'Move the focused tab'], ['Esc', 'Close the palette, leave the prompt, deselect']] },
+      { keys: [['⌘K / Ctrl-K', 'Command palette'], ['/', 'Jump to the prompt'], ['↑ ↓ in the prompt', 'Earlier and later commands'], ['Alt-Shift-← → (↑ ↓ in a rail)', 'Move the focused tab'], ['Esc', 'Close the palette, leave the prompt, deselect']] },
     ],
   },
   {

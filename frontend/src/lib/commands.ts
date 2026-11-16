@@ -6,6 +6,7 @@ import type { Route } from './router';
 import type { Posture } from './rig';
 import { THEMES, type Theme } from './theme';
 import { TOPICS } from './helpDocs';
+import { TAB_PLACEMENTS, type TabPlacement } from './tabs';
 
 export interface Snapshot {
   rooms: { name: string }[];
@@ -30,6 +31,7 @@ export type Intent =
   | { kind: 'layout-open'; id: string | null; name: string }
   | { kind: 'layout-new'; name: string | null }
   | { kind: 'tabs-reset' }
+  | { kind: 'tabs-place'; placement: TabPlacement }
   | { kind: 'scenes'; room: string | null }
   | { kind: 'scene-apply'; id: string; name: string }
   | { kind: 'open'; route: Route; label: string }
@@ -53,6 +55,7 @@ export const HELP: [string, string][] = [
   ['open home|studio|scenes|lights|settings|setup', 'Go to a screen'],
   ['open workbench|plan|3d|photo [room]', 'Go to a room: use it, or design it'],
   ['open help [topic]', 'The help pages'],
+  ['tabs top|bottom|left|right', 'Put the tabs in the top bar, above the prompt, or in a rail down the left or right'],
   ['tabs reset', 'Put every tab back, in the original order'],
   ['theme <name>|system', 'Switch the color theme'],
 ];
@@ -210,7 +213,9 @@ export function plan(line: string, snapshot: Snapshot): Intent {
 
   if (verb === 'tabs' || verb === 'tab') {
     if (action === 'reset') return { kind: 'tabs-reset' };
-    return fail('Try: tabs reset. Drag a tab to move it; × closes it; + brings closed tabs back.');
+    const place = TAB_PLACEMENTS.find((item) => item === action);
+    if (place) return { kind: 'tabs-place', placement: place };
+    return fail(`Try: tabs ${TAB_PLACEMENTS.join(', tabs ')}, or tabs reset. Drag a tab to move it; × closes it; + brings closed tabs back.`);
   }
 
   if (verb === 'theme') {
@@ -230,6 +235,11 @@ export function plan(line: string, snapshot: Snapshot): Intent {
 
 /** A name as it must be typed: quoted when it has a space. */
 export const quote = (name: string) => (/\s/.test(name) ? `"${name}"` : name);
+
+const TAB_PLACE_DETAIL: Record<TabPlacement, string> = {
+  top: 'The tabs in the top bar', bottom: 'The tabs in a strip above the prompt',
+  left: 'The tabs in a rail on the left', right: 'The tabs in a rail on the right',
+};
 
 export interface Shortcut { title: string; detail: string; command: string; group: string }
 
@@ -288,6 +298,7 @@ export function shortcuts(snapshot: Snapshot): Shortcut[] {
   for (const layout of snapshot.layouts) list.push({ group: 'Layouts', title: layout.active ? `Back to ${layout.name} (active)` : `Open sandbox ${layout.name}`, detail: '', command: `layouts open ${layout.active ? 'active' : quote(layout.name)}` });
   for (const item of TOPICS) list.push({ group: 'Help', title: `Help: ${item.title}`, detail: item.summary, command: `open help ${item.id}` });
   list.push(
+    ...TAB_PLACEMENTS.map((place): Shortcut => ({ group: 'Window', title: `Tabs: ${place}`, detail: TAB_PLACE_DETAIL[place], command: `tabs ${place}` })),
     { group: 'Window', title: 'Reset the tabs', detail: 'Every tab back, in the original order', command: 'tabs reset' },
     { group: 'Window', title: 'What can I type? (commands)', detail: 'Everything the prompt understands', command: 'help' },
   );

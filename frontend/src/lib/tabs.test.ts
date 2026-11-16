@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ALL_TABS, DEFAULT_TABS, closeTab, moveTab, neighbour, normalizeTabs, openTabs, reopenTab, shiftTab, tabForRoute, type TabState } from './tabs';
+import { ALL_TABS, DEFAULT_TABS, TAB_PLACEMENTS, closeTab, isVertical, normalizePlacement, moveTab, neighbour, normalizeTabs, openTabs, reopenTab, shiftTab, tabForRoute, type TabState } from './tabs';
 
 const state = (order: string, closed = ''): TabState => normalizeTabs({ order: order.split(' ').filter(Boolean), closed: closed.split(' ').filter(Boolean) });
 
@@ -60,4 +60,17 @@ it('every screen has a tab', () => {
   expect(tabForRoute({ view: 'setup' })).toBe('settings');
   expect(tabForRoute({ view: 'help' })).toBe('help');
   expect(tabForRoute({ view: 'home' })).toBe('home');
+});
+
+describe('tab placement', () => {
+  it('lists the four places in order', () => {
+    expect(TAB_PLACEMENTS).toEqual(['top', 'bottom', 'left', 'right']);
+  });
+  it('reads anything that is not a place as top', () => {
+    for (const place of TAB_PLACEMENTS) expect(normalizePlacement(place)).toBe(place);
+    for (const junk of [null, undefined, 7, {}, [], 'Left', 'middle', '', ['left']]) expect(normalizePlacement(junk)).toBe('top');
+  });
+  it('knows which places are rails', () => {
+    expect(TAB_PLACEMENTS.filter(isVertical)).toEqual(['left', 'right']);
+  });
 });

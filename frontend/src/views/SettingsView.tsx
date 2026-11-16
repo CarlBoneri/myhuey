@@ -5,6 +5,8 @@ import { useStore } from '../store';
 import { Field, HueIcon, Panel, Segmented, TextInput, Toggle } from '../components/ui';
 import type { Preferences } from '../types';
 import { THEMES, themeGroups, type Theme, type ThemeId } from '../lib/theme';
+import { useUi } from '../uiStore';
+import { TAB_PLACEMENTS, type TabPlacement } from '../lib/tabs';
 import { quarterHours, scheduleWarning } from '../lib/suggest';
 
 export function SettingsView() {
@@ -128,6 +130,7 @@ function ThemeSelect({ label, value, onChange, kind, withSystem = false }: {
 
 function PreferencesPanel() {
   const { preferences: p, setPreferences } = useStore();
+  const { tabPlacement, setTabPlacement } = useUi();
   const set = (changes: Partial<Preferences>) => void setPreferences(changes);
   const choice = <K extends keyof Preferences>(key: K, values: Preferences[K][], format: (v: Preferences[K]) => string) => (
     <Segmented label={key} value={String(p[key])} onChange={(v) => set({ [key]: values.find((x) => String(x) === v) } as Partial<Preferences>)}
@@ -150,6 +153,10 @@ function PreferencesPanel() {
           </PreferenceRow>
         </>
       )}
+      <PreferenceRow label="Tab position" hint="Where the window tabs sit: in the top bar, above the prompt, or in a rail down the left or right. In a narrow window they stay at the top.">
+        <Segmented<TabPlacement> label="Tab position" value={tabPlacement} onChange={setTabPlacement}
+          options={TAB_PLACEMENTS.map((place) => ({ value: place, label: place[0].toUpperCase() + place.slice(1) }))} />
+      </PreferenceRow>
       <PreferenceRow label="Reduce transparency" hint="Solid panels instead of frosted glass, and no glow. Auto follows your computer's setting.">
         {choice('reduce_transparency', ['auto', 'on', 'off'], (v) => ({ auto: 'Auto', on: 'On', off: 'Off' })[v])}
       </PreferenceRow>

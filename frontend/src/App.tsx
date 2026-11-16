@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { Box, CircleHelp, Command, House, Lightbulb, Map as MapIcon, Palette, Plus, RotateCcw, Settings, SlidersHorizontal, Sparkles, Terminal, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Box, CircleHelp, Command, House, Lightbulb, Map as MapIcon, Palette, Settings, SlidersHorizontal, Sparkles, Terminal, X } from 'lucide-react';
 import { applyTheme, applyTransparency, followSystemTheme, normalizeTheme, themeGroups, type Theme } from './lib/theme';
 import { useStore } from './store';
 import { href, useRoute, type Route } from './lib/router';
@@ -15,7 +15,8 @@ import { LightsView } from './views/LightsView';
 import { SettingsView } from './views/SettingsView';
 import { HelpView } from './views/HelpView';
 import { topicFor } from './lib/helpDocs';
-import { DEFAULT_TABS, closeTab, moveTab, neighbour, openTabs, reopenTab, shiftTab, tabForRoute, type TabId } from './lib/tabs';
+import { isVertical, openTabs, reopenTab, tabForRoute, type TabId, type TabPlacement } from './lib/tabs';
+import { TabStrip, type Tab } from './components/TabStrip';
 import { SandboxBanner } from './components/SandboxBanner';
 import { PromptBar } from './components/PromptBar';
 import { CommandPalette } from './components/CommandPalette';
@@ -24,8 +25,20 @@ import { API_VERSION } from './api';
 import { useUi } from './uiStore';
 import { snapshot } from './lib/runCommand';
 
-interface Tab { id: TabId; label: string; icon: typeof House; route: Route }
-const TAB_DRAG = 'application/x-myhuey-tab';
+/** Below this width a rail has no room beside the content, so it is drawn in the top bar instead. */
+const NARROW = '(max-width: 719.98px)';
+function useNarrow(): boolean {
+  const [narrow, setNarrow] = useState(() => typeof window.matchMedia === 'function' && window.matchMedia(NARROW).matches);
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return;
+    const query = window.matchMedia(NARROW);
+    const update = () => setNarrow(query.matches);
+    update();
+    query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
+  }, []);
+  return narrow;
+}
 
 /** Every tab there can be. The room tabs follow the room you were last in, and need one. */
 function allTabs(room: string | null): Tab[] {
@@ -44,10 +57,10 @@ function allTabs(room: string | null): Tab[] {
 export function App() {
   const route = useRoute();
   const { ready, setup, load, refreshLights, toasts, dismiss, lightsError, serverStale, preferences, setPreferences, rooms } = useStore();
-  const { paletteOpen, workflowsOpen, setPalette, setWorkflows, setCurrentRoom, currentRoom, tabs: tabState, setTabs } = useUi();
-  const [tabMenu, setTabMenu] = useState(false);
-  const [dropAt, setDropAt] = useState<TabId | 'end' | null>(null);
-  const dragging = useRef<TabId | null>(null);
+  const { paletteOpen, workflowsOpen, setPalette, setWorkflows, setCurrentRoom, currentRoom, tabs: tabState, setTabs, tabPlacement } = useUi();
+  const narrow = useNarrow();
+  // The saved choice is untouched; a narrow window just draws a rail in the top bar.
+  const placement: TabPlacement = narrow && isVertical(tabPlacement) ? 'top' : tabPlacement;
 
   const { theme, theme_dark, theme_light } = preferences;
   useEffect(() => {
@@ -82,26 +95,7 @@ export function App() {
     const now = useUi.getState().tabs;
     if (now.closed.includes(activeTab)) setTabs(reopenTab(now, activeTab));
   }, [activeTab, setTabs]);
-  useEffect(() => {
-    if (!tabMenu) return;
-    const close = () => setTabMenu(false);
-    window.addEventListener('pointerdown', close);
-    return () => window.removeEventListener('pointerdown', close);
-  }, [tabMenu]);
-  const close = (id: TabId) => {
-    const next = closeTab(tabState, id);
-    if (next === tabState) return;
-    if (id === activeTab) {
-      const to = neighbour(tabState, id, available);
-      if (to && byId.get(to)) go(byId.get(to)!.route);
-    }
-    setTabs(next);
-  };
-  const dropOn = (target: TabId | null) => {
-    if (dragging.current) setTabs(moveTab(tabState, dragging.current, target));
-    dragging.current = null;
-    setDropAt(null);
-  };
+  const strip = <TabStrip placement={placement} tabs={tabs} closed={closed} available={available} byId={byId} activeTab={activeTab} state={tabState} setTabs={setTabs} />;
   const bridgeOk = !!setup?.configured && !lightsError;
 
   useEffect(() => {
@@ -152,7 +146,7 @@ export function App() {
   })();
 
   return (
-    <div className={`shell${preferences.show_light_glow ? '' : ' no-glow'}`}>
+    <div className={`shell tabs-${placement}${preferences.show_light_glow ? '' : ' no-glow'}`}>
       <header className="topbar">
         <div className="topbar-left">
           <span className="window-dots" aria-hidden="true"><i /><i /><i /></span>
@@ -161,63 +155,7 @@ export function App() {
             <span>MyHuey</span>
             <small title="The API revision this page was built for">rev {API_VERSION}</small>
           </a>
-          <nav className="tabs" aria-label="Main"
-            onDragOver={(event) => { if (dragging.current) { event.preventDefault(); setDropAt('end'); } }}
-            onDrop={(event) => { event.preventDefault(); dropOn(null); }}>
-            {tabs.map((tab, index) => {
-              const Icon = tab.icon;
-              const active = tab.id === activeTab;
-              return (
-                <span key={tab.id} className={`tab${active ? ' active' : ''}${dropAt === tab.id ? ' drop-before' : ''}`} draggable
-                  onDragStart={(event) => { dragging.current = tab.id; event.dataTransfer.setData(TAB_DRAG, tab.id); event.dataTransfer.effectAllowed = 'move'; }}
-                  onDragEnd={() => { dragging.current = null; setDropAt(null); }}
-                  onDragOver={(event) => {
-                    if (!dragging.current) return;
-                    event.preventDefault();
-                    event.stopPropagation();
-                    // Past the middle of a tab means "after it": before the next tab, or at the end.
-                    const box = event.currentTarget.getBoundingClientRect();
-                    const after = event.clientX > box.left + box.width / 2;
-                    setDropAt(after ? tabs[index + 1]?.id ?? 'end' : tab.id);
-                  }}
-                  onDrop={(event) => { event.preventDefault(); event.stopPropagation(); dropOn(dropAt === 'end' || dropAt === null ? null : dropAt); }}
-                  onAuxClick={(event) => { if (event.button === 1) { event.preventDefault(); close(tab.id); } }}>
-                  <a href={href(tab.route)} draggable={false} aria-current={active ? 'page' : undefined}
-                    title="Drag to move · Alt-Shift-← → moves it with the keyboard"
-                    onKeyDown={(event) => {
-                      if (!(event.altKey && event.shiftKey) || (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight')) return;
-                      event.preventDefault();
-                      setTabs(shiftTab(tabState, tab.id, event.key === 'ArrowLeft' ? -1 : 1));
-                    }}>
-                    <Icon size={13} strokeWidth={1.6} aria-hidden="true" />
-                    <span>{tab.label}</span>
-                  </a>
-                  {tabs.length > 1 && (
-                    <button type="button" className="tab-close" aria-label={`Close the ${tab.label} tab`} title="Close this tab" onClick={() => close(tab.id)}><X size={11} /></button>
-                  )}
-                </span>
-              );
-            })}
-            {dropAt === 'end' && <span className="tab-drop-end" aria-hidden="true" />}
-            <span className="tab-add" onPointerDown={(event) => event.stopPropagation()}>
-              <button type="button" className="tab-close always" aria-haspopup="menu" aria-expanded={tabMenu} aria-label="Reopen or reset tabs"
-                title={closed.length ? `Reopen a closed tab (${closed.length})` : 'Reset the tabs'} onClick={() => setTabMenu((open) => !open)}><Plus size={13} /></button>
-              {tabMenu && (
-                <div className="tab-menu" role="menu">
-                  {closed.map((tab) => {
-                    const Icon = tab.icon;
-                    return (
-                      <button key={tab.id} type="button" role="menuitem" onClick={() => { setTabs(reopenTab(tabState, tab.id)); setTabMenu(false); go(tab.route); }}>
-                        <Icon size={13} aria-hidden="true" /> {tab.label}
-                      </button>
-                    );
-                  })}
-                  {!closed.length && <p>No closed tabs. × on a tab closes it.</p>}
-                  <button type="button" role="menuitem" onClick={() => { setTabs(DEFAULT_TABS); setTabMenu(false); }}><RotateCcw size={13} aria-hidden="true" /> Reset the tabs</button>
-                </div>
-              )}
-            </span>
-          </nav>
+          {placement === 'top' && strip}
         </div>
         <div className="topbar-right">
           <a className={`bridge-pill${bridgeOk ? ' ok' : ''}`} href="#/settings" title={setup?.configured ? (lightsError || 'The bridge is answering') : 'No bridge paired'}>
@@ -245,6 +183,7 @@ export function App() {
         </div>
       </header>
       <div className="workspace">
+        {placement === 'left' && strip}
       <main className="main">
         {serverStale && (
           <p className="stale-banner" role="alert">
@@ -255,7 +194,9 @@ export function App() {
         {view}
       </main>
         {workflowsOpen && <WorkflowsDrawer />}
+        {placement === 'right' && strip}
       </div>
+      {placement === 'bottom' && strip}
       <PromptBar />
       {paletteOpen && <CommandPalette />}
       <div className="toasts" role="status" aria-live="polite">

@@ -2,7 +2,7 @@
 // posture and glare mode, the prompt's history, and which overlays are open.
 import { create } from 'zustand';
 import type { Posture } from './lib/rig';
-import { normalizeTabs, type TabState } from './lib/tabs';
+import { normalizePlacement, normalizeTabs, type TabPlacement, type TabState } from './lib/tabs';
 
 export interface Entry { id: number; command: string; output: string; ok: boolean; ms: number; at: number }
 
@@ -17,10 +17,12 @@ interface UiState {
   /** The prompt's text, so help pages and other screens can put a command in it. */
   draft: string;
   tabs: TabState;
+  tabPlacement: TabPlacement;
   /** Sidebar panels that are folded, by panel key. */
   folded: Record<string, true>;
   setDraft: (draft: string) => void;
   setTabs: (tabs: TabState) => void;
+  setTabPlacement: (placement: TabPlacement) => void;
   setFolded: (keys: string[], folded: boolean) => void;
   setCurrentRoom: (room: string | null) => void;
   setPosture: (posture: Posture) => void;
@@ -35,6 +37,7 @@ interface UiState {
 export const HISTORY_LIMIT = 100;
 const ROOM_KEY = 'myhuey.room';
 const TABS_KEY = 'myhuey.tabs';
+const PLACEMENT_KEY = 'myhuey.tabPlacement';
 const PANELS_KEY = 'myhuey.panels';
 
 function stored<T>(key: string, fallback: T): T {
@@ -59,11 +62,17 @@ export const useUi = create<UiState>((set, get) => ({
   workflowsOpen: false,
   draft: '',
   tabs: normalizeTabs(stored(TABS_KEY, null)),
+  tabPlacement: normalizePlacement(stored(PLACEMENT_KEY, null)),
   folded: Object.fromEntries((stored<unknown[]>(PANELS_KEY, []) as unknown[]).filter((key): key is string => typeof key === 'string').map((key) => [key, true as const])),
   setDraft: (draft) => set({ draft }),
   setTabs(tabs) {
     store(TABS_KEY, tabs);
     set({ tabs });
+  },
+  setTabPlacement(placement) {
+    const next = normalizePlacement(placement);
+    store(PLACEMENT_KEY, next);
+    set({ tabPlacement: next });
   },
   setFolded(keys, folded) {
     const next = { ...get().folded };

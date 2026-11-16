@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { matchScore, parseArgs, plan, quote, search, shortcuts, tokenize, type Snapshot } from './commands';
+import { HELP, matchScore, parseArgs, plan, quote, search, shortcuts, tokenize, type Snapshot } from './commands';
 
 const snapshot: Snapshot = {
   rooms: [{ name: 'Office' }, { name: 'Living room' }, { name: 'Loft' }],
@@ -117,5 +117,31 @@ describe('shortcuts', () => {
     expect(search(list, 'zzz')).toEqual([]);
     expect(search(list, '').length).toBe(Math.min(40, list.length));
     expect(matchScore(list[0], 'code')).toBeGreaterThan(matchScore(list[0], 'suggest'));
+  });
+});
+
+describe('tab position commands', () => {
+  it('sets each of the four places', () => {
+    for (const place of ['top', 'bottom', 'left', 'right']) {
+      expect(run(`tabs ${place}`)).toEqual({ kind: 'tabs-place', placement: place });
+    }
+    expect(run('TAB Left')).toEqual({ kind: 'tabs-place', placement: 'left' });
+  });
+  it('still resets the tabs', () => {
+    expect(run('tabs reset')).toEqual({ kind: 'tabs-reset' });
+  });
+  it('names the valid words for an unknown one', () => {
+    for (const line of ['tabs middle', 'tabs']) {
+      const text = message(line);
+      for (const word of ['top', 'bottom', 'left', 'right', 'reset']) expect(text).toContain(word);
+    }
+  });
+  it('is offered in the palette, one shortcut per place', () => {
+    const commands = shortcuts(snapshot).filter((item) => item.group === 'Window').map((item) => item.command);
+    for (const place of ['top', 'bottom', 'left', 'right']) expect(commands).toContain(`tabs ${place}`);
+    for (const item of shortcuts(snapshot).filter((entry) => entry.command.startsWith('tabs '))) expect(run(item.command).kind).not.toBe('error');
+  });
+  it('is in the help text', () => {
+    expect(HELP.some(([usage]) => usage.startsWith('tabs top'))).toBe(true);
   });
 });

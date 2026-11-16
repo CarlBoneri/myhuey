@@ -19,6 +19,17 @@ export function normalizeTabs(saved: unknown): TabState {
   return { order, closed };
 }
 
+/** Where the tabs sit: in the top bar, in a strip above the prompt, or in a rail down one side. */
+export type TabPlacement = 'top' | 'bottom' | 'left' | 'right';
+export const TAB_PLACEMENTS: TabPlacement[] = ['top', 'bottom', 'left', 'right'];
+
+/** A saved placement made safe: anything that is not one of the four is top. */
+export const normalizePlacement = (value: unknown): TabPlacement =>
+  TAB_PLACEMENTS.find((place) => place === value) ?? 'top';
+
+/** Rails run down the side; their tabs stack, so they move along the vertical axis. */
+export const isVertical = (placement: TabPlacement): boolean => placement === 'left' || placement === 'right';
+
 export const openTabs = (state: TabState): TabId[] => state.order.filter((id) => !state.closed.includes(id));
 
 /** Move a tab to sit just before another, or to the end when `before` is null. */

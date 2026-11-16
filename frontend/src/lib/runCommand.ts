@@ -106,6 +106,9 @@ async function execute(intent: Intent): Promise<Outcome> {
     case 'tabs-reset':
       ui.setTabs(DEFAULT_TABS);
       return { output: 'Every tab is back, in the original order', ok: true };
+    case 'tabs-place':
+      ui.setTabPlacement(intent.placement);
+      return { output: `Tabs: ${intent.placement}`, ok: true };
     case 'scenes': {
       const list = store.scenes.filter((scene) => !intent.room || scene.room.toLowerCase() === intent.room.toLowerCase());
       return { output: list.map((scene) => `${scene.name} [${scene.room}] ${scene.id}`).join(' · ') || 'No scenes yet', ok: true };

@@ -55,7 +55,7 @@ There's no separate frontend server in normal use: `myhuey serve` runs the API a
 
 ### The window
 
-The app is laid out like a terminal. Tabs along the top open each screen: the 3D view and the workbench for the room you were last in, Home, the floor plan, Scenes, Lights and groups, Settings, and Help. The tabs are yours to arrange: drag one to move it (or Alt-Shift-← → with it focused), close it with its × or a middle click, and bring closed tabs back, or reset them all, from the + at the end. Opening a screen whose tab is closed reopens it. The top bar also shows the bridge's address and whether it is answering, the theme menu, Workflows, and ⌘K.
+The app is laid out like a terminal. Tabs along the top open each screen: the 3D view and the workbench for the room you were last in, Home, the floor plan, Scenes, Lights and groups, Settings, and Help. The tabs are yours to arrange: drag one to move it (or Alt-Shift-← → with it focused), close it with its × or a middle click, and bring closed tabs back, or reset them all, from the + at the end. Opening a screen whose tab is closed reopens it. You can move the tabs to a strip above the prompt or to a rail down the left or right side, from the + menu, from Settings, or by typing `tabs bottom`, `tabs left`, `tabs right` or `tabs top`. The top bar also shows the bridge's address and whether it is answering, the theme menu, Workflows, and ⌘K.
 
 A prompt is pinned to the bottom of every screen. Type a command and it runs through the same API the screens use, then shows what really happened and how long it took. Click the line above the prompt for the history. It understands a fixed set of commands and nothing else: it never runs a shell, and nothing runs on the server.
 
