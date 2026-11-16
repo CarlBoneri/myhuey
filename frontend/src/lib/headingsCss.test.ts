@@ -24,6 +24,18 @@ describe('path headings', () => {
     expect(body).not.toContain('font-size: 28px');
   });
 
+  it('lets the heading holding the name field shrink inside its row', () => {
+    const h1 = bodies('.page-head h1:has(.title-input)').join('\n');
+    expect(h1).toContain('display: flex');
+    expect(h1).toContain('min-width: 0');
+    expect(bodies('.page-head .title-input').join('\n')).toContain('min-width: 0');
+  });
+
+  it('marks keyboard focus on the name field with a solid 2px accent underline', () => {
+    const focus = bodies('.page-head .title-input:focus-visible').join('\n');
+    expect(focus).toContain('border-bottom: 2px solid var(--accent)');
+  });
+
   it('keeps fixed heading words lowercase', () => {
     expect(bodies('.page-head h1').join('\n')).toContain('text-transform: lowercase');
   });

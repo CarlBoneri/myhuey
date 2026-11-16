@@ -11,7 +11,7 @@ describe('plan strokes', () => {
   });
 
   it('draws no white stroke straight onto a theme background', () => {
-    for (const file of ['../views/SceneEditor.tsx', '../components/PlanLightsPanel.tsx']) {
+    for (const file of ['../views/SceneEditor.tsx', '../components/PlanLightsPanel.tsx', '../components/Shapes.tsx']) {
       const source = read(file);
       expect(source, file).not.toContain('stroke="#fff"');
       expect(source, file).not.toContain("stroke={selected ? '#fff'");
@@ -20,6 +20,14 @@ describe('plan strokes', () => {
     const handle = css.match(/\.end-handle circle\s*\{[^}]*\}/)?.[0] ?? '';
     expect(handle).toContain('stroke');
     expect(handle).not.toContain('stroke: #fff');
+  });
+
+  it('draws light rings and strip outlines in the line colour', () => {
+    const source = read('../components/Shapes.tsx');
+    expect(source).not.toContain('rgba(255,255,255,0.55)');
+    expect(source).not.toContain('rgba(255,255,255,0.4)');
+    expect(source).toContain("stroke: 'var(--plan-line)'");
+    expect(css).toMatch(/--plan-line:\s*color-mix\(in srgb, var\(--text\) 55%/);
   });
 
   it('draws the string light wire in the line colour', () => {

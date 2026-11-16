@@ -26,6 +26,20 @@ describe('legibility', () => {
     expect(shrinking.map((size) => `line ${size.line}: ${size.value}`)).toEqual([]);
   });
 
+  it('keeps the floor inside max() at 12px or more', () => {
+    const floors = sizes.filter((size) => /^max\(/.test(size.value));
+    expect(floors.length).toBeGreaterThan(0);
+    expect(floors.filter((size) => parseFloat(size.value.slice(4)) < 12).map((size) => `line ${size.line}: ${size.value}`)).toEqual([]);
+  });
+
+  it('gives <small> a 12px floor of its own', () => {
+    const rule = css.match(/^small\s*\{([^}]*)\}/m);
+    expect(rule, 'a rule for small exists').not.toBeNull();
+    const size = rule![1].match(/font-size:\s*([^;]+)/)?.[1].trim() ?? '';
+    const floor = size.startsWith('max(') ? parseFloat(size.slice(4)) : parseFloat(size);
+    expect(floor).toBeGreaterThanOrEqual(12);
+  });
+
   it('leaves no hard-coded violet outside theme palettes', () => {
     const rest = css.replace(/^:root[^{]*\{[^}]*\}/gm, '');
     const rules = [...rest.matchAll(/^([^{}\n/][^{}]*)\{([^}]*)\}/gm)];
