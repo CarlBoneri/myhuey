@@ -13,7 +13,11 @@ import { LightSilhouette, OpeningShape } from '../components/Shapes';
 import { Empty, Field, Panel, TextInput } from '../components/ui';
 import { RoomDimmer } from '../components/RoomDimmer';
 
-export function RoomOnPlan({ room, offset, onMove, onDrop }: { room: Room; offset: Pt; onMove: (d: Pt) => void; onDrop: () => void }) {
+export function RoomOnPlan({ room, offset, onMove, onDrop, onSelect, selected }: {
+  room: Room; offset: Pt; onMove: (d: Pt) => void; onDrop: () => void;
+  /** On the floor plan: a click selects the room for reshaping instead of opening it. */
+  onSelect?: () => void; selected?: boolean;
+}) {
   const drag = useDrag();
   const { cmPerPx } = usePlan();
   const { lights, profiles } = useStore();
@@ -22,12 +26,12 @@ export function RoomOnPlan({ room, offset, onMove, onDrop }: { room: Room; offse
   const fontSize = Math.max(12 * cmPerPx, 14);
   return (
     <g
-      className="home-room"
+      className={`home-room${selected ? ' selected' : ''}`}
       transform={`translate(${room.x + offset[0]},${room.y + offset[1]})`}
       onPointerDown={(event) =>
         drag(event, {
           move: (_, delta) => onMove([snap(delta[0], room.units), snap(delta[1], room.units)]),
-          end: (moved) => (moved ? onDrop() : go({ view: 'room', room: room.name, tab: 'plan' })),
+          end: (moved) => (moved ? onDrop() : onSelect ? onSelect() : go({ view: 'room', room: room.name, tab: 'plan' })),
         })
       }
       role="button"

@@ -1,11 +1,13 @@
 // The whole home over a scanned floor plan. Set the plan's scale from a printed dimension,
 // then click inside a room to trace it, or draw rooms by hand with snapping.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Hand, ImagePlus, PenLine, Ruler, ScanLine, Square, Trash2 } from 'lucide-react';
+import { Check, Hand, ImagePlus, PenLine, Ruler, ScanLine, Square, Trash2 } from 'lucide-react';
 import { api } from '../api';
 import { attempt, useStore } from '../store';
 import { area, bounds, pathOf, rectPoints, round1 } from '../lib/geometry';
-import { calibrate, imageToPlan, lightsOutside, planToImage, snapPoint } from '../lib/plan';
+import { calibrate, imageToPlan, lightsOutside, planToImage, snapCorner, snapPoint } from '../lib/plan';
+import { href } from '../lib/router';
+import { OutlineHandles } from '../components/OutlineHandles';
 import { scaleToFit, simplifyPolygon, toGray, traceRoom, type Gray } from '../lib/trace';
 import { formatArea, formatLength, parseLength } from '../lib/units';
 import type { HomePlan, Pt, Room, Units } from '../types';
@@ -193,7 +195,7 @@ function Backdrop({ plan }: { plan: HomePlan }) {
   );
 }
 
-export function PlanView() {
+export function PlanView({ focus }: { focus?: string } = {}) {
   const { rooms, plan, setPlan, refreshRooms, replaceRoom, toast } = useStore();
   const [tool, setTool] = useState<Tool>('select');
   const [shape, setShape] = useState<DrawShape>('rect');
@@ -207,6 +209,11 @@ export function PlanView() {
   const movingRef = useRef(moving);
   const setMoving = (next: typeof moving) => { movingRef.current = next; setMovingState(next); };
   const pixels = usePlanPixels(plan);
+  // Reshaping a room in place, over the plan image: the selected room and its outline mid-drag.
+  const [selected, setSelected] = useState<string | null>(focus ?? null);
+  const [draft, setDraft] = useState<Pt[] | null>(null);
+  useEffect(() => { if (focus) { setSelected(focus); setTool('select'); } }, [focus]);
+  const selectedRoom = rooms.find((room) => room.name === selected) ?? null;
   const units: Units = rooms[0]?.units ?? 'imperial';
 
   const fit = useMemo(() => {
@@ -278,8 +285,33 @@ export function PlanView() {
       : `${room.name} reshaped.`, outside.length > 0);
   };
 
+  const reshape = async (room: Room, outline: Pt[]) => {
+    const rounded = outline.map(([x, y]) => [round1(x), round1(y)] as Pt);
+    const updated = await attempt(() => api.updateRoom(room.name, { outline: rounded }));
+    setDraft(null);
+    if (!updated) return;
+    replaceRoom(room.name, updated);
+    const outside = lightsOutside(updated.lights, updated.outline);
+    if (outside.length) toast(`Now outside ${room.name}: ${outside.map((l) => l.label).join(', ')}. Move them back in on the room's plan.`, true);
+  };
+
+  /** Snap a dragged corner of `room` to the other rooms' corners and walls (in its own coordinates). */
+  const snapFor = (room: Room) => {
+    const others = rooms.filter((other) => other.name !== room.name);
+    const corners = others.flatMap((other) => other.outline.map(([x, y]) => [x + other.x - room.x, y + other.y - room.y] as Pt));
+    const edges = others.flatMap((other) => other.outline.map((p, i) => {
+      const q = other.outline[(i + 1) % other.outline.length];
+      return [[p[0] + other.x - room.x, p[1] + other.y - room.y], [q[0] + other.x - room.x, q[1] + other.y - room.y]] as [Pt, Pt];
+    }));
+    return (target: Pt, neighbors: [Pt, Pt], free: boolean, radius: number) =>
+      free ? snapCorner(target, neighbors, { units, radius, corners: [], edges: [] }, true)
+        : snapCorner(target, neighbors, { units, radius, corners, edges }, false);
+  };
+
   const hint = {
-    select: 'Drag rooms to arrange them. Click a room to open it.',
+    select: selectedRoom
+      ? `Reshaping ${selectedRoom.name}: drag a corner, drag a + to add one, double-click a corner to remove it. Corners snap to other rooms; hold Alt to place freely.`
+      : 'Click a room to reshape it over the plan. Drag a room to move it.',
     scale: 'Drag a line over a printed dimension, then type its length.',
     trace: 'Hover inside a room to preview its outline. Click to keep it.',
     draw: shape === 'points' ? 'Click each corner. Click the first corner, double-click, or press Enter to close. Esc cancels.' : 'Drag out the room. Corners snap to other rooms.',
@@ -301,11 +333,13 @@ export function PlanView() {
             <IconButton label="Trace a room" active={tool === 'trace'} disabled={!plan} onClick={() => setTool('trace')}><ScanLine size={18} strokeWidth={1.5} /></IconButton>
             <IconButton label="Draw a room" active={tool === 'draw'} onClick={() => setTool('draw')}><PenLine size={18} strokeWidth={1.5} /></IconButton>
           </div>
-          <PlanCanvas fit={fit} units={units}>
+          <PlanCanvas fit={fit} units={units} onBackgroundPointerDown={() => { if (tool === 'select') setSelected(null); return false; }}>
             {plan && <Backdrop plan={plan} />}
             <g pointerEvents={tool === 'select' ? undefined : 'none'}>
               {rooms.map((room) => (
-                <RoomOnPlan key={room.name} room={room} offset={moving?.name === room.name ? moving.delta : [0, 0]}
+                <RoomOnPlan key={room.name} room={room.name === selected && draft ? { ...room, outline: draft } : room}
+                  offset={moving?.name === room.name ? moving.delta : [0, 0]}
+                  selected={room.name === selected} onSelect={() => setSelected(room.name)}
                   onMove={(delta) => setMoving({ name: room.name, delta })}
                   onDrop={async () => {
                     const delta = movingRef.current?.name === room.name ? movingRef.current.delta : null;
@@ -316,6 +350,12 @@ export function PlanView() {
                   }} />
               ))}
             </g>
+            {tool === 'select' && selectedRoom && !moving && (
+              <g transform={`translate(${selectedRoom.x},${selectedRoom.y})`}>
+                <ReshapeHandles room={selectedRoom} outline={draft ?? selectedRoom.outline} units={units}
+                  snap={snapFor(selectedRoom)} onChange={setDraft} onCommit={(outline) => void reshape(selectedRoom, outline)} />
+              </g>
+            )}
             {pending && <path d={pathOf(pending)} className="pending-outline" />}
             <ToolLayer tool={tool} shape={shape} units={units} rooms={rooms} plan={plan} pixels={pixels} gap={gap}
               onOutline={(outline) => { setPending(outline); setNewName(''); }}
@@ -326,6 +366,16 @@ export function PlanView() {
         </div>
 
         <aside className="inspector">
+          {tool === 'select' && selectedRoom && (
+            <Panel title={selectedRoom.name} actions={<IconButton label="Done reshaping" onClick={() => setSelected(null)}><Check size={16} /></IconButton>}>
+              <p className="hint">{formatLength(selectedRoom.width, selectedRoom.units)} × {formatLength(selectedRoom.height, selectedRoom.units)} · {selectedRoom.outline.length} corners</p>
+              <p className="hint">Drag the corners onto the walls in the plan behind. Each change saves; doors and windows stay on their walls.</p>
+              <div className="button-row">
+                <a className="button" href={href({ view: 'room', room: selectedRoom.name, tab: 'plan' })}>Open room</a>
+                <button type="button" className="button subtle" onClick={() => setSelected(null)}>Done</button>
+              </div>
+            </Panel>
+          )}
           {pending && (
             <Panel title="New outline" actions={<IconButton label="Discard" danger onClick={() => setPending(null)}><Trash2 size={16} /></IconButton>}>
               <p className="hint">{formatArea(area(pending), units)} · {pending.length} corners</p>
@@ -407,4 +457,15 @@ export function PlanView() {
       </div>
     </div>
   );
+}
+
+/** The outline editor, wired to the plan screen's snapping (its zoom sets the snap radius). */
+function ReshapeHandles({ room, outline, units, snap, onChange, onCommit }: {
+  room: Room; outline: Pt[]; units: Units;
+  snap: (target: Pt, neighbors: [Pt, Pt], free: boolean, radius: number) => Pt;
+  onChange: (outline: Pt[]) => void; onCommit: (outline: Pt[]) => void;
+}) {
+  const { cmPerPx } = usePlan();
+  return <OutlineHandles outline={outline} units={units} onChange={onChange} onCommit={onCommit} origin={[room.x, room.y]}
+    snapTo={(target, neighbors, free) => snap(target, neighbors, free, 12 * cmPerPx)} />;
 }

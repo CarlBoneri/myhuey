@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 export type Route =
   | { view: 'home' }
-  | { view: 'plan' }
+  | { view: 'plan'; room?: string }
   | { view: 'setup' }
   | { view: 'room'; room: string; tab: 'plan' | 'photo' }
   | { view: 'scenes' }
@@ -16,7 +16,7 @@ export function parseRoute(hash: string): Route {
   if (parts[0] === 'scenes' && parts[1]) return { view: 'scene', id: parts[1] };
   if (parts[0] === 'scenes') return { view: 'scenes' };
   if (parts[0] === 'lights') return { view: 'lights' };
-  if (parts[0] === 'plan') return { view: 'plan' };
+  if (parts[0] === 'plan') return parts[1] ? { view: 'plan', room: parts[1] } : { view: 'plan' };
   if (parts[0] === 'setup') return { view: 'setup' };
   if (parts[0] === 'settings') return { view: 'settings' };
   return { view: 'home' };
@@ -28,6 +28,8 @@ export function href(route: Route): string {
       return `#/room/${encodeURIComponent(route.room)}${route.tab === 'photo' ? '/photo' : ''}`;
     case 'scene':
       return `#/scenes/${encodeURIComponent(route.id)}`;
+    case 'plan':
+      return route.room ? `#/plan/${encodeURIComponent(route.room)}` : '#/plan';
     case 'home':
       return '#/';
     default:
