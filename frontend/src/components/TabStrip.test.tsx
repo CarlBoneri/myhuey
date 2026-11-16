@@ -124,11 +124,11 @@ describe('TabStrip screen-reader details and the narrow-window note', () => {
   it('names the rail toggle once and lets aria-expanded carry the state', () => {
     useUi.setState({ tabPlacement: 'left' });
     strip({ placement: 'left' });
-    expect(screen.getByRole('button', { name: 'Tab rail' }).getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByRole('button', { name: 'Tabs', exact: true }).getAttribute('aria-expanded')).toBe('true');
     cleanup();
     useUi.setState({ tabRail: { width: 210, collapsed: true } });
     strip({ placement: 'left' });
-    expect(screen.getByRole('button', { name: 'Tab rail' }).getAttribute('aria-expanded')).toBe('false');
+    expect(screen.getByRole('button', { name: 'Tabs', exact: true }).getAttribute('aria-expanded')).toBe('false');
     expect(screen.queryByRole('separator')).toBeNull();
   });
   it('explains a rail drawn at the top in the menu', () => {

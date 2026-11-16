@@ -195,7 +195,7 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
       onDrop={(event) => { event.preventDefault(); dropOn(null); }}>
       {vertical && (
         <button type="button" className={`rail-toggle ${placement}`} aria-expanded={!collapsed}
-          aria-label="Tab rail" title={collapsed ? 'Expand the tab rail' : 'Collapse the tab rail to icons'}
+          aria-label="Tabs" title={collapsed ? 'Expand the tab rail' : 'Collapse the tab rail to icons'}
           onClick={() => setTabRail({ ...tabRail, collapsed: !collapsed })}>
           {collapsed ? <PanelLeftOpen size={14} aria-hidden="true" /> : <PanelLeftClose size={14} aria-hidden="true" />}
           {!collapsed && <span>Tabs</span>}
