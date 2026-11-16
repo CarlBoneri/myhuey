@@ -22,7 +22,7 @@ beforeEach(() => {
   useStore.setState({ rooms: rooms as never });
   useUi.setState({ currentRoom: null });
 });
-afterEach(() => { vi.useRealTimers(); });
+afterEach(() => { vi.clearAllTimers(); vi.useRealTimers(); });
 
 describe('StudioHead', () => {
   it('lists Whole home and every room, and shows the room on screen', () => {
@@ -141,8 +141,10 @@ describe('StudioHead', () => {
     byKey('Den');
     fireEvent.click(radio('3D'));
     expect(vi.mocked(go).mock.lastCall).toEqual([{ view: 'design', room: 'Den', tab: '3d' }]);
+    fireEvent.blur(picker());
     wait(PICK_SETTLE_MS);
     expect(go).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(go).mock.lastCall).toEqual([{ view: 'design', room: 'Den', tab: '3d' }]);
   });
 
   it('the view switch still goes to the chosen room when blur opened it first', () => {
@@ -165,9 +167,60 @@ describe('StudioHead', () => {
 
   it('opens at once when Enter chooses in the open list', () => {
     render(<StudioHead view="3d" room="Office" />);
+    fireEvent.keyDown(picker(), { key: 'ArrowDown' });
+    wait(300);
     fireEvent.keyDown(picker(), { key: 'Enter' });
     fireEvent.change(picker(), { target: { value: 'Den' } });
     expect(go).toHaveBeenCalledTimes(1);
     expect(go).toHaveBeenCalledWith({ view: 'design', room: 'Den', tab: '3d' });
+  });
+
+  it('Enter never settles', () => {
+    render(<StudioHead view="3d" room="Office" />);
+    fireEvent.keyDown(picker(), { key: 'Enter' });
+    fireEvent.change(picker(), { target: { value: 'Den' } });
+    expect(go).toHaveBeenCalledTimes(1);
+    expect(go).toHaveBeenCalledWith({ view: 'design', room: 'Den', tab: '3d' });
+  });
+
+  it('leaves a pending choice alone when focus moves to the view switch', () => {
+    render(<StudioHead view="plan" room="Office" />);
+    byKey('Den');
+    fireEvent.blur(picker(), { relatedTarget: radio('3D') });
+    expect(go).not.toHaveBeenCalled();
+    fireEvent.click(radio('3D'));
+    expect(go).toHaveBeenCalledTimes(1);
+    expect(go).toHaveBeenCalledWith({ view: 'design', room: 'Den', tab: '3d' });
+  });
+
+  it('opens the pending room at once when focus leaves for something outside the header', () => {
+    render(<StudioHead view="3d" room="Office" />);
+    const outside = document.createElement('button');
+    document.body.appendChild(outside);
+    byKey('Den');
+    fireEvent.blur(picker(), { relatedTarget: outside });
+    outside.remove();
+    expect(go).toHaveBeenCalledTimes(1);
+    expect(go).toHaveBeenCalledWith({ view: 'design', room: 'Den', tab: '3d' });
+  });
+
+  it('a key that changes nothing still restarts the pause', () => {
+    render(<StudioHead view="3d" room="Office" />);
+    byKey('Den');
+    wait(300);
+    fireEvent.keyDown(picker(), { key: 'ArrowDown' });
+    wait(300);
+    expect(go).not.toHaveBeenCalled();
+    wait(50);
+    expect(go).toHaveBeenCalledTimes(1);
+    expect(go).toHaveBeenCalledWith({ view: 'design', room: 'Den', tab: '3d' });
+  });
+
+  it('drops a pending room that has gone', () => {
+    render(<StudioHead view="3d" room="Office" />);
+    byKey('Den');
+    act(() => useStore.setState({ rooms: rooms.filter((room) => room.name !== 'Den') as never }));
+    wait(PICK_SETTLE_MS);
+    expect(go).not.toHaveBeenCalled();
   });
 });

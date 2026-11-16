@@ -7,7 +7,7 @@ import { Box, Camera, House, Map as MapIcon } from 'lucide-react';
 import { useStore } from '../store';
 import { useUi } from '../uiStore';
 import { go } from '../lib/router';
-import { PICK_KEY_WINDOW_MS, PICK_SETTLE_MS, pickRoom, switchView, type StudioView } from '../lib/studio';
+import { PICK_SETTLE_MS, pickRoom, pickSettles, switchView, type StudioView } from '../lib/studio';
 import { Segmented } from './ui';
 
 const WHOLE_HOME = '';
@@ -29,6 +29,7 @@ export function StudioHead({ view, room, onPick, children }: {
   const rooms = useStore((state) => state.rooms);
   const remembered = useUi((state) => state.currentRoom);
   const picker = useRef<HTMLSelectElement>(null);
+  const header = useRef<HTMLElement>(null);
   const none = rooms.length === 0;
   const known = room !== null && rooms.some((item) => item.name === room);
 
@@ -65,7 +66,10 @@ export function StudioHead({ view, room, onPick, children }: {
   const open = () => {
     const value = pendingRef.current;
     drop();
-    if (value !== null && value !== shown) pick(value);
+    if (value === null || value === shown) return;
+    // A room that has gone since the choice was made opens nothing.
+    if (value !== WHOLE_HOME && !rooms.some((item) => item.name === value)) return;
+    pick(value);
   };
   // The timer calls whatever open the latest render made, so it never opens against an old room or view.
   const openLatest = useRef(open);
@@ -80,20 +84,27 @@ export function StudioHead({ view, room, onPick, children }: {
     opened.current = null;
   }, [shown]);
 
-  const change = (value: string) => {
-    const last = lastKey.current;
-    const stepping = last !== null && last.key !== 'Enter' && Date.now() - last.at < PICK_KEY_WINDOW_MS;
-    if (!stepping) { drop(); pick(value); return; }
-    pendingRef.current = value;
-    setPending(value);
+  const restart = () => {
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => openLatest.current(), PICK_SETTLE_MS);
+  };
+  const change = (value: string) => {
+    if (!pickSettles(lastKey.current, Date.now())) { drop(); pick(value); return; }
+    pendingRef.current = value;
+    setPending(value);
+    restart();
   };
   const keyDown = (key: string) => {
     if (key === 'Tab') return;
     lastKey.current = { key, at: Date.now() };
     if (key === 'Enter') open();
     else if (key === 'Escape') drop();
+    else if (pendingRef.current !== null) restart(); // any other key, even one that changes nothing, keeps the pause going
+  };
+  // Blur opens the pending choice, unless focus is only moving to another control in this header (the view switch), which acts on it itself.
+  const blur = (to: EventTarget | null) => {
+    if (pendingRef.current !== null && to instanceof Node && header.current?.contains(to)) return;
+    open();
   };
   // The view switch acts on the room the picker has chosen, whether or not that room has opened yet.
   const switchTo = (next: StudioView) => {
@@ -103,7 +114,7 @@ export function StudioHead({ view, room, onPick, children }: {
   };
 
   return (
-    <header className="page-head studio-head">
+    <header ref={header} className="page-head studio-head">
       <div>
         <p className="eyebrow">Studio</p>
         <h1>{view === 'home' || !known ? 'Whole home' : room}</h1>
@@ -113,7 +124,7 @@ export function StudioHead({ view, room, onPick, children }: {
           <span>Room</span>
           <select ref={picker} className="input" value={pending ?? shown}
             onPointerDown={() => { lastKey.current = null; }} onKeyDown={(event) => keyDown(event.key)}
-            onBlur={open} onChange={(event) => change(event.target.value)}>
+            onBlur={(event) => blur(event.relatedTarget)} onChange={(event) => change(event.target.value)}>
             <option value={WHOLE_HOME}>Whole home</option>
             {rooms.map((item) => <option key={item.name} value={item.name}>{item.name}</option>)}
           </select>

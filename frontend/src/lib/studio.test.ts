@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseRoute, href } from './router';
-import { nextDesignerKey, pickRoom, resolveStudioRoute, studioRoom, studioViewOf, switchView } from './studio';
+import { PICK_KEY_WINDOW_MS, designerRoom, nextDesignerKey, pickRoom, pickSettles, resolveStudioRoute, studioRoom, studioViewOf, switchView } from './studio';
 
 const rooms = [{ name: 'Loft' }, { name: 'Office' }, { name: 'Den' }];
 
@@ -89,5 +89,42 @@ describe('the designer survives a rename but not a room switch', () => {
     expect(nextDesignerKey(start, 'Den', null)).toEqual({ n: 4, room: 'Den' });
     expect(nextDesignerKey(start, 'Den', { from: 'Office', to: 'Study' })).toEqual({ n: 4, room: 'Den' });
     expect(nextDesignerKey(start, 'Study', { from: 'Loft', to: 'Study' })).toEqual({ n: 4, room: 'Study' });
+  });
+});
+
+describe('the room the designer shows', () => {
+  const all = [{ name: 'Office', n: 1 }, { name: 'Study', n: 2 }];
+  it('finds the room by name', () => {
+    expect(designerRoom(all, 'Office', null)).toBe(all[0]);
+  });
+  it('finds the room by name even when a rename is given', () => {
+    expect(designerRoom(all, 'Office', { from: 'Office', to: 'Study' })).toBe(all[0]);
+  });
+  it('gives the renamed room while the address catches up', () => {
+    expect(designerRoom(all, 'Den', { from: 'Den', to: 'Study' })).toBe(all[1]);
+  });
+  it('ignores a rename of another room', () => {
+    expect(designerRoom(all, 'Den', { from: 'Loft', to: 'Study' })).toBeUndefined();
+  });
+  it('gives nothing for a missing name and no rename', () => {
+    expect(designerRoom(all, 'Den', null)).toBeUndefined();
+  });
+  it('gives nothing when the renamed room is missing too', () => {
+    expect(designerRoom(all, 'Den', { from: 'Den', to: 'Gone' })).toBeUndefined();
+  });
+});
+
+describe('when a picker change waits', () => {
+  it('does not wait without a key before it', () => {
+    expect(pickSettles(null, 1000)).toBe(false);
+  });
+  it('waits when a key came just before', () => {
+    expect(pickSettles({ key: 'ArrowDown', at: 1000 }, 1000 + PICK_KEY_WINDOW_MS - 1)).toBe(true);
+  });
+  it('does not wait once the window has passed', () => {
+    expect(pickSettles({ key: 'ArrowDown', at: 1000 }, 1000 + PICK_KEY_WINDOW_MS)).toBe(false);
+  });
+  it('never waits after Enter', () => {
+    expect(pickSettles({ key: 'Enter', at: 1000 }, 1001)).toBe(false);
   });
 });
