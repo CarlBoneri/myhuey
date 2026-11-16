@@ -1,7 +1,8 @@
 import { create } from 'zustand';
-import { API_VERSION, api } from './api';
+import { API_VERSION, api, setOpenLayout } from './api';
+import { isMissingLayout, readStoredLayout, storeLayout } from './lib/layout';
 import type { Preferences } from './types';
-import type { BridgeLight, HomePlan, ProfileTable, Room, Scene, SetupStatus } from './types';
+import type { BridgeLight, HomePlan, LayoutSummary, ProfileTable, Room, Scene, SetupStatus } from './types';
 
 export interface Toast { id: number; message: string; error: boolean }
 
@@ -14,6 +15,11 @@ interface State {
   serverStale: boolean;
   rooms: Room[];
   scenes: Scene[];
+  /** The open sandbox's ID; null while working on the Active layout. */
+  layout: string | null;
+  layouts: LayoutSummary[];
+  /** The Active layout's rooms, kept apart while a sandbox is open: the home screen shows these. */
+  activeRooms: Room[];
   plan: HomePlan | null;
   preferences: Preferences;
   profiles: ProfileTable | null;
@@ -22,6 +28,12 @@ interface State {
   refreshLights: () => Promise<void>;
   refreshRooms: () => Promise<void>;
   refreshScenes: () => Promise<void>;
+  refreshLayouts: () => Promise<void>;
+  openLayout: (id: string | null) => Promise<void>;
+  /** The rooms the home screen shows: always the Active layout's. */
+  homeRooms: () => Room[];
+  /** The open sandbox was deleted elsewhere: go back to Active and say so. */
+  layoutGone: () => Promise<void>;
   setPlan: (plan: HomePlan | null) => void;
   setPreferences: (changes: Partial<Preferences>) => Promise<void>;
   replaceRoom: (previousName: string, room: Room) => void;
@@ -46,6 +58,9 @@ export const useStore = create<State>((set, get) => ({
   serverStale: false,
   rooms: [],
   scenes: [],
+  layout: null,
+  layouts: [],
+  activeRooms: [],
   plan: null,
   preferences: DEFAULT_PREFERENCES,
   profiles: null,
@@ -59,10 +74,17 @@ export const useStore = create<State>((set, get) => ({
       // reported by the calls below
     }
     try {
-      const [setup, rooms, scenes, profiles, plan, preferences] = await Promise.all([
+      // Reopen the sandbox this browser had open, if it still exists and is not the Active layout.
+      const layouts = await api.layouts().catch(() => [] as LayoutSummary[]);
+      const stored = readStoredLayout();
+      const layout = layouts.some((item) => item.id === stored && !item.active) ? stored : null;
+      setOpenLayout(layout);
+      storeLayout(layout);
+      const [setup, rooms, scenes, profiles, plan, preferences, activeRooms] = await Promise.all([
         api.setup(), api.rooms(), api.scenes(), api.profiles(), api.plan(), api.preferences().catch(() => DEFAULT_PREFERENCES),
+        layout ? api.activeRooms() : Promise.resolve([] as Room[]),
       ]);
-      set({ setup, rooms, scenes, profiles, plan, preferences });
+      set({ setup, rooms, scenes, profiles, plan, preferences, layout, layouts, activeRooms });
       if (setup.configured) await get().refreshLights();
     } catch (error) {
       get().toast((error as Error).message);
@@ -81,7 +103,37 @@ export const useStore = create<State>((set, get) => ({
   },
 
   async refreshRooms() {
-    set({ rooms: await api.rooms() });
+    const [rooms, activeRooms] = await Promise.all([api.rooms(), get().layout ? api.activeRooms() : Promise.resolve([] as Room[])]);
+    set({ rooms, activeRooms });
+  },
+
+  async refreshLayouts() {
+    set({ layouts: await api.layouts() });
+  },
+
+  async openLayout(id) {
+    setOpenLayout(id);
+    storeLayout(id);
+    set({ layout: id });
+    try {
+      const [rooms, scenes, plan, layouts, activeRooms] = await Promise.all([
+        api.rooms(), api.scenes(), api.plan(), api.layouts(), id ? api.activeRooms() : Promise.resolve([] as Room[]),
+      ]);
+      set({ rooms, scenes, plan, layouts, activeRooms });
+    } catch (error) {
+      if (id && isMissingLayout(error)) await get().layoutGone();
+      else get().toast((error as Error).message);
+    }
+  },
+
+  homeRooms() {
+    const { layout, activeRooms, rooms } = get();
+    return layout ? activeRooms : rooms;
+  },
+
+  async layoutGone() {
+    get().toast("That sandbox was deleted, so you're back on your active layout.");
+    await get().openLayout(null);
   },
 
   async refreshScenes() {
@@ -150,13 +202,14 @@ export function sendLight(id: string, changes: Record<string, unknown>, optimist
   })();
 }
 
-/** Turn every light in a room on or off; the plan updates at once, then reads back the bridge. */
-export async function setRoomPower(room: Room, on: boolean) {
+/** Turn every light in a room on or off; the plan updates at once, then reads back the bridge.
+ * `activeOnly` is for the home screen, which always works on the Active layout. */
+export async function setRoomPower(room: Room, on: boolean, activeOnly = false) {
   const store = useStore.getState();
   const ids = room.lights.map((l) => l.light_id).filter((id) => store.lights[id]);
   ids.forEach((id) => store.patchLight(id, { on }));
   try {
-    const result = await api.roomPower(room.name, on);
+    const result = await api.roomPower(room.name, on, activeOnly);
     if (result.failed) {
       const names = result.results.filter((r) => !r.ok).map((r) => r.label).join(', ');
       store.toast(`${result.failed} light(s) in ${room.name} did not turn ${on ? 'on' : 'off'}: ${names}`);
@@ -168,12 +221,12 @@ export async function setRoomPower(room: Room, on: boolean) {
 }
 
 /** Dim or brighten every light that is on in a room. The plan updates at once, then reads back the bridge. */
-export async function setRoomBrightness(room: Room, percent: number) {
+export async function setRoomBrightness(room: Room, percent: number, activeOnly = false) {
   const store = useStore.getState();
   const bri = Math.max(1, Math.round(percent * 2.54));
   room.lights.forEach((p) => store.lights[p.light_id]?.on && store.patchLight(p.light_id, { brightness: bri }));
   try {
-    const result = await api.roomBrightness(room.name, Math.round(percent));
+    const result = await api.roomBrightness(room.name, Math.round(percent), activeOnly);
     if (result.failed) {
       store.toast(`${result.failed} light(s) in ${room.name} did not change: ${result.results.filter((r) => !r.ok).map((r) => r.label).join(', ')}`);
     }
@@ -190,7 +243,8 @@ export async function attempt<T>(work: () => Promise<T>, success?: string): Prom
     if (success) useStore.getState().toast(success, false);
     return result;
   } catch (error) {
-    useStore.getState().toast((error as Error).message);
+    if (isMissingLayout(error) && useStore.getState().layout) await useStore.getState().layoutGone();
+    else useStore.getState().toast((error as Error).message);
     return undefined;
   }
 }

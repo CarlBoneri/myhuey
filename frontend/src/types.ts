@@ -285,3 +285,13 @@ export interface ProfileTable {
   product: Record<string, Profile>;
   model: Record<string, Profile>;
 }
+
+/** A saved layout. One is Active and runs the app; the others are sandboxes. */
+export interface LayoutSummary {
+  id: string;
+  name: string;
+  active: boolean;
+  rooms: number;
+  scenes: number;
+  updated: number | null;
+}
