@@ -460,12 +460,12 @@ export function PlanView({ focus }: { focus?: string } = {}) {
 }
 
 /** The outline editor, wired to the plan screen's snapping (its zoom sets the snap radius). */
-function ReshapeHandles({ outline, units, snap, onChange, onCommit }: {
+function ReshapeHandles({ room, outline, units, snap, onChange, onCommit }: {
   room: Room; outline: Pt[]; units: Units;
   snap: (target: Pt, neighbors: [Pt, Pt], free: boolean, radius: number) => Pt;
   onChange: (outline: Pt[]) => void; onCommit: (outline: Pt[]) => void;
 }) {
   const { cmPerPx } = usePlan();
-  return <OutlineHandles outline={outline} units={units} onChange={onChange} onCommit={onCommit}
+  return <OutlineHandles outline={outline} units={units} onChange={onChange} onCommit={onCommit} origin={[room.x, room.y]}
     snapTo={(target, neighbors, free) => snap(target, neighbors, free, 12 * cmPerPx)} />;
 }
