@@ -1,6 +1,6 @@
 // The right-click menu on the tab bar: close a tab, choose where the tabs sit, fold or reset the
 // rail. It opens at the pointer (or beside a focused tab), stays inside the window, takes focus,
-// and hands it back when it closes. What it offers is decided by tabMenuItems in lib/tabs.ts.
+// and hands it back when it closes. Escape and Tab both leave it. What it offers is decided by tabMenuItems in lib/tabs.ts.
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { PanelLeftClose, PanelLeftOpen, RotateCcw, X } from 'lucide-react';
@@ -48,6 +48,8 @@ export function TabContextMenu({ items, at, onChoose, onClose }: {
   }, [onClose]);
 
   const move = (event: React.KeyboardEvent) => {
+    // Tab leaves the menu like Escape does, so focus goes back to the tab it came from.
+    if (event.key === 'Tab') { event.preventDefault(); onClose(true); return; }
     const keys = ['ArrowDown', 'ArrowUp', 'Home', 'End'];
     if (!keys.includes(event.key)) return;
     event.preventDefault();

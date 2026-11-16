@@ -8,5 +8,6 @@ export default defineConfig({
   plugins: [react()],
   build: { outDir: '../static/app', emptyOutDir: true, assetsInlineLimit: 0 },
   server: { proxy: { '/api': 'http://127.0.0.1:8000' } },
+  // Tests run in plain Node; a component test opts in to a simulated browser with a first-line comment.
   test: { environment: 'node', server: { deps: { inline: ['@material/material-color-utilities'] } } },
 });

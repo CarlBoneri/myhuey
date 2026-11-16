@@ -355,6 +355,16 @@ npm --prefix frontend test               # frontend tests
 npm --prefix frontend run typecheck
 ```
 
+#### Component tests
+
+Some tests now run in a simulated browser (happy-dom, with React Testing Library). Before this, focus and keyboard behaviour in things like the tab menu could only be checked by eye.
+
+Both are dev-only. Nothing from them is in the built app, and the tests make no network requests.
+
+A test file opts in by putting `// @vitest-environment happy-dom` on its first line and importing `render`, `screen` and the rest from `frontend/src/test/dom.ts`. Every other test still runs in plain Node.
+
+The simulated browser has no layout, so these tests cannot check sizes, scrolling, or what is drawn on top of what. Those are still checked by eye.
+
 ### Credits and license
 
 MyHuey is free for non-commercial use.
