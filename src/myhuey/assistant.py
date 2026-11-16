@@ -16,6 +16,7 @@ from .catalog import CATALOG
 from .errors import BridgeNotConfigured, HueError, RoomNotFound
 from .layouts import using_layout
 from .models import DEFAULT_FURNITURE_HEIGHT, FURNITURE_HEIGHTS, FURNITURE_SIZES
+from .room_text import draw_room, layout_problems
 from .room_view import room_json
 from .service import HueRoomService
 from .units import parse_length
@@ -85,6 +86,19 @@ def get_room(service: HueRoomService, room: str, layout: str | None = None) -> d
         data = room_json(service.get_room(_room_name(service, room)))
     data.pop("photo", None)
     return data
+
+
+def describe_room(service: HueRoomService, room: str, layout: str | None = None) -> dict[str, Any]:
+    """A room as a scaled text drawing with a legend and its doors and windows in words."""
+    with in_layout(service, layout):
+        return draw_room(service.get_room(_room_name(service, room)))
+
+
+def check_layout(service: HueRoomService, room: str, layout: str | None = None) -> dict[str, Any]:
+    """What is wrong with a room's layout. `ok` is true when nothing is."""
+    with in_layout(service, layout):
+        problems = layout_problems(service.get_room(_room_name(service, room)))
+    return {"ok": not problems, "problems": problems}
 
 
 def list_lights(service: HueRoomService) -> dict[str, Any]:
