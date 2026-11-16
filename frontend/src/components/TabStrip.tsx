@@ -5,14 +5,14 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
 import { PanelLeftClose, PanelLeftOpen, Plus, RotateCcw, X, type LucideIcon } from 'lucide-react';
 import { href, go, type Route } from '../lib/router';
-import { DEFAULT_TABS, contextOrigin, focusAfterClose, RAIL_DEFAULT, RAIL_MAX, RAIL_MIN, RAIL_STEP, clampRail, closeTab, isVertical, moveTab, neighbour, reopenTab, settleRail, shiftTab, tabMenuItems, type TabId, type TabMenuItem, type TabPlacement, type TabState } from '../lib/tabs';
+import { DEFAULT_TABS, contextOrigin, focusAfterClose, refocusReady, RAIL_DEFAULT, RAIL_MAX, RAIL_MIN, RAIL_STEP, clampRail, closeTab, isVertical, moveTab, neighbour, reopenTab, settleRail, shiftTab, tabMenuItems, type TabId, type TabMenuItem, type TabPlacement, type TabState } from '../lib/tabs';
 import { useUi } from '../uiStore';
 import { TabContextMenu } from './TabContextMenu';
 
 export interface Tab { id: TabId; label: string; icon: LucideIcon; route: Route }
 const TAB_DRAG = 'application/x-myhuey-tab';
-/** Set when the tab menu closes by choice; the next render of any strip (a placement change builds a new one) takes it and moves focus. */
-let refocusAfterMenu: { restore: HTMLElement | null } | null = null;
+/** Set when the tab menu closes by choice; a render of any strip (a placement change builds a new one) takes it and moves focus. `waitFor` is the tab a close is about to make active: the claim stays until that tab is active (or `at` is too old). */
+let refocusAfterMenu: { restore: HTMLElement | null; waitFor: TabId | null; at: number } | null = null;
 
 interface Props {
   /** Where the strip is drawn right now (a rail falls back to top in a narrow window). */
@@ -63,10 +63,15 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
   }, [activeTab, placement, collapsed, tabs.length]);
 
   // After the menu closes (and what it chose has been drawn, even in a strip that was rebuilt elsewhere), put focus back.
+  // No dependency list, so it runs after every render: a close that opens the neighbour is drawn twice, and the claim waits for the second.
   useEffect(() => {
     if (!refocusAfterMenu) return;
-    const { restore } = refocusAfterMenu;
+    const claim = refocusAfterMenu;
+    const { restore } = claim;
+    const ready = refocusReady(claim, { restore: !!restore?.isConnected }, activeTab, Date.now());
+    if (ready === 'wait') return;
     refocusAfterMenu = null;
+    if (ready === 'drop') return;
     const area = nav.current;
     const active = area?.querySelector<HTMLElement>('.tab.active a') ?? null;
     const any = area?.querySelector<HTMLElement>('.tab a') ?? null;
@@ -113,14 +118,24 @@ export function TabStrip({ placement, tabs, closed, available, byId, activeTab, 
     setContext({ x, y, tab, restore: active instanceof HTMLElement && active !== document.body ? active : null });
   };
   const shutContext = useCallback((restoreFocus: boolean) => {
-    if (restoreFocus) refocusAfterMenu = { restore: contextRef.current?.restore ?? null };
+    if (restoreFocus) refocusAfterMenu = { restore: contextRef.current?.restore ?? null, waitFor: null, at: Date.now() };
     setContext(null);
   }, []);
   const choose = (item: TabMenuItem) => {
     const tab = context?.tab ?? null;
     shutContext(true);
     switch (item.kind) {
-      case 'close': if (tab) close(tab); break;
+      case 'close':
+        if (tab) {
+          // Closing the active tab opens its neighbour; focus waits for that tab, and cannot go back to the tab being closed.
+          const to = tab === activeTab && closeTab(state, tab) !== state ? neighbour(state, tab, available) : null;
+          if (to && byId.get(to) && refocusAfterMenu) {
+            refocusAfterMenu.waitFor = to;
+            if (refocusAfterMenu.restore?.closest(`[data-tab="${tab}"]`)) refocusAfterMenu.restore = null;
+          }
+          close(tab);
+        }
+        break;
       case 'place': setTabPlacement(item.placement); break;
       case 'rail-fold': setTabRail({ ...tabRail, collapsed: !item.collapsed }); break;
       case 'rail-reset': setTabRail({ width: RAIL_DEFAULT, collapsed: tabRail.collapsed }); break;

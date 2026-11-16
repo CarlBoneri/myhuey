@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { contextOrigin, focusAfterClose, RAIL_DEFAULT, RAIL_MAX, RAIL_MIN, RAIL_SNAP, tabMenuItems, clampRail, normalizeRail, settleRail, ALL_TABS, DEFAULT_TABS, TAB_PLACEMENTS, closeTab, isVertical, normalizePlacement, moveTab, neighbour, normalizeTabs, openTabs, reopenTab, shiftTab, tabForRoute, type TabState } from './tabs';
+import { contextOrigin, focusAfterClose, refocusReady, REFOCUS_WINDOW, type TabId, RAIL_DEFAULT, RAIL_MAX, RAIL_MIN, RAIL_SNAP, tabMenuItems, clampRail, normalizeRail, settleRail, ALL_TABS, DEFAULT_TABS, TAB_PLACEMENTS, closeTab, isVertical, normalizePlacement, moveTab, neighbour, normalizeTabs, openTabs, reopenTab, shiftTab, tabForRoute, type TabState } from './tabs';
 
 const state = (order: string, closed = ''): TabState => normalizeTabs({ order: order.split(' ').filter(Boolean), closed: closed.split(' ').filter(Boolean) });
 
@@ -144,5 +144,24 @@ describe('the right-click menu on the tabs', () => {
     expect(items.find((item) => item.kind === 'rail-fold')).toEqual({ kind: 'rail-fold', collapsed: true });
     // saved as left in a narrow window: drawn at the top, so no rail items
     expect(kinds(tabMenuItems({ closable: false, tabPlacement: 'left', drawnAsRail: false, rail }))).not.toContain('rail-fold');
+  });
+});
+
+describe('refocusReady', () => {
+  const claim = { waitFor: 'scenes' as TabId, at: 1000 };
+  it('places focus now when nothing is awaited', () => {
+    expect(refocusReady({ waitFor: null, at: 1000 }, { restore: false }, 'home', 1001)).toBe('now');
+  });
+  it('places focus now when what had focus before can take it back', () => {
+    expect(refocusReady(claim, { restore: true }, 'home', 1001)).toBe('now');
+  });
+  it('waits while the awaited tab is not yet the active one', () => {
+    expect(refocusReady(claim, { restore: false }, 'home', 1001)).toBe('wait');
+  });
+  it('places focus once the awaited tab is active', () => {
+    expect(refocusReady(claim, { restore: false }, 'scenes', 1200)).toBe('now');
+  });
+  it('gives up when the awaited tab has not arrived within the window', () => {
+    expect(refocusReady(claim, { restore: false }, 'home', 1000 + REFOCUS_WINDOW + 1)).toBe('drop');
   });
 });
