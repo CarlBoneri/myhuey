@@ -102,3 +102,31 @@ a rename changes no light). The tab is closed and the server stopped after each 
 
 Names of the new helpers; how `StudioHead` tells a keyboard change from a mouse one; exact CSS
 selectors.
+
+## As built (2026-11-16)
+
+Where the finished work differs from the design above, and why:
+
+- The picker tells stepping through the closed picker from choosing in its open list by timing, not
+  by "keyboard or mouse": a change waits only when it comes within 80 ms of a key press that was
+  not Enter. So a room chosen in the open list, or with Enter, opens at once on every platform.
+- Any further key restarts the pause, and a pending room that has since been renamed or deleted
+  opens nothing.
+- The view switch goes to the room the picker has chosen, even if that room has not opened yet. A
+  click on a view right after a keyboard choice therefore lands on that room in that view. When
+  focus moves from the picker to the view switch, the pending room is left to the pause instead of
+  being opened at once.
+- Renaming a room now keeps the 3D camera. The check by eye found it did not: for a moment after
+  the rename was saved the designer could not find the room under its old name and rebuilt the 3D
+  screen. The Room panel with the Name field only shows with nothing selected, so there is no
+  selection to keep.
+- Under 980 px the bar between the stacked 3D view and glare table is hidden. It resized nothing
+  there but still rewrote the saved split.
+
+Left for later: in Safari and Firefox on a Mac a click does not focus a button, so a view click
+right after a keyboard choice can still be lost there (Chrome is fine); in a narrow window "Give
+the 3D view the whole column" folds the glare table but cannot make the view taller; dragging the
+bar between the wide layout's panes ends a few pixels from the pointer.
+Not checked by eye: choosing from the picker's open list and arrow-key stepping on a closed picker
+(the test browser's keys do not drive the Mac's native list, and on a Mac arrows open it); tests
+cover both.
