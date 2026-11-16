@@ -141,3 +141,24 @@ of the new helper functions; exact pinned versions of the three dev dependencies
 - A DOM test setup as dev-only dependencies, and it must be documented (approved 2026-11-16).
 - Choices marked "chosen" above, the hint's wording and where it shows are the assistant's
   proposals, open to correction in this review.
+
+## As built (2026-11-16)
+
+Where the finished work differs from the design above, and why:
+
+- The rail toggle's one fixed name for screen readers is "Tabs", not "Tab rail". "Tabs" is the label
+  drawn on the button, and a name that differs from the visible label breaks voice control.
+- Pressing Tab inside the right-click menu closes it and hands focus back, the same as Escape.
+- The pinned "Tabs" toggle and the pinned "+" of a rail are now opaque and run to the rail's edges.
+  Before, tabs scrolling beneath them showed through. This was found by eye and was not in the list.
+- Scroll padding is 40px at both ends of a rail and before the "+" of the bottom strip (32px in the
+  top bar), measured in a browser.
+- The handle's drag is measured from where it began, and a press on it no longer starts a text
+  selection. Without that, the browser turned the drag into a drag of a tab and cancelled the resize.
+- The reply to `tabs width` and `tabs collapse` in a narrow window now gives the same sentence as the
+  hint, instead of saying the tabs are not on a side.
+
+Found and left for a later slice: under 980 px the Workflows drawer covers the top bar and the prompt;
+the "+" menu has no arrow-key or Tab handling; a right-button press on the handle starts a resize.
+Not checked: the Menu key (no such key on this keyboard; a test covers it) and always-visible
+scrollbars (judged from the layout only).
