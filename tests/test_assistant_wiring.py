@@ -23,5 +23,15 @@ def test_other_agents_are_pointed_at_them():
 
 def test_readme_covers_setup_ssh_and_examples():
     text = Path("README.md").read_text()
-    for words in ("## Use it from your assistant", '"command": "uv"', "ssh", "--app-url", "myhuey mcp --list"):
-        assert words in text
+    for words in ("## Use it from your assistant", '"command": "uv"', "ssh", "--app-url", "myhuey mcp --list",
+                  '"command": "/path/to/myhuey/.venv/bin/myhuey"', '"command": "ssh"', "--host 0.0.0.0", "which uv",
+                  "never deletes anything from your active home"):
+        assert words in text, words
+    assert "cannot delete a scene" not in text and "ssh -L" not in text
+
+
+def test_no_doc_says_a_scene_is_never_deleted():
+    """remove_room in a sandbox drops that room's scenes, so only the active home is safe from deletes."""
+    for path in ("AGENTS.md", "skills/myhuey-basics/SKILL.md"):
+        text = " ".join(Path(path).read_text().split())
+        assert "deletes a scene" not in text and "active home" in text, path

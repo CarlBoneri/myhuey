@@ -209,11 +209,24 @@ Gradient lights take 2 to 5 colors, spaced evenly from start to end, and Hue fix
 
 ## Use it from your assistant
 
-MyHuey ships no AI of its own. `myhuey mcp` is a small tool server that the assistant you already use (Claude Code, Claude Desktop, Cursor, VS Code, or any other that speaks MCP) starts on your own machine, and the skills in `skills/` teach that assistant how to use it well. It runs locally, needs no account or API key, and makes no requests to the internet.
+MyHuey ships no AI of its own. `myhuey mcp` is a small tool server that the assistant you already use (Claude Code, Claude Desktop, Cursor, VS Code, or any other that speaks MCP) starts on your own machine, and the skills in `skills/` teach that assistant how to use it well. It runs locally and needs no account or API key. It talks to your bridge on your own network and, for `open_in_app`, to the app's address; it makes no requests to the internet.
 
 The server sends nothing to the internet, but the assistant sees what the tools return (your room names, layouts, and light states), and what it does with that is governed by the assistant you chose, not by MyHuey. The tools never return the bridge key.
 
-In this repo, Claude Code needs nothing: `.mcp.json` starts the server and `.claude/skills/` holds the skills. Other agents are pointed at them by `AGENTS.md`. The same config goes into other tools. Where it says `/path/to/myhuey`, put the folder you cloned:
+The configs below start the server with [uv](https://docs.astral.sh/uv/). If you installed with `python3 -m venv` and pip as above and have no `uv`, point the config at the `myhuey` in that virtual environment instead. It needs no `uv` and works from any folder:
+
+```json
+{
+  "mcpServers": {
+    "myhuey": {
+      "command": "/path/to/myhuey/.venv/bin/myhuey",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+In this repo, with `uv` installed, Claude Code needs nothing: `.mcp.json` starts the server with `uv run myhuey mcp`, which works from the MyHuey folder, and `.claude/skills/` holds the skills. Other agents are pointed at them by `AGENTS.md`. For other tools, or another folder, use this config (or the one above). Where it says `/path/to/myhuey`, put the folder you cloned:
 
 ```json
 {
@@ -231,22 +244,32 @@ In this repo, Claude Code needs nothing: `.mcp.json` starts the server and `.cla
 - **Cursor:** paste it into `.cursor/mcp.json` in your project, or `~/.cursor/mcp.json` for every project.
 - **VS Code:** put it in `.vscode/mcp.json`, but VS Code names the top key `servers` instead of `mcpServers`.
 
+Apps you open from the dock or Start menu, such as Claude Desktop, often do not see your shell's PATH and cannot find `uv`. Put its full path (what `which uv` prints) in `"command"`, or use the `.venv/bin/myhuey` form.
+
 `myhuey mcp --list` prints the 24 tools, one per line. A different database goes before the command (`myhuey --db PATH mcp`).
 
-If your editor runs on another machine and you reach it over ssh, the server runs there too, so the link `open_in_app` returns would point at the wrong address. Give it the address you use for the app in your browser:
+If MyHuey runs on a home server and your assistant on a laptop, the assistant starts the server over ssh. Use the form without `uv` on the server, and give `--app-url` the address your laptop's browser uses for the app, so the link `open_in_app` returns opens there:
 
-```bash
-uv run myhuey mcp --app-url http://localhost:8000
+```json
+{
+  "mcpServers": {
+    "myhuey": {
+      "command": "ssh",
+      "args": ["you@homeserver", "/path/to/myhuey/.venv/bin/myhuey", "mcp", "--app-url", "http://homeserver:8000"]
+    }
+  }
+}
 ```
 
-Put those arguments after `"mcp"` in the config's `args`, and forward the port with `ssh -L 8000:localhost:8000 you@host`.
+ssh has to log in with a key, since the assistant cannot type a password. `myhuey serve` listens only on 127.0.0.1 unless told otherwise, so start it on the server with `myhuey serve --host 0.0.0.0 --port 8000` for that address to open from the laptop (anyone on your network can then reach the app). The `answering` value `open_in_app` returns is checked from the server's side: it says whether the app is running there, not whether your laptop can reach it.
 
 ### What the assistant can and cannot do
 
 It can read your rooms, lights, and scenes, design a scene and preview it, save a scene, and build a room layout. It can also call `apply_scene`, `room_power`, and `room_dim`, the only tools that change real lights, and it is taught to do that only when you ask.
 
 - It builds layouts only in a sandbox, a private copy of your home. Every layout-writing tool refuses the active home.
-- It cannot delete a scene or a layout, and it cannot touch bridge pairing.
+- It never deletes anything from your active home, and never deletes a layout. It can remove rooms (with their scenes) and lights only inside a sandbox it is building.
+- It cannot touch bridge pairing.
 - It cannot make a sandbox active. You look at it in the app and do that yourself.
 - Planned lights from the catalog take part in roles and previews and are never sent to the bridge.
 

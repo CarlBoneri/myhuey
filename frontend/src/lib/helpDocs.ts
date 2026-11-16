@@ -4,6 +4,8 @@ import type { Route } from './router';
 
 /** The config that starts the tool server from this repo's folder; the same as `.mcp.json`. */
 export const MCP_CONFIG = JSON.stringify({ mcpServers: { myhuey: { command: 'uv', args: ['run', 'myhuey', 'mcp'] } } }, null, 2);
+/** The same server without uv, from the folder's virtual environment; works from any folder. */
+export const MCP_VENV_CONFIG = JSON.stringify({ mcpServers: { myhuey: { command: '/path/to/myhuey/.venv/bin/myhuey', args: ['mcp'] } } }, null, 2);
 
 export type Block =
   | { p: string }
@@ -167,14 +169,17 @@ export const TOPICS: Topic[] = [
   {
     id: 'assistant', title: 'Your assistant', summary: 'Let the AI assistant you already use read your home and design lights.',
     blocks: [
-      { p: 'MyHuey has no AI of its own. `myhuey mcp` is a tool server that your own assistant (Claude Code, Claude Desktop, Cursor, VS Code, or any MCP client) starts on this computer, so it can read your rooms and lights and design scenes and layouts for you. MyHuey needs no account or API key, and its server sends nothing to the internet. But the assistant reads what the tools return (your room names, layouts, and light states), and that goes wherever the assistant sends its conversations, so it falls under that assistant’s privacy terms, not MyHuey’s. The tools never return the bridge key.' },
-      { p: 'In the MyHuey folder, put this in the project’s `.mcp.json` (Claude Code finds it there already). Settings has the same text under Command line, with a Copy button. For another tool, add `"--directory", "/path/to/myhuey"` after `"run"`.' },
+      { p: 'MyHuey has no AI of its own. `myhuey mcp` is a tool server that your own assistant (Claude Code, Claude Desktop, Cursor, VS Code, or any MCP client) starts on this computer, so it can read your rooms and lights and design scenes and layouts for you. MyHuey needs no account or API key, and its server talks only to your bridge and to this app’s address: it sends nothing to the internet. But the assistant reads what the tools return (your room names, layouts, and light states), and that goes wherever the assistant sends its conversations, so it falls under that assistant’s privacy terms, not MyHuey’s. The tools never return the bridge key.' },
+      { p: 'This config starts the server with `uv`. Put it in the `.mcp.json` of the MyHuey folder (Claude Code finds it there already); it works from that folder only. Anywhere else, add `"--directory", "/path/to/myhuey"` after `"run"`, or use the form below. Settings has the same text under Command line, with a Copy button.' },
       { code: MCP_CONFIG },
-      { p: 'If your editor runs on another machine over ssh, add `"--app-url", "http://localhost:8000"` after `"mcp"` so the link to the 3D view opens in your browser.' },
+      { p: 'Without `uv`, or when an app such as Claude Desktop cannot find it (apps opened from the dock often miss your shell’s PATH), point the config at the `myhuey` in the folder’s virtual environment. It works from any folder:' },
+      { code: MCP_VENV_CONFIG },
+      { p: 'If MyHuey runs on a home server and your assistant on a laptop, the config’s command is `ssh`, with args `["you@homeserver", "/path/to/myhuey/.venv/bin/myhuey", "mcp", "--app-url", "http://homeserver:8000"]`, so the link to the 3D view opens in the laptop’s browser. Start the app on the server with `myhuey serve --host 0.0.0.0` so that address answers beyond the server itself. Whether the app is answering is checked from the server’s side.' },
       { list: [
         'It builds layouts only in a sandbox, a private copy of your home. Every layout-writing tool refuses the active home.',
         'Only three tools change your real lights: apply_scene, room_power, and room_dim. The assistant is taught to use them only when you ask.',
-        'It cannot delete a scene or a layout, and it cannot touch bridge pairing.',
+        'It never deletes anything from your active home, and never deletes a layout. It can remove rooms (with their scenes) and lights only inside a sandbox it is building.',
+        'It cannot touch bridge pairing.',
         'It cannot make a sandbox active. Look at it in the app, then use Make active yourself.',
       ] },
       { p: 'Try asking: “Make the office easy on the eyes for coding tonight, warm and dim, and show me before you apply it.” Or: “Build my office in a sandbox, 12 by 14 feet, desk on the north wall under the window.”' },

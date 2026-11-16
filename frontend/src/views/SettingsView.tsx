@@ -97,6 +97,11 @@ myhuey palettes --tag warm`}</pre>
               onClick={() => navigator.clipboard?.writeText(MCP_CONFIG).then(() => toast('Copied.', false), () => toast('Could not copy.'))}><Copy size={12} /> Copy</button>
           </p>
           <pre className="code">{MCP_CONFIG}</pre>
+          <p className="hint">
+            It runs <code>uv</code> and works from the MyHuey folder. Anywhere else, add <code>"--directory", "/path/to/myhuey"</code> after{' '}
+            <code>"run"</code>, or set <code>"command"</code> to <code>/path/to/myhuey/.venv/bin/myhuey</code> with <code>"args": ["mcp"]</code>.
+            Help, under Your assistant, has more.
+          </p>
         </Panel>
       </div>
     </div>

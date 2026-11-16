@@ -12,6 +12,7 @@ finds them.
 
 The limits are enforced by the tools, so do not look for a way around them. Layouts are built only
 in a sandbox, never in the person's active home. Only `apply_scene`, `room_power`, and `room_dim`
-change real lights, and only when the person asks. Nothing deletes a scene or a layout, and you
+change real lights, and only when the person asks. Nothing is ever deleted from the active home and
+no layout is deleted; rooms and lights can be removed only inside a sandbox you are building. You
 never make a sandbox active; the person does that in the app. To work on the code itself, see
 `README.md`; run `uv run pytest -q` and `npm --prefix frontend test` before committing.

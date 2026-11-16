@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { plan, shortcuts, search, type Snapshot } from './commands';
-import { MCP_CONFIG, TOPICS, searchHelp, topic, topicFor } from './helpDocs';
+import { MCP_CONFIG, MCP_VENV_CONFIG, TOPICS, searchHelp, topic, topicFor } from './helpDocs';
 import { parseRoute, href } from './router';
 
 // The rooms, scene, and group the help pages use in their examples.
@@ -77,5 +77,15 @@ describe('the assistant help page', () => {
     const text = TOPICS.find((item) => item.id === 'assistant')!.blocks.map((block) => ('p' in block ? block.p : 'list' in block ? block.list.join(' ') : '')).join(' ');
     expect(text).not.toContain('nothing leaves your computer');
     expect(text).toContain('reads what the tools return');
+  });
+  it('says where the config works, gives one without uv, and the home-server case', () => {
+    const blocks = TOPICS.find((item) => item.id === 'assistant')!.blocks;
+    const text = blocks.map((block) => ('p' in block ? block.p : 'list' in block ? block.list.join(' ') : '')).join(' ');
+    expect(text).toContain('works from that folder only');
+    expect(text).toContain('"--directory", "/path/to/myhuey"');
+    expect(blocks).toContainEqual({ code: MCP_VENV_CONFIG });
+    expect(JSON.parse(MCP_VENV_CONFIG).mcpServers.myhuey).toEqual({ command: '/path/to/myhuey/.venv/bin/myhuey', args: ['mcp'] });
+    expect(text).toContain('myhuey serve --host 0.0.0.0');
+    expect(text).not.toContain('cannot delete a scene');
   });
 });
