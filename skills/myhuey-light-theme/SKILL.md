@@ -49,9 +49,12 @@ first: the roles and the five eye-comfort rules decide most of the numbers.
    the room they are sitting in, and saving adds to their list of scenes.
 6. **Do what they chose.**
    - Apply: `apply_scene` with the same room, name, and `lights` (and `others`) you previewed;
-     or, once saved, with `scene` set to its id. The result lists each light with `applied`, `planned`,
-     and an `error` for any that refused, plus a `failed` count. Report failures plainly
-     (usually a light that is unplugged or out of reach).
+     or, once saved, with `scene` set to its id and nothing else (a saved scene already says
+     what happens to the other lights, so `others` is refused with it). The result lists each
+     light with `applied`, `planned`, an `error` for any that refused, and a `warning` for one
+     that took the scene without an effect or mode it lacks, plus a `failed` count. Report
+     failures and warnings plainly (a failure is usually a light that is unplugged or out of
+     reach); never say a light shows an effect its `warning` says it skipped.
    - Save: `save_scene` with the same arguments returns the scene's id. To change a saved scene
      later, pass that id as `scene_id`; `list_scenes` shows what exists.
 7. **Planned lights** (`planned: true`) are not installed yet. They appear in the preview so the

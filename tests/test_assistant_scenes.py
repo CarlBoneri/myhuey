@@ -100,3 +100,17 @@ def test_power_and_dim(service, session):
 
 def test_only_these_tools_change_lights():
     assert CHANGES_LIGHTS == ("apply_scene", "room_power", "room_dim")
+
+
+def test_a_left_out_effect_is_reported(service, session):
+    result = apply_scene(service, room="Den", name="Fire", lights={"1": {"white": 2700, "brightness": 30, "effect": "candle"}})
+    (lamp,) = [light for light in result["lights"] if light["id"] == "1"]
+    assert lamp["applied"] is True and "does not support the effect candle" in lamp["warning"]
+    assert all("warning" not in light for light in result["lights"] if light["id"] != "1")
+
+
+def test_others_with_a_saved_scene_is_refused(service, session):
+    save_scene(service, "Den", "Calm", THEME)
+    with pytest.raises(ValueError, match="either"):
+        apply_scene(service, scene="Calm", others="off")
+    assert session.calls == []

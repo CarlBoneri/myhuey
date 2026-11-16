@@ -106,5 +106,5 @@ These are enforced by the tools themselves, so a plan that relies on getting aro
   take part in roles and previews and are never sent to the bridge.
 
 The read and scene tools that take a room also take an optional `layout` (a sandbox's name or
-id); without it, they use the active home. A tool that cannot do what you asked says why in one plain sentence, often with
+id); without it, or with "active", they use the active home. A tool that cannot do what you asked says why in one plain sentence, often with
 the values it accepts. Read it, fix the argument, and call again.

@@ -8,6 +8,7 @@ bridge username or the raw document.
 from __future__ import annotations
 
 import math
+import re
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from typing import Any
@@ -33,8 +34,17 @@ class Refused(ValueError):
 
 @contextmanager
 def in_layout(service: HueRoomService, layout: str | None) -> Iterator[None]:
-    """Open the named layout (its name or ID) for the block. None is the active layout."""
-    layout_id = service.sandbox_id(service.resolve_layout(layout)) if layout else None
+    """Open the named layout (its name or ID) for the block. None or "active" is the active layout."""
+    layout_id = None
+    if layout and str(layout).strip().casefold() != "active":  # create_sandbox teaches the word "active"
+        try:
+            layout_id = service.sandbox_id(service.resolve_layout(str(layout)))
+        except LayoutNotFound as error:
+            known = ", ".join(
+                f'{entry["name"]} (id {entry["id"]}{", the active home" if entry["active"] else ""})' for entry in service.layouts()
+            )
+            error.args = (f'There is no layout "{layout}". Layouts: {known}. Pass a name or an id, or "active" for the active home.',)
+            raise
     with using_layout(layout_id):
         yield
 
@@ -183,13 +193,24 @@ def catalog() -> dict[str, Any]:
 
 
 def suggest(service: HueRoomService, room: str, mode: str, at: str | None = None, layout: str | None = None) -> list[dict[str, Any]]:
-    """Suggested scenes for a room, as previews: nothing is saved and no light changes."""
+    """Suggested scenes for a room, as previews: nothing is saved and no light changes.
+
+    `mode` is "code", "work", "study", "read", or "relax". `at` is the time of day to suggest
+    for, as 24-hour "HH:MM" (such as "21:00"); without it, now. Whites get warmer and dimmer
+    toward the person's bedtime."""
+    if at is not None and not _is_clock(at):
+        raise ValueError(f'at must be a 24-hour time as HH:MM, such as "21:00" for 9 pm, not "{at}".')
     with in_layout(service, layout):
         items = service.suggest(_room_name(service, room), mode, at=at)
     return [
         {"name": item["scene"]["name"], "kelvin": item["kelvin"], "roles": item["roles"], "lights": item["scene"]["overrides"]}
         for item in items
     ]
+
+
+def _is_clock(at: Any) -> bool:
+    """Whether `at` is a 24-hour "HH:MM" time."""
+    return isinstance(at, str) and re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", at) is not None
 
 
 # Scenes. preview_scene and save_scene send nothing to the bridge; the three tools named in
@@ -285,24 +306,32 @@ def save_scene(
 
 def apply_scene(
     service: HueRoomService, scene: str | None = None, room: str | None = None, name: str | None = None,
-    lights: dict[str, dict[str, Any]] | None = None, others: str = "keep", layout: str | None = None,
+    lights: dict[str, dict[str, Any]] | None = None, others: str | None = None, layout: str | None = None,
 ) -> dict[str, Any]:
     """Changes the real lights. Sends a scene to a room's lights and reports what each took.
 
-    Give a saved scene (`scene`, by ID or name), or one not saved (`room`, `name`, `lights`).
-    Planned lights are not installed, so they are reported, not sent."""
-    if scene is not None and (room is not None or name is not None or lights is not None) or (
+    Give a saved scene (`scene`, by ID or name), or one not saved (`room`, `name`, `lights`, and
+    optionally `others`, "keep" or "off"). Planned lights are not installed, so they are reported,
+    not sent. A light that lacks an effect or mode in the scene gets the rest, with a `warning`."""
+    if scene is not None and (room is not None or name is not None or lights is not None or others is not None) or (
         scene is None and (room is None or lights is None)
     ):
-        raise ValueError("Give either scene (a saved scene's ID or name), or room, name, and lights for one that is not saved. Not both.")
+        raise ValueError(
+            "Give either scene (a saved scene's ID or name), or room, name, and lights (and optionally others) "
+            "for one that is not saved. Not both: a saved scene already says what happens to the other lights."
+        )
     with in_layout(service, layout):
-        target = service.get_scene(scene) if scene is not None else _scene(service, room, name or "Assistant scene", lights, others)
+        target = (
+            service.get_scene(scene) if scene is not None
+            else _scene(service, room, name or "Assistant scene", lights, others or "keep")
+        )
         results = service.apply_scene_object(target)
     shown = []
     for item in results:
         light = {"id": item["light_id"], "name": item["label"], "applied": item["applied"], "planned": bool(item.get("planned"))}
-        if item.get("error"):
-            light["error"] = item["error"]
+        for key in ("warning", "error"):
+            if item.get(key):
+                light[key] = item[key]
         shown.append(light)
     return {"scene": target.name, "room": target.room, "sent": True, "lights": shown, "failed": sum("error" in light for light in shown)}
 

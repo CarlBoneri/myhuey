@@ -111,3 +111,29 @@ def test_suggest_returns_overrides_per_light(service):
     first = suggest(service, "Den", "code", at="14:00")[0]
     assert set(first["lights"]) == {"1", "2", "3"} and first["kelvin"] > 2000
     assert set(first) == {"name", "kelvin", "roles", "lights"}
+
+
+def test_active_names_the_active_home_and_an_unknown_layout_lists_the_ones_that_exist(service):
+    box = service.new_layout("Try")
+    with in_layout(service, box["id"]):
+        service.add_room("Loft", 300, 300)
+    for word in ("active", "Active", " ACTIVE "):
+        assert [room["name"] for room in list_rooms(service, layout=word)] == ["Den"]
+    home = next(entry for entry in service.layouts() if entry["active"])
+    with pytest.raises(LayoutNotFound) as missing:
+        list_rooms(service, layout="nope")
+    assert str(missing.value) == (
+        f'There is no layout "nope". Layouts: {home["name"]} (id {home["id"]}, the active home), Try (id {box["id"]}). '
+        'Pass a name or an id, or "active" for the active home.'
+    )
+
+
+@pytest.mark.parametrize("at", ["9pm", "21", "25:00", "9:5", "noon"])
+def test_suggest_says_what_time_it_takes(service, at):
+    with pytest.raises(ValueError) as refused:
+        suggest(service, "Den", "code", at=at)
+    assert str(refused.value) == f'at must be a 24-hour time as HH:MM, such as "21:00" for 9 pm, not "{at}".'
+
+
+def test_suggest_names_its_modes_and_time_format():
+    assert all(word in suggest.__doc__ for word in ("code", "work", "study", "read", "relax", "HH:MM"))
