@@ -163,3 +163,25 @@ the narrow view's height, the shared menu-keys code's shape, and the root cause 
   this slice does not make.
 - The Room picker's native open list and arrow-stepping on a closed picker on a Mac: the tools
   cannot drive the native list; tests cover both.
+
+## As built, Part A (2026-11-16)
+
+Where the finished work differs from the design above, and why:
+
+- `<small>` elements with no size of their own fell back to the browser's "smaller" (10.8px) on the
+  Home room tiles and in the scene editor's lists. Found by eye; a base `small` rule now gives them a
+  12px floor.
+- The unselected light ring and the strip outline on the plan (`Shapes.tsx`) were not on the list in
+  item 6, but on light themes a pale lit light had no visible edge. Found by eye; both now use the
+  plan line colour.
+- The plan line colour is 55% of the text colour, not the 45% first planned: the final review
+  measured 45% at about 2.7:1 on the Light floor, under the usual 3:1 for lines.
+- In a narrow window a long scene name made the page scroll sideways by about 11px. Found by eye;
+  the heading that holds the name is now a row the name can shrink in.
+- The scene name shows a solid 2px accent underline when focused (dashed 1px on hover), with no
+  shift in height between the states.
+- The README links the guides and both of them.
+
+Not checked by eye: the baseline of tags and role badges (they appear only after selecting a light
+or with overrides, next to real light controls); the transparency listener (needs the Mac's
+setting changed; a test covers it).
