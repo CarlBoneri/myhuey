@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { House, LayoutGrid, Lightbulb, Map as MapIcon, Moon, Palette, Settings, Sun, X } from 'lucide-react';
+import { House, LayoutGrid, Map as MapIcon, Moon, Palette, Settings, Sun, X } from 'lucide-react';
 import { applyTheme, followSystemTheme, systemPrefersDark, toggledTheme } from './lib/theme';
 import { useStore } from './store';
 import { href, useRoute, type Route } from './lib/router';
@@ -16,10 +16,9 @@ import { SandboxBanner } from './components/SandboxBanner';
 
 const NAV: { route: Route; label: string; icon: typeof House; match: Route['view'][] }[] = [
   { route: { view: 'home' }, label: 'Home', icon: House, match: ['home', 'room'] },
-  { route: { view: 'plan' }, label: 'Plan', icon: MapIcon, match: ['plan'] },
+  { route: { view: 'studio' }, label: 'Studio', icon: MapIcon, match: ['studio', 'design'] },
   { route: { view: 'scenes' }, label: 'Scenes', icon: Palette, match: ['scenes', 'scene'] },
-  { route: { view: 'lights' }, label: 'Lights', icon: Lightbulb, match: ['lights'] },
-  { route: { view: 'settings' }, label: 'Bridge', icon: Settings, match: ['settings', 'setup'] },
+  { route: { view: 'settings' }, label: 'Settings', icon: Settings, match: ['settings', 'setup'] },
 ];
 
 export function App() {
@@ -57,19 +56,19 @@ export function App() {
     if (!ready) return <div className="loading">Loading your home…</div>;
     switch (route.view) {
       case 'room':
+        return <RoomView name={route.room} tab="plan" />;
+      case 'design':
         return <RoomView name={route.room} tab={route.tab} />;
       case 'scenes':
         return <ScenesView />;
       case 'scene':
         return <SceneEditor id={route.id} />;
-      case 'lights':
-        return <LightsView />;
-      case 'plan':
-        return <PlanView focus={route.room} />;
+      case 'studio':
+        return <PlanView focus={route.focus} />;
       case 'setup':
         return <SetupView />;
       case 'settings':
-        return <SettingsView />;
+        return route.section === 'lights' ? <LightsView /> : <SettingsView />;
       default:
         return <HomeView />;
     }

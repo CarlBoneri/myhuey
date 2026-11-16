@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Crosshair, ImagePlus, MapPin, Plus, ShoppingBag, Sparkles, Trash2, Upload } from 'lucide-react';
 import { api } from '../api';
+import { href } from '../lib/router';
 import { attempt, useStore } from '../store';
 import { liveColor, placedProfile } from '../lib/lights';
 import { darkness, glowLayout, heightPreset, nudge, parseTag, resolvableTags, tagKey, type HeightPreset, type TagKind } from '../lib/photo';
@@ -369,7 +370,7 @@ export function PhotoView({ room }: { room: Room }) {
           {!untagged('light').length && !untagged('furniture').length && !untagged('opening').length && (
             <p className="hint">{room.lights.length || room.furniture.length ? 'Everything on the plan is tagged on the photo.' : 'Add lights and furniture on the plan first.'}</p>
           )}
-          <p className="hint">Not on the plan yet? <a href={`#/room/${encodeURIComponent(room.name)}`}>Add it on the plan</a> first, then tag it here.</p>
+          <p className="hint">Not on the plan yet? <a href={href({ view: 'design', room: room.name, tab: 'plan' })}>Add it on the plan</a> first, then tag it here.</p>
         </Panel>
         <Panel title="Photo">
           <div className="button-row">

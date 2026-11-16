@@ -44,7 +44,7 @@ export function RoomOnPlan({ room, offset, onMove, onDrop, onSelect, selected, r
             else if (moved) return;
             else if (onSelect) onSelect();
             else if (onOpen) onOpen();
-            else go({ view: 'room', room: room.name, tab: 'plan' });
+            else go({ view: 'design', room: room.name, tab: 'plan' });
           },
         })
       }
@@ -100,7 +100,7 @@ export function HomeView() {
   const sandboxName = layout ? (layouts.find((item) => item.id === layout)?.name ?? 'a sandbox') : null;
   const openRoom = async (room: Room) => {
     if (layout) await openLayout(null);
-    go({ view: 'room', room: room.name, tab: 'plan' });
+    go({ view: 'design', room: room.name, tab: 'plan' });
   };
   const [moving, setMovingState] = useState<{ name: string; delta: Pt } | null>(null);
   const movingRef = useRef<{ name: string; delta: Pt } | null>(null);
@@ -130,7 +130,7 @@ export function HomeView() {
     if (room) {
       setName('');
       await refreshRooms();
-      go({ view: 'room', room: room.name, tab: 'plan' });
+      go({ view: 'design', room: room.name, tab: 'plan' });
     }
   };
 
@@ -182,7 +182,7 @@ export function HomeView() {
         <aside className="inspector">
           {sandboxName && (
             <p className="sandbox-note">
-              You're editing the sandbox {sandboxName}. This screen shows your active home. <a href="#/plan">Open sandbox</a>
+              You're editing the sandbox {sandboxName}. This screen shows your active home. <a href="#/studio">Open sandbox</a>
             </p>
           )}
           <Panel title="Rooms">

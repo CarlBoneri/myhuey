@@ -381,7 +381,7 @@ export function PlanView({ focus }: { focus?: string } = {}) {
               <p className="hint">{formatLength(selectedRoom.width, selectedRoom.units)} × {formatLength(selectedRoom.height, selectedRoom.units)} · {selectedRoom.outline.length} corners</p>
               <p className="hint">Drag the corners onto the walls in the plan behind. Each change saves; doors and windows stay on their walls.</p>
               <div className="button-row">
-                <a className="button" href={href({ view: 'room', room: selectedRoom.name, tab: 'plan' })}>Open room</a>
+                <a className="button" href={href({ view: 'design', room: selectedRoom.name, tab: 'plan' })}>Open room</a>
                 <button type="button" className="button subtle" onClick={() => setSelected(null)}>Done</button>
               </div>
             </Panel>

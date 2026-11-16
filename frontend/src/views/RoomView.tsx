@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Armchair, Camera, Copy, DoorOpen, Hand, Map as MapIcon, PenLine, Plus, RotateCw, Sparkles, Trash2 } from 'lucide-react';
 import { api } from '../api';
 import { attempt, useStore } from '../store';
-import { go } from '../lib/router';
+import { go, href } from '../lib/router';
 import { area, bounds, pathOf, round1 } from '../lib/geometry';
 import { formatArea, formatLength, snap } from '../lib/units';
 import { effectiveLength, liveColors, placedProfile } from '../lib/lights';
@@ -221,7 +221,7 @@ export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' })
     const updated = await attempt(() => api.updateRoom(current.name, changes));
     if (updated) {
       replaceRoom(current.name, updated);
-      if (changes.name && changes.name !== current.name) go({ view: 'room', room: updated.name, tab });
+      if (changes.name && changes.name !== current.name) go({ view: 'design', room: updated.name, tab });
     } else {
       setDraft(source);
     }
@@ -383,7 +383,7 @@ export function RoomView({ name, tab }: { name: string; tab: 'plan' | 'photo' })
           <Segmented
             label="View"
             value={tab}
-            onChange={(next) => go({ view: 'room', room: draft.name, tab: next })}
+            onChange={(next) => go({ view: 'design', room: draft.name, tab: next })}
             options={[
               { value: 'plan', label: <><MapIcon size={15} /> Plan</> },
               { value: 'photo', label: <><Camera size={15} /> Photo</> },
@@ -630,7 +630,7 @@ function RoomFields({ room, onSave, onDelete }: { room: Room; onSave: (changes: 
       <div className="button-row">
         <button type="button" className="button subtle" onClick={() => onSave({ outline: [[box.minX, box.minY], [box.maxX, box.minY], [box.maxX, box.maxY], [box.minX, box.maxY]] })}>Rectangle</button>
         <button type="button" className="button subtle" onClick={() => onSave({ outline: lShape() })}>L-shape</button>
-        <a className="button subtle" href={`#/plan/${encodeURIComponent(room.name)}`} title="Edit the corners over your floor plan image">Reshape on the floor plan</a>
+        <a className="button subtle" href={href({ view: 'studio', focus: room.name })} title="Edit the corners over your floor plan image">Reshape on the floor plan</a>
         <button type="button" className="button danger subtle" onClick={onDelete}><Trash2 size={14} /> Delete</button>
       </div>
     </Panel>
