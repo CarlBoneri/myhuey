@@ -57,3 +57,9 @@ class PairingInProgress(HueError):
 
     def __init__(self) -> None:
         super().__init__("MyHuey is already waiting for a link-button press. Press the button, or wait for that to time out.")
+
+
+class LayoutNotFound(HueError, LookupError):
+    def __init__(self, layout_id: str = "") -> None:
+        self.layout_id = layout_id
+        super().__init__("That layout no longer exists")

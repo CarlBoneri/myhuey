@@ -15,7 +15,7 @@ from typing import Any, Callable
 
 from .color import hex_to_rgb, light_state_to_hex, mired_to_color_temperature, rgb_to_xy, xy_to_hex, xy_to_kelvin
 from .discovery import discover
-from .errors import BridgeNotConfigured, BridgeUnreachable, HueError, RoomNotFound, SceneNotFound
+from .errors import BridgeNotConfigured, BridgeUnreachable, HueError, LayoutNotFound, RoomNotFound, SceneNotFound
 from .geometry import rectangle
 from .hue import HueBridgeClient
 from .images import ImageSampler, extract_palette, image_path, prune_unreferenced, store_image
@@ -27,6 +27,9 @@ from .preferences import chosen as chosen_preferences, merged as merged_preferen
 from .scenes import Scene, evaluate
 from .suggest import suggest as suggest_scenes
 from .shapes import profile_for
+from .layout_store import backup_layout, load_layout, save_layout
+from .layouts import HOME_KEYS, current_layout, ensure_identity
+from .migrations import CURRENT_VERSION, migrate
 from .storage import DEFAULT_STORAGE_PATH, load_config, save_config, uploads_dir
 from .tls import pin_certificate, pinned_bridge_id
 from .units import UNIT_SYSTEMS
@@ -140,11 +143,54 @@ class HueRoomService:
         self._relocate_after = 0.0
         self._bridge_writes = threading.Lock()
 
+    def _load_active(self) -> dict[str, Any]:
+        """The main document, with the Active layout's identity (given one on first use)."""
+        config = load_config(self.storage_path)
+        if ensure_identity(config):
+            save_config(config, self.storage_path)
+        return config
+
+    def _open_sandbox(self, config: dict[str, Any]) -> str | None:
+        """The open layout's ID when it is a sandbox; None when it is Active."""
+        layout_id = current_layout.get()
+        return layout_id if layout_id and layout_id != config["layout"]["id"] else None
+
     def _load(self) -> dict[str, Any]:
-        return load_config(self.storage_path)
+        """The document for the open layout: global data plus that layout's rooms, scenes, and home."""
+        config = self._load_active()
+        layout_id = self._open_sandbox(config)
+        if not layout_id:
+            return config
+        record = load_layout(layout_id, self.storage_path)
+        if record is None:
+            raise LayoutNotFound(layout_id)
+        merged = {**config, "schema_version": record.get("schema_version", CURRENT_VERSION)}
+        merged.update({key: record.get(key) for key in HOME_KEYS})
+        upgraded, start = migrate(merged)
+        if start < CURRENT_VERSION:
+            backup_layout(record, start, self.storage_path)
+            self._save_record(record, upgraded)
+        return upgraded
+
+    def _save_record(self, record: dict[str, Any], config: dict[str, Any]) -> None:
+        updated = {**record, **{key: config[key] for key in HOME_KEYS}}
+        updated.update(updated=time.time(), schema_version=CURRENT_VERSION)
+        save_layout(updated, self.storage_path)
 
     def _save(self, config: dict[str, Any]) -> None:
-        save_config(config, self.storage_path)
+        stored = self._load_active()
+        layout_id = self._open_sandbox(stored)
+        if not layout_id:
+            save_config(config, self.storage_path)
+            return
+        record = load_layout(layout_id, self.storage_path)
+        if record is None:
+            raise LayoutNotFound(layout_id)
+        self._save_record(record, config)
+        # Everything else (bridge, preferences) is global; the Active layout's home data stays put.
+        stored.update({key: value for key, value in config.items() if key not in HOME_KEYS and key != "layout"})
+        stored["schema_version"] = CURRENT_VERSION
+        save_config(stored, self.storage_path)
 
     @staticmethod
     def _room_data(config: dict[str, Any], name: str) -> dict[str, Any]:
