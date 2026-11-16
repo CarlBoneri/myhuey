@@ -18,11 +18,12 @@ import { throttleLatest } from '../lib/throttle';
 export function LightsView() {
   const { lights, rooms, setup, lightsError } = useStore();
   const [selected, setSelected] = useState<string[]>([]);
-  const [saved, setSaved] = useState<LightGroup[]>([]);
+  const saved = useStore((state) => state.groups);
+  const { loadGroups, createGroup } = useStore();
   const [groupId, setGroupId] = useState<string | null>(null);
   const [naming, setNaming] = useState<string | null>(null);
 
-  useEffect(() => { void attempt(() => api.groups()).then((list) => list && setSaved(list)); }, []);
+  useEffect(() => { void loadGroups(); }, [loadGroups]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -40,7 +41,6 @@ export function LightsView() {
   );
   const picked = selected.map((id) => lights[id]).filter((light): light is BridgeLight => !!light);
   const group = saved.find((item) => item.id === groupId) ?? null;
-  const replace = (next: LightGroup) => setSaved(saved.map((item) => (item.id === next.id ? next : item)));
   const openGroup = (item: LightGroup) => { setGroupId(item.id); setSelected(item.lights.filter((id) => lights[id])); };
   const applyLook = async (item: LightGroup) => {
     const result = await attempt(() => api.applyGroup(item.id));
@@ -54,8 +54,8 @@ export function LightsView() {
   const saveSelection = async () => {
     const name = (naming ?? '').trim();
     if (!name) return;
-    const made = await attempt(() => api.createGroup(name, selected), `Saved the group ${name}.`);
-    if (made) { setSaved([...saved, made]); setGroupId(made.id); setNaming(null); }
+    const made = await createGroup(name, selected);
+    if (made) { useStore.getState().toast(`Saved the group ${made.name}.`, false); setGroupId(made.id); setNaming(null); }
   };
 
   return (
@@ -134,8 +134,7 @@ export function LightsView() {
         </div>
         <aside className="inspector">
           {group && (
-            <GroupPanel key={group.id} group={group} selected={selected} onApply={() => void applyLook(group)} onChange={replace}
-              onDeleted={() => { setSaved(saved.filter((item) => item.id !== group.id)); setGroupId(null); }} />
+            <GroupPanel key={group.id} group={group} selected={selected} onApply={() => void applyLook(group)} onDeleted={() => setGroupId(null)} />
           )}
           {picked.length > 1 ? <GroupControls lights={picked} />
             : picked.length === 1 ? <Panel title="Light"><LightControls light={picked[0]} /></Panel>
@@ -187,15 +186,16 @@ function GroupControls({ lights }: { lights: BridgeLight[] }) {
 }
 
 /** The current saved group: its look, its lights, its name. */
-function GroupPanel({ group, selected, onApply, onChange, onDeleted }: {
-  group: LightGroup; selected: string[]; onApply: () => void; onChange: (group: LightGroup) => void; onDeleted: () => void;
+function GroupPanel({ group, selected, onApply, onDeleted }: {
+  group: LightGroup; selected: string[]; onApply: () => void; onDeleted: () => void;
 }) {
+  const { updateGroup, saveGroupLook, clearGroupLook, deleteGroup, toast } = useStore();
   const [name, setName] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const differs = selected.length > 0 && !sameLights(selected, group.lights);
-  const update = async (work: () => Promise<LightGroup>, message?: string) => {
-    const next = await attempt(work, message);
-    if (next) onChange(next);
+  const update = async (work: () => Promise<LightGroup | undefined>, message?: string) => {
+    const next = await work();
+    if (next && message) toast(message, false);
     return next;
   };
   return (
@@ -208,10 +208,10 @@ function GroupPanel({ group, selected, onApply, onChange, onDeleted }: {
       {name !== null && (
         <form className="group-name-form" onSubmit={async (event) => {
           event.preventDefault();
-          if (name.trim() && (await update(() => api.updateGroup(group.id, { name: name.trim() })))) setName(null);
+          if (name.trim() && (await update(() => updateGroup(group.id, { name: name.trim() })))) setName(null);
         }}>
           <TextInput autoFocus value={name} onChange={(e) => setName(e.target.value)} aria-label="Group name" maxLength={60} />
-          <IconButton label="Save the name" onClick={async () => { if (name.trim() && (await update(() => api.updateGroup(group.id, { name: name.trim() })))) setName(null); }}><Check size={15} /></IconButton>
+          <IconButton label="Save the name" onClick={async () => { if (name.trim() && (await update(() => updateGroup(group.id, { name: name.trim() })))) setName(null); }}><Check size={15} /></IconButton>
           <IconButton label="Cancel renaming" onClick={() => setName(null)}><X size={15} /></IconButton>
         </form>
       )}
@@ -219,7 +219,7 @@ function GroupPanel({ group, selected, onApply, onChange, onDeleted }: {
         <div className="inline-confirm">
           <span>Delete {group.name}? Your lights are not changed.</span>
           <button type="button" className="button small danger" onClick={async () => {
-            if (await attempt(() => api.deleteGroup(group.id), `Deleted ${group.name}.`)) onDeleted();
+            if (await deleteGroup(group.id)) { toast(`Deleted ${group.name}.`, false); onDeleted(); }
           }}>Yes</button>
           <button type="button" className="button small subtle" onClick={() => setConfirming(false)}>No</button>
         </div>
@@ -227,13 +227,13 @@ function GroupPanel({ group, selected, onApply, onChange, onDeleted }: {
       <p className="hint">{group.lights.length} lights · {group.look ? 'a look is saved' : 'no look saved yet'}</p>
       <div className="button-row">
         {group.look && <button type="button" className="button primary" onClick={onApply}><Play size={15} /> Apply look</button>}
-        <button type="button" className="button" onClick={() => void update(() => api.saveGroupLook(group.id), `Saved how ${group.name} looks now.`)}>
+        <button type="button" className="button" onClick={() => void update(() => saveGroupLook(group.id), `Saved how ${group.name} looks now.`)}>
           <Save size={15} /> {group.look ? 'Save current look again' : 'Save current look'}
         </button>
-        {group.look && <button type="button" className="button subtle" onClick={() => void update(() => api.clearGroupLook(group.id))}>Clear look</button>}
+        {group.look && <button type="button" className="button subtle" onClick={() => void update(() => clearGroupLook(group.id))}>Clear look</button>}
       </div>
       {differs && (
-        <button type="button" className="button subtle" onClick={() => void update(() => api.updateGroup(group.id, { lights: selected }), `${group.name} now has ${selected.length} lights.`)}>
+        <button type="button" className="button subtle" onClick={() => void update(() => updateGroup(group.id, { lights: selected }), `${group.name} now has ${selected.length} lights.`)}>
           Update lights to this selection ({selected.length})
         </button>
       )}

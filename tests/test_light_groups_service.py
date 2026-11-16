@@ -71,3 +71,54 @@ def test_apply_reports_lights_the_bridge_no_longer_has(service, fake_bridge):
     service.save_group_look(group["id"])
     results = service.apply_group(group["id"])
     assert results == [{"light_id": "1", "label": "Light 1", "ok": False, "error": "Light 1 is no longer on the bridge"}]
+
+
+def _gradient_strip(rid="rid-desk", v1="1"):
+    return {"id": rid, "id_v1": f"/lights/{v1}", "gradient": {
+        "points": [{"color": {"xy": {"x": 0.6915, "y": 0.3083}}}, {"color": {"xy": {"x": 0.1532, "y": 0.0475}}}],
+        "mode": "segmented_palette", "mode_values": ["interpolated_palette", "segmented_palette"], "points_capable": 5, "pixel_count": 10}}
+
+
+def test_a_gradient_light_gets_its_points_back_after_its_brightness(service, fake_bridge):
+    group = service.create_group("Strip", ["1"])
+    session = fake_bridge(LIGHTS, LIGHTS, [{"success": {}}])
+    session.v2_lights = [_gradient_strip()]
+    look = service.save_group_look(group["id"])["look"]
+    assert look["1"]["gradient"]["mode"] == "segmented_palette" and len(look["1"]["gradient"]["colors"]) == 2
+    service.apply_group(group["id"])
+    v1 = [c for c in session.calls if c["method"] == "PUT"]
+    v2 = [c for c in session.clip_calls if c["method"] == "PUT"]
+    assert [c["url"].rsplit("/lights/", 1)[1] for c in v1] == ["1/state"] and v1[0]["json"] == {"on": True, "bri": 254}
+    assert len(v2) == 1 and v2[0]["url"].endswith("/rid-desk")
+    assert v2[0]["json"]["gradient"]["mode"] == "segmented_palette" and len(v2[0]["json"]["gradient"]["points"]) == 2
+
+
+def test_apply_waits_the_command_gap_between_lights(service, fake_bridge):
+    pauses = []
+    service.sleep = pauses.append
+    service.update_preferences({"command_gap_ms": 300})
+    group = service.create_group("All", ["1", "2", "10"])
+    fake_bridge(LIGHTS, LIGHTS, [{"success": {}}])
+    service.save_group_look(group["id"])
+    service.apply_group(group["id"])
+    assert pauses == [0.3, 0.3, 0.3]
+
+
+def test_a_light_that_refuses_does_not_stop_the_rest(service, fake_bridge):
+    group = service.create_group("Pair", ["1", "2"])
+    refused = [{"error": {"type": 201, "address": "/lights/1/state/xy", "description": "parameter not modifiable"}}]
+    fake_bridge(LIGHTS, LIGHTS, refused, [{"success": {}}])
+    service.save_group_look(group["id"])
+    results = service.apply_group(group["id"])
+    assert [(r["light_id"], r["ok"]) for r in results] == [("1", False), ("2", True)]
+    assert "not modifiable" in results[0]["error"]
+
+
+def test_groups_survive_making_a_sandbox_active_and_deleting_layouts(service):
+    service.create_group("Desk", ["1"])
+    first = next(item["id"] for item in service.layouts() if item["active"])
+    sandbox = service.new_layout("Try")["id"]
+    service.activate_layout(sandbox)
+    assert [g["name"] for g in service.groups()] == ["Desk"]
+    service.delete_layout(first)
+    assert [g["name"] for g in service.groups()] == ["Desk"]

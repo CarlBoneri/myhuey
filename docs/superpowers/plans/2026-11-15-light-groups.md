@@ -50,7 +50,7 @@
 - Capture of a light that is off.
 - Capture of a light in xy mode.
 - Capture of a light in hs mode, which is stored as xy.
-- Capture of a light in ct mode, which is stored as kelvin.
+- Capture of a light in ct mode, which is stored as the exact mired value `ct` (see the spec).
 - Capture of a gradient light with 3 points.
 - A light that was off becomes `{on: False}` only.
 - A light that was on gets `{on, brightness, xy|color_temp}`.

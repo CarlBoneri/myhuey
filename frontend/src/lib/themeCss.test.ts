@@ -29,3 +29,9 @@ describe('quick settings menu', () => {
     expect(rule('.quick-menu')).toContain('var(--bg-2)');
   });
 });
+
+describe('group chips', () => {
+  it('draw the keyboard focus ring inside the chip, which clips anything outside it', () => {
+    expect(rule('.group-chip button:focus-visible')).toMatch(/outline-offset:\s*-2px/);
+  });
+});
