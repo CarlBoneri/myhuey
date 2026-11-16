@@ -15,7 +15,7 @@ import { FurnitureShape, LightSilhouette } from '../components/Shapes';
 import { ColorPicker } from '../components/ColorPicker';
 import { GradientEditor, gradientCss } from '../components/GradientEditor';
 import { ThemeExtractor, type ThemeMood } from '../components/ThemeExtractor';
-import { Empty, Field, IconButton, Panel, Segmented, Slider, Swatch, TextInput, Toggle } from '../components/ui';
+import { Empty, Field, IconButton, Panel, Segmented, Sidebar, Slider, Swatch, TextInput, Toggle } from '../components/ui';
 
 type Tool = 'select' | 'rect' | 'ellipse' | 'lasso';
 type Pick = { type: 'zone'; id: string } | { type: 'image' } | { type: 'light'; id: string } | null;
@@ -373,7 +373,7 @@ export function SceneEditor({ id }: { id: string }) {
           </PlanCanvas>
         </div>
 
-        <aside className="inspector">
+        <Sidebar name="scene">
           {pick?.type === 'light' ? (
             <OverridePanel
               lightId={pick.id}
@@ -513,7 +513,7 @@ export function SceneEditor({ id }: { id: string }) {
               go({ view: 'scenes' });
             }
           }}><Trash2 size={14} /> Delete scene</button>
-        </aside>
+        </Sidebar>
       </div>
     </div>
   );
@@ -540,7 +540,7 @@ function OverridePanel({ lightId, result, override, palette, onChange }: {
 
   if (!override) {
     return (
-      <Panel title={name}>
+      <Panel id="light" title={name}>
         <p className="hint">This light takes its color from the {result?.keep ? 'base (left unchanged)' : 'zones and image under it'}.</p>
         <button type="button" className="button primary" onClick={() => onChange(fromScene())}>Override this light</button>
       </Panel>
@@ -550,7 +550,7 @@ function OverridePanel({ lightId, result, override, palette, onChange }: {
   const colors = override.colors?.length ? override.colors : fromScene().colors!;
   const isWhite = override.white != null && !override.colors?.length; // colors win on the server
   return (
-    <Panel title={name} actions={<button type="button" className="button subtle small" onClick={() => onChange(null)}>Clear override</button>}>
+    <Panel id="light" title={name} actions={<button type="button" className="button subtle small" onClick={() => onChange(null)}>Clear override</button>}>
       <label className="check-row">
         <Toggle checked={override.on !== false} label="On in this scene" onChange={(on) => onChange({ ...override, on })} />
         On in this scene

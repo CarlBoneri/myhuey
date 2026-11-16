@@ -21,11 +21,9 @@ from .hue import COLLECTIONS, PAIRING_WINDOW, HueBridgeClient
 from .images import MAX_UPLOAD_BYTES, media_type
 from .catalog import CATALOG
 from .hue_scenes import gallery
-from .models import Room
 from .palette import MOODS
 from .palettes import search as search_palettes
-from .placement import resolved_elevation
-from .roles import FOCUS_KINDS, find_focus, resolve_roles
+from .room_view import room_json
 from .scenes import Scene
 from .service import HueRoomService
 from .discovery import discover
@@ -265,17 +263,6 @@ async def _read_upload(upload: UploadFile) -> bytes:
     data = await upload.read(MAX_UPLOAD_BYTES + 1)
     if len(data) > MAX_UPLOAD_BYTES:
         raise HTTPException(status_code=413, detail=f"Images can be at most {MAX_UPLOAD_BYTES // (1024 * 1024)} MB")
-    return data
-
-
-def room_json(room: Room) -> dict[str, Any]:
-    """A room as the app sees it: what is saved, plus each light's worked-out height and its
-    role for each kind of focus ("desk", "read", "sofa")."""
-    data = room.to_dict()
-    roles = {kind: resolve_roles(room, find_focus(room, kind)) for kind in FOCUS_KINDS}
-    for light, saved in zip(room.lights, data["lights"]):
-        saved["resolved_elevation"] = resolved_elevation(light, room)
-        saved["resolved_roles"] = {kind: roles[kind][light.light_id] for kind in FOCUS_KINDS}
     return data
 
 

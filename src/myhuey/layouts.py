@@ -20,12 +20,18 @@ ACTIVE_DEFAULT_NAME = "My home"
 current_layout: ContextVar[str | None] = ContextVar("myhuey_layout", default=None)
 
 
+# When set, an open layout that has become the Active one is an error instead of Active.
+strict_layout: ContextVar[bool] = ContextVar("myhuey_layout_strict", default=False)
+
+
 @contextmanager
-def using_layout(layout_id: str | None) -> Iterator[None]:
+def using_layout(layout_id: str | None, *, strict: bool = False) -> Iterator[None]:
     token = current_layout.set(layout_id or None)
+    strict_token = strict_layout.set(strict)
     try:
         yield
     finally:
+        strict_layout.reset(strict_token)
         current_layout.reset(token)
 
 

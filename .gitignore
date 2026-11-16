@@ -7,3 +7,6 @@ __pycache__/
 node_modules/
 static/app/
 frontend/node_modules/
+
+# Theme extensions dropped in for scripts/import_editor_themes.py; their files are not ours to redistribute
+scripts/extra-themes/

@@ -1,4 +1,5 @@
-import { useEffect, useState, type ReactNode, type CSSProperties, type InputHTMLAttributes } from 'react';
+import { Children, createContext, isValidElement, useContext, useEffect, useId, useRef, useState, type ReactNode, type CSSProperties, type InputHTMLAttributes } from 'react';
+import { useUi } from '../uiStore';
 import type { Units } from '../types';
 import { formatLength, parseLength } from '../lib/units';
 import { HUE_ICONS } from './hueIcons';
@@ -12,16 +13,70 @@ export function HueIcon({ name, size = 20, className }: { name: string; size?: n
   );
 }
 
-export function Panel({ title, actions, children, className = '' }: { title?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string }) {
+/** The words in a title, for naming a panel whose title is more than text (an icon and a label). */
+function textOf(node: ReactNode): string {
+  if (typeof node === 'string' || typeof node === 'number') return String(node);
+  if (Array.isArray(node)) return node.map(textOf).join('');
+  if (isValidElement<{ children?: ReactNode }>(node)) return Children.toArray(node.props.children).map(textOf).join('');
+  return '';
+}
+
+/** Inside a sidebar, panels fold. The sidebar knows its panels so one Alt-click can fold or open them all. */
+const SidebarContext = createContext<{ name: string; keys: Set<string> } | null>(null);
+
+/** A side column of panels that fold away, like the tool windows of an editor. */
+export function Sidebar({ name, children, className = '' }: { name: string; children: ReactNode; className?: string }) {
+  const keys = useRef(new Set<string>());
   return (
-    <section className={`panel ${className}`}>
-      {(title || actions) && (
-        <header className="panel-head">
-          {title && <h2>{title}</h2>}
-          {actions && <div className="panel-actions">{actions}</div>}
-        </header>
-      )}
-      {children}
+    <SidebarContext.Provider value={{ name, keys: keys.current }}>
+      <aside className={`inspector ${className}`}>{children}</aside>
+    </SidebarContext.Provider>
+  );
+}
+
+/**
+ * A titled block. In a Sidebar it folds: click the title (or its triangle) to hide the body,
+ * Alt-click to fold or open every panel in that sidebar. What is folded is remembered per
+ * browser, under the panel's `id` or, without one, its title.
+ */
+export function Panel({ title, actions, children, className = '', id }: { title?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string; id?: string }) {
+  const sidebar = useContext(SidebarContext);
+  const bodyId = useId();
+  const key = sidebar && title ? `${sidebar.name}/${id ?? textOf(title).trim().toLowerCase()}` : null;
+  const folded = useUi((state) => (key ? !!state.folded[key] : false));
+  useEffect(() => {
+    if (!sidebar || !key) return;
+    sidebar.keys.add(key);
+    return () => { sidebar.keys.delete(key); };
+  }, [sidebar, key]);
+  if (!key || !sidebar) {
+    return (
+      <section className={`panel ${className}`}>
+        {(title || actions) && (
+          <header className="panel-head">
+            {title && <h2>{title}</h2>}
+            {actions && <div className="panel-actions">{actions}</div>}
+          </header>
+        )}
+        {children}
+      </section>
+    );
+  }
+  return (
+    <section className={`panel foldable${folded ? ' folded' : ''} ${className}`}>
+      <header className="panel-head">
+        <h2>
+          <button type="button" className="panel-toggle" aria-expanded={!folded} aria-controls={bodyId}
+            title={`${folded ? 'Show' : 'Hide'} this panel · Alt-click for all of them`}
+            onClick={(event) => useUi.getState().setFolded(event.altKey ? [...sidebar.keys] : [key], !folded)}>
+            <svg className="panel-twist" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1l6 4-6 4z" fill="currentColor" /></svg>
+            <span>{title}</span>
+          </button>
+        </h2>
+        {actions && <div className="panel-actions">{actions}</div>}
+      </header>
+      {/* Hidden, not removed: half-typed fields and open pickers are still there when it opens again. */}
+      <div className="panel-body" id={bodyId} hidden={folded}>{children}</div>
     </section>
   );
 }
@@ -34,7 +89,7 @@ export function Pill({ active, onClick, children, title }: { active?: boolean; o
   );
 }
 
-export function Segmented<T extends string>({ value, options, onChange, label }: { value: T; options: { value: T; label: ReactNode; title?: string }[]; onChange: (value: T) => void; label: string }) {
+export function Segmented<T extends string>({ value, options, onChange, label }: { value: T; options: { value: T; label: ReactNode; title?: string; disabled?: boolean }[]; onChange: (value: T) => void; label: string }) {
   return (
     <div className="segmented" role="radiogroup" aria-label={label}>
       {options.map((option) => (
@@ -43,6 +98,7 @@ export function Segmented<T extends string>({ value, options, onChange, label }:
           type="button"
           role="radio"
           aria-checked={option.value === value}
+          disabled={option.disabled}
           className={option.value === value ? 'active' : ''}
           onClick={() => onChange(option.value)}
           title={option.title}

@@ -3,12 +3,16 @@
 // follows the operating system with a chosen theme for each mode. A copy in localStorage avoids
 // a flash of the wrong theme before the preferences load.
 
-export type ThemeId = 'neon' | 'monokai' | 'dracula' | 'nord' | 'graphite' | 'solarized-light' | 'light';
+import { GENERATED_THEMES } from './themes.generated';
+
+type BuiltInThemeId = 'neon' | 'monokai' | 'dracula' | 'nord' | 'graphite' | 'solarized-light' | 'light';
+export type ThemeId = BuiltInThemeId | (typeof GENERATED_THEMES)[number]['id'];
+export interface ThemeInfo { id: ThemeId; label: string; kind: 'dark' | 'light'; source: string; swatches: readonly string[] }
 export type Theme = ThemeId | 'system';
 export type ThemePrefs = { theme: string; theme_dark?: string; theme_light?: string };
 
 /** Each theme's six ANSI colours (red, green, yellow, blue, magenta, cyan), shown in the picker; styles.css holds the same values. */
-export const THEMES: { id: ThemeId; label: string; kind: 'dark' | 'light'; swatches: string[] }[] = [
+const BUILT_IN: Omit<ThemeInfo, 'source'>[] = [
   { id: 'neon', label: 'Neon', kind: 'dark', swatches: ['#ff4060', '#a6e22e', '#e6db74', '#5a7dff', '#ff2eea', '#37f6ff'] },
   { id: 'monokai', label: 'Monokai', kind: 'dark', swatches: ['#f92672', '#a6e22e', '#e6db74', '#66d9ef', '#ae81ff', '#a1efe4'] },
   { id: 'dracula', label: 'Dracula', kind: 'dark', swatches: ['#ff5555', '#50fa7b', '#f1fa8c', '#bd93f9', '#ff79c6', '#8be9fd'] },
@@ -17,6 +21,22 @@ export const THEMES: { id: ThemeId; label: string; kind: 'dark' | 'light'; swatc
   { id: 'solarized-light', label: 'Solarized Light', kind: 'light', swatches: ['#dc322f', '#859900', '#b58900', '#268bd2', '#d33682', '#2aa198'] },
   { id: 'light', label: 'Light', kind: 'light', swatches: ['#dc2626', '#059669', '#b45309', '#2563eb', '#c026d3', '#0891b2'] },
 ];
+
+/** Every theme: MyHuey's own seven, then the ones imported from VS Code and Starship (scripts/import_editor_themes.py). */
+export const THEMES: ThemeInfo[] = [...BUILT_IN.map((theme) => ({ ...theme, source: 'MyHuey' })), ...GENERATED_THEMES];
+
+/** The themes of one kind (or all), grouped by where they come from, for a menu. */
+export function themeGroups(kind?: 'dark' | 'light'): { label: string; themes: ThemeInfo[] }[] {
+  const groups: { label: string; themes: ThemeInfo[] }[] = [];
+  for (const mode of ['dark', 'light'] as const) {
+    if (kind && kind !== mode) continue;
+    for (const source of [...new Set(THEMES.map((theme) => theme.source))]) {
+      const themes = THEMES.filter((theme) => theme.kind === mode && theme.source === source);
+      if (themes.length) groups.push({ label: `${mode === 'dark' ? 'Dark' : 'Light'} · ${source}`, themes });
+    }
+  }
+  return groups;
+}
 
 const CACHE_KEY = 'myhuey.theme';
 const DEFAULTS = { theme: 'neon' as Theme, theme_dark: 'neon' as ThemeId, theme_light: 'light' as ThemeId };

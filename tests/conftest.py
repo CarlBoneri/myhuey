@@ -1,7 +1,12 @@
 import pytest
 import requests
 
+from myhuey.service import HueRoomService
+
 USERNAME = "test-user-0123456789abcdef"
+
+TABLE = {"archetype": "tableshade", "productname": "Hue color lamp"}
+STRIP = {"archetype": "huelightstrip", "productname": "Hue lightstrip plus"}
 
 
 class FakeResponse:
@@ -129,3 +134,26 @@ def no_real_network(monkeypatch):
     from myhuey import discovery
 
     discovery.reset_cloud_cache()
+
+
+@pytest.fixture
+def service(db_path):
+    """A paired service with the Den: 400 x 400, a desk, a monitor, and lights 1, 2 and 3."""
+    service = HueRoomService(db_path)
+    service.sleep = lambda seconds: None
+    service.set_bridge("10.0.0.77", USERNAME)
+    service.add_room("Den", 400, 400)
+    service.update_room("Den", furniture=[
+        {"kind": "desk", "x": 200, "y": 150, "width": 140, "depth": 70},
+        {"kind": "monitor-27", "x": 200, "y": 130, "width": 61, "depth": 20},
+    ])
+    service.assign_light("Den", "1", x=260, y=160, product=TABLE)
+    service.assign_light("Den", "2", x=390, y=190, product=TABLE)
+    service.assign_light("Den", "3", x=200, y=115, product=STRIP)
+    return service
+
+
+@pytest.fixture
+def session(fake_bridge):
+    """The fake bridge's recording session: `.calls` and `.clip_calls` list what was sent."""
+    return fake_bridge(LIGHTS)

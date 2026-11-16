@@ -53,6 +53,34 @@ There's no separate frontend server in normal use: `myhuey serve` runs the API a
 | Run it in the background | `nohup .venv/bin/myhuey serve --port 8000 > ~/.myhuey/serve.log 2>&1 &` |
 | Check it's up | `curl -s localhost:8000/api/health` should answer `{"status":"ok","api":5}` |
 
+### The window
+
+The app is laid out like a terminal. Tabs along the top open each screen: the 3D view and the workbench for the room you were last in, Home, the floor plan, Scenes, Lights and groups, Settings, and Help. The tabs are yours to arrange: drag one to move it (or Alt-Shift-← → with it focused), close it with its × or a middle click, and bring closed tabs back, or reset them all, from the + at the end. Opening a screen whose tab is closed reopens it. You can move the tabs to a strip above the prompt or to a rail down the left or right side, in Settings, by right-clicking the tab bar, or by typing `tabs bottom`, `tabs left`, `tabs right` or `tabs top`. A rail can be dragged wider or narrower by its inner edge and folded to icons (`tabs collapse`, `tabs expand`, `tabs width 260`). The top bar also shows the bridge's address and whether it is answering, the theme menu, Workflows, and ⌘K.
+
+A prompt is pinned to the bottom of every screen. Type a command and it runs through the same API the screens use, then shows what really happened and how long it took. Click the line above the prompt for the history. It understands a fixed set of commands and nothing else: it never runs a shell, and nothing runs on the server.
+
+| Command | What it does |
+|---|---|
+| `room list` | The rooms in the open layout |
+| `room on Office`, `room off Office` | Every light in the room on or off |
+| `room dim Office 30` | Dim the lit lights |
+| `room posture Office standing` | Preview sitting or standing in the 3D view |
+| `room glare Office [--mode code] [--fix]` | Check for glare from the desk; `--fix` dims the flagged lights |
+| `suggest --room Office --mode code [--apply]` | Eye-comfort suggestions; `--apply` sends the first one |
+| `scene list`, `scene apply <scene>` | Saved scenes |
+| `groups list`, `groups apply <group>` | Saved groups and their looks |
+| `layouts list`, `layouts open <layout>` | Layouts and sandboxes (`active` goes back) |
+| `open home`, `open 3d Office`, … | Go to a screen |
+| `theme dracula` | Switch theme |
+
+The real CLI's spelling works too (`myhuey room dim --name Office --level 30`), and a command with no room uses the one you were last in. `room posture` and `room glare` exist only in the browser for now. Commands act on the layout named in the prompt, so with a sandbox open they act on the sandbox. Press `/` to jump to the prompt.
+
+⌘K (Ctrl-K) opens a palette that searches rooms, scenes, groups, screens, layouts, themes, help pages, and design steps such as “design a room” or “place lights”; Enter runs the top result, and anything it does not recognise is run as a command. Workflows is a drawer of ready-made commands for the room you are in and your saved groups, each with a Run button and the command to copy.
+
+Side panels fold like an editor's tool windows. Click a panel's title, or the triangle beside it, to hide its contents; Alt-click folds or opens every panel in that sidebar. Folded panels stay folded next time, per browser.
+
+**Help** is built in. The Help tab has a page for each part of the app, searchable, with keyboard shortcuts and commands you can drop into the prompt. The ? in the top bar opens the page for the screen you are on.
+
 ### Home
 
 Home is the everyday screen, and it always controls your active home, even while you're trying ideas in a sandbox.
@@ -69,7 +97,7 @@ You get All on, All off, the room dimmer, and a card per light. Click a card for
 
 ### Studio
 
-The Studio is where you build. Changes here go to whichever layout is open.
+The Studio is where you build. Changes here go to whichever layout is open. It is one module with a room menu and four views (the whole-home plan, a room's plan, its 3D view, and its photo): pick any room in the menu and you stay on the same view of it, and its tab opens it without going through the workbench first.
 
 **Floor plan.** Upload a floor plan image (JPEG, PNG, or WebP) and set its scale by dragging a line over a printed dimension and typing its length, like `12' 6"` or `3.8 m`. Then hover inside a room to preview its traced outline and click to keep it. If a spot won't trace, the hint tells you why before you click: it leaks through a doorway, it's on a wall, or it's too small. The Close door gaps slider fixes most doorway leaks. You can also draw rooms by hand (rectangle, L-shape, or corner by corner, snapping to neighbors), drag rooms around, reshape their corners over the image, add a room by width and depth, or import rooms straight from your Hue bridge. Room fill sets how see-through the room shapes are so you can trace without fighting them.
 
@@ -83,6 +111,12 @@ The Studio is where you build. Changes here go to whichever layout is open.
 - lights
 
 Drag paired lights onto the plan and they're drawn the way they actually look: strips long and thin, bars as bars, bulbs round, all worked out from the product data. Each light gets a height (guessed from the product and the furniture under it, or set by you) and a role (Auto, or pinned to Bias, Task, or View). You can also place Hue products you don't own yet. They take part in suggestions without sending anything to the bridge, and you swap them for the real light once it shows up. Arrows nudge, R rotates 15 degrees, Delete removes, and Escape deselects.
+
+**3D view.** The designer's 3D tab draws the same room in three dimensions: walls on its real outline up to the ceiling, doors and windows at their heights, furniture as solids, and each light at its height and real length, in its live color. Drag to orbit, Shift-drag or Space-drag to pan, and use the wheel to zoom toward the cursor (`=`, `-`, and `0` work too). The eye button sits you at the desk, looking at the screen. Drag a light and it slides across the room at its own height; Alt-drag raises or lowers it. Drag a desk and the screens and lights on it come along; Shift-drag turns it. Everything saves to the same room the plan shows.
+
+The 3D screen is three panes. The view is on top, with a switch between looking in from outside and sitting at the desk. Under it is the glare table: every light with its role, position, angle off your gaze, live level, and glare status; click a row to select the light. Beside them is the inspector, with nudge buttons and a height slider for the selected light, the posture switch, and the room's furniture. Drag the bars between panes to resize them, and fold any pane away; the sizes are remembered in your browser.
+
+The glare check is made from the desk seat. It flags lights that bounce off a screen into your eyes, and lights in or near your line of sight, and draws the paths. Lights just behind a screen count as bias lights. Each flagged light gets a level to stay under, and Fix glare dims the lit ones that are over it (it never brightens anything). Standing is a preview: it raises your eyes and any sit-stand desk with what is on it, and it is not saved. The check runs in the browser for now; the `myhuey` CLI and the API do not have it yet, and monitors are assumed to lean back 12 degrees.
 
 **Room photo.** Upload a photo of the real room (it's re-encoded, which strips location data) and pin each light where it appears. Map four floor points between the photo and the plan, and MyHuey can project plan positions onto the photo. That's what powers Setups, which proposes desk lighting (a bias strip behind the monitor, a floor lamp, a desk lamp) on your actual photo before you buy anything. It also lets you preview a suggestion's colors painted onto the photo.
 
@@ -110,7 +144,7 @@ Save selection keeps a pick as a named group. Groups are stored by MyHuey (nothi
 
 ### Settings
 
-Settings holds the bridge pairing and the preferences, which the web app and `myhuey prefs` share. The look is an editor's: a flat background, frosted glass panels, JetBrains Mono, and seven themes. Neon is the default, a dark Monokai-style palette. Each theme only recolors the app; the colors of your lights always show as they really are. Every theme's text is checked to read at 4.5:1 contrast or better, so some themes use slightly lighter greys for text than their palettes do. The sun/moon button on the rail flips between your dark and light theme without losing the one you picked. Pairing works by address or by discovery: local mDNS first, then Hue's discovery service, which allows one request per 15 minutes. The bridge certificate is pinned after pairing, and the dot at the bottom of the side rail tells you whether the bridge is answering.
+Settings holds the bridge pairing and the preferences, which the web app and `myhuey prefs` share. The look is an editor's: a flat background, frosted glass panels, JetBrains Mono, and seven themes of its own. Neon is the default, a dark Monokai-style palette. The theme menus also list the colour themes installed in VS Code on this computer and the palettes from Starship's presets, imported by `scripts/import_editor_themes.py`: run it again after installing a theme, then rebuild the web app and restart the server. For a theme you have not installed in VS Code, put its extension folder (the one with `package.json` and the theme's JSON file) in `scripts/extra-themes/` and run the script: that folder is ignored by git, so the theme's own files stay on your computer, and where such a theme keeps a plain interface its syntax colours become the accent and the six hues. Imported themes get the same contrast checks as the built-in ones, so their greys can differ slightly from the editor's. Each theme only recolors the app; the colors of your lights always show as they really are. Every theme's text is checked to read at 4.5:1 contrast or better, so some themes use slightly lighter greys for text than their palettes do. The theme menu in the top bar switches theme from any screen. Pairing works by address or by discovery: local mDNS first, then Hue's discovery service, which allows one request per 15 minutes. The bridge certificate is pinned after pairing, and the dot at the bottom of the side rail tells you whether the bridge is answering.
 
 | Preference | Choices | Default |
 | --- | --- | --- |
@@ -172,6 +206,79 @@ Gradient lights take 2 to 5 colors, spaced evenly from start to end, and Hue fix
 - scattered: `random_pixelated`
 
 `lights list` shows what each light supports. One bridge quirk to know: setting an effect replaces the gradient, and setting a gradient stops the effect.
+
+## Use it from your assistant
+
+MyHuey ships no AI of its own. `myhuey mcp` is a small tool server that the assistant you already use (Claude Code, Claude Desktop, Cursor, VS Code, or any other that speaks MCP) starts on your own machine, and the skills in `skills/` teach that assistant how to use it well. It runs locally and needs no account or API key. It talks to your bridge on your own network and, for `open_in_app`, to the app's address; it makes no requests to the internet.
+
+The server sends nothing to the internet, but the assistant sees what the tools return (your room names, layouts, and light states), and what it does with that is governed by the assistant you chose, not by MyHuey. The tools never return the bridge key.
+
+The configs below start the server with [uv](https://docs.astral.sh/uv/). If you installed with `python3 -m venv` and pip as above and have no `uv`, point the config at the `myhuey` in that virtual environment instead. It needs no `uv` and works from any folder:
+
+```json
+{
+  "mcpServers": {
+    "myhuey": {
+      "command": "/path/to/myhuey/.venv/bin/myhuey",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+In this repo, with `uv` installed, Claude Code needs nothing: `.mcp.json` starts the server with `uv run myhuey mcp`, which works from the MyHuey folder, and `.claude/skills/` holds the skills. Other agents are pointed at them by `AGENTS.md`. For other tools, or another folder, use this config (or the one above). Where it says `/path/to/myhuey`, put the folder you cloned:
+
+```json
+{
+  "mcpServers": {
+    "myhuey": {
+      "command": "uv",
+      "args": ["run", "--directory", "/path/to/myhuey", "myhuey", "mcp"]
+    }
+  }
+}
+```
+
+- **Claude Code:** already set up by `.mcp.json` when you work inside this repo. Elsewhere, paste the snippet above into that project's `.mcp.json`.
+- **Claude Desktop:** paste it into `claude_desktop_config.json` (Settings, Developer, Edit Config), then restart the app.
+- **Cursor:** paste it into `.cursor/mcp.json` in your project, or `~/.cursor/mcp.json` for every project.
+- **VS Code:** put it in `.vscode/mcp.json`, but VS Code names the top key `servers` instead of `mcpServers`.
+
+Apps you open from the dock or Start menu, such as Claude Desktop, often do not see your shell's PATH and cannot find `uv`. Put its full path (what `which uv` prints) in `"command"`, or use the `.venv/bin/myhuey` form.
+
+`myhuey mcp --list` prints the 24 tools, one per line. A different database goes before the command (`myhuey --db PATH mcp`).
+
+If MyHuey runs on a home server and your assistant on a laptop, the assistant starts the server over ssh. Use the form without `uv` on the server, and give `--app-url` the address your laptop's browser uses for the app, so the link `open_in_app` returns opens there:
+
+```json
+{
+  "mcpServers": {
+    "myhuey": {
+      "command": "ssh",
+      "args": ["you@homeserver", "/path/to/myhuey/.venv/bin/myhuey", "mcp", "--app-url", "http://homeserver:8000"]
+    }
+  }
+}
+```
+
+ssh has to log in with a key, since the assistant cannot type a password. `myhuey serve` listens only on 127.0.0.1 unless told otherwise, so start it on the server with `myhuey serve --host 0.0.0.0 --port 8000` for that address to open from the laptop (anyone on your network can then reach the app). The `answering` value `open_in_app` returns is checked from the server's side: it says whether the app is running there, not whether your laptop can reach it.
+
+### What the assistant can and cannot do
+
+It can read your rooms, lights, and scenes, design a scene and preview it, save a scene, and build a room layout. It can also call `apply_scene`, `room_power`, and `room_dim`, the only tools that change real lights, and it is taught to do that only when you ask.
+
+- It builds layouts only in a sandbox, a private copy of your home. Every layout-writing tool refuses the active home.
+- It never deletes anything from your active home, and never deletes a layout. It can remove rooms (with their scenes) and lights only inside a sandbox it is building.
+- It cannot touch bridge pairing.
+- It cannot make a sandbox active. You look at it in the app and do that yourself.
+- Planned lights from the catalog take part in roles and previews and are never sent to the bridge.
+
+Two requests to start with:
+
+- *"Make the office easy on the eyes for coding tonight: warm and dim, a little teal behind the monitor. Show me before you apply anything."* The assistant reads the room, previews a scene, and applies or saves it when you say so.
+- *"Build my office in a sandbox: 12 by 14 feet, desk on the north wall under the window, door on the south wall."* It builds the room, checks it, and gives you a link that opens the sandbox in the 3D view.
+
+The server also offers two prompts, `design_light_theme` and `design_room_layout`, and a `guide` tool for assistants that do not read skill files. `skills/README.md` describes the skills.
 
 ## HTTP API
 

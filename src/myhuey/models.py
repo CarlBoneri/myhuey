@@ -46,6 +46,41 @@ FURNITURE_HEIGHTS: dict[str, tuple[float, float]] = {
 }
 DEFAULT_FURNITURE_HEIGHT = (0.0, 75.0)
 
+# Furniture the plan can place: kind -> (label, width, depth, shape) in cm. The same rows as
+# FURNITURE_CATALOG in frontend/src/components/Shapes.tsx; a test keeps the two in step.
+FURNITURE_SIZES: dict[str, tuple[str, float, float, str]] = {
+    "sofa": ("Sofa", 213.0, 91.0, "rect"),
+    "sectional": ("Sectional", 280.0, 180.0, "rect"),
+    "armchair": ("Armchair", 85.0, 85.0, "rect"),
+    "coffee-table": ("Coffee table", 120.0, 60.0, "rect"),
+    "tv": ('TV 65"', 145.0, 8.0, "rect"),
+    "tv-stand": ("TV stand", 180.0, 45.0, "rect"),
+    "bed-king": ("King bed", 193.0, 203.0, "rect"),
+    "bed-queen": ("Queen bed", 152.0, 203.0, "rect"),
+    "bed-full": ("Full bed", 137.0, 191.0, "rect"),
+    "bed-twin": ("Twin bed", 97.0, 191.0, "rect"),
+    "nightstand": ("Nightstand", 50.0, 40.0, "rect"),
+    "dresser": ("Dresser", 150.0, 50.0, "rect"),
+    "desk": ("Desk", 140.0, 70.0, "rect"),
+    "desk-l": ("L-desk", 160.0, 150.0, "rect"),
+    "desk-standing": ("Standing desk", 140.0, 70.0, "rect"),
+    "monitor-24": ('Monitor 24"', 54.0, 18.0, "rect"),
+    "monitor-27": ('Monitor 27"', 61.0, 20.0, "rect"),
+    "monitor-34": ('Ultrawide 34"', 81.0, 22.0, "rect"),
+    "chair": ("Chair", 50.0, 50.0, "rect"),
+    "dining-table": ("Dining table", 180.0, 90.0, "rect"),
+    "round-table": ("Round table", 110.0, 110.0, "ellipse"),
+    "bookshelf": ("Bookshelf", 90.0, 30.0, "rect"),
+    "counter": ("Counter", 240.0, 64.0, "rect"),
+    "island": ("Island", 180.0, 100.0, "rect"),
+    "rug": ("Rug 8x10", 305.0, 244.0, "rect"),
+    "plant": ("Plant", 45.0, 45.0, "ellipse"),
+    "tree": ("Tree", 140.0, 140.0, "ellipse"),
+    "bathtub": ("Bathtub", 152.0, 76.0, "rect"),
+    "pillar-round": ("Round pillar", 30.0, 30.0, "ellipse"),
+    "pillar-square": ("Square pillar", 30.0, 30.0, "rect"),
+}
+
 # Roles a user can pin on a light. Suggestions also use "behind" and "ambient" internally.
 PINNABLE_ROLES = ("auto", "bias", "task", "view")
 

@@ -9,6 +9,8 @@ describe('routes', () => {
     expect(parseRoute('#/studio/plan/Living%20room')).toEqual({ view: 'studio', focus: 'Living room' });
     expect(parseRoute('#/studio/room/Office')).toEqual({ view: 'design', room: 'Office', tab: 'plan' });
     expect(parseRoute('#/studio/room/Office/photo')).toEqual({ view: 'design', room: 'Office', tab: 'photo' });
+    expect(parseRoute('#/studio/room/Office/3d')).toEqual({ view: 'design', room: 'Office', tab: '3d' });
+    expect(href({ view: 'design', room: 'Office', tab: '3d' })).toBe('#/studio/room/Office/3d');
     expect(parseRoute('#/settings')).toEqual({ view: 'settings' });
     expect(parseRoute('#/lights')).toEqual({ view: 'lights' });
   });

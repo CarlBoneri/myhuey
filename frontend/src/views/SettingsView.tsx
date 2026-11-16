@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
-import { Link2, Search } from 'lucide-react';
+import { Copy, Link2, Search } from 'lucide-react';
 import { api } from '../api';
 import { useStore } from '../store';
 import { Field, HueIcon, Panel, Segmented, TextInput, Toggle } from '../components/ui';
 import type { Preferences } from '../types';
-import { THEMES, type Theme, type ThemeId } from '../lib/theme';
+import { THEMES, themeGroups, type Theme, type ThemeId } from '../lib/theme';
+import { useUi } from '../uiStore';
+import { TAB_PLACEMENTS, type TabPlacement } from '../lib/tabs';
+import { MCP_CONFIG } from '../lib/helpDocs';
 import { quarterHours, scheduleWarning } from '../lib/suggest';
 
 export function SettingsView() {
-  const { setup, lights, load, lightsError } = useStore();
+  const { setup, lights, load, lightsError, toast } = useStore();
   const [address, setAddress] = useState('');
   const [found, setFound] = useState<{ id: string; ip: string }[] | null>(null);
   const [finding, setFinding] = useState(false);
@@ -87,6 +90,18 @@ myhuey scene apply --scene "Sunset"
 myhuey palette --file photo.jpg --mood bright
 myhuey suggest --room Office --mode code --save "Late night"
 myhuey palettes --tag warm`}</pre>
+          <p className="hint">
+            Use it from your assistant. Add this to <code>.mcp.json</code> and your AI assistant can read your home and design scenes and layouts.
+            It builds only in a sandbox, and changes your lights only when you ask.{' '}
+            <button type="button" className="button subtle small" aria-label="Copy the assistant config"
+              onClick={() => navigator.clipboard?.writeText(MCP_CONFIG).then(() => toast('Copied.', false), () => toast('Could not copy.'))}><Copy size={12} /> Copy</button>
+          </p>
+          <pre className="code">{MCP_CONFIG}</pre>
+          <p className="hint">
+            It runs <code>uv</code> and works from the MyHuey folder. Anywhere else, add <code>"--directory", "/path/to/myhuey"</code> after{' '}
+            <code>"run"</code>, or set <code>"command"</code> to <code>/path/to/myhuey/.venv/bin/myhuey</code> with <code>"args": ["mcp"]</code>.
+            Help, under Your assistant, has more.
+          </p>
         </Panel>
       </div>
     </div>
@@ -111,11 +126,15 @@ function ThemeSelect({ label, value, onChange, kind, withSystem = false }: {
     <span className="theme-pick">
       <select className="input theme-select" aria-label={label} value={value} onChange={(e) => onChange(e.target.value as Theme)}>
         {withSystem && <option value="system">System</option>}
-        {THEMES.filter((t) => !kind || t.kind === kind).map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+        {themeGroups(kind).map((group) => (
+          <optgroup key={group.label} label={group.label}>
+            {group.themes.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+          </optgroup>
+        ))}
       </select>
       {shown && (
         <span className="theme-swatches" aria-hidden="true">
-          {shown.swatches.map((color) => <span key={color} style={{ background: color }} />)}
+          {shown.swatches.map((color, index) => <span key={index} style={{ background: color }} />)}
         </span>
       )}
     </span>
@@ -124,6 +143,7 @@ function ThemeSelect({ label, value, onChange, kind, withSystem = false }: {
 
 function PreferencesPanel() {
   const { preferences: p, setPreferences } = useStore();
+  const { tabPlacement, setTabPlacement } = useUi();
   const set = (changes: Partial<Preferences>) => void setPreferences(changes);
   const choice = <K extends keyof Preferences>(key: K, values: Preferences[K][], format: (v: Preferences[K]) => string) => (
     <Segmented label={key} value={String(p[key])} onChange={(v) => set({ [key]: values.find((x) => String(x) === v) } as Partial<Preferences>)}
@@ -146,6 +166,10 @@ function PreferencesPanel() {
           </PreferenceRow>
         </>
       )}
+      <PreferenceRow label="Tab position" hint="Where the window tabs sit: in the top bar, above the prompt, or in a rail down the left or right. In a narrow window they stay at the top.">
+        <Segmented<TabPlacement> label="Tab position" value={tabPlacement} onChange={setTabPlacement}
+          options={TAB_PLACEMENTS.map((place) => ({ value: place, label: place[0].toUpperCase() + place.slice(1) }))} />
+      </PreferenceRow>
       <PreferenceRow label="Reduce transparency" hint="Solid panels instead of frosted glass, and no glow. Auto follows your computer's setting.">
         {choice('reduce_transparency', ['auto', 'on', 'off'], (v) => ({ auto: 'Auto', on: 'On', off: 'Off' })[v])}
       </PreferenceRow>

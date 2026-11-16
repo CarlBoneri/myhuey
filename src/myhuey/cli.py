@@ -203,6 +203,11 @@ def build_parser() -> argparse.ArgumentParser:
     serve.add_argument("--port", type=int, default=8000)
     serve.set_defaults(handler=handle_serve)
 
+    mcp = subparsers.add_parser("mcp", help="Run a tool server (MCP, over stdio) for an AI assistant")
+    mcp.add_argument("--app-url", default="http://127.0.0.1:8000", help="Where the web app runs, for open_in_app")
+    mcp.add_argument("--list", action="store_true", help="List the tools the server offers, then exit")
+    mcp.set_defaults(handler=handle_mcp)
+
     return parser
 
 
@@ -720,6 +725,19 @@ def handle_lights(args: argparse.Namespace) -> int:
     return 0
 
 
+def handle_mcp(args: argparse.Namespace) -> int:
+    from . import mcp_server
+
+    if args.list:
+        from .assistant import TOOLS
+
+        for name, tool in TOOLS.items():
+            print(f"{name:<18}{(tool.__doc__ or '').strip().splitlines()[0]}")
+        return 0
+    mcp_server.run(args.db, args.app_url)
+    return 0
+
+
 def _require_free_port(host: str, port: int) -> None:
     if port == 0:
         return
@@ -783,7 +801,7 @@ def _elevation_arg(text: str | None, units: str) -> float | str | None:
 def main(argv: Sequence[str] | None = None) -> None:
     args = build_parser().parse_args(argv)
     try:
-        if args.layout and args.command not in ("layouts", "groups"):  # both are app-wide
+        if args.layout and args.command not in ("layouts", "groups", "mcp"):  # app-wide, or (mcp) each tool takes its own
             service = HueRoomService(args.db)
             with using_layout(service.sandbox_id(service.resolve_layout(args.layout))):
                 code = args.handler(args)

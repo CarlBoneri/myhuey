@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '@fontsource-variable/jetbrains-mono';
 import './styles.css';
+import './themes.generated.css';
 import { App } from './App';
 import { applyTheme, readCachedTheme } from './lib/theme';
 

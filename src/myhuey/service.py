@@ -29,7 +29,7 @@ from .scenes import Scene, evaluate
 from .suggest import suggest as suggest_scenes
 from .shapes import profile_for
 from .layout_store import backup_layout, delete_layout, list_layouts, load_layout, save_layout, swap_active
-from .layouts import HOME_KEYS, clean_name, current_layout, ensure_identity, using_layout
+from .layouts import HOME_KEYS, clean_name, current_layout, ensure_identity, strict_layout, using_layout
 from .light_groups import capture_look, clean_group_name, clean_light_ids, look_commands
 from .migrations import CURRENT_VERSION, migrate
 from .storage import DEFAULT_STORAGE_PATH, load_config, save_config, uploads_dir
@@ -155,6 +155,8 @@ class HueRoomService:
     def _open_sandbox(self, config: dict[str, Any]) -> str | None:
         """The open layout's ID when it is a sandbox; None when it is Active."""
         layout_id = current_layout.get()
+        if layout_id and layout_id == config["layout"]["id"] and strict_layout.get():
+            raise LayoutChanged()  # a sandbox the caller meant to write was made active
         return layout_id if layout_id and layout_id != config["layout"]["id"] else None
 
     def _load(self) -> dict[str, Any]:
@@ -323,6 +325,16 @@ class HueRoomService:
             raw = self.client().get_lights()
         self._remember_products(raw)
         return [light_snapshot(light_id, raw[light_id], index.get(light_id)) for light_id in sorted(raw, key=_light_order)]
+
+    def read_lights(self) -> list[dict[str, Any]]:
+        """Every light on the bridge from one plain read of its light list, and nothing else.
+
+        Unlike lights(), this never looks for a bridge that stopped answering (no mDNS, no cloud
+        discovery), makes no v2 call, and saves nothing, so it is safe from a read-only caller.
+        Gradient and effect state are not included.
+        """
+        raw = self.client().get_lights()
+        return [light_snapshot(light_id, raw[light_id]) for light_id in sorted(raw, key=_light_order)]
 
     def _remember_products(self, raw: dict[str, Any]) -> None:
         """Copy archetype, product name, and model ID into placements that lack them, so

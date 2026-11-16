@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 
+export type DesignTab = 'plan' | '3d' | 'photo';
+
 export type Route =
   | { view: 'home' }
   /** A room's workbench: use and tune it. */
@@ -7,12 +9,16 @@ export type Route =
   /** The whole-home floor plan; `focus` selects a room for reshaping. */
   | { view: 'studio'; focus?: string }
   /** One room's designer in the Studio: outline, furniture, light placement, photo. */
-  | { view: 'design'; room: string; tab: 'plan' | 'photo' }
+  | { view: 'design'; room: string; tab: DesignTab }
+  /** A Studio address with no room (`#/studio/room`, `#/studio/3d`): lib/studio.ts picks the room. */
+  | { view: 'studio-room'; tab: DesignTab }
   | { view: 'setup' }
   | { view: 'scenes' }
   | { view: 'scene'; id: string }
   | { view: 'lights' }
-  | { view: 'settings' };
+  | { view: 'settings' }
+  /** The in-app help; `topic` is one of the ids in lib/helpDocs.ts. */
+  | { view: 'help'; topic?: string };
 
 export function parseRoute(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').map(decodeURIComponent);
@@ -22,7 +28,9 @@ export function parseRoute(hash: string): Route {
     return third === 'photo' ? { view: 'design', room: second, tab: 'photo' } : { view: 'room', room: second };
   }
   if (first === 'studio') {
-    if (second === 'room' && third) return { view: 'design', room: third, tab: fourth === 'photo' ? 'photo' : 'plan' };
+    if (second === 'room' && third) return { view: 'design', room: third, tab: fourth === 'photo' || fourth === '3d' ? fourth : 'plan' };
+    if (second === 'room') return { view: 'studio-room', tab: 'plan' };
+    if (second === '3d' || second === 'photo') return { view: 'studio-room', tab: second };
     if (second === 'plan' && third) return { view: 'studio', focus: third };
     return { view: 'studio' };
   }
@@ -31,6 +39,7 @@ export function parseRoute(hash: string): Route {
   if (first === 'scenes') return { view: 'scenes' };
   if (first === 'lights') return { view: 'lights' };
   if (first === 'setup') return { view: 'setup' };
+  if (first === 'help') return second ? { view: 'help', topic: second } : { view: 'help' };
   if (first === 'settings') return second === 'lights' ? { view: 'lights' } : { view: 'settings' };
   return { view: 'home' };
 }
@@ -42,13 +51,17 @@ export function href(route: Route): string {
     case 'room':
       return `#/room/${part(route.room)}`;
     case 'design':
-      return `#/studio/room/${part(route.room)}${route.tab === 'photo' ? '/photo' : ''}`;
+      return `#/studio/room/${part(route.room)}${route.tab === 'plan' ? '' : `/${route.tab}`}`;
+    case 'studio-room':
+      return route.tab === 'plan' ? '#/studio/room' : `#/studio/${route.tab}`;
     case 'studio':
       return route.focus ? `#/studio/plan/${part(route.focus)}` : '#/studio';
     case 'scene':
       return `#/scenes/${part(route.id)}`;
     case 'home':
       return '#/';
+    case 'help':
+      return route.topic ? `#/help/${part(route.topic)}` : '#/help';
     default:
       return `#/${route.view}`;
   }

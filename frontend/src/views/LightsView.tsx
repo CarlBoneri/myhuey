@@ -8,7 +8,7 @@ import { attempt, useStore, sendLight } from '../store';
 import type { BridgeLight, LightGroup } from '../types';
 import { LightControls } from '../components/LightControls';
 import { ColorPicker } from '../components/ColorPicker';
-import { Empty, HueIcon, IconButton, Panel, Slider, TextInput, Toggle } from '../components/ui';
+import { Empty, HueIcon, IconButton, Panel, Sidebar, Slider, TextInput, Toggle } from '../components/ui';
 import { formatLength } from '../lib/units';
 import { groupLightsByRoom } from '../lib/lights';
 import { kelvinToHex } from '../lib/color';
@@ -132,14 +132,14 @@ export function LightsView() {
             );
           })}
         </div>
-        <aside className="inspector">
+        <Sidebar name="lights">
           {group && (
             <GroupPanel key={group.id} group={group} selected={selected} onApply={() => void applyLook(group)} onDeleted={() => setGroupId(null)} />
           )}
           {picked.length > 1 ? <GroupControls lights={picked} />
             : picked.length === 1 ? <Panel title="Light"><LightControls light={picked[0]} /></Panel>
               : <Panel title="Light"><p className="hint">Pick a light to change its brightness and color.</p></Panel>}
-        </aside>
+        </Sidebar>
       </div>
     </div>
   );
@@ -159,7 +159,7 @@ function GroupControls({ lights }: { lights: BridgeLight[] }) {
   const warmth = useMemo(() => throttleLatest((v: number) => each((light) => light.supports_color_temp, { color_temp: v, on: true }, { color_temp: v, color: kelvinToHex(v), on: true }), pace), [key]); // eslint-disable-line react-hooks/exhaustive-deps
   const paint = useMemo(() => throttleLatest((hex: string) => each((light) => light.supports_color, { color: hex, on: true }, { color: hex, on: true }), pace), [key]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
-    <Panel title={`${state.count} lights`}>
+    <Panel id="selection" title={`${state.count} lights`}>
       <p className="hint">{state.on} of {state.count} on · {lights.map((light) => light.name).join(', ')}</p>
       <div className="button-row">
         <button type="button" className={`button${state.on === state.count ? ' active' : ''}`} onClick={() => each(() => true, { on: true }, { on: true })}><Power size={15} /> All on</button>
@@ -199,7 +199,7 @@ function GroupPanel({ group, selected, onApply, onDeleted }: {
     return next;
   };
   return (
-    <Panel title={name === null ? group.name : 'Rename group'} actions={name === null && !confirming && (
+    <Panel id="group" title={name === null ? group.name : 'Rename group'} actions={name === null && !confirming && (
       <>
         <IconButton label={`Rename ${group.name}`} onClick={() => setName(group.name)}><Pencil size={15} /></IconButton>
         <IconButton label={`Delete ${group.name}`} danger onClick={() => setConfirming(true)}><Trash2 size={15} /></IconButton>

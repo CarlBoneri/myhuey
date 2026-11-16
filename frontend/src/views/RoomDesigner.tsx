@@ -1,10 +1,11 @@
 // The Studio's room designer: one room drawn to scale, with its outline, furniture, doors and
 // windows, and lights at their physical sizes; plus the room photo. Using the room is the workbench's job.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Armchair, Camera, Copy, DoorOpen, Hand, Lightbulb, Map as MapIcon, PenLine, Plus, RotateCw, Trash2 } from 'lucide-react';
+import { Armchair, Copy, DoorOpen, Hand, Lightbulb, PenLine, Plus, RotateCw, Trash2 } from 'lucide-react';
 import { api } from '../api';
 import { attempt, useStore } from '../store';
-import { go, href } from '../lib/router';
+import { go, href, parseRoute, type DesignTab } from '../lib/router';
+import { markRename } from '../lib/studio';
 import { area, bounds, pathOf, round1 } from '../lib/geometry';
 import { formatArea, formatLength, snap } from '../lib/units';
 import { effectiveLength, liveColors, placedProfile } from '../lib/lights';
@@ -13,11 +14,15 @@ import { openingAt, reanchorOpenings } from '../lib/plan';
 import { PlanCanvas, useDrag, usePlan } from '../components/PlanCanvas';
 import { FURNITURE_CATALOG, FurnitureShape, LightSilhouette, OpeningShape } from '../components/Shapes';
 import { LightControls } from '../components/LightControls';
-import { Empty, Field, HueIcon, IconButton, LengthInput, Panel, Segmented, Slider, TextInput } from '../components/ui';
+import { StudioHead } from '../components/StudioHead';
+import { Empty, Field, HueIcon, IconButton, LengthInput, Panel, Segmented, Sidebar, Slider, TextInput } from '../components/ui';
 import { PhotoView } from './PhotoView';
 import { OutlineHandles } from '../components/OutlineHandles';
 import { PlanLightsPanel } from '../components/PlanLightsPanel';
 import { autoRoleLabel, placementNeedsRefresh } from '../lib/suggest';
+import { Studio3D } from '../components/Studio3D';
+import { roomGlare } from '../lib/roomGlare';
+import { useUi } from '../uiStore';
 
 type Selection = { type: 'light'; id: string } | { type: 'furniture'; id: string } | { type: 'opening'; id: string } | null;
 type Tool = 'select' | 'outline' | 'openings';
@@ -199,13 +204,14 @@ function PlacedFurniture({ item, selected, onSelect, onChange, onCommit, units }
   );
 }
 
-export function RoomDesigner({ name, tab }: { name: string; tab: 'plan' | 'photo' }) {
-  const { rooms, lights, replaceRoom, refreshRooms } = useStore();
+export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
+  const { rooms, lights, profiles, replaceRoom, refreshRooms } = useStore();
   const source = rooms.find((room) => room.name === name);
   const [draft, setDraft, draftRef] = useDraft(source);
   const [selection, setSelection] = useState<Selection>(null);
   const [tool, setTool] = useState<Tool>('select');
   const [openingKind, setOpeningKind] = useState<Opening['kind']>('window');
+  const { posture, glareMode } = useUi();
 
   const fit = useMemo(() => {
     if (!source) return { x: 0, y: 0, w: 450, h: 300 };
@@ -219,7 +225,14 @@ export function RoomDesigner({ name, tab }: { name: string; tab: 'plan' | 'photo
     const updated = await attempt(() => api.updateRoom(current.name, changes));
     if (updated) {
       replaceRoom(current.name, updated);
-      if (changes.name && changes.name !== current.name) go({ view: 'design', room: updated.name, tab });
+      if (changes.name && changes.name !== current.name) {
+        // Follow the rename only if this room is still the one on screen; someone who has switched rooms since stays where they are.
+        const here = parseRoute(window.location.hash);
+        if (here.view === 'design' && here.room === current.name) {
+          markRename(current.name, updated.name);
+          go({ view: 'design', room: updated.name, tab: here.tab });
+        }
+      }
     } else {
       setDraft(source);
     }
@@ -319,7 +332,7 @@ export function RoomDesigner({ name, tab }: { name: string; tab: 'plan' | 'photo
   // Keyboard: Escape deselects, Delete removes, arrows nudge (Shift for a foot or 10 cm), R rotates 15°.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (tab !== 'plan' || !selection || event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) return;
+      if (tab === 'photo' || !selection || event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) return;
       if (event.key === 'Escape') {
         setSelection(null);
         return;
@@ -353,6 +366,22 @@ export function RoomDesigner({ name, tab }: { name: string; tab: 'plan' | 'photo
     return () => window.removeEventListener('keydown', onKey);
   });
 
+  // The 3D view: the room as it stands in the chosen posture, and the glare from its seat.
+  // Recomputed from the draft, so it follows a drag without a request.
+  const glare = useMemo(
+    () => (draft && tab === '3d' ? roomGlare(draft, posture, glareMode, lights, profiles) : null),
+    [draft, posture, glareMode, lights, profiles, tab],
+  );
+
+  /** After a desk moved with what was on it: save the lights it carried, then the furniture. */
+  const commitRig = async (lightIds: string[]) => {
+    for (const id of lightIds) {
+      const placement = draftRef.current?.lights.find((l) => l.light_id === id);
+      if (placement) await saveLight(placement);
+    }
+    await saveRoom({ furniture: draftRef.current!.furniture });
+  };
+
   if (!source || !draft) {
     return <div className="page"><Empty title={`No room named “${name}”`}><a className="button" href="#/studio">Back to the Studio</a></Empty></div>;
   }
@@ -364,29 +393,112 @@ export function RoomDesigner({ name, tab }: { name: string; tab: 'plan' | 'photo
   const selectedFurniture = selection?.type === 'furniture' ? draft.furniture.find((f) => f.id === selection.id) : undefined;
   const selectedOpening = selection?.type === 'opening' ? draft.openings.find((o) => o.id === selection.id) : undefined;
 
+  const inspectorPanels = (
+    <>
+    {selectedLight && (
+      <Panel id="light" title={selectedLight.planned ? 'Planned light' : 'Light'} actions={<IconButton label="Remove from room" danger onClick={removeSelected}><Trash2 size={16} /></IconButton>}>
+        {selectedLight.planned ? (
+          <SwapPlanned room={draft} placement={selectedLight} unplaced={tray.map((light) => ({ id: light.id, name: light.name }))} />
+        ) : lights[selectedLight.light_id] ? <LightControls light={lights[selectedLight.light_id]} /> : <p className="hint">{selectedLight.label} is not on the bridge right now.</p>}
+        <LightPlacementFields placement={selectedLight} units={draft.units} onChange={(next) => { updateLocalLight(next); void saveLight(next); }} />
+      </Panel>
+    )}
+    {selectedOpening && (
+      <Panel id="opening" title={selectedOpening.kind === 'door' ? 'Door' : 'Window'} actions={<IconButton label="Delete" danger onClick={removeSelected}><Trash2 size={16} /></IconButton>}>
+        <Segmented label="Kind" value={selectedOpening.kind}
+          onChange={(kind) => { updateLocalOpening({ ...selectedOpening, kind, sill: kind === 'window' ? selectedOpening.sill ?? 90 : null, top: selectedOpening.top ?? (kind === 'window' ? 210 : 203) }); void commitOpenings(); }}
+          options={[{ value: 'window', label: 'Window' }, { value: 'door', label: 'Door' }]} />
+        <div className="field-row">
+          <LengthInput label="Width" value={selectedOpening.width} units={draft.units} onCommit={(width) => { updateLocalOpening({ ...selectedOpening, width: round1(width) }); void commitOpenings(); }} />
+          <LengthInput label="From corner" value={selectedOpening.offset} units={draft.units} onCommit={(offset) => { updateLocalOpening({ ...selectedOpening, offset: round1(offset) }); void commitOpenings(); }} />
+        </div>
+        <div className="field-row">
+          {selectedOpening.kind === 'window' && (
+            <LengthInput label="Sill height" value={selectedOpening.sill ?? 90} units={draft.units} onCommit={(sill) => { updateLocalOpening({ ...selectedOpening, sill: round1(sill) }); void commitOpenings(); }} />
+          )}
+          <LengthInput label="Top height" value={selectedOpening.top ?? 203} units={draft.units} onCommit={(top) => { updateLocalOpening({ ...selectedOpening, top: round1(top) }); void commitOpenings(); }} />
+        </div>
+        <p className="hint">Windows are daylight sources for glare checks, so their heights matter.</p>
+      </Panel>
+    )}
+    {selectedFurniture && (
+      <Panel id="selected-furniture" title="Furniture" actions={
+        <>
+          <IconButton label="Duplicate" onClick={() => addFurniture({ ...selectedFurniture, label: selectedFurniture.label })}><Copy size={16} /></IconButton>
+          <IconButton label="Delete" danger onClick={removeSelected}><Trash2 size={16} /></IconButton>
+        </>
+      }>
+        <Field label="Label"><TextInput value={selectedFurniture.label} onChange={(e) => updateLocalFurniture({ ...selectedFurniture, label: e.target.value })} onBlur={commitFurniture} /></Field>
+        <div className="field-row">
+          <LengthInput label="Width" value={selectedFurniture.width} units={draft.units} onCommit={(width) => { updateLocalFurniture({ ...selectedFurniture, width }); void commitFurniture(); }} />
+          <LengthInput label="Depth" value={selectedFurniture.depth} units={draft.units} onCommit={(depth) => { updateLocalFurniture({ ...selectedFurniture, depth }); void commitFurniture(); }} />
+        </div>
+        <div className="field-row">
+          <LengthInput label="Off the floor" value={selectedFurniture.elevation ?? 0} units={draft.units} onCommit={(elevation) => { updateLocalFurniture({ ...selectedFurniture, elevation: round1(elevation) }); void commitFurniture(); }} />
+          <LengthInput label="Height" value={selectedFurniture.height ?? 75} units={draft.units} onCommit={(height) => { updateLocalFurniture({ ...selectedFurniture, height: round1(height) }); void commitFurniture(); }} />
+        </div>
+        <Slider label="Rotation" value={selectedFurniture.rotation} min={0} max={359} format={(v) => `${Math.round(v)}°`}
+          onChange={(rotation) => updateLocalFurniture({ ...selectedFurniture, rotation })} onCommit={commitFurniture} />
+        <Segmented label="Shape" value={selectedFurniture.shape} onChange={(shape) => { updateLocalFurniture({ ...selectedFurniture, shape }); void commitFurniture(); }}
+          options={[{ value: 'rect', label: 'Rectangle' }, { value: 'ellipse', label: 'Round' }]} />
+      </Panel>
+    )}
+    {!selection && (
+      <RoomFields room={draft} onSave={saveRoom} onDelete={async () => {
+        if (!confirm(`Delete ${draft.name}, its layout, and its scenes?`)) return;
+        if (await attempt(() => api.deleteRoom(draft.name))) {
+          await refreshRooms();
+          go({ view: 'studio' });
+        }
+      }} />
+    )}
+
+    <Panel title={<><Armchair size={16} strokeWidth={1.5} /> Furniture</>}>
+      <div className="catalog">
+        {FURNITURE_CATALOG.map((preset) => (
+          <button key={preset.kind} type="button" className="catalog-item" onClick={() => addFurniture(preset)} title={`${formatLength(preset.width, draft.units)} × ${formatLength(preset.depth, draft.units)}`}>
+            {preset.label}
+          </button>
+        ))}
+      </div>
+    </Panel>
+
+    <PlanLightsPanel room={source ?? draft} />
+
+    <Panel title="Lights to place">
+      {tray.length ? (
+        <ul className="tray">
+          {tray.map((light) => (
+            <li key={light.id} draggable onDragStart={(event) => event.dataTransfer.setData('application/x-myhuey-light', light.id)}>
+              <HueIcon name={light.profile.icon} size={20} />
+              <span>
+                {light.name}
+                <small>{light.profile.label} · {formatLength(light.profile.length, draft.units)}{placedElsewhere.get(light.id) ? ` · in ${placedElsewhere.get(light.id)}` : ''}</small>
+              </span>
+              <IconButton label={`Place ${light.name}`} onClick={() => addLight(light.id)}><Plus size={16} /></IconButton>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="hint">{Object.keys(lights).length ? 'Every light is placed here.' : 'Pair a bridge to place lights.'}</p>
+      )}
+    </Panel>
+    </>
+  );
+
   return (
     <div className="page room">
-      <header className="page-head">
-        <div>
-          <p className="eyebrow"><a href="#/studio">Studio</a> / Room</p>
-          <h1>{draft.name}</h1>
-        </div>
-        <div className="head-tools">
-          <a className="button" href={href({ view: 'room', room: draft.name })}><Lightbulb size={15} /> Open workbench</a>
-          <Segmented
-            label="View"
-            value={tab}
-            onChange={(next) => go({ view: 'design', room: draft.name, tab: next })}
-            options={[
-              { value: 'plan', label: <><MapIcon size={15} /> Plan</> },
-              { value: 'photo', label: <><Camera size={15} /> Photo</> },
-            ]}
-          />
-        </div>
-      </header>
+      <StudioHead view={tab} room={draft.name}>
+        <a className="button" href={href({ view: 'room', room: draft.name })}><Lightbulb size={15} /> Open workbench</a>
+      </StudioHead>
 
       {tab === 'photo' ? (
         <PhotoView room={draft} />
+      ) : tab === '3d' && glare ? (
+        <Studio3D room={draft} glare={glare} selection={selection} onSelect={setSelection}
+          onLight={updateLocalLight} onLightCommit={saveLight} onRoom={setDraft} onRigCommit={commitRig}>
+          {inspectorPanels}
+        </Studio3D>
       ) : (
         <div className="split">
           <div className="stage">
@@ -448,97 +560,7 @@ export function RoomDesigner({ name, tab }: { name: string; tab: 'plan' | 'photo
             {tool === 'openings' && <p className="stage-hint">Click a wall to add a {openingKind} there. Doors and windows follow their wall when you reshape the room, and go if their wall does.</p>}
           </div>
 
-          <aside className="inspector">
-            {selectedLight && (
-              <Panel title={selectedLight.planned ? 'Planned light' : 'Light'} actions={<IconButton label="Remove from room" danger onClick={removeSelected}><Trash2 size={16} /></IconButton>}>
-                {selectedLight.planned ? (
-                  <SwapPlanned room={draft} placement={selectedLight} unplaced={tray.map((light) => ({ id: light.id, name: light.name }))} />
-                ) : lights[selectedLight.light_id] ? <LightControls light={lights[selectedLight.light_id]} /> : <p className="hint">{selectedLight.label} is not on the bridge right now.</p>}
-                <LightPlacementFields placement={selectedLight} units={draft.units} onChange={(next) => { updateLocalLight(next); void saveLight(next); }} />
-              </Panel>
-            )}
-            {selectedOpening && (
-              <Panel title={selectedOpening.kind === 'door' ? 'Door' : 'Window'} actions={<IconButton label="Delete" danger onClick={removeSelected}><Trash2 size={16} /></IconButton>}>
-                <Segmented label="Kind" value={selectedOpening.kind}
-                  onChange={(kind) => { updateLocalOpening({ ...selectedOpening, kind, sill: kind === 'window' ? selectedOpening.sill ?? 90 : null, top: selectedOpening.top ?? (kind === 'window' ? 210 : 203) }); void commitOpenings(); }}
-                  options={[{ value: 'window', label: 'Window' }, { value: 'door', label: 'Door' }]} />
-                <div className="field-row">
-                  <LengthInput label="Width" value={selectedOpening.width} units={draft.units} onCommit={(width) => { updateLocalOpening({ ...selectedOpening, width: round1(width) }); void commitOpenings(); }} />
-                  <LengthInput label="From corner" value={selectedOpening.offset} units={draft.units} onCommit={(offset) => { updateLocalOpening({ ...selectedOpening, offset: round1(offset) }); void commitOpenings(); }} />
-                </div>
-                <div className="field-row">
-                  {selectedOpening.kind === 'window' && (
-                    <LengthInput label="Sill height" value={selectedOpening.sill ?? 90} units={draft.units} onCommit={(sill) => { updateLocalOpening({ ...selectedOpening, sill: round1(sill) }); void commitOpenings(); }} />
-                  )}
-                  <LengthInput label="Top height" value={selectedOpening.top ?? 203} units={draft.units} onCommit={(top) => { updateLocalOpening({ ...selectedOpening, top: round1(top) }); void commitOpenings(); }} />
-                </div>
-                <p className="hint">Windows are daylight sources for glare checks, so their heights matter.</p>
-              </Panel>
-            )}
-            {selectedFurniture && (
-              <Panel title="Furniture" actions={
-                <>
-                  <IconButton label="Duplicate" onClick={() => addFurniture({ ...selectedFurniture, label: selectedFurniture.label })}><Copy size={16} /></IconButton>
-                  <IconButton label="Delete" danger onClick={removeSelected}><Trash2 size={16} /></IconButton>
-                </>
-              }>
-                <Field label="Label"><TextInput value={selectedFurniture.label} onChange={(e) => updateLocalFurniture({ ...selectedFurniture, label: e.target.value })} onBlur={commitFurniture} /></Field>
-                <div className="field-row">
-                  <LengthInput label="Width" value={selectedFurniture.width} units={draft.units} onCommit={(width) => { updateLocalFurniture({ ...selectedFurniture, width }); void commitFurniture(); }} />
-                  <LengthInput label="Depth" value={selectedFurniture.depth} units={draft.units} onCommit={(depth) => { updateLocalFurniture({ ...selectedFurniture, depth }); void commitFurniture(); }} />
-                </div>
-                <div className="field-row">
-                  <LengthInput label="Off the floor" value={selectedFurniture.elevation ?? 0} units={draft.units} onCommit={(elevation) => { updateLocalFurniture({ ...selectedFurniture, elevation: round1(elevation) }); void commitFurniture(); }} />
-                  <LengthInput label="Height" value={selectedFurniture.height ?? 75} units={draft.units} onCommit={(height) => { updateLocalFurniture({ ...selectedFurniture, height: round1(height) }); void commitFurniture(); }} />
-                </div>
-                <Slider label="Rotation" value={selectedFurniture.rotation} min={0} max={359} format={(v) => `${Math.round(v)}°`}
-                  onChange={(rotation) => updateLocalFurniture({ ...selectedFurniture, rotation })} onCommit={commitFurniture} />
-                <Segmented label="Shape" value={selectedFurniture.shape} onChange={(shape) => { updateLocalFurniture({ ...selectedFurniture, shape }); void commitFurniture(); }}
-                  options={[{ value: 'rect', label: 'Rectangle' }, { value: 'ellipse', label: 'Round' }]} />
-              </Panel>
-            )}
-            {!selection && (
-              <RoomFields room={draft} onSave={saveRoom} onDelete={async () => {
-                if (!confirm(`Delete ${draft.name}, its layout, and its scenes?`)) return;
-                if (await attempt(() => api.deleteRoom(draft.name))) {
-                  await refreshRooms();
-                  go({ view: 'studio' });
-                }
-              }} />
-            )}
-
-            <Panel title={<><Armchair size={16} strokeWidth={1.5} /> Furniture</>}>
-              <div className="catalog">
-                {FURNITURE_CATALOG.map((preset) => (
-                  <button key={preset.kind} type="button" className="catalog-item" onClick={() => addFurniture(preset)} title={`${formatLength(preset.width, draft.units)} × ${formatLength(preset.depth, draft.units)}`}>
-                    {preset.label}
-                  </button>
-                ))}
-              </div>
-            </Panel>
-
-            <PlanLightsPanel room={source ?? draft} />
-
-            <Panel title="Lights to place">
-              {tray.length ? (
-                <ul className="tray">
-                  {tray.map((light) => (
-                    <li key={light.id} draggable onDragStart={(event) => event.dataTransfer.setData('application/x-myhuey-light', light.id)}>
-                      <HueIcon name={light.profile.icon} size={20} />
-                      <span>
-                        {light.name}
-                        <small>{light.profile.label} · {formatLength(light.profile.length, draft.units)}{placedElsewhere.get(light.id) ? ` · in ${placedElsewhere.get(light.id)}` : ''}</small>
-                      </span>
-                      <IconButton label={`Place ${light.name}`} onClick={() => addLight(light.id)}><Plus size={16} /></IconButton>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="hint">{Object.keys(lights).length ? 'Every light is placed here.' : 'Pair a bridge to place lights.'}</p>
-              )}
-            </Panel>
-
-          </aside>
+          <Sidebar name="designer">{inspectorPanels}</Sidebar>
         </div>
       )}
     </div>

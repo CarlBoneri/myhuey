@@ -84,6 +84,9 @@ export interface Furniture {
   /** cm from the floor to the piece's bottom, and its own height. */
   elevation?: number;
   height?: number;
+  /** Not saved yet: the 3D view treats monitors and TVs as screens, monitors leaning back 12°. */
+  display?: boolean;
+  tilt?: number;
 }
 
 export interface Opening {
