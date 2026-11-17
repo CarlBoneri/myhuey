@@ -6,13 +6,13 @@ of its whitelist.
 """
 
 from pathlib import Path
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from fastapi import FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
-from pydantic import BaseModel, ConfigDict, Field, StrictInt
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StringConstraints
 
 from .errors import BridgeNotConfigured, GroupNotFound, HueError, LayoutChanged, LayoutNotFound, LinkButtonNotPressed, PairingInProgress, RoomNotFound, SceneNotFound
 from .light_groups import MAX_GROUP_LIGHTS, MAX_GROUP_NAME
@@ -227,8 +227,22 @@ class RoomBrightness(Body):
     brightness: StrictInt = Field(..., ge=1, le=100, description="percent")
 
 
+class LookGradient(Body):
+    colors: list[Annotated[str, StringConstraints(pattern=r"^#[0-9a-fA-F]{6}$")]] = Field(min_length=2, max_length=20)
+    mode: str | None = None
+
+
+class LookEntry(Body):
+    on: bool
+    bri: int | None = Field(None, ge=1, le=254)
+    xy: tuple[Annotated[float, Field(ge=0, le=1)], Annotated[float, Field(ge=0, le=1)]] | None = None
+    ct: int | None = Field(None, ge=153, le=500)
+    gradient: LookGradient | None = None
+    effect: str | None = Field(None, max_length=40)
+
+
 class RoomLookApply(Body):
-    look: dict[str, dict[str, Any]]
+    look: dict[str, LookEntry] = Field(max_length=64)
 
 
 class RoomPower(Body):
@@ -461,7 +475,7 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
 
     @app.post("/api/rooms/{room_name}/look/apply")
     def apply_room_look(room_name: str, body: RoomLookApply) -> dict[str, Any]:
-        results = service.apply_room_look(room_name, body.look)
+        results = service.apply_room_look(room_name, {k: v.model_dump(exclude_none=True) for k, v in body.look.items()})
         return {"results": results, "failed": sum(1 for item in results if not item["ok"])}
 
     @app.post("/api/rooms/{room_name}/suggest")

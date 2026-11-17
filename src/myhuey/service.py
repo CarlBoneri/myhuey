@@ -268,7 +268,7 @@ class HueRoomService:
             self._v2_index, self._v2_loaded = {}, 0.0
         return self._client
 
-    def v2_index(self, *, refresh: bool = False) -> dict[str, dict[str, Any]]:
+    def v2_index(self, *, refresh: bool = False, strict: bool = False) -> dict[str, dict[str, Any]]:
         """v1 light ID -> {"rid": v2 ID, "gradient_points": n}. Cached for a few minutes.
 
         The v2 API is used for gradients only, so if it fails the app keeps working
@@ -290,6 +290,8 @@ class HueRoomService:
                         "effect": _effect_state(light),
                     }
         except HueError:
+            if strict:
+                raise
             return self._v2_index
         self._v2_index, self._v2_loaded = index, time.monotonic()
         return index
@@ -478,10 +480,22 @@ class HueRoomService:
         pause = self._command_gap() if pause is None else pause
         client = self.client()
         raw = client.get_lights()
-        commands, skipped = look_commands(look, set(raw))
+        known = set(raw)
         results: list[dict[str, Any]] = []
+        commands: list[dict[str, Any]] = []
+        skipped: list[str] = []
+        for light_id, entry in look.items():
+            try:
+                made, gone = look_commands({light_id: entry}, known)
+            except (KeyError, TypeError, ValueError, AttributeError) as exc:
+                results.append({"light_id": light_id, "label": f"Light {light_id}", "ok": False, "error": f"Light {light_id} has a look that cannot be applied ({exc})"})
+                continue
+            commands += made
+            skipped += gone
         for light_id in skipped:
-            if allowed is not None and light_id not in allowed:
+            if str(light_id).startswith("planned-"):
+                error = f"Light {light_id} is planned, not a real light"
+            elif allowed is not None and light_id not in allowed:
                 error = f"Light {light_id} is not in this room"
             else:
                 error = f"Light {light_id} is no longer on the bridge"
@@ -490,7 +504,8 @@ class HueRoomService:
             for command in [c for c in commands if c["light_id"] not in allowed]:
                 commands.remove(command)
                 results.append({"light_id": command["light_id"], "label": f"Light {command['light_id']}", "ok": False,
-                                "error": f"Light {command['light_id']} is not in this room"})
+                                "error": f"Light {command['light_id']} is "
+                                + ("planned, not a real light" if str(command["light_id"]).startswith("planned-") else "not in this room")})
         index = self.v2_index(refresh=True) if commands else {}
         for command in commands:
             light_id = command["light_id"]
@@ -504,7 +519,7 @@ class HueRoomService:
                     self.set_effect(light_id, command.get("effect"))
                 elif command["gradient"]:
                     self.set_gradient(light_id, command["gradient"]["colors"], command["gradient"].get("mode"))
-            except (HueError, ValueError) as exc:
+            except (HueError, ValueError, KeyError, TypeError) as exc:
                 result.update(ok=False, error=str(exc))
             results.append(result)
             if pause:
@@ -518,7 +533,11 @@ class HueRoomService:
         raw = self.client().get_lights()
         real = [light.light_id for light in room_lights if not light.planned and light.light_id in raw]
         skipped = [light.light_id for light in room_lights if light.light_id not in real]
-        look = capture_look(raw, self.v2_index(refresh=True), real)
+        try:
+            v2 = self.v2_index(refresh=True, strict=True)
+        except HueError as exc:
+            raise HueError("The bridge did not report gradients and effects, so a try could not be undone. Nothing was changed.") from exc
+        look = capture_look(raw, v2, real)
         return {"look": look, "skipped": skipped, "at": datetime.now().strftime("%H:%M")}
 
     @_one_bridge_write

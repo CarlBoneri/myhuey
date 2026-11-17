@@ -213,3 +213,50 @@ def test_the_room_look_routes_capture_and_apply(service, fake_bridge, db_path):
     assert got["look"]["1"]["bri"] == 254 and got["skipped"] == []
     done = client.post("/api/rooms/Den/look/apply", json={"look": got["look"]}).json()
     assert done["failed"] == 0 and done["results"][0]["light_id"] == "1"
+
+
+def test_a_malformed_look_is_a_422_and_nothing_is_sent(service, fake_bridge, db_path):
+    from fastapi.testclient import TestClient
+    from myhuey.api import create_app
+
+    service.add_room("Den")
+    _place(service, ["1", "2"])
+    session = fake_bridge(LIGHTS)
+    client = TestClient(create_app(db_path))
+    for bad in ({"1": {"on": True, "xy": 5}}, {"1": {"on": True, "gradient": {"mode": "x"}}},
+                {"1": {"on": True, "bri": 999}}, {"1": {"on": True, "gradient": {"colors": ["#fff"]}}}):
+        assert client.post("/api/rooms/Den/look/apply", json={"look": bad}).status_code == 422
+    assert session.calls == [] and session.clip_calls == []
+
+
+def test_one_bad_entry_does_not_stop_the_other_lights(service, fake_bridge):
+    service.add_room("Den")
+    _place(service, ["1", "2"])
+    session = fake_bridge(LIGHTS, [{"success": {}}])
+    look = {"1": {"on": True, "xy": 5}, "2": {"on": False}}
+    by_id = {r["light_id"]: r for r in service.apply_room_look("Den", look)}
+    assert by_id["1"]["ok"] is False and by_id["2"]["ok"] is True
+    assert [c["url"].rsplit("/lights/", 1)[1] for c in session.calls if c["method"] == "PUT"] == ["2/state"]
+
+
+def test_a_planned_light_in_a_look_is_named_as_planned(service, fake_bridge):
+    service.add_room("Den")
+    _place(service, ["1", "planned-abc"], planned=("planned-abc",))
+    fake_bridge(LIGHTS, [{"success": {}}])
+    by_id = {r["light_id"]: r for r in service.apply_room_look("Den", {"planned-abc": {"on": False}})}
+    assert "planned" in by_id["planned-abc"]["error"] and "not a real light" in by_id["planned-abc"]["error"]
+
+
+def test_capture_refuses_when_the_bridge_does_not_report_effects(service, fake_bridge, monkeypatch):
+    from myhuey.errors import HueError
+
+    service.add_room("Den")
+    _place(service, ["1"])
+    fake_bridge(LIGHTS)
+
+    def broken():
+        raise HueError("v2 down")
+
+    monkeypatch.setattr(service.client(), "get_v2_lights", broken)
+    with pytest.raises(HueError, match="Nothing was changed"):
+        service.capture_room_look("Den")
