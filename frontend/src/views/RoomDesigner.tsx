@@ -217,7 +217,8 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
   const [selection, setSelection] = useState<Selection>(null);
   const [tool, setTool] = useState<Tool>('select');
   const [openingKind, setOpeningKind] = useState<Opening['kind']>('window');
-  const { posture, glareMode } = useUi();
+  // Every hook sits above the early return below: a room that goes away must not change the hook count.
+  const { posture, glareMode, lightingOpen } = useUi();
   const { lights: drawnLights, showing: shownCard } = useDrawnLights(draft?.name ?? name);
 
   const fit = useMemo(() => {
@@ -401,7 +402,6 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
   const selectedFurniture = selection?.type === 'furniture' ? draft.furniture.find((f) => f.id === selection.id) : undefined;
   const selectedOpening = selection?.type === 'opening' ? draft.openings.find((o) => o.id === selection.id) : undefined;
 
-  const lightingOpen = useUi((state) => state.lightingOpen);
   const inspectorPanels = (
     <>
     {lightingOpen && tab !== 'photo' && <RoomLighting room={draft} onClose={() => useUi.getState().setLightingOpen(false)} />}
