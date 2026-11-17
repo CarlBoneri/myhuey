@@ -58,3 +58,8 @@ def minutes_until_bed(at: time, wake: str, bed: str) -> int | None:
     now = (_minutes(at) - _minutes(wake)) % DAY
     day = _day_length(wake, bed)
     return day - now if now <= day else None
+
+
+def minutes_since_wake(at: time, wake: str) -> int:
+    """Minutes since the last wake time."""
+    return (_minutes(at) - _minutes(wake)) % DAY

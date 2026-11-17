@@ -310,7 +310,7 @@ def test_time_guide():
     from myhuey.suggest import time_guide
 
     assert time_guide(dt(8, 10), "07:00", "23:00").startswith("Morning, 1 h 10 after waking")
-    assert time_guide(dt(21, 40), "07:00", "23:00") == "21:40, 1 h 20 before bed: warm whites, no blue palettes"
+    assert time_guide(dt(21, 40), "07:00", "23:00") == "21:40, 1 h 20 before bed: warm whites, no blue palettes."
     assert time_guide(dt(23, 30), "07:00", "23:00").startswith("Past bedtime")
     midday = time_guide(dt(13, 5), "07:00", "23:00")
     assert "13:05" in midday and "follow your day" in midday
@@ -321,3 +321,15 @@ def test_chill_is_relax():
 
     assert get_mode("chill") is get_mode("relax") and MODES["relax"].title == "Chill"
     assert _one(_office(), "chill", dt(20))["scene"].name.startswith("Chill")
+
+
+def test_a_light_already_under_its_cap_gets_no_line():
+    room = _office()
+    low = _one(room, "code", dt(12))["scene"].overrides[VIEW_LAMP]["brightness"]
+    easy = {"checked": True, "caps": {VIEW_LAMP: _cap(low + 20, "direct")}}
+    item = _one(room, "code", dt(12), glare=easy)
+    assert item["guide"]["glare"] == ["No light would glare at the desk."]
+    assert item["scene"].overrides[VIEW_LAMP]["brightness"] == low
+    tight = {"checked": True, "caps": {VIEW_LAMP: _cap(low - 5, "direct")}}
+    line = _one(room, "code", dt(12), glare=tight)["guide"]["glare"]
+    assert line == [f"v held at {low - 5:g}%: it sits in your view of the screen."]

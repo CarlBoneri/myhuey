@@ -203,13 +203,24 @@ class HueSceneRequest(Body):
     name: str = Field(..., max_length=60)
 
 
+class GlareCap(Body):
+    brightness: float = Field(..., ge=0, le=100)
+    kelvin: StrictInt | None = None
+    reason: Literal["reflection", "direct", "peripheral"]
+
+
+class Glare(Body):
+    checked: bool
+    caps: dict[str, GlareCap] = {}
+
+
 class SuggestRequest(Body):
     mode: str = Field(..., max_length=20)
     at: str | None = Field(None, pattern=r"^([01]\d|2[0-3]):[0-5]\d$", description="HH:MM; default now")
     palette_id: str | None = Field(None, max_length=80)
     count: StrictInt = Field(4, ge=1, le=6)
     seed: StrictInt = Field(0, ge=0, le=1_000_000)
-    glare: dict[str, Any] | None = None
+    glare: Glare | None = None
 
 
 class RoomBrightness(Body):
@@ -443,7 +454,7 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
     @app.post("/api/rooms/{room_name}/suggest")
     def suggest(room_name: str, body: SuggestRequest) -> list[dict[str, Any]]:
         return service.suggest(room_name, body.mode, at=body.at, palette_id=body.palette_id, count=body.count, seed=body.seed,
-                               glare=body.glare)
+                               glare=body.glare.model_dump() if body.glare else None)
 
     @app.post("/api/rooms/{room_name}/suggest/apply")
     def apply_suggestion(room_name: str, body: dict[str, Any]) -> dict[str, Any]:

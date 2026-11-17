@@ -15,7 +15,7 @@ from typing import Any
 
 from .color import color_temperature_to_rgb, rgb_to_hex
 from .catalog import color_of
-from .curve import _minutes, baseline, minutes_until_bed
+from .curve import baseline, minutes_since_wake, minutes_until_bed
 from .models import LayoutLight, Room, new_id
 from .modes import Mode, get_mode
 from .palettes import Palette, by_id, lab, load, mix
@@ -57,8 +57,8 @@ def time_guide(at: datetime, wake: str, bed: str) -> str:
     if left is None:
         return f"Past bedtime ({stamp}): whites stay warm and dim, no blue palettes."
     if _night(at, wake, bed):
-        return f"{stamp}, {_span(left)} before bed: warm whites, no blue palettes"
-    since = (_minutes(at.time()) - _minutes(wake)) % (24 * 60)
+        return f"{stamp}, {_span(left)} before bed: warm whites, no blue palettes."
+    since = minutes_since_wake(at.time(), wake)
     if since < MORNING_MIN:
         return f"Morning, {_span(since)} after waking: whites are cool and bright for the day ahead."
     return f"{stamp}, midday: whites follow your day, cooler and brighter than evening."
@@ -82,12 +82,15 @@ def apply_caps(
         brightness = min(override.get("brightness", limit), limit)
         if reason == "reflection":
             warm = min(override.get("white", kelvin), cap.get("kelvin") or WHITE_RANGE[1])
+            changed = "white" not in override or "colors" in override or warm != override["white"] or brightness != override.get("brightness")
             overrides[light.light_id] = {"white": warm, "brightness": brightness}
-            lines.append(f"{light.label} held at {_percent(limit)}%, warm white: it would reflect in the screen.")
+            if changed:
+                lines.append(f"{light.label} held at {_percent(limit)}%, warm white: it would reflect in the screen.")
         else:
-            override["brightness"] = brightness
-            why = "it sits in your view of the screen" if reason == "direct" else "it sits at the edge of your view"
-            lines.append(f"{light.label} held at {_percent(limit)}%: {why}.")
+            if brightness != override.get("brightness"):
+                override["brightness"] = brightness
+                why = "it sits in your view of the screen" if reason == "direct" else "it sits at the edge of your view"
+                lines.append(f"{light.label} held at {_percent(limit)}%: {why}.")
     return lines
 
 

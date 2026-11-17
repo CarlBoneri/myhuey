@@ -130,3 +130,16 @@ def test_api_accepts_glare_and_chill(service, db_path):
 def test_cli_accepts_chill(service, db_path, capsys):
     assert _cli(db_path, "suggest", "--room", "Den", "--mode", "chill", "--at", "20:00", "--count", "1") == 0
     assert "Chill" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("glare", [
+    {"checked": True, "caps": {"1": {"brightness": 15}}},
+    {"checked": True, "caps": {"1": {"brightness": 15, "kelvin": None, "reason": "bogus"}}},
+    {"checked": True, "caps": {"1": {"brightness": "high", "kelvin": None, "reason": "direct"}}},
+    {"checked": True, "caps": [1]},
+    {"caps": {}},
+])
+def test_api_rejects_a_malformed_glare(service, db_path, glare):
+    web = TestClient(create_app(db_path))
+    response = web.post("/api/rooms/Den/suggest", json={"mode": "code", "glare": glare})
+    assert response.status_code == 422
