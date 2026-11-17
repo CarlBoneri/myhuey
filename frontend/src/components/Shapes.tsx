@@ -3,7 +3,7 @@ import { useId } from 'react';
 import type { Furniture, Opening, Profile, Pt } from '../types';
 import { openingSegment } from '../lib/plan';
 import { renderStops } from '../lib/color';
-import { glowOpacity } from '../lib/suggest';
+import { glowColor as glowTint, glowOpacity } from '../lib/suggest';
 
 const OFF = '#3a3650';
 
@@ -18,7 +18,7 @@ export function LightSilhouette({
   const id = useId().replace(/:/g, '');
   const minPx = 4 * cmPerPx; // keep thin things visible when zoomed out
   const fill = on && colors?.length ? (colors.length > 1 ? `url(#g${id})` : colors[0]) : OFF;
-  const glowColor = on && colors?.length ? colors[Math.floor(colors.length / 2)] : null;
+  const glowColor = on && colors?.length ? glowTint(colors[Math.floor(colors.length / 2)]) : null;
   const glowFade = level == null ? undefined : glowOpacity(level);
   const stroke = selected ? 'var(--accent)' : 'var(--plan-line)';
   const strokeWidth = (selected ? 2.2 : 1) * cmPerPx;

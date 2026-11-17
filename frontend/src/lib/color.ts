@@ -62,6 +62,13 @@ export function hexToHsl(hex: string): [number, number, number] {
   return [Math.round(hsl.h ?? 0), Math.round((hsl.s ?? 0) * 100), Math.round((hsl.l ?? 0) * 100)];
 }
 
+/** Raises HSL lightness to at least `floor` (0-1), keeping hue and saturation. Lighter colors come back unchanged. */
+export function liftLightness(hex: string, floor: number): string {
+  const hsl = toHsl(hex);
+  if (!hsl || (hsl.l ?? 0) >= floor) return hex;
+  return formatHex({ ...hsl, l: floor }) ?? hex;
+}
+
 export function hslToHex([h, s, l]: [number, number, number]): string {
   return formatHex({ mode: 'hsl', h, s: s / 100, l: l / 100 }) ?? '#000000';
 }

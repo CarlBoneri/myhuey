@@ -6,7 +6,7 @@ import { useUi } from '../uiStore';
 import { bounds } from '../lib/geometry';
 import { glareLimits, glareModeFor } from '../lib/glareLimits';
 import { roomGlare } from '../lib/roomGlare';
-import { MODE_LABELS, cardTitle, creditText, glareHeldLine, heldText, latestOnly, lightFill, quarterHours, showKey } from '../lib/suggest';
+import { MODE_LABELS, cardTitle, creditText, glareHeldLine, heldText, fullStrength, latestOnly, quarterHours, showKey, thumbFill } from '../lib/suggest';
 import { clearTry, loadTry, mergeTry, saveTry, type TryRecord } from '../lib/tryLook';
 import { Field, IconButton, Panel, Segmented, TextInput } from './ui';
 import type { PaletteEntry, Room, Suggestion } from '../types';
@@ -270,11 +270,11 @@ function MiniRoom({ room, item }: { room: Room; item: Suggestion }) {
         const result = byId[light.light_id];
         if (!result) return null;
         const colors = result.on && result.gradient ? result.gradient : null;
-        const { fill, opacity } = lightFill(result);
+        const { fill, opacity } = thumbFill(result);
         return (
           <g key={light.light_id}>
             {colors ? colors.map((color, index) => (
-              <circle key={index} cx={light.x + (index - (colors.length - 1) / 2) * radius * 1.1} cy={light.y} r={radius * 0.6} fill={color} opacity={opacity} />
+              <circle key={index} cx={light.x + (index - (colors.length - 1) / 2) * radius * 1.1} cy={light.y} r={radius * 0.6} fill={fullStrength(color)} opacity={opacity} />
             )) : <circle cx={light.x} cy={light.y} r={radius} fill={fill} opacity={opacity} />}
             <title>{`${result.label} · ${item.roles[light.light_id] ?? ''} · ${result.on ? `${result.color_temp ? `${result.color_temp} K` : result.color} ${Math.round(result.brightness)}%` : 'off'}`}</title>
           </g>

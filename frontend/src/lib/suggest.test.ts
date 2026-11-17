@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { autoRoleLabel, cardTitle, creditText, fullStrength, glowOpacity, lightFill, nowHHMM, quarterHours, scheduleWarning } from './suggest';
+import { glowColor, thumbFill, THUMB_FLOOR, autoRoleLabel, cardTitle, creditText, fullStrength, glowOpacity, lightFill, nowHHMM, quarterHours, scheduleWarning } from './suggest';
 import { hexToRgb } from './color';
 
 describe('suggest helpers', () => {
@@ -52,6 +52,32 @@ describe('suggest helpers', () => {
 });
 
 import { latestOnly, placementNeedsRefresh } from './suggest';
+import { hexToHsl } from './color';
+
+describe('glowColor', () => {
+  it('lifts a dark color to a lightness floor and keeps its hue', () => {
+    for (const hex of ['#1d2440', '#3b2416']) {
+      const [h0] = hexToHsl(hex);
+      const [h, , l] = hexToHsl(glowColor(hex));
+      expect(l).toBeGreaterThanOrEqual(59);
+      expect(Math.abs(h - h0)).toBeLessThanOrEqual(1);
+    }
+  });
+  it('leaves an already light color alone', () => {
+    expect(glowColor('#ffd29a')).toBe('#ffd29a');
+    expect(glowColor('#ffffff')).toBe('#ffffff');
+  });
+});
+
+describe('thumbFill', () => {
+  it('keeps a dim light visible in a thumbnail and an off light solid', () => {
+    const dim = thumbFill({ on: true, color: '#ffb46b', brightness: 3 });
+    expect(dim.opacity).toBeGreaterThanOrEqual(THUMB_FLOOR);
+    expect(THUMB_FLOOR).toBe(0.2);
+    expect(thumbFill({ on: true, color: '#ffb46b', brightness: 100 }).opacity).toBe(1);
+    expect(thumbFill({ on: false, color: null, brightness: 0 })).toEqual({ fill: '#2a2a2a', opacity: 1 });
+  });
+});
 
 describe('request hygiene', () => {
   const base: { light_id: string; x: number; y: number; elevation: number | null; role: string } = { light_id: '1', x: 0, y: 0, elevation: null, role: 'auto' };

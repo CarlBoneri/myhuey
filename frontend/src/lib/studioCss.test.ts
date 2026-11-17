@@ -50,15 +50,19 @@ describe('studio layout', () => {
     expect(bodiesIn(css, '.splitter').join('\n')).toMatch(/user-select:\s*none/);
   });
 
-  it('keeps the Showing label off the corner the plan toolbar sits in', () => {
+  it('puts the plan Showing label at the bottom centre, clear of the top toolbar and hints', () => {
     const toolbar = bodiesIn(css, '.toolbar.floating').find((body) => /position:\s*absolute/.test(body))!;
     expect(toolbar).toMatch(/top:[^;]+;\s*left:\s*14px/);
     const label = bodiesIn(css, '.showing-label').find((body) => /position:\s*absolute/.test(body))!;
     expect(label).toMatch(/left:\s*50%/);
+    expect(label).toMatch(/bottom:\s*\d+px/);
+    expect(label).not.toMatch(/\btop:/);
     expect(label).toMatch(/transform:\s*translateX\(-50%\)/);
     // In the 3D view the top-left holds the stage's own hint, so the label sits at the top right there.
     const in3d = bodiesIn(css, '.pane-body.stage .showing-label').join('\n');
     expect(in3d).toMatch(/right:\s*\d+px/);
     expect(in3d).toMatch(/left:\s*auto/);
+    expect(in3d).toMatch(/top:\s*\d+px/);
+    expect(in3d).toMatch(/bottom:\s*auto/);
   });
 });

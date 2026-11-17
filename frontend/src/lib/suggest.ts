@@ -1,5 +1,5 @@
 /** Pure helpers for the Suggest panel. */
-import { hexToRgb, rgbToHex } from './color';
+import { hexToRgb, liftLightness, rgbToHex } from './color';
 import type { GlareLimits, GlareReason } from './glareLimits';
 import type { SuggestionGuide } from '../types';
 
@@ -94,6 +94,23 @@ export function fullStrength(hex: string): string {
 export function glowOpacity(brightness: number): number {
   const level = Math.max(0, Math.min(100, brightness)) / 100;
   return Math.round(Math.max(0.06, level) * 100) / 100;
+}
+
+/** The lightness a glow is drawn at least as bright as, so a dark palette color still glows on a light plan. */
+export const GLOW_LIGHTNESS_FLOOR = 0.6;
+
+/** A color for drawing a glow only: its hue and saturation kept, its lightness raised to the floor. Never sent to a light. */
+export function glowColor(hex: string): string {
+  return liftLightness(hex, GLOW_LIGHTNESS_FLOOR);
+}
+
+/** The least opaque a light is drawn in a card thumbnail, so a dim light stays visible next to an off one. */
+export const THUMB_FLOOR = 0.2;
+
+/** A light's fill and opacity for a card thumbnail: the plan's fade, but never fainter than the floor. */
+export function thumbFill(result: { on: boolean; color: string | null; brightness: number }): { fill: string; opacity: number } {
+  const { fill, opacity } = lightFill(result);
+  return { fill, opacity: result.on && result.color ? Math.max(THUMB_FLOOR, opacity) : opacity };
 }
 
 export function lightFill(result: { on: boolean; color: string | null; brightness: number }): { fill: string; opacity: number } {
