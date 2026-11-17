@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { inspectorAfterDrag, shouldScrollOnFold, splitAfterDrag } from './paneDrag';
+import { inspectorAfterDrag, shouldScrollOnFold, splitAfterDrag, unfoldForLighting } from './paneDrag';
 
 describe('splitAfterDrag', () => {
   it('does not jump when the bar is pressed and not moved', () => {
@@ -30,5 +30,18 @@ describe('shouldScrollOnFold', () => {
     expect(shouldScrollOnFold(false, true)).toBe(false);
     expect(shouldScrollOnFold(true, false)).toBe(false);
     expect(shouldScrollOnFold(false, false)).toBe(false);
+  });
+});
+
+describe('unfoldForLighting', () => {
+  const sizes = (inspector: boolean) => ({ split: 0.6, inspector: 380, collapsed: { view: false, audit: true, inspector } });
+  it('unfolds a folded inspector when the lighting panel opens, and leaves the other panes alone', () => {
+    expect(unfoldForLighting(sizes(true), true)).toEqual(sizes(false));
+  });
+  it('changes nothing when the panel is closed or the inspector is already open', () => {
+    const folded = sizes(true);
+    expect(unfoldForLighting(folded, false)).toBe(folded);
+    const open = sizes(false);
+    expect(unfoldForLighting(open, true)).toBe(open);
   });
 });

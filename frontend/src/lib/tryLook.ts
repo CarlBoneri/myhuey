@@ -34,3 +34,10 @@ export function loadTry(room: string, now: number = Date.now()): TryRecord | nul
 export function clearTry(room: string): void {
   try { localStorage.removeItem(key(room)); } catch { /* storage unavailable */ }
 }
+
+/** A later try's capture folded into the first: first-captured values win, lights new since then get today's state. */
+export function mergeTry(record: TryRecord, captured: { look: RoomLook; skipped: string[] }, title: string): TryRecord {
+  const look = { ...captured.look, ...record.look };
+  const skipped = [...new Set([...record.skipped, ...captured.skipped])].filter((id) => !(id in look));
+  return { ...record, title, look, skipped };
+}

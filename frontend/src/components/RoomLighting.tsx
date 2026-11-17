@@ -7,7 +7,7 @@ import { bounds } from '../lib/geometry';
 import { glareLimits, glareModeFor } from '../lib/glareLimits';
 import { roomGlare } from '../lib/roomGlare';
 import { MODE_LABELS, cardTitle, creditText, latestOnly, lightFill, quarterHours } from '../lib/suggest';
-import { clearTry, loadTry, saveTry, type TryRecord } from '../lib/tryLook';
+import { clearTry, loadTry, mergeTry, saveTry, type TryRecord } from '../lib/tryLook';
 import { Field, IconButton, Panel, Segmented, TextInput } from './ui';
 import type { PaletteEntry, Room, Suggestion } from '../types';
 
@@ -55,13 +55,14 @@ export function RoomLighting({ room, onClose, onShow, shownId }: {
   useEffect(() => { setRecord(loadTry(room.name)); setNotice(''); setActionError(''); setLive(false); }, [room.name]);
 
   // The glare check for the desk presets, judged from the room as it is now; part of the request key.
+  // Read and Chill send an unchecked one with no limits, so the server answers which presets are checked.
   const glare = useMemo(() => {
     const glareMode = glareModeFor(mode);
-    if (!glareMode) return undefined;
+    if (!glareMode) return { checked: false, caps: {} };
     const { scene, report } = roomGlare(room, posture, glareMode, lights, profiles);
     return glareLimits(report, !!scene.eye);
   }, [room, posture, mode, lights, profiles]);
-  const glareKey = JSON.stringify(glare ?? null);
+  const glareKey = JSON.stringify(glare);
 
   const requests = useRef(latestOnly());
   const load = useCallback(async () => {
@@ -69,7 +70,7 @@ export function RoomLighting({ room, onClose, onShow, shownId }: {
     setLoading(true);
     setError('');
     try {
-      const body = { mode, at: at || undefined, palette_id: paletteId, count: paletteId ? 1 : 4, seed, ...(glare ? { glare } : {}) };
+      const body = { mode, at: at || undefined, palette_id: paletteId, count: paletteId ? 1 : 4, seed, glare };
       const found = await api.suggest(room.name, body);
       if (requests.current.isLatest(token)) setItems(found);
     } catch (e) {
@@ -93,14 +94,12 @@ export function RoomLighting({ room, onClose, onShow, shownId }: {
     setActionError('');
     setNotice('');
     try {
-      let current = record;
-      if (!current) {
-        // The first try captures how the room was; a second one keeps that look so Undo goes back past both.
-        const captured = await api.captureLook(room.name);
-        current = { at: Date.now(), look: captured.look, skipped: captured.skipped, title, layout, capturedAt: captured.at };
-      } else {
-        current = { ...current, title };
-      }
+      // Every try captures first, so a light the first capture missed is still put back by Undo.
+      // The first capture wins for lights in both: Undo goes back to before the first try, not the second.
+      const captured = await api.captureLook(room.name);
+      const current: TryRecord = record
+        ? mergeTry(record, captured, title)
+        : { at: Date.now(), look: captured.look, skipped: captured.skipped, title, layout, capturedAt: captured.at };
       saveTry(room.name, current);
       setRecord(current);
       setLive(true);

@@ -1,7 +1,9 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
-import { render, screen } from '../test/dom';
+import { fireEvent, render, screen } from '../test/dom';
+import { waitFor } from '@testing-library/react';
+import { api } from '../api';
 import { useStore } from '../store';
 import { useUi } from '../uiStore';
 import { RoomDesigner } from './RoomDesigner';
@@ -30,6 +32,7 @@ const office = {
 
 beforeEach(() => {
   localStorage.clear();
+  vi.mocked(api.suggest).mockClear();
   useStore.setState({ rooms: [office], lights: {}, profiles: null, layout: null, layouts: [], replaceRoom: vi.fn() as never, refreshRooms: vi.fn() as never });
   useUi.setState({ showing: null, lightingOpen: false, posture: 'seated', glareMode: 'code' } as never);
 });
@@ -45,4 +48,16 @@ describe('RoomDesigner', () => {
       expect(screen.getByText('No room named “Office”')).toBeTruthy();
     });
   }
+
+  it('judges suggestions from the saved room, so editing an unsaved draft sends no new request', async () => {
+    useUi.setState({ lightingOpen: true });
+    const { container } = render(<RoomDesigner name="Office" tab="plan" />);
+    await waitFor(() => expect(api.suggest).toHaveBeenCalled());
+    const calls = vi.mocked(api.suggest).mock.calls.length;
+    fireEvent.pointerDown(container.querySelector('.placed-furniture')!);
+    fireEvent.change(screen.getByDisplayValue('Desk'), { target: { value: 'Standing desk' } });
+    expect(screen.getByDisplayValue('Standing desk')).toBeTruthy();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(vi.mocked(api.suggest).mock.calls.length).toBe(calls);
+  });
 });

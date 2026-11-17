@@ -47,15 +47,15 @@ const tryFirst = async () => { fireEvent.click(screen.getAllByRole('button', { n
 const mode = (name: string) => fireEvent.click(screen.getByRole('radio', { name }));
 
 describe('RoomLighting', () => {
-  it('sends the glare limits for the desk presets only', async () => {
+  it('sends the glare limits for the desk presets only; Read and Chill send an unchecked check so the server says why', async () => {
     await mount();
     expect(api_.suggest.mock.calls.at(-1)![1].glare).toEqual({ checked: true, caps: { l1: { brightness: 10, kelvin: 2700, reason: 'reflection' } } });
     mode('Read');
     await waitFor(() => expect(api_.suggest.mock.calls.at(-1)![1].mode).toBe('read'));
-    expect(api_.suggest.mock.calls.at(-1)![1]).not.toHaveProperty('glare');
+    expect(api_.suggest.mock.calls.at(-1)![1].glare).toEqual({ checked: false, caps: {} });
     mode('Chill');
     await waitFor(() => expect(api_.suggest.mock.calls.at(-1)![1].mode).toBe('relax'));
-    expect(api_.suggest.mock.calls.at(-1)![1]).not.toHaveProperty('glare');
+    expect(api_.suggest.mock.calls.at(-1)![1].glare).toEqual({ checked: false, caps: {} });
   });
 
   it('shows every card its time and glare lines, and the header the time line once', async () => {
@@ -100,16 +100,34 @@ describe('RoomLighting', () => {
     expect(screen.getByText(/2 planned lights skipped/)).toBeTruthy();
   });
 
-  it('does not capture again on a second try, so Undo goes back to the first state', async () => {
+  it('captures again on a second try: the first capture wins, lights new since then keep their own state', async () => {
+    api_.captureLook.mockResolvedValueOnce({ look, skipped: ['l2', 'l3'], at: '09:41' } as never);
+    await mount();
+    await tryFirst();
+    await screen.findByText(/Trying Code · Dune on Office/);
+    // Between the tries l1 changed (the first try did that) and l2 came back on the bridge.
+    api_.captureLook.mockResolvedValueOnce({ look: { l1: { on: false }, l2: { on: true, bri: 20 } }, skipped: ['l3'], at: '09:45' } as never);
+    fireEvent.click(screen.getAllByRole('button', { name: /Try on lights/ })[1]);
+    await screen.findByText(/Trying Code · Fern on Office/);
+    expect(api_.captureLook).toHaveBeenCalledTimes(2);
+    expect(api_.applySuggestion).toHaveBeenCalledTimes(2);
+    const saved = loadTry('Office')!;
+    expect(saved.look).toEqual({ l1: { on: true, bri: 50 }, l2: { on: true, bri: 20 } });
+    expect(saved.skipped).toEqual(['l3']);
+    expect(saved.capturedAt).toBe('09:41');
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    await waitFor(() => expect(api_.applyLook).toHaveBeenCalledWith('Office', saved.look));
+  });
+
+  it('refuses a second try when its capture fails, and keeps the first record', async () => {
     await mount();
     await tryFirst();
     await screen.findByText('Trying Code · Dune on Office');
+    api_.captureLook.mockRejectedValueOnce(new Error('no bridge'));
     fireEvent.click(screen.getAllByRole('button', { name: /Try on lights/ })[1]);
-    await screen.findByText('Trying Code · Fern on Office');
-    expect(api_.captureLook).toHaveBeenCalledTimes(1);
-    expect(api_.applySuggestion).toHaveBeenCalledTimes(2);
-    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
-    await waitFor(() => expect(api_.applyLook).toHaveBeenCalledWith('Office', look));
+    expect(await screen.findByText('no bridge')).toBeTruthy();
+    expect(api_.applySuggestion).toHaveBeenCalledTimes(1);
+    expect(loadTry('Office')!.look).toEqual(look);
   });
 
   it('puts the room back on Undo and says when it was', async () => {

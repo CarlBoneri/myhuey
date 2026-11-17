@@ -125,6 +125,7 @@ def test_api_accepts_glare_and_chill(service, db_path):
     body = {"mode": "chill", "at": "20:00", "count": 1, "glare": {"checked": False, "caps": {}}}
     response = web.post("/api/rooms/Den/suggest", json=body)
     assert response.status_code == 200 and response.json()[0]["guide"]["checked"] is False
+    assert response.json()[0]["guide"]["glare"] == ["Glare is checked for the desk presets (Code, Work, Study)."]
 
 
 def test_cli_accepts_chill(service, db_path, capsys):

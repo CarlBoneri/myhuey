@@ -404,7 +404,8 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
 
   const inspectorPanels = (
     <>
-    {lightingOpen && tab !== 'photo' && <RoomLighting room={draft} onClose={() => useUi.getState().setLightingOpen(false)} />}
+    {/* The saved room, not the draft: a drag would otherwise ask for new suggestions at every step. */}
+    {lightingOpen && tab !== 'photo' && <RoomLighting room={source} onClose={() => useUi.getState().setLightingOpen(false)} />}
     {selectedLight && (
       <Panel id="light" title={selectedLight.planned ? 'Planned light' : 'Light'} actions={<IconButton label="Remove from room" danger onClick={removeSelected}><Trash2 size={16} /></IconButton>}>
         {selectedLight.planned ? (

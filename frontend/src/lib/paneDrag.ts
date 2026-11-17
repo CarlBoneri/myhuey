@@ -10,3 +10,9 @@ export const inspectorAfterDrag = (startWidth: number, startX: number, x: number
 
 /** Folding the glare table in a narrow window leaves the 3D view in a long column: bring it to the top. Unfolding, or a wide window, scrolls nothing. */
 export const shouldScrollOnFold = (folding: boolean, narrow: boolean) => folding && narrow;
+
+/** The lighting panel lives in the inspector, so opening it unfolds a folded inspector; anything else is left as it is. */
+export function unfoldForLighting<T extends { collapsed: { inspector: boolean } }>(sizes: T, lightingOpen: boolean): T {
+  if (!lightingOpen || !sizes.collapsed.inspector) return sizes;
+  return { ...sizes, collapsed: { ...sizes.collapsed, inspector: false } };
+}

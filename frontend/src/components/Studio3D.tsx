@@ -20,7 +20,7 @@ import { clamp } from '../lib/view3d';
 import type { Placement, Room } from '../types';
 import { Room3DStage, type Selection3D, type View3D } from './Room3DStage';
 import { isMac, isResizePress } from '../lib/pointer';
-import { inspectorAfterDrag, shouldScrollOnFold, splitAfterDrag } from '../lib/paneDrag';
+import { inspectorAfterDrag, shouldScrollOnFold, splitAfterDrag, unfoldForLighting } from '../lib/paneDrag';
 import { Panel, Segmented, Sidebar, Slider } from './ui';
 
 const SIZES_KEY = 'myhuey.studio3d';
@@ -76,6 +76,9 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
   useEffect(() => {
     try { localStorage.setItem(SIZES_KEY, JSON.stringify(sizes)); } catch { /* storage blocked: sizes just reset next time */ }
   }, [sizes]);
+  // Opening the lighting panel (the Light button) shows the inspector it lives in.
+  const lightingOpen = useUi((state) => state.lightingOpen);
+  useEffect(() => { setSizes((s) => unfoldForLighting(s, lightingOpen)); }, [lightingOpen]);
   const viewPane = useRef<HTMLElement>(null);
   const fold = (key: keyof Sizes['collapsed']) => setSizes((s) => ({ ...s, collapsed: { ...s.collapsed, [key]: !s.collapsed[key] } }));
 
