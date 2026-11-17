@@ -9,7 +9,7 @@ import { formatLength } from '../lib/units';
 import { roomSummary } from '../lib/roomControls';
 import { LightControls } from '../components/LightControls';
 import { RoomDimmer } from '../components/RoomDimmer';
-import { SuggestPanel } from '../components/SuggestPanel';
+import { RoomLighting } from '../components/RoomLighting';
 import { Empty, HueIcon, Panel, Sidebar, Toggle } from '../components/ui';
 
 export function RoomWorkbench({ name }: { name: string }) {
@@ -75,7 +75,7 @@ export function RoomWorkbench({ name }: { name: string }) {
             </div>
             {planned.length > 0 && <p className="hint">Planned, not installed yet: {planned.map((p) => p.label).join(', ')}.</p>}
             {silent.length > 0 && <p className="hint">Not answering on the bridge: {silent.map((p) => p.label).join(', ')}.</p>}
-            <SuggestPanel room={room} />
+            <RoomLighting room={room} />
           </div>
           <Sidebar name="workbench">
             <Panel title="Light">

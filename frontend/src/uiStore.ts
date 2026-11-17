@@ -2,6 +2,7 @@
 // posture and glare mode, the prompt's history, and which overlays are open.
 import { create } from 'zustand';
 import type { Posture } from './lib/rig';
+import type { SceneResult } from './types';
 import { normalizePlacement, normalizeRail, normalizeTabs, type TabPlacement, type TabRail, type TabState } from './lib/tabs';
 
 export interface Entry { id: number; command: string; output: string; ok: boolean; ms: number; at: number }
@@ -22,6 +23,9 @@ interface UiState {
   tabRail: TabRail;
   /** Sidebar panels that are folded, by panel key. */
   folded: Record<string, true>;
+  /** A suggestion drawn on the plan and 3D view without touching the lights; not persisted. */
+  showing: { room: string; title: string; results: SceneResult[] } | null;
+  setShowing: (next: { room: string; title: string; results: SceneResult[] } | null) => void;
   setDraft: (draft: string) => void;
   setTabs: (tabs: TabState) => void;
   setTabPlacement: (placement: TabPlacement) => void;
@@ -69,6 +73,8 @@ export const useUi = create<UiState>((set, get) => ({
   tabPlacement: normalizePlacement(stored(PLACEMENT_KEY, null)),
   tabRail: normalizeRail(stored(RAIL_KEY, null)),
   folded: Object.fromEntries((stored<unknown[]>(PANELS_KEY, []) as unknown[]).filter((key): key is string => typeof key === 'string').map((key) => [key, true as const])),
+  showing: null,
+  setShowing: (showing) => set({ showing }),
   setDraft: (draft) => set({ draft }),
   setTabs(tabs) {
     store(TABS_KEY, tabs);

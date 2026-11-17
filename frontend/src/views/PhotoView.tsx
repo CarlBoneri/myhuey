@@ -14,7 +14,8 @@ import { roomCenter } from '../lib/photo';
 import { formatLength } from '../lib/units';
 import type { CatalogItem, PhotoSpot, Pt, Room, Suggestion } from '../types';
 import { LightControls } from '../components/LightControls';
-import { SuggestPanel } from '../components/SuggestPanel';
+import { useUi } from '../uiStore';
+import { RoomLighting } from '../components/RoomLighting';
 import { Empty, HueIcon, IconButton, Panel, Sidebar, Slider } from '../components/ui';
 
 const ACCEPT = 'image/jpeg,image/png,image/webp';
@@ -295,10 +296,10 @@ export function PhotoView({ room }: { room: Room }) {
             onClick={() => { setSuggesting(!suggesting); if (suggesting) setShown(null); }}>
             <Sparkles size={15} /> Suggest
           </button>
-          {shown && <button type="button" className="button subtle" onClick={() => setShown(null)}>Show live colors</button>}
+          {shown && <button type="button" className="button subtle" onClick={() => { setShown(null); useUi.getState().setShowing(null); }}>Show live colors</button>}
         </div>
         {suggesting && (
-          <SuggestPanel room={room} onClose={() => { setSuggesting(false); setShown(null); }}
+          <RoomLighting room={room} onClose={() => { setSuggesting(false); setShown(null); useUi.getState().setShowing(null); }}
             shownId={shown?.scene.id} onShow={(item) => setShown(item && shown?.scene.id === item.scene.id ? null : item)} />
         )}
         {shown && (

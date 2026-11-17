@@ -1347,3 +1347,8 @@ kbd { padding: 2px 7px; border-radius: 5px; border: 1px solid var(--border-stron
   .help-layout { grid-template-columns: 1fr; }
   .help-nav { max-height: 240px; }
 }
+
+/* The try bar at the top of the lighting panel */
+.try-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--accent); border-radius: var(--radius-m); background: var(--surface-2); font-size: 13px; }
+.try-bar > span { flex: 1; min-width: 160px; }
+.guide-line { margin: 0; }
