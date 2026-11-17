@@ -227,6 +227,10 @@ class RoomBrightness(Body):
     brightness: StrictInt = Field(..., ge=1, le=100, description="percent")
 
 
+class RoomLookApply(Body):
+    look: dict[str, dict[str, Any]]
+
+
 class RoomPower(Body):
     on: bool
 
@@ -450,6 +454,15 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
     @app.delete("/api/rooms/{room_name}/photo/floor")
     def clear_floor(room_name: str) -> dict[str, Any]:
         return room_json(service.set_floor_transform(room_name, None, None))
+
+    @app.post("/api/rooms/{room_name}/look")
+    def capture_room_look(room_name: str) -> dict[str, Any]:
+        return service.capture_room_look(room_name)
+
+    @app.post("/api/rooms/{room_name}/look/apply")
+    def apply_room_look(room_name: str, body: RoomLookApply) -> dict[str, Any]:
+        results = service.apply_room_look(room_name, body.look)
+        return {"results": results, "failed": sum(1 for item in results if not item["ok"])}
 
     @app.post("/api/rooms/{room_name}/suggest")
     def suggest(room_name: str, body: SuggestRequest) -> list[dict[str, Any]]:
