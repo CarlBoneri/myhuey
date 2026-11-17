@@ -37,7 +37,7 @@ put a bright light where it reflects in the screen.
 5. **Try it on the lights, with Undo.** "Try on lights" sends the suggestion to the real lights and
    shows a bar: "Trying Code · Ember on Office · Keep · Undo". Undo puts every light in the room back
    the way it was before the first try. Keep ends the try. Trying a second card while the bar is
-   showing keeps the first "before" state, so Undo always goes back to where the person started.
+   showing keeps the first "before" state for every light it already saved (and saves any light it had not), so Undo always goes back to where the person started.
    "Save as scene" stays.
 6. **"Chill".** The relax preset is shown as "Chill" everywhere in the app; `chill` is accepted as a
    name for it by the API, CLI and the assistant tools. Its id stays `relax`, so saved scenes and
@@ -132,7 +132,7 @@ lights. Keep, a navigation away from the room, or a successful Undo ends the try
    A direct or edge-of-view limit caps brightness only and keeps the colors. A limit applies to
    whatever role the server gave the light, task and bias included: glare wins.
 6. **Sandboxes and missing lights.** Capture and Undo cover the room's lights that are on the bridge
-   and not planned. The bar names any it skipped ("2 planned lights skipped").
+   and not planned. The bar names any it skipped ("2 lights skipped (planned or not on the bridge)").
 7. **Time.** The panel keeps its time picker ("Now" or a quarter hour). The guide's time line is made
    on the server from the chosen time, wake and bed: "Morning, 1 h 10 after waking: …", "21:40, 1 h 20
    before bed: warm whites, no blue palettes", "Past bedtime: the warmest, dimmest whites, no blue".
@@ -156,3 +156,38 @@ panel (a drawer in the work area like Workflows, or the room screens' sidebar).
 - In a sandbox, Try still drives the real lights, with a note. If wrong: block trying in sandboxes.
 - Home's quick settings are unchanged (no glare limits there yet). If wrong: a follow-up to send the
   limits from Home too.
+
+## As built (2026-11-16)
+
+Where the finished work differs from the design above, and why:
+
+- **Every try captures.** A second try captures the room again and merges: lights the first capture
+  saved keep their first state, and a light that joined the room since (a planned light swapped for
+  a real one, or a try in another layout) gets its state saved before it changes. Found by the final
+  review; without it Undo could not put such a light back.
+- **Undo goes to the layout the try was made in**, not the one open when Undo is pressed.
+- **The time line follows the curve's own phases:** waking up, day ("19:04, 3 h 56 before bed:
+  daylight whites."), winding down ("whites warming for the evening"), the night window ("warm
+  whites, no blue palettes"), past bedtime. An early version called 18:36 "midday"; found by eye.
+- **The time and the glare limits are said once, at the top of the panel**, grouped by reason; each
+  card says how many lights it held ("9 lights held for glare"). A light only recoloured for a
+  reflection limit is "made warm white", not "held at 18%". The server returns `guide.held` for the
+  count. Found by eye: each card had ten lines of repeated text.
+- **Read and Chill say why glare was not checked** ("Glare is checked for the desk presets").
+- **A shown card stays shown when switching between Room plan, 3D and Photo**; the Studio room
+  screen (and the Workbench) decide when it ends: another room, closing the panel, or leaving.
+  Cards are matched by mode, palette, shuffle and time, since a refetch gives new scene ids.
+- **The Studio panel uses the saved room**, so dragging in the plan does not refetch suggestions.
+- **The Light button unfolds the 3D screen's inspector** if it was folded.
+- **The "Showing" label** sits top-centre on the plan (clear of the tools) and top-right in 3D.
+- **The 3D badge is green when nothing is over its limit.**
+- **The glare request is bounded** (kelvin 2000-6500, brightness at least 1, at most 64 lights).
+- **"Chill" works in the in-app prompt too** (`suggest --mode chill`).
+
+Checked by eye in Chrome on a test copy (with every light-changing request blocked): the Light button
+on Room plan, 3D and Photo; one panel per screen; a shown card on the plan and in 3D, kept across
+the switch; the badge and "Fix glare" waiting while shown; the time and glare lines; Chill's line.
+Not checked by eye: "Try on lights", "Keep" and "Undo" on real lights (tests cover them; trying
+them changes the owner's lights). Known and left: dark palette colours still draw as darker glows
+on a light theme's plan; the centred plan label can overlap the outline/openings tool hint while a
+card is shown; dim lights are faint in the card thumbnails.
