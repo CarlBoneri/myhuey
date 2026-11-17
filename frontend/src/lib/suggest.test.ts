@@ -111,3 +111,10 @@ describe('one save at a time', () => {
     expect(runs).toEqual([false, true]);
   });
 });
+
+describe('the relax preset is shown as Chill', () => {
+  it('labels relax as Chill', async () => {
+    const { MODE_LABELS } = await import('./suggest');
+    expect(MODE_LABELS.relax).toBe('Chill');
+  });
+});

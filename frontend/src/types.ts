@@ -248,7 +248,25 @@ export interface Suggestion {
   preview: SceneResult[];
   white: string;
   kelvin: number;
+  guide?: SuggestionGuide;
 }
+
+export interface SuggestionGuide {
+  time: string;
+  glare: string[];
+  checked: boolean;
+}
+
+export interface LookEntry {
+  on: boolean;
+  bri?: number;
+  xy?: [number, number];
+  ct?: number;
+  gradient?: { colors: string[]; mode: string | null };
+  effect?: string | null;
+}
+
+export type RoomLook = Record<string, LookEntry>;
 
 export interface SceneResult {
   light_id: string;

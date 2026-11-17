@@ -16,7 +16,7 @@ export const MODE_LABELS: Record<string, string> = {
   work: 'Work',
   study: 'Study',
   read: 'Read',
-  relax: 'Relax',
+  relax: 'Chill',
 };
 
 const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);

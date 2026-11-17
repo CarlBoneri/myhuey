@@ -106,7 +106,7 @@ export const TOPICS: Topic[] = [
   {
     id: 'suggestions', title: 'Eye-comfort suggestions', summary: 'Scenes made from what you are doing, the time, and your room.',
     blocks: [
-      { p: 'Pick a mode (Code, Work, Study, Read, Relax) and MyHuey proposes scenes for this moment. It uses the clock, your wake time and bedtime from Settings, and where each light sits relative to your seat and screen.' },
+      { p: 'Pick a mode (Code, Work, Study, Read, Chill) and MyHuey proposes scenes for this moment. It uses the clock, your wake time and bedtime from Settings, and where each light sits relative to your seat and screen.' },
       { list: [
         'Lights by the desk stay near white, at a temperature that warms toward evening.',
         'A light just behind the monitor stays dim, as a bias light.',

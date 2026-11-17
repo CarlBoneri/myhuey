@@ -1,8 +1,9 @@
 import type { BridgeInfo } from './lib/setupFlow';
 import { MISSING_LAYOUT, layoutHeaders } from './lib/layout';
+import type { GlareLimits } from './lib/glareLimits';
 import type { Preferences } from './types';
 import type { LayoutSummary, LightGroup } from './types';
-import type { CatalogItem, HueSceneSet, HomePlan, Placement, Opening, ImageLayer, Mood, PaletteEntry, Setup, PinnableRole, ProfileTable, Room, Scene, SceneResult, SetupStatus, Suggestion, Swatch, BridgeLight, Furniture, PhotoSpot, Pt } from './types';
+import type { CatalogItem, HueSceneSet, HomePlan, Placement, Opening, ImageLayer, Mood, PaletteEntry, Setup, PinnableRole, ProfileTable, Room, Scene, SceneResult, SetupStatus, Suggestion, RoomLook, Swatch, BridgeLight, Furniture, PhotoSpot, Pt } from './types';
 
 export class ApiError extends Error {
   constructor(message: string, readonly status: number) {
@@ -150,8 +151,12 @@ export const api = {
   addSetup: (name: string, index: number) => call<Placement[]>(`${room(name)}/setups/apply`, { method: 'POST', json: { index } }),
   setFloor: (name: string, photo: Pt[], plan: Pt[]) => call<Room>(`${room(name)}/photo/floor`, { method: 'PUT', json: { photo, plan } }),
   clearFloor: (name: string) => call<Room>(`${room(name)}/photo/floor`, { method: 'DELETE' }),
-  suggest: (name: string, body: { mode: string; at?: string; palette_id?: string; count?: number; seed?: number }, activeOnly = false) =>
+  suggest: (name: string, body: { mode: string; at?: string; palette_id?: string; count?: number; seed?: number; glare?: GlareLimits }, activeOnly = false) =>
     call<Suggestion[]>(`${room(name)}/suggest`, { method: 'POST', json: body, activeOnly }),
+  captureLook: (name: string) =>
+    call<{ look: RoomLook; skipped: string[]; at: string }>(`${room(name)}/look`, { method: 'POST' }),
+  applyLook: (name: string, look: RoomLook) =>
+    call<{ results: { light_id: string; label: string; ok: boolean; error?: string }[]; failed: number }>(`${room(name)}/look/apply`, { method: 'POST', json: { look } }),
   applySuggestion: (name: string, scene: Scene, activeOnly = false) =>
     call<{ scene: string; results: SceneResult[] }>(`${room(name)}/suggest/apply`, { method: 'POST', json: scene, activeOnly }),
   palettes: (params: { tag?: string; q?: string; limit?: number } = {}) => {
