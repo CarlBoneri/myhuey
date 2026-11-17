@@ -24,8 +24,8 @@ interface UiState {
   /** Sidebar panels that are folded, by panel key. */
   folded: Record<string, true>;
   /** A suggestion drawn on the plan and 3D view without touching the lights; not persisted. */
-  showing: { room: string; title: string; results: SceneResult[] } | null;
-  setShowing: (next: { room: string; title: string; results: SceneResult[] } | null) => void;
+  showing: { room: string; id: string; title: string; results: SceneResult[] } | null;
+  setShowing: (next: { room: string; id: string; title: string; results: SceneResult[] } | null) => void;
   setDraft: (draft: string) => void;
   setTabs: (tabs: TabState) => void;
   setTabPlacement: (placement: TabPlacement) => void;

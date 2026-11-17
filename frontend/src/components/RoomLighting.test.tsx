@@ -69,7 +69,7 @@ describe('RoomLighting', () => {
     await mount();
     const show = screen.getAllByRole('button', { name: 'Show' })[0];
     fireEvent.click(show);
-    expect(useUi.getState().showing).toEqual({ room: 'Office', title: 'Code · Dune', results: item('Dune', 'a').preview });
+    expect(useUi.getState().showing).toEqual({ room: 'Office', id: 'a', title: 'Code · Dune', results: item('Dune', 'a').preview });
     fireEvent.click(screen.getByRole('button', { name: 'Showing' }));
     expect(useUi.getState().showing).toBeNull();
     fireEvent.click(screen.getAllByRole('button', { name: 'Show' })[0]);
@@ -117,7 +117,7 @@ describe('RoomLighting', () => {
     await tryFirst();
     await screen.findByText('Trying Code · Dune on Office');
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
-    expect(await screen.findByText('Put back how Office was at 09:41')).toBeTruthy();
+    expect(await screen.findByText('Put back how Office was at 09:41.')).toBeTruthy();
     expect(api_.applyLook).toHaveBeenCalledWith('Office', look);
     expect(loadTry('Office')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Keep' })).toBeNull();
@@ -161,5 +161,52 @@ describe('RoomLighting', () => {
     fireEvent.change(screen.getByLabelText('Scene name'), { target: { value: 'Mine' } });
     await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Save' })); });
     expect(api_.createScene).toHaveBeenCalledWith({ ...item('Dune', 'a').scene, name: 'Mine' });
+  });
+
+  it('keeps the try and says so when Undo leaves lights behind, and clears on a full success', async () => {
+    api_.applyLook.mockResolvedValueOnce({ results: [{ light_id: 'l1', label: 'Lamp', ok: false, error: 'unreachable' }], failed: 1 } as never);
+    await mount();
+    await tryFirst();
+    await screen.findByText('Trying Code · Dune on Office');
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    expect(await screen.findByText('1 lights did not go back: unreachable')).toBeTruthy();
+    expect(loadTry('Office')).not.toBeNull();
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    expect(await screen.findByText('Put back how Office was at 09:41.')).toBeTruthy();
+    expect(loadTry('Office')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull();
+  });
+
+  it('keeps the record and bar when the apply fails after a good capture', async () => {
+    api_.applySuggestion.mockRejectedValue(new Error('apply broke'));
+    await mount();
+    await tryFirst();
+    expect((await screen.findByRole('alert')).textContent).toContain('apply broke');
+    expect(loadTry('Office')).not.toBeNull();
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeTruthy();
+  });
+
+  it('does not let a refetch wipe an unread Try error', async () => {
+    api_.captureLook.mockRejectedValue(new Error('no bridge'));
+    await mount();
+    await tryFirst();
+    await screen.findByText('no bridge');
+    mode('Study');
+    await waitFor(() => expect(api_.suggest.mock.calls.at(-1)![1].mode).toBe('study'));
+    expect(screen.getByText('no bridge')).toBeTruthy();
+  });
+
+  it('drops what is showing when the room changes or the panel goes away', async () => {
+    const other = { ...(room as object), name: 'Den' } as never;
+    const view = render(<RoomLighting room={room} />);
+    await screen.findAllByText('Mid-morning light, 4000 K.');
+    fireEvent.click(screen.getAllByRole('button', { name: 'Show' })[0]);
+    expect(useUi.getState().showing).not.toBeNull();
+    view.rerender(<RoomLighting room={other} />);
+    expect(useUi.getState().showing).toBeNull();
+    useUi.getState().setShowing({ room: 'Den', id: 'a', title: 't', results: [] });
+    view.unmount();
+    expect(useUi.getState().showing).toBeNull();
   });
 });

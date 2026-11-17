@@ -34,7 +34,8 @@ export function RoomLighting({ room, onClose, onShow, shownId }: {
   const [paletteId, setPaletteId] = useState<string | undefined>();
   const [items, setItems] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(''); // the suggestion request
+  const [actionError, setActionError] = useState(''); // Try or Undo
   const [notice, setNotice] = useState('');
   const [browsing, setBrowsing] = useState(false);
   const [record, setRecord] = useState<TryRecord | null>(() => loadTry(room.name));
@@ -42,7 +43,16 @@ export function RoomLighting({ room, onClose, onShow, shownId }: {
   /** True once a try was pressed in this visit; a record found on mount reads as an earlier try. */
   const [live, setLive] = useState(false);
 
-  useEffect(() => { setRecord(loadTry(room.name)); setNotice(''); setLive(false); }, [room.name]);
+  // What is shown belongs to the room it was shown for: leaving the room or the panel drops it.
+  const roomRef = useRef(room.name);
+  roomRef.current = room.name;
+  const dropShowing = (name: string) => {
+    const now = useUi.getState().showing;
+    if (now && now.room === name) useUi.getState().setShowing(null);
+  };
+  useEffect(() => () => dropShowing(roomRef.current), []);
+  useEffect(() => { const name = room.name; return () => dropShowing(name); }, [room.name]);
+  useEffect(() => { setRecord(loadTry(room.name)); setNotice(''); setActionError(''); setLive(false); }, [room.name]);
 
   // The glare check for the desk presets, judged from the room as it is now; part of the request key.
   const glare = useMemo(() => {
@@ -80,7 +90,7 @@ export function RoomLighting({ room, onClose, onShow, shownId }: {
   async function tryOn(item: Suggestion, title: string) {
     if (trying) return;
     setTrying(true);
-    setError('');
+    setActionError('');
     setNotice('');
     try {
       let current = record;
@@ -98,7 +108,7 @@ export function RoomLighting({ room, onClose, onShow, shownId }: {
       const failed = results.filter((r) => r.error);
       if (failed.length) toast(`${failed.length} lights did not change: ${failed[0].error}`, true);
     } catch (e) {
-      setError((e as Error).message);
+      setActionError((e as Error).message);
     }
     setTrying(false);
   }
@@ -106,13 +116,19 @@ export function RoomLighting({ room, onClose, onShow, shownId }: {
   async function undo() {
     if (!record) return;
     try {
-      await api.applyLook(room.name, record.look);
+      setActionError('');
+      const { results, failed } = await api.applyLook(room.name, record.look);
+      if (failed > 0) {
+        const first = results.find((r) => !r.ok);
+        setActionError(`${failed} lights did not go back: ${first?.error ?? 'no answer'}`);
+        return;
+      }
       clearTry(room.name);
-      setNotice(`Put back how ${room.name} was at ${record.capturedAt}`);
+      setNotice(`Put back how ${room.name} was at ${record.capturedAt}.`);
       setRecord(null);
       setLive(false);
     } catch (e) {
-      setError((e as Error).message);
+      setActionError((e as Error).message);
     }
   }
 
@@ -162,15 +178,16 @@ export function RoomLighting({ room, onClose, onShow, shownId }: {
       )}
       {browsing && <PaletteBrowser onPick={(id) => { setPaletteId(id); setBrowsing(false); }} />}
       {error && <p className="error-text" role="alert">{error}</p>}
+      {actionError && <p className="error-text" role="alert">{actionError}</p>}
       {!room.lights.length && <p className="hint">Place lights in this room first; suggestions color the lights where they sit.</p>}
       <div className="suggest-cards" aria-busy={loading}>
         {items.map((item) => {
           const title = cardTitle(mode, item.palette);
-          const shown = onShow && shownId ? shownId === item.scene.id : mine?.title === title;
+          const shown = onShow && shownId ? shownId === item.scene.id : mine?.id === item.scene.id;
           return (
             <SuggestionCard key={`${item.palette.id}-${seed}`} room={room} item={item} mode={mode} shown={!!shown} photo={!!onShow}
               onShow={() => {
-                setShowing(mine?.title === title ? null : { room: room.name, title, results: item.preview });
+                setShowing(mine?.id === item.scene.id ? null : { room: room.name, id: item.scene.id, title, results: item.preview });
                 onShow?.(item);
               }}
               onSaved={async (name) => {
