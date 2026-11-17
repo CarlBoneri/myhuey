@@ -15,6 +15,9 @@ DAY = 24 * 60
 _FROM_WAKE = [(0, 3000, 60.0), (60, 5000, 100.0)]
 _FROM_BED = [(-240, 5000, 100.0), (-120, 3000, 70.0), (0, 2400, 40.0), (60, 2200, 25.0)]
 
+WARM_UP_MIN = _FROM_WAKE[-1][0]  # minutes after waking until the whites reach daylight
+EVENING_MIN = -_FROM_BED[0][0]  # minutes before bed when the whites start warming for the evening
+
 
 def _minutes(value: time | str) -> int:
     if isinstance(value, str):
@@ -58,3 +61,8 @@ def minutes_until_bed(at: time, wake: str, bed: str) -> int | None:
     now = (_minutes(at) - _minutes(wake)) % DAY
     day = _day_length(wake, bed)
     return day - now if now <= day else None
+
+
+def minutes_since_wake(at: time, wake: str) -> int:
+    """Minutes since the last wake time."""
+    return (_minutes(at) - _minutes(wake)) % DAY

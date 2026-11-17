@@ -1,4 +1,7 @@
 /** Pure helpers for the Suggest panel. */
+import { hexToRgb, liftLightness, rgbToHex } from './color';
+import type { GlareLimits, GlareReason } from './glareLimits';
+import type { SuggestionGuide } from '../types';
 
 export interface PaletteCredit {
   set?: string;
@@ -16,10 +19,15 @@ export const MODE_LABELS: Record<string, string> = {
   work: 'Work',
   study: 'Study',
   read: 'Read',
-  relax: 'Relax',
+  relax: 'Chill',
 };
 
 const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+
+/** A card's key while it is shown: stable across fetches, unlike its scene's id. */
+export function showKey(mode: string, paletteId: string, seed: number, at: string): string {
+  return `${mode}|${paletteId}|${seed}|${at}`;
+}
 
 export function cardTitle(mode: string, palette: { name: string }): string {
   return `${MODE_LABELS[mode] ?? capitalize(mode)} · ${palette.name}`;
@@ -71,9 +79,72 @@ export function scheduleWarning(wake: string, bed: string): string {
   return '';
 }
 
+/**
+ * A light's color at full strength. A Hue light shows a color's hue and saturation and keeps its
+ * brightness apart, so a dark palette color is drawn as the light would show it, not as a grey smudge.
+ */
+export function fullStrength(hex: string): string {
+  const [r, g, b] = hexToRgb(hex);
+  const top = Math.max(r, g, b);
+  if (top === 0) return '#ffffff';
+  return rgbToHex([r, g, b].map((channel) => Math.round((channel * 255) / top)) as [number, number, number]);
+}
+
+/** How opaque a light's glow is drawn at a brightness (0-100): fading toward transparent as it dims, never darker. */
+export function glowOpacity(brightness: number): number {
+  const level = Math.max(0, Math.min(100, brightness)) / 100;
+  return Math.round(Math.max(0.06, level) * 100) / 100;
+}
+
+/** The lightness a glow is drawn at least as bright as, so a dark palette color still glows on a light plan. */
+export const GLOW_LIGHTNESS_FLOOR = 0.6;
+
+/** A color for drawing a glow only: its hue and saturation kept, its lightness raised to the floor. Never sent to a light. */
+export function glowColor(hex: string): string {
+  return liftLightness(hex, GLOW_LIGHTNESS_FLOOR);
+}
+
+/** The least opaque a light is drawn in a card thumbnail, so a dim light stays visible next to an off one. */
+export const THUMB_FLOOR = 0.2;
+
+/** A light's fill and opacity for a card thumbnail: the plan's fade, but never fainter than the floor. */
+export function thumbFill(result: { on: boolean; color: string | null; brightness: number }): { fill: string; opacity: number } {
+  const { fill, opacity } = lightFill(result);
+  return { fill, opacity: result.on && result.color ? Math.max(THUMB_FLOOR, opacity) : opacity };
+}
+
 export function lightFill(result: { on: boolean; color: string | null; brightness: number }): { fill: string; opacity: number } {
   if (!result.on || !result.color) return { fill: '#2a2a2a', opacity: 1 };
-  return { fill: result.color, opacity: Math.round((0.2 + (0.8 * result.brightness) / 100) * 100) / 100 };
+  return { fill: fullStrength(result.color), opacity: glowOpacity(result.brightness) };
+}
+
+const REASON_WORDS: Record<GlareReason, string> = { reflection: 'reflect in the screen', direct: 'in view', peripheral: 'at the edge of view' };
+const REASON_ORDER: GlareReason[] = ['reflection', 'direct', 'peripheral'];
+
+/**
+ * The panel's one glare line, from the limits the request sent: every held light once, grouped by
+ * why and by its limit. '' when nothing was checked or nothing is held (the server's line says why).
+ */
+export function glareHeldLine(limits: GlareLimits, labels: Record<string, string>): string {
+  if (!limits.checked) return '';
+  const groups = new Map<string, { reason: GlareReason; brightness: number; kelvin: number | null; names: string[] }>();
+  for (const [id, cap] of Object.entries(limits.caps)) {
+    const key = `${cap.reason}|${cap.brightness}|${cap.kelvin ?? ''}`;
+    if (!groups.has(key)) groups.set(key, { reason: cap.reason, brightness: cap.brightness, kelvin: cap.kelvin, names: [] });
+    groups.get(key)!.names.push(labels[id] ?? id);
+  }
+  if (!groups.size) return '';
+  const parts = [...groups.values()]
+    .sort((a, b) => REASON_ORDER.indexOf(a.reason) - REASON_ORDER.indexOf(b.reason) || a.brightness - b.brightness)
+    .map((group) => `${group.names.join(', ')} (${REASON_WORDS[group.reason]}: ≤${group.brightness}%${group.kelvin ? ', warm white' : ''})`);
+  return `Held for glare at the desk: ${parts.join('; ')}.`;
+}
+
+/** A card's short glare line: how many of its lights it holds for glare, or '' for none. */
+export function heldText(guide: SuggestionGuide | undefined): string {
+  const held = guide?.checked ? guide.held ?? 0 : 0;
+  if (!held) return '';
+  return `${held} light${held === 1 ? '' : 's'} held for glare`;
 }
 
 type HeightAndRole = { elevation?: number | null; role?: string };

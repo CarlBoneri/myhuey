@@ -122,3 +122,141 @@ def test_groups_survive_making_a_sandbox_active_and_deleting_layouts(service):
     assert [g["name"] for g in service.groups()] == ["Desk"]
     service.delete_layout(first)
     assert [g["name"] for g in service.groups()] == ["Desk"]
+
+
+# A room's lights, captured and put back (planned lights are never sent to the bridge)
+
+def _effect_light(rid, v1, status):
+    return {"id": rid, "id_v1": f"/lights/{v1}", "effects": {"status": status, "effect_values": ["no_effect", "candle", "fire"]}}
+
+
+def _place(service, ids, planned=()):
+    from myhuey.models import LayoutLight
+    config = service._load()
+    room = next(r for r in config["rooms"] if r["name"] == "Den")
+    for light_id in ids:
+        room["lights"].append(LayoutLight(light_id=light_id, label=f"L{light_id}", x=10, y=10, planned=light_id in planned).to_dict())
+    service._save(config)
+
+
+def test_capture_room_look_leaves_out_planned_and_missing_lights(service, fake_bridge):
+    service.add_room("Den")
+    _place(service, ["1", "2", "99", "planned-abc"], planned=("planned-abc",))
+    fake_bridge(LIGHTS)
+    got = service.capture_room_look("Den")
+    assert sorted(got["look"]) == ["1", "2"]
+    assert sorted(got["skipped"]) == ["99", "planned-abc"]
+    assert len(got["at"]) == 5 and got["at"][2] == ":"
+
+
+def test_capture_room_look_records_a_running_effect(service, fake_bridge):
+    service.add_room("Den")
+    _place(service, ["1", "2"])
+    session = fake_bridge(LIGHTS)
+    session.v2_lights = [_effect_light("rid-1", "1", "candle"), _effect_light("rid-2", "2", "no_effect")]
+    look = service.capture_room_look("Den")["look"]
+    assert look["1"]["effect"] == "candle"
+    assert "effect" not in look["2"]
+
+
+def _clip_puts(session):
+    return [(c["url"].rsplit("/", 1)[1], c["json"]) for c in session.clip_calls if c["method"] == "PUT"]
+
+
+def test_apply_room_look_restores_colours_and_ignores_ids_outside_the_room(service, fake_bridge):
+    service.add_room("Den")
+    _place(service, ["1", "2", "10"])
+    session = fake_bridge(LIGHTS, [{"success": {}}])
+    look = {"1": {"on": True, "bri": 254, "xy": [0.5, 0.4]}, "2": {"on": False}, "10": {"on": True, "bri": 127, "ct": 370}, "55": {"on": False}}
+    results = service.apply_room_look("Den", look)
+    puts = [(c["url"].rsplit("/lights/", 1)[1], c["json"]) for c in session.calls if c["method"] == "PUT"]
+    assert puts == [("1/state", {"on": True, "bri": 254, "xy": [0.5, 0.4]}), ("2/state", {"on": False}), ("10/state", {"on": True, "bri": 127, "ct": 370})]
+    by_id = {r["light_id"]: r for r in results}
+    assert by_id["55"]["ok"] is False and "not in" in by_id["55"]["error"]
+    assert all(by_id[i]["ok"] for i in ("1", "2", "10"))
+
+
+def test_apply_room_look_starts_a_recorded_effect(service, fake_bridge):
+    service.add_room("Den")
+    _place(service, ["1"])
+    session = fake_bridge(LIGHTS, [{"success": {}}])
+    session.v2_lights = [_effect_light("rid-1", "1", "no_effect")]
+    results = service.apply_room_look("Den", {"1": {"on": True, "bri": 100, "effect": "candle"}})
+    assert results[0]["ok"]
+    assert _clip_puts(session) == [("rid-1", {"effects": {"effect": "candle"}})]
+
+
+def test_apply_room_look_stops_a_running_effect_before_colours(service, fake_bridge):
+    service.add_room("Den")
+    _place(service, ["1"])
+    session = fake_bridge(LIGHTS, [{"success": {}}])
+    session.v2_lights = [_effect_light("rid-1", "1", "fire")]
+    order = []
+    real = session.request
+    session.request = lambda method, url, **kw: (order.append(("v2" if "/clip/v2/" in url else "v1", method)), real(method, url, **kw))[1]
+    results = service.apply_room_look("Den", {"1": {"on": True, "bri": 254, "xy": [0.5, 0.4]}})
+    assert results[0]["ok"]
+    assert _clip_puts(session) == [("rid-1", {"effects": {"effect": "no_effect"}})]
+    puts = [kind for kind, method in order if method == "PUT"]
+    assert puts == ["v2", "v1"]  # the effect stops before the colours go back
+
+
+def test_the_room_look_routes_capture_and_apply(service, fake_bridge, db_path):
+    from fastapi.testclient import TestClient
+    from myhuey.api import create_app
+
+    service.add_room("Den")
+    _place(service, ["1"])
+    fake_bridge(LIGHTS, LIGHTS, [{"success": {}}])
+    client = TestClient(create_app(db_path))
+    got = client.post("/api/rooms/Den/look").json()
+    assert got["look"]["1"]["bri"] == 254 and got["skipped"] == []
+    done = client.post("/api/rooms/Den/look/apply", json={"look": got["look"]}).json()
+    assert done["failed"] == 0 and done["results"][0]["light_id"] == "1"
+
+
+def test_a_malformed_look_is_a_422_and_nothing_is_sent(service, fake_bridge, db_path):
+    from fastapi.testclient import TestClient
+    from myhuey.api import create_app
+
+    service.add_room("Den")
+    _place(service, ["1", "2"])
+    session = fake_bridge(LIGHTS)
+    client = TestClient(create_app(db_path))
+    for bad in ({"1": {"on": True, "xy": 5}}, {"1": {"on": True, "gradient": {"mode": "x"}}},
+                {"1": {"on": True, "bri": 999}}, {"1": {"on": True, "gradient": {"colors": ["#fff"]}}}):
+        assert client.post("/api/rooms/Den/look/apply", json={"look": bad}).status_code == 422
+    assert session.calls == [] and session.clip_calls == []
+
+
+def test_one_bad_entry_does_not_stop_the_other_lights(service, fake_bridge):
+    service.add_room("Den")
+    _place(service, ["1", "2"])
+    session = fake_bridge(LIGHTS, [{"success": {}}])
+    look = {"1": {"on": True, "xy": 5}, "2": {"on": False}}
+    by_id = {r["light_id"]: r for r in service.apply_room_look("Den", look)}
+    assert by_id["1"]["ok"] is False and by_id["2"]["ok"] is True
+    assert [c["url"].rsplit("/lights/", 1)[1] for c in session.calls if c["method"] == "PUT"] == ["2/state"]
+
+
+def test_a_planned_light_in_a_look_is_named_as_planned(service, fake_bridge):
+    service.add_room("Den")
+    _place(service, ["1", "planned-abc"], planned=("planned-abc",))
+    fake_bridge(LIGHTS, [{"success": {}}])
+    by_id = {r["light_id"]: r for r in service.apply_room_look("Den", {"planned-abc": {"on": False}})}
+    assert "planned" in by_id["planned-abc"]["error"] and "not a real light" in by_id["planned-abc"]["error"]
+
+
+def test_capture_refuses_when_the_bridge_does_not_report_effects(service, fake_bridge, monkeypatch):
+    from myhuey.errors import HueError
+
+    service.add_room("Den")
+    _place(service, ["1"])
+    fake_bridge(LIGHTS)
+
+    def broken():
+        raise HueError("v2 down")
+
+    monkeypatch.setattr(service.client(), "get_v2_lights", broken)
+    with pytest.raises(HueError, match="Nothing was changed"):
+        service.capture_room_look("Den")

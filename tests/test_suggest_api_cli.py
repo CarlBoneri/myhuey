@@ -102,10 +102,56 @@ def test_cli_suggest_and_save(service, db_path, capsys):
 def test_cli_suggest_lists_without_saving(service, db_path, capsys):
     assert _cli(db_path, "suggest", "--room", "Den", "--mode", "relax", "--count", "2") == 0
     out = capsys.readouterr().out
-    assert out.count("Relax ·") == 2 and service.scenes("Den") == []
+    assert out.count("Chill ·") == 2 and service.scenes("Den") == []
 
 
 def test_cli_palettes(service, db_path, capsys):
     assert _cli(db_path, "palettes", "--tag", "warm", "--limit", "3") == 0
     lines = [line for line in capsys.readouterr().out.splitlines() if line.strip()]
     assert len(lines) == 3 and all("#" in line for line in lines)
+
+
+def test_preview_matches_the_capped_scene(service, fake_bridge):
+    fake_bridge()
+    glare = {"checked": True, "caps": {"1": {"brightness": 15, "kelvin": None, "reason": "direct"}}}
+    for item in service.suggest("Den", "code", at="12:00", glare=glare):
+        shown = next(light for light in item["preview"] if light["light_id"] == "1")
+        assert shown["brightness"] <= 15
+        assert item["scene"]["overrides"]["1"]["brightness"] <= 15
+
+
+def test_api_accepts_glare_and_chill(service, db_path):
+    web = TestClient(create_app(db_path))
+    body = {"mode": "chill", "at": "20:00", "count": 1, "glare": {"checked": False, "caps": {}}}
+    response = web.post("/api/rooms/Den/suggest", json=body)
+    assert response.status_code == 200 and response.json()[0]["guide"]["checked"] is False
+    assert response.json()[0]["guide"]["glare"] == ["Glare is checked for the desk presets (Code, Work, Study)."]
+
+
+def test_cli_accepts_chill(service, db_path, capsys):
+    assert _cli(db_path, "suggest", "--room", "Den", "--mode", "chill", "--at", "20:00", "--count", "1") == 0
+    assert "Chill" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("glare", [
+    {"checked": True, "caps": {"1": {"brightness": 15}}},
+    {"checked": True, "caps": {"1": {"brightness": 15, "kelvin": None, "reason": "bogus"}}},
+    {"checked": True, "caps": {"1": {"brightness": "high", "kelvin": None, "reason": "direct"}}},
+    {"checked": True, "caps": [1]},
+    {"caps": {}},
+    {"checked": True, "caps": {"1": {"brightness": 0, "kelvin": None, "reason": "direct"}}},
+    {"checked": True, "caps": {"1": {"brightness": 18, "kelvin": 1500, "reason": "reflection"}}},
+    {"checked": True, "caps": {"1": {"brightness": 18, "kelvin": 7000, "reason": "reflection"}}},
+    {"checked": True, "caps": {str(i): {"brightness": 15, "kelvin": None, "reason": "direct"} for i in range(65)}},
+])
+def test_api_rejects_a_malformed_glare(service, db_path, glare):
+    web = TestClient(create_app(db_path))
+    response = web.post("/api/rooms/Den/suggest", json={"mode": "code", "glare": glare})
+    assert response.status_code == 422
+
+
+def test_api_accepts_glare_limits_at_their_bounds(service, db_path):
+    web = TestClient(create_app(db_path))
+    caps = {str(i): {"brightness": 1, "kelvin": 2000 if i % 2 else 6500, "reason": "reflection"} for i in range(64)}
+    response = web.post("/api/rooms/Den/suggest", json={"mode": "code", "count": 1, "glare": {"checked": True, "caps": caps}})
+    assert response.status_code == 200

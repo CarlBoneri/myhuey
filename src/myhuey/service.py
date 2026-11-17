@@ -268,7 +268,7 @@ class HueRoomService:
             self._v2_index, self._v2_loaded = {}, 0.0
         return self._client
 
-    def v2_index(self, *, refresh: bool = False) -> dict[str, dict[str, Any]]:
+    def v2_index(self, *, refresh: bool = False, strict: bool = False) -> dict[str, dict[str, Any]]:
         """v1 light ID -> {"rid": v2 ID, "gradient_points": n}. Cached for a few minutes.
 
         The v2 API is used for gradients only, so if it fails the app keeps working
@@ -290,6 +290,8 @@ class HueRoomService:
                         "effect": _effect_state(light),
                     }
         except HueError:
+            if strict:
+                raise
             return self._v2_index
         self._v2_index, self._v2_loaded = index, time.monotonic()
         return index
@@ -469,26 +471,80 @@ class HueRoomService:
         group = self._group(self._load(), key)
         if not group.get("look"):
             raise ValueError(f"The group '{group['name']}' has no saved look yet")
+        return self._replay_look(group["look"], pause=pause)
+
+    def _replay_look(self, look: dict[str, Any], *, allowed: set[str] | None = None, pause: float | None = None) -> list[dict[str, Any]]:
+        """Send a look to the bridge, one light at a time. Lights the bridge lacks, or that are
+        outside `allowed` (when given), are reported and not sent. A running effect is stopped
+        before colours go back (the bridge clears gradient points when an effect is set)."""
         pause = self._command_gap() if pause is None else pause
         client = self.client()
         raw = client.get_lights()
-        commands, skipped = look_commands(group["look"], set(raw))
+        known = set(raw)
         results: list[dict[str, Any]] = []
+        commands: list[dict[str, Any]] = []
+        skipped: list[str] = []
+        for light_id, entry in look.items():
+            try:
+                made, gone = look_commands({light_id: entry}, known)
+            except (KeyError, TypeError, ValueError, AttributeError) as exc:
+                results.append({"light_id": light_id, "label": f"Light {light_id}", "ok": False, "error": f"Light {light_id} has a look that cannot be applied ({exc})"})
+                continue
+            commands += made
+            skipped += gone
         for light_id in skipped:
-            results.append({"light_id": light_id, "label": f"Light {light_id}", "ok": False, "error": f"Light {light_id} is no longer on the bridge"})
+            if str(light_id).startswith("planned-"):
+                error = f"Light {light_id} is planned, not a real light"
+            elif allowed is not None and light_id not in allowed:
+                error = f"Light {light_id} is not in this room"
+            else:
+                error = f"Light {light_id} is no longer on the bridge"
+            results.append({"light_id": light_id, "label": f"Light {light_id}", "ok": False, "error": error})
+        if allowed is not None:
+            for command in [c for c in commands if c["light_id"] not in allowed]:
+                commands.remove(command)
+                results.append({"light_id": command["light_id"], "label": f"Light {command['light_id']}", "ok": False,
+                                "error": f"Light {command['light_id']} is "
+                                + ("planned, not a real light" if str(command["light_id"]).startswith("planned-") else "not in this room")})
+        index = self.v2_index(refresh=True) if commands else {}
         for command in commands:
             light_id = command["light_id"]
             result: dict[str, Any] = {"light_id": light_id, "label": raw[light_id].get("name") or f"Light {light_id}", "ok": True}
             try:
+                running = ((index.get(light_id) or {}).get("effect") or {}).get("current")
+                if not command.get("effect") and running not in (None, "no_effect"):
+                    self.set_effect(light_id, "no_effect")
                 client.set_light_color(light_id, **command["v1"])
-                if command["gradient"]:
+                if command.get("effect"):
+                    self.set_effect(light_id, command.get("effect"))
+                elif command["gradient"]:
                     self.set_gradient(light_id, command["gradient"]["colors"], command["gradient"].get("mode"))
-            except (HueError, ValueError) as exc:
+            except (HueError, ValueError, KeyError, TypeError) as exc:
                 result.update(ok=False, error=str(exc))
             results.append(result)
             if pause:
                 self.sleep(pause)
         return results
+
+    def capture_room_look(self, room_name: str) -> dict[str, Any]:
+        """What the room's real lights show right now. Planned lights, and lights the bridge
+        does not have, are left out and listed in `skipped`."""
+        room_lights = self.get_room(room_name).lights
+        raw = self.client().get_lights()
+        real = [light.light_id for light in room_lights if not light.planned and light.light_id in raw]
+        skipped = [light.light_id for light in room_lights if light.light_id not in real]
+        try:
+            v2 = self.v2_index(refresh=True, strict=True)
+        except HueError as exc:
+            raise HueError("The bridge did not report gradients and effects, so a try could not be undone. Nothing was changed.") from exc
+        look = capture_look(raw, v2, real)
+        return {"look": look, "skipped": skipped, "at": datetime.now().strftime("%H:%M")}
+
+    @_one_bridge_write
+    def apply_room_look(self, room_name: str, look: dict[str, Any], *, pause: float | None = None) -> list[dict[str, Any]]:
+        """Put a captured look back on the room's lights. IDs outside the room are reported, not sent."""
+        allowed = {light.light_id for light in self.get_room(room_name).lights if not light.planned}
+        return self._replay_look(look, allowed=allowed, pause=pause)
 
     # Rooms
 
@@ -1142,7 +1198,7 @@ class HueRoomService:
 
     def suggest(
         self, room_name: str, mode: str, *, at: str | None = None, palette_id: str | None = None,
-        count: int = 4, seed: int = 0,
+        count: int = 4, seed: int = 0, glare: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         """Suggested scenes for a room, as previews: nothing is saved and no light changes.
 
@@ -1152,7 +1208,7 @@ class HueRoomService:
         prefs = self.preferences()
         when = _clock(at)
         items = suggest_scenes(room, mode, at=when, wake=prefs["wake_time"], bed=prefs["bed_time"],
-                               palette_id=palette_id, count=count, seed=seed)
+                               palette_id=palette_id, count=count, seed=seed, glare=glare)
         return [
             {**item, "scene": item["scene"].to_dict(), "preview": evaluate(item["scene"], room)}
             for item in items

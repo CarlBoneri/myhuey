@@ -7,15 +7,18 @@ import { attempt, sendLight, setRoomPower, useStore } from '../store';
 import { href } from '../lib/router';
 import { formatLength } from '../lib/units';
 import { roomSummary } from '../lib/roomControls';
+import { useShowingFor } from '../lib/shownLights';
 import { LightControls } from '../components/LightControls';
 import { RoomDimmer } from '../components/RoomDimmer';
-import { SuggestPanel } from '../components/SuggestPanel';
+import { RoomLighting } from '../components/RoomLighting';
 import { Empty, HueIcon, Panel, Sidebar, Toggle } from '../components/ui';
 
 export function RoomWorkbench({ name }: { name: string }) {
   const { rooms, lights, scenes, refreshLights } = useStore();
   const room = rooms.find((item) => item.name === name);
   const [selected, setSelected] = useState<string | null>(null);
+  // The workbench always shows its lighting panel; a card shown there ends with the room or the screen.
+  useShowingFor(name, true);
 
   if (!room) {
     return <div className="page"><Empty title={`No room named “${name}”`}><a className="button" href="#/">Back home</a></Empty></div>;
@@ -75,7 +78,7 @@ export function RoomWorkbench({ name }: { name: string }) {
             </div>
             {planned.length > 0 && <p className="hint">Planned, not installed yet: {planned.map((p) => p.label).join(', ')}.</p>}
             {silent.length > 0 && <p className="hint">Not answering on the bridge: {silent.map((p) => p.label).join(', ')}.</p>}
-            <SuggestPanel room={room} />
+            <RoomLighting room={room} />
           </div>
           <Sidebar name="workbench">
             <Panel title="Light">

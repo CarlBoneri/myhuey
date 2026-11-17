@@ -2,7 +2,7 @@
 import type { BridgeLight, Placement, Profile, ProfileTable } from '../types';
 
 export function placedProfile(placement: Placement, bridge: BridgeLight | undefined, table: ProfileTable | null): Profile {
-  if (bridge) return bridge.profile;
+  if (bridge?.profile) return bridge.profile;
   const fallback: Profile = table?.default ?? {
     kind: 'round', length: 15, width: 15, icon: 'bulb-classic', gradient: false, adjustable: false, linear: false, label: 'Light',
   };

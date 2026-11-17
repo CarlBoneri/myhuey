@@ -3,6 +3,7 @@ optional saved look that puts the lights back the way they were in one tap.
 
 A look maps a light ID to what that light showed: {"on": False} for a light that was off, or
 {"on": True, "bri": 1-254} plus one of "xy", "ct" (mired, exactly as the bridge had it), or "gradient" ({"colors", "mode"}).
+A light with a built-in effect running (candle, fire) also carries "effect": its name.
 """
 
 from __future__ import annotations
@@ -58,6 +59,9 @@ def capture_look(raw: dict[str, Any], v2: dict[str, Any], ids: Iterable[str]) ->
             entry["xy"] = [float(value) for value in state["xy"]]
         elif mode == "ct" and state.get("ct"):
             entry["ct"] = int(state["ct"])
+        running = ((v2.get(light_id) or {}).get("effect") or {}).get("current")
+        if running and running != "no_effect":
+            entry["effect"] = str(running)
         look[light_id] = entry
     return look
 
@@ -80,5 +84,8 @@ def look_commands(look: dict[str, dict[str, Any]], known: set[str]) -> tuple[lis
             v1["xy"] = tuple(entry["xy"])
         elif entry.get("ct"):
             v1["color_temp"] = entry["ct"]  # under 1000, so build_hue_state takes it as mired
-        commands.append({"light_id": light_id, "v1": v1, "gradient": entry.get("gradient")})
+        command = {"light_id": light_id, "v1": v1, "gradient": entry.get("gradient")}
+        if entry.get("effect"):
+            command["effect"] = entry["effect"]
+        commands.append(command)
     return commands, skipped

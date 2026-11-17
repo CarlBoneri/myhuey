@@ -5,11 +5,14 @@ import { ArrowUpDown, Box, Maximize2, Minus, Monitor, PanelRightClose, PanelRigh
 import { sendLight, useStore } from '../store';
 import { useUi } from '../uiStore';
 import { quote } from '../lib/commands';
-import { STATUS_LABELS, capText, isDisplay, statusTone, summary } from '../lib/glareMath';
+import { STATUS_LABELS, capText, isDisplay, statusTone } from '../lib/glareMath';
 import { round1 } from '../lib/geometry';
 import { placedProfile } from '../lib/lights';
 import { EYE_SEATED, EYE_STANDING, heightPreset, type HeightPreset } from '../lib/photo';
 import { STANDING_DESK_CM, heightOf, type Posture } from '../lib/rig';
+import { fixGlareState, useDrawnLights, shownLevels, glareBadge } from '../lib/shownLights';
+import { overLimit } from '../lib/glareLimits';
+import { ShowingLabel } from './ShowingLabel';
 import { lightsToDim, type RoomGlare } from '../lib/roomGlare';
 import { MODE_LABELS, autoRoleLabel } from '../lib/suggest';
 import { CM_PER_INCH, formatLength } from '../lib/units';
@@ -17,7 +20,7 @@ import { clamp } from '../lib/view3d';
 import type { Placement, Room } from '../types';
 import { Room3DStage, type Selection3D, type View3D } from './Room3DStage';
 import { isMac, isResizePress } from '../lib/pointer';
-import { inspectorAfterDrag, shouldScrollOnFold, splitAfterDrag } from '../lib/paneDrag';
+import { inspectorAfterDrag, shouldScrollOnFold, splitAfterDrag, unfoldForLighting } from '../lib/paneDrag';
 import { Panel, Segmented, Sidebar, Slider } from './ui';
 
 const SIZES_KEY = 'myhuey.studio3d';
@@ -62,7 +65,8 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
   /** The designer's own panels (selected light, furniture, room), shown under the 3D cards. */
   children: ReactNode;
 }) {
-  const { lights, profiles, toast } = useStore();
+  const { lights: liveLights, profiles, toast } = useStore();
+  const { lights, showing } = useDrawnLights(room.name);
   const { posture, setPosture, glareMode, setGlareMode } = useUi();
   const [sizes, setSizes] = useState(loadSizes);
   const [view, setView] = useState<View3D>('orbit');
@@ -72,6 +76,9 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
   useEffect(() => {
     try { localStorage.setItem(SIZES_KEY, JSON.stringify(sizes)); } catch { /* storage blocked: sizes just reset next time */ }
   }, [sizes]);
+  // Opening the lighting panel (the Light button) shows the inspector it lives in.
+  const lightingOpen = useUi((state) => state.lightingOpen);
+  useEffect(() => { setSizes((s) => unfoldForLighting(s, lightingOpen)); }, [lightingOpen]);
   const viewPane = useRef<HTMLElement>(null);
   const fold = (key: keyof Sizes['collapsed']) => setSizes((s) => ({ ...s, collapsed: { ...s.collapsed, [key]: !s.collapsed[key] } }));
 
@@ -101,7 +108,11 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
 
   const { report, scene, posed } = glare;
   const status = new Map(report.lights.map((light) => [light.light_id, light]));
-  const toDim = lightsToDim(room, report, lights);
+  const toDim = lightsToDim(room, report, liveLights);
+  const levels = shownLevels(lights);
+  const over = new Set(overLimit(report, levels));
+  const fix = fixGlareState(!!showing, toDim.length);
+  const watch = Math.max(0, report.hazards - over.size);
   const unit = room.units === 'imperial' ? CM_PER_INCH : 1;
   const unitName = room.units === 'imperial' ? 'in' : 'cm';
   const inUnits = (cm: number) => Math.round(cm / unit);
@@ -115,7 +126,7 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
       <div className="studio3d-main" ref={column}>
         <section className="pane" ref={viewPane} style={{ flex: collapsed.view ? '0 0 auto' : collapsed.audit ? '1 1 0' : `0 0 calc(${sizes.split * 100}% - 5px)` }}>
           <PaneHead label="the 3D view" collapsed={collapsed.view} onToggle={() => fold('view')} command={`room posture ${quote(room.name)} ${posture}`}>
-            <span className={`pane-badge${report.hazards ? ' flagged' : ''}`}>{scene.eye ? summary(report) : 'No desk to check from'}</span>
+            <span className={`pane-badge${over.size > 0 ? ' flagged' : ''}`}>{scene.eye ? glareBadge(over.size, watch) : 'No desk to check from'}</span>
             <Segmented label="Camera" value={view} onChange={setView} options={[
               { value: 'orbit', label: <><Box size={13} /> Isometric cutaway</>, title: 'Look at the room from outside' },
               { value: 'seat', label: <><ScanEye size={13} /> Desk eye-level</>, title: scene.eye ? 'Sit at the desk and look at the screen' : 'Add a desk or a screen to sit here' },
@@ -130,6 +141,7 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
           </PaneHead>
           {!collapsed.view && (
             <div className="pane-body stage">
+              {showing && <ShowingLabel title={showing.title} />}
               <Room3DStage room={room} posed={posed} view={scene.eye ? view : 'orbit'} selection={selection} onSelect={onSelect}
                 onLight={onLight} onLightCommit={onLightCommit} onRoom={onRoom} onRigCommit={onRigCommit} scene={scene} report={report} />
             </div>
@@ -144,8 +156,7 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
         <section className="pane" style={{ flex: collapsed.audit ? '0 0 auto' : '1 1 0' }}>
           <PaneHead label="the glare table" collapsed={collapsed.audit} onToggle={() => fold('audit')} command={`room glare ${quote(room.name)} --mode ${glareMode}`}>
             <Segmented label="Mode" value={glareMode} onChange={setGlareMode} options={DESK_MODES.map((value) => ({ value, label: MODE_LABELS[value] ?? value }))} />
-            <button type="button" className="button small primary" disabled={!toDim.length}
-              title={toDim.length ? 'Lowers only the lit lights that are over their limit. Nothing is brightened.' : 'No lit light is over its limit right now.'}
+            <button type="button" className="button small primary" disabled={fix.disabled} title={fix.title}
               onClick={() => {
                 for (const item of toDim) sendLight(item.id, { brightness: item.level }, { brightness: item.level });
                 toast(`Dimmed ${toDim.length} light${toDim.length === 1 ? '' : 's'}.`, false);
@@ -155,6 +166,7 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
           </PaneHead>
           {!collapsed.audit && (
             <div className="pane-body audit">
+              {showing && <p className="hint audit-note">Showing {showing.title}: this table describes that scene, not your lights.</p>}
               <table>
                 <thead>
                   <tr><th>Light</th><th>Role</th><th>Position (x, y, height · {unitName})</th><th>Off your gaze</th><th>Level</th><th>Glare</th></tr>
@@ -175,7 +187,10 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
                         <td className="audit-role">{role}</td>
                         <td className="mono">{inUnits(placement.x)}, {inUnits(placement.y)}, <strong>{inUnits(heightOf(placement))}</strong></td>
                         <td className="mono">{entry?.angle != null ? `${Math.round(entry.angle)}°` : '—'}</td>
-                        <td className="mono">{placement.planned ? 'Planned' : !live ? '—' : live.on ? `${Math.round(((live.brightness ?? 254) / 254) * 100)}%` : 'Off'}</td>
+                        <td className="mono">
+                          {placement.planned && !live ? 'Planned' : !live ? '—' : live.on ? `${levels[placement.light_id].brightness}%` : 'Off'}
+                          {live && entry?.cap && <span className={over.has(placement.light_id) ? 'level-over' : 'level-limit'}> · limit {entry.cap.brightness}%{over.has(placement.light_id) ? ' · over' : ''}</span>}
+                        </td>
                         <td>{entry && <span className={`glare-badge tone-${statusTone(entry.status)}`} title={capText(entry.cap) || undefined}>{STATUS_LABELS[entry.status]}</span>}</td>
                       </tr>
                     );
@@ -205,7 +220,7 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
 
             {selectedLight && selectedPosed && (() => {
               const live = lights[selectedLight.light_id];
-              const profile = placedProfile(selectedLight, live, profiles);
+              const profile = placedProfile(selectedLight, liveLights[selectedLight.light_id], profiles);
               const entry = status.get(selectedLight.light_id);
               const height = heightOf(selectedLight);
               const axes: { label: string; value: string; nudge: (delta: number) => Placement }[] = [

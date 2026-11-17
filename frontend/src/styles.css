@@ -1347,3 +1347,16 @@ kbd { padding: 2px 7px; border-radius: 5px; border: 1px solid var(--border-stron
   .help-layout { grid-template-columns: 1fr; }
   .help-nav { max-height: 240px; }
 }
+
+/* The try bar at the top of the lighting panel */
+.try-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--accent); border-radius: var(--radius-m); background: var(--surface-2); font-size: 13px; }
+.try-bar > span { flex: 1; min-width: 160px; }
+.guide-line { margin: 0; }
+
+/* Bottom centre on the plan, above the scale bar and Fit button (bottom-left) and clear of the toolbar and hints along the top. */
+.showing-label { position: absolute; bottom: 56px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 28px); z-index: 5; display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 12px; border-radius: 999px; background: var(--glass-strong); backdrop-filter: blur(var(--glass-blur)); box-shadow: var(--shadow); font-size: 12px; color: var(--text-2); }
+.showing-label button { font-size: 12px; padding: 3px 10px; border-radius: 999px; }
+/* The 3D stage keeps its own hint in the top-left and its controls along the bottom. */
+.pane-body.stage .showing-label { left: auto; right: 12px; top: 12px; bottom: auto; transform: none; }
+.level-over { color: var(--warn-text); font-weight: 600; }
+.level-limit { color: var(--text-2); font-size: 12px; }

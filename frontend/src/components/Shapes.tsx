@@ -3,19 +3,23 @@ import { useId } from 'react';
 import type { Furniture, Opening, Profile, Pt } from '../types';
 import { openingSegment } from '../lib/plan';
 import { renderStops } from '../lib/color';
+import { glowColor as glowTint, glowOpacity } from '../lib/suggest';
 
 const OFF = '#3a3650';
 
 /** A light's silhouette centered on (0, 0), running along +x. Rotate it with a parent group. */
 export function LightSilhouette({
-  profile, length, colors, on, selected, cmPerPx, mode = 'interpolated_palette',
+  profile, length, colors, on, selected, cmPerPx, mode = 'interpolated_palette', level,
 }: {
   profile: Profile; length: number; colors: string[] | null; on: boolean; selected?: boolean; cmPerPx: number; mode?: string | null;
+  /** Brightness 0-100: a dim light's glow fades toward transparent. Left out, the glow is drawn at full strength. */
+  level?: number;
 }) {
   const id = useId().replace(/:/g, '');
   const minPx = 4 * cmPerPx; // keep thin things visible when zoomed out
   const fill = on && colors?.length ? (colors.length > 1 ? `url(#g${id})` : colors[0]) : OFF;
-  const glowColor = on && colors?.length ? colors[Math.floor(colors.length / 2)] : null;
+  const glowColor = on && colors?.length ? glowTint(colors[Math.floor(colors.length / 2)]) : null;
+  const glowFade = level == null ? undefined : glowOpacity(level);
   const stroke = selected ? 'var(--accent)' : 'var(--plan-line)';
   const strokeWidth = (selected ? 2.2 : 1) * cmPerPx;
   // Drawn as hard steps so every Hue mode (bands, mirrored, scattered) shows as it looks.
@@ -35,7 +39,7 @@ export function LightSilhouette({
     const r = Math.max(profile.length / 2, minPx);
     return (
       <g>
-        {glowColor && <circle r={r * 4 + 30} fill="url(#glow)" color={glowColor} className="light-glow" />}
+        {glowColor && <circle r={r * 4 + 30} fill="url(#glow)" color={glowColor} opacity={glowFade} className="light-glow" />}
         <circle r={r} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
         <circle r={r * 0.45} fill="rgba(255,255,255,0.18)" />
       </g>
@@ -45,7 +49,7 @@ export function LightSilhouette({
   const w = Math.max(profile.width, minPx);
   const half = length / 2;
   const glow = glowColor && (
-    <ellipse rx={half + 40} ry={w / 2 + 45} fill="url(#glow)" color={glowColor} className="light-glow" />
+    <ellipse rx={half + 40} ry={w / 2 + 45} fill="url(#glow)" color={glowColor} opacity={glowFade} className="light-glow" />
   );
 
   if (profile.kind === 'string') {

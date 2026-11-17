@@ -56,10 +56,15 @@ describe('room commands', () => {
 });
 
 describe('other commands', () => {
+  it('takes chill as the name of the relax preset, as the CLI and API do', () => {
+    expect(run('suggest --room Office --mode chill')).toEqual({ kind: 'suggest', room: 'Office', mode: 'relax', apply: false });
+    expect(run('suggest --room Office --mode Chill --apply')).toEqual({ kind: 'suggest', room: 'Office', mode: 'relax', apply: true });
+  });
+
   it('reads suggest as the CLI does', () => {
     expect(run('myhuey suggest --room Office --mode code')).toEqual({ kind: 'suggest', room: 'Office', mode: 'code', apply: false });
     expect(run('suggest --room "Living room" --mode relax --apply')).toEqual({ kind: 'suggest', room: 'Living room', mode: 'relax', apply: true });
-    expect(message('suggest --room Office --mode dance')).toMatch(/code, work, study, read, relax/);
+    expect(message('suggest --room Office --mode dance')).toMatch(/code, work, study, read, chill/);
   });
   it('finds groups, scenes, and layouts by name, start of name, or ID', () => {
     expect(run('myhuey groups apply "Desk Halo"')).toEqual({ kind: 'group-apply', id: 'g1', name: 'Desk Halo' });
@@ -124,6 +129,11 @@ describe('shortcuts', () => {
     for (const item of list) expect(run(item.command), item.command).not.toMatchObject({ kind: 'error' });
     expect(list.find((item) => item.title === 'Apply Dusk')!.command).toBe('scene apply s2'); // by ID: two scenes share the name
     expect(quote('Living room')).toBe('"Living room"');
+  });
+  it('offers Chill by the name the app shows', () => {
+    const chill = list.find((item) => item.title === 'Suggest for chill in Office');
+    expect(chill?.command).toBe('suggest --room Office --mode chill');
+    expect(list.some((item) => item.title.startsWith('Suggest for relax'))).toBe(false);
   });
   it('builds workflows for the room you are in, or the first room', () => {
     expect(list[0]).toMatchObject({ group: 'Workflows', command: 'suggest --room Office --mode code --apply' });

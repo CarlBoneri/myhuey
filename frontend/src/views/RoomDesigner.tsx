@@ -9,20 +9,24 @@ import { designerRoom, markRename } from '../lib/studio';
 import { area, bounds, pathOf, round1 } from '../lib/geometry';
 import { formatArea, formatLength, snap } from '../lib/units';
 import { effectiveLength, liveColors, placedProfile } from '../lib/lights';
-import type { Furniture, Opening, PinnableRole, Placement, Pt, Room, Units } from '../types';
+import type { BridgeLight, Furniture, Opening, PinnableRole, Placement, Pt, Room, Units } from '../types';
 import { openingAt, reanchorOpenings } from '../lib/plan';
 import { PlanCanvas, useDrag, usePlan } from '../components/PlanCanvas';
 import { FURNITURE_CATALOG, FurnitureShape, LightSilhouette, OpeningShape } from '../components/Shapes';
 import { LightControls } from '../components/LightControls';
 import { StudioHead } from '../components/StudioHead';
+import { LightToggle } from '../components/LightToggle';
+import { RoomLighting } from '../components/RoomLighting';
 import { Empty, Field, HueIcon, IconButton, LengthInput, Panel, Segmented, Sidebar, Slider, TextInput } from '../components/ui';
 import { PhotoView } from './PhotoView';
 import { OutlineHandles } from '../components/OutlineHandles';
 import { PlanLightsPanel } from '../components/PlanLightsPanel';
-import { autoRoleLabel, placementNeedsRefresh } from '../lib/suggest';
+import { autoRoleLabel, fullStrength, placementNeedsRefresh } from '../lib/suggest';
 import { Studio3D } from '../components/Studio3D';
 import { roomGlare } from '../lib/roomGlare';
 import { useUi } from '../uiStore';
+import { useDrawnLights, useShowingFor } from '../lib/shownLights';
+import { ShowingLabel } from '../components/ShowingLabel';
 
 type Selection = { type: 'light'; id: string } | { type: 'furniture'; id: string } | { type: 'opening'; id: string } | null;
 type Tool = 'select' | 'outline' | 'openings';
@@ -85,16 +89,18 @@ function WallHits({ outline, onPick }: { outline: Pt[]; onPick: (point: Pt) => v
   );
 }
 
-function PlacedLight({ placement, selected, onSelect, onChange, onCommit, units }: {
-  placement: Placement; selected: boolean; onSelect: () => void; onChange: (p: Placement) => void; onCommit: (p: Placement) => void; units: Units;
+function PlacedLight({ lights, placement, selected, onSelect, onChange, onCommit, units }: {
+  lights: Record<string, BridgeLight>; placement: Placement; selected: boolean; onSelect: () => void; onChange: (p: Placement) => void; onCommit: (p: Placement) => void; units: Units;
 }) {
   const drag = useDrag();
   const { cmPerPx } = usePlan();
-  const { lights, profiles } = useStore();
+  const { profiles, lights: liveLights } = useStore();
   const bridge = lights[placement.light_id];
-  const profile = placedProfile(placement, bridge, profiles);
+  const profile = placedProfile(placement, liveLights[placement.light_id], profiles);
   const length = effectiveLength(placement, profile);
-  const colors = liveColors(bridge);
+  // Drawn as the light shows them: each color at full strength, with a dim light's glow fading instead of darkening.
+  const colors = liveColors(bridge)?.map(fullStrength) ?? null;
+  const level = bridge?.brightness != null ? (bridge.brightness / 254) * 100 : undefined;
   const latest = useRef(placement);
   latest.current = placement;
   const rad = (placement.rotation * Math.PI) / 180;
@@ -134,7 +140,7 @@ function PlacedLight({ placement, selected, onSelect, onChange, onCommit, units 
       }}
     >
       <g transform={`rotate(${placement.rotation})`}>
-        <LightSilhouette profile={profile} length={length} colors={colors} on={!!colors} selected={selected} cmPerPx={cmPerPx} mode={bridge?.gradient?.mode} />
+        <LightSilhouette profile={profile} length={length} colors={colors} on={!!colors} selected={selected} cmPerPx={cmPerPx} mode={bridge?.gradient?.mode} level={level} />
         {/* A generous invisible hit area for thin strips. */}
         <rect x={-Math.max(length, profile.length) / 2 - 6 * cmPerPx} y={-10 * cmPerPx} width={Math.max(length, profile.length) + 12 * cmPerPx} height={20 * cmPerPx} fill="transparent" />
       </g>
@@ -213,7 +219,12 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
   const [selection, setSelection] = useState<Selection>(null);
   const [tool, setTool] = useState<Tool>('select');
   const [openingKind, setOpeningKind] = useState<Opening['kind']>('window');
-  const { posture, glareMode } = useUi();
+  // Every hook sits above the early return below: a room that goes away must not change the hook count.
+  const { posture, glareMode, lightingOpen } = useUi();
+  const { lights: drawnLights, showing: shownCard } = useDrawnLights(draft?.name ?? name);
+  // This screen decides when a shown card ends: another room, the panel closed, or leaving the
+  // designer. Switching between Room plan, 3D and Photo keeps it.
+  useShowingFor(source?.name ?? name, lightingOpen);
 
   const fit = useMemo(() => {
     if (!source) return { x: 0, y: 0, w: 450, h: 300 };
@@ -398,6 +409,8 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
 
   const inspectorPanels = (
     <>
+    {/* The saved room, not the draft: a drag would otherwise ask for new suggestions at every step. */}
+    {lightingOpen && tab !== 'photo' && <RoomLighting room={source} onClose={() => useUi.getState().setLightingOpen(false)} />}
     {selectedLight && (
       <Panel id="light" title={selectedLight.planned ? 'Planned light' : 'Light'} actions={<IconButton label="Remove from room" danger onClick={removeSelected}><Trash2 size={16} /></IconButton>}>
         {selectedLight.planned ? (
@@ -492,6 +505,7 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
   return (
     <div className="page room">
       <StudioHead view={tab} room={draft.name}>
+        <LightToggle />
         <a className="button" href={href({ view: 'room', room: draft.name })}><Lightbulb size={15} /> Open workbench</a>
       </StudioHead>
 
@@ -514,6 +528,7 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
                   options={[{ value: 'window', label: 'Window' }, { value: 'door', label: 'Door' }]} />
               )}
             </div>
+            {shownCard && <ShowingLabel title={shownCard.title} />}
             <PlanCanvas
               fit={fit}
               units={draft.units}
@@ -539,7 +554,7 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
                     onSelect={() => setSelection({ type: 'furniture', id: item.id })} onChange={updateLocalFurniture} onCommit={commitFurniture} />
                 ))}
                 {draft.lights.map((placement) => (
-                  <PlacedLight key={placement.light_id} placement={placement} units={draft.units} selected={selection?.type === 'light' && selection.id === placement.light_id}
+                  <PlacedLight key={placement.light_id} lights={drawnLights} placement={placement} units={draft.units} selected={selection?.type === 'light' && selection.id === placement.light_id}
                     onSelect={() => setSelection({ type: 'light', id: placement.light_id })} onChange={updateLocalLight} onCommit={saveLight} />
                 ))}
               </g>

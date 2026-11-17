@@ -2,7 +2,14 @@
 // posture and glare mode, the prompt's history, and which overlays are open.
 import { create } from 'zustand';
 import type { Posture } from './lib/rig';
+import type { SceneResult } from './types';
 import { normalizePlacement, normalizeRail, normalizeTabs, type TabPlacement, type TabRail, type TabState } from './lib/tabs';
+
+/**
+ * The card being shown. `id` is the card's stable key (mode, palette, shuffle and time), since a
+ * scene's id changes on every fetch; `roles` are the light roles the photo badges.
+ */
+export interface Showing { room: string; id: string; title: string; results: SceneResult[]; roles?: Record<string, string> }
 
 export interface Entry { id: number; command: string; output: string; ok: boolean; ms: number; at: number }
 
@@ -14,6 +21,8 @@ interface UiState {
   busy: boolean;
   paletteOpen: boolean;
   workflowsOpen: boolean;
+  /** The Studio's lighting panel (the Light button), kept across room views and reloads. */
+  lightingOpen: boolean;
   /** The prompt's text, so help pages and other screens can put a command in it. */
   draft: string;
   tabs: TabState;
@@ -22,6 +31,9 @@ interface UiState {
   tabRail: TabRail;
   /** Sidebar panels that are folded, by panel key. */
   folded: Record<string, true>;
+  /** A suggestion drawn on the plan, 3D view and photo without touching the lights; not persisted. */
+  showing: Showing | null;
+  setShowing: (next: Showing | null) => void;
   setDraft: (draft: string) => void;
   setTabs: (tabs: TabState) => void;
   setTabPlacement: (placement: TabPlacement) => void;
@@ -35,6 +47,7 @@ interface UiState {
   setBusy: (busy: boolean) => void;
   setPalette: (open: boolean) => void;
   setWorkflows: (open: boolean) => void;
+  setLightingOpen: (open: boolean) => void;
 }
 
 export const HISTORY_LIMIT = 100;
@@ -43,6 +56,7 @@ const TABS_KEY = 'myhuey.tabs';
 const PLACEMENT_KEY = 'myhuey.tabPlacement';
 const RAIL_KEY = 'myhuey.tabRail';
 const PANELS_KEY = 'myhuey.panels';
+const LIGHTING_KEY = 'myhuey.lightingOpen';
 
 function stored<T>(key: string, fallback: T): T {
   try { return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback; } catch { return fallback; }
@@ -64,11 +78,14 @@ export const useUi = create<UiState>((set, get) => ({
   busy: false,
   paletteOpen: false,
   workflowsOpen: false,
+  lightingOpen: stored<unknown>(LIGHTING_KEY, false) === true,
   draft: '',
   tabs: normalizeTabs(stored(TABS_KEY, null)),
   tabPlacement: normalizePlacement(stored(PLACEMENT_KEY, null)),
   tabRail: normalizeRail(stored(RAIL_KEY, null)),
   folded: Object.fromEntries((stored<unknown[]>(PANELS_KEY, []) as unknown[]).filter((key): key is string => typeof key === 'string').map((key) => [key, true as const])),
+  showing: null,
+  setShowing: (showing) => set({ showing }),
   setDraft: (draft) => set({ draft }),
   setTabs(tabs) {
     store(TABS_KEY, tabs);
@@ -106,4 +123,8 @@ export const useUi = create<UiState>((set, get) => ({
   setBusy: (busy) => set({ busy }),
   setPalette: (paletteOpen) => set({ paletteOpen }),
   setWorkflows: (workflowsOpen) => set({ workflowsOpen }),
+  setLightingOpen(lightingOpen) {
+    store(LIGHTING_KEY, lightingOpen);
+    set({ lightingOpen });
+  },
 }));

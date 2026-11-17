@@ -6,6 +6,7 @@ import { PICK_SETTLE_MS } from '../lib/studio';
 import { useStore } from '../store';
 import { useUi } from '../uiStore';
 import { StudioHead } from './StudioHead';
+import { LightToggle } from './LightToggle';
 
 vi.mock('../lib/router', async (original) => ({ ...(await original<typeof import('../lib/router')>()), go: vi.fn() }));
 
@@ -272,5 +273,14 @@ describe('StudioHead', () => {
     act(() => useStore.setState({ rooms: rooms.filter((room) => room.name !== 'Den') as never }));
     wait(PICK_SETTLE_MS);
     expect(go).not.toHaveBeenCalled();
+  });
+});
+
+describe('StudioHead extras', () => {
+  it('shows what a room screen passes in, and nothing extra on the home plan', () => {
+    const { rerender } = render(<StudioHead view="plan" room="Office"><LightToggle /></StudioHead>);
+    expect(screen.getByRole('button', { name: 'Light' })).toBeTruthy();
+    rerender(<StudioHead view="home" room={null} />);
+    expect(screen.queryByRole('button', { name: 'Light' })).toBeNull();
   });
 });

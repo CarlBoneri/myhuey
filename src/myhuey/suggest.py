@@ -15,7 +15,7 @@ from typing import Any
 
 from .color import color_temperature_to_rgb, rgb_to_hex
 from .catalog import color_of
-from .curve import baseline, minutes_until_bed
+from .curve import EVENING_MIN, WARM_UP_MIN, baseline, minutes_since_wake, minutes_until_bed
 from .models import LayoutLight, Room, new_id
 from .modes import Mode, get_mode
 from .palettes import Palette, by_id, lab, load, mix
@@ -24,6 +24,7 @@ from .scenes import MAX_GRADIENT_POINTS, WHITE_RANGE, Scene, placed_profile
 
 NIGHT_WINDOW_MIN = 180  # no blue-heavy palettes from this long before bed until wake
 NIGHT_TASK_KELVIN = 2700  # in the night window the task light drops the mode's floor to this
+GLARE_MODES = ("code", "work", "study")  # the desk presets; read and chill get no glare limits
 BIAS_RANGE = (10.0, 20.0)
 BIAS_SHARE = 0.2
 VIEW_COLOR, VIEW_LEVEL = 0.25, 0.5
@@ -39,6 +40,72 @@ def _clamp(value: float, low: float, high: float) -> float:
 def _night(at: datetime, wake: str, bed: str) -> bool:
     """From NIGHT_WINDOW_MIN before bedtime until wake time."""
     return (minutes_until_bed(at.time(), wake, bed) or 0) <= NIGHT_WINDOW_MIN
+
+
+def _span(minutes: int) -> str:
+    hours, rest = divmod(minutes, 60)
+    if not hours:
+        return f"{rest} min"
+    return f"{hours} h {rest}" if rest else f"{hours} h"
+
+
+def time_guide(at: datetime, wake: str, bed: str) -> str:
+    """One line on why the whites look as they do at this time of day; its phases are the curve's."""
+    stamp = at.strftime("%H:%M")
+    left = minutes_until_bed(at.time(), wake, bed)
+    if left is None:
+        return f"Past bedtime ({stamp}): whites stay warm and dim, no blue palettes."
+    if _night(at, wake, bed):
+        return f"{stamp}, {_span(left)} before bed: warm whites, no blue palettes."
+    since = minutes_since_wake(at.time(), wake)
+    if since < WARM_UP_MIN:
+        return f"{stamp}, {_span(since)} after waking: warm and gentle while you wake."
+    if left < EVENING_MIN:
+        return f"{stamp}, {_span(left)} before bed: whites warming for the evening."
+    return f"{stamp}, {_span(left)} before bed: daylight whites."
+
+
+def _percent(value: float) -> str:
+    return f"{value:g}"
+
+
+def apply_caps(
+    room: Room, overrides: dict[str, dict[str, Any]], caps: dict[str, Any], kelvin: int,
+) -> list[str]:
+    """Hold lights under their glare caps, in place; returns one line per light that was held."""
+    lines = []
+    for light in room.lights:
+        cap = caps.get(light.light_id)
+        override = overrides.get(light.light_id)
+        if not cap or not override or override.get("on") is False:
+            continue
+        limit, reason = cap["brightness"], cap["reason"]
+        brightness = min(override.get("brightness", limit), limit)
+        if reason == "reflection":
+            warm = min(override.get("white", kelvin), cap.get("kelvin") or WHITE_RANGE[1])
+            dimmed = brightness != override.get("brightness")
+            recolored = "white" not in override or "colors" in override or warm != override["white"]
+            overrides[light.light_id] = {"white": warm, "brightness": brightness}
+            if dimmed:
+                lines.append(f"{light.label} held at {_percent(limit)}%, warm white: it would reflect in the screen.")
+            elif recolored:
+                lines.append(f"{light.label} made warm white: it would reflect in the screen.")
+        else:
+            if brightness != override.get("brightness"):
+                override["brightness"] = brightness
+                why = "it sits in your view of the screen" if reason == "direct" else "it sits at the edge of your view"
+                lines.append(f"{light.label} held at {_percent(limit)}%: {why}.")
+    return lines
+
+
+def _glare_guide(mode: str, glare: dict[str, Any] | None, lines: list[str]) -> tuple[bool, list[str]]:
+    if glare is None:
+        return False, []
+    if mode not in GLARE_MODES:
+        return False, ["Glare is checked for the desk presets (Code, Work, Study)."]
+    if not glare.get("checked"):
+        return False, ["No desk with a screen in this room, so glare was not checked. Add one in the Room plan."]
+    return True, lines or ["No light would glare at the desk."]
 
 
 def _choose(mode: Mode, at: datetime, wake: str, bed: str, palette_id: str | None, count: int, seed: int) -> list[Palette]:
@@ -87,6 +154,7 @@ def suggest(
     palette_id: str | None = None,
     count: int = 4,
     seed: int = 0,
+    glare: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """`count` suggestions: {"scene": unsaved Scene, "palette": dict, "roles": {id: role}, "white": hex}."""
     chosen_mode = get_mode(mode)
@@ -108,11 +176,18 @@ def suggest(
     for index, palette in enumerate(_choose(chosen_mode, at, wake, bed, palette_id, count, seed)):
         colors = _order(palette.colors, seed + index)
         overrides = _overrides(room, chosen_mode, roles, focus, center, colors, kelvin, task_kelvin, level, white)
+        lines: list[str] = []
+        if glare and chosen_mode.name in GLARE_MODES and glare.get("checked"):
+            lines = apply_caps(room, overrides, glare.get("caps") or {}, kelvin)
+        checked, notes = _glare_guide(chosen_mode.name, glare, lines)
         scene = Scene(
             id=new_id(), name=f"{chosen_mode.title} · {palette.name}", room=room.name, overrides=overrides,
             origin={"mode": chosen_mode.name, "palette_id": palette.id, "palette_name": palette.name, "at": stamp},
         )
-        results.append({"scene": scene, "palette": palette.to_dict(), "roles": roles, "white": white, "kelvin": kelvin})
+        results.append({"scene": scene, "palette": palette.to_dict(), "roles": roles, "white": white, "kelvin": kelvin,
+                        # `held` counts the lights this card holds for glare (its lines say which), so a
+                        # card can say "2 lights held for glare" without reading its own lines.
+                        "guide": {"time": time_guide(at, wake, bed), "glare": notes, "checked": checked, "held": len(lines)}})
     return results
 
 

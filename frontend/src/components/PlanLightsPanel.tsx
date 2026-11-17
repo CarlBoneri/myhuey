@@ -5,7 +5,7 @@ import { attempt, useStore } from '../store';
 import { bounds } from '../lib/geometry';
 import { roomCenter } from '../lib/photo';
 import { MODE_LABELS } from '../lib/suggest';
-import { lightFill } from '../lib/suggest';
+import { thumbFill } from '../lib/suggest';
 import { Panel } from './ui';
 import type { CatalogItem, Room, Setup } from '../types';
 
@@ -92,7 +92,7 @@ function SetupMap({ room, setup }: { room: Room; setup: Setup }) {
           transform={`rotate(${f.rotation} ${f.x} ${f.y})`} />
       ))}
       {setup.lights.map((light, i) => {
-        const { fill, opacity } = lightFill(preview[i] ?? { on: true, color: '#ffd29a', brightness: 60 });
+        const { fill, opacity } = thumbFill(preview[i] ?? { on: true, color: '#ffd29a', brightness: 60 });
         return <circle key={i} cx={light.x} cy={light.y} r={span / 26} fill={fill} opacity={opacity} style={{ stroke: 'var(--plan-line)' }} strokeDasharray={`${span / 120}`} strokeWidth={span / 300}><title>{light.label}</title></circle>;
       })}
     </svg>

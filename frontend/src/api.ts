@@ -1,8 +1,9 @@
 import type { BridgeInfo } from './lib/setupFlow';
 import { MISSING_LAYOUT, layoutHeaders } from './lib/layout';
+import type { GlareLimits } from './lib/glareLimits';
 import type { Preferences } from './types';
 import type { LayoutSummary, LightGroup } from './types';
-import type { CatalogItem, HueSceneSet, HomePlan, Placement, Opening, ImageLayer, Mood, PaletteEntry, Setup, PinnableRole, ProfileTable, Room, Scene, SceneResult, SetupStatus, Suggestion, Swatch, BridgeLight, Furniture, PhotoSpot, Pt } from './types';
+import type { CatalogItem, HueSceneSet, HomePlan, Placement, Opening, ImageLayer, Mood, PaletteEntry, Setup, PinnableRole, ProfileTable, Room, Scene, SceneResult, SetupStatus, Suggestion, RoomLook, Swatch, BridgeLight, Furniture, PhotoSpot, Pt } from './types';
 
 export class ApiError extends Error {
   constructor(message: string, readonly status: number) {
@@ -25,10 +26,15 @@ export function onLayoutGone(handler: (() => void) | null) {
   layoutGone = handler;
 }
 
-async function call<T>(path: string, init: RequestInit & { json?: unknown; activeOnly?: boolean } = {}): Promise<T> {
-  const { json, activeOnly = false, ...rest } = init;
+/**
+ * `layout`, when given, names the layout this one call works in (null = Active) in place of the open
+ * one: Undo goes back in the layout its look was captured in, whichever is open now.
+ */
+async function call<T>(path: string, init: RequestInit & { json?: unknown; activeOnly?: boolean; layout?: string | null } = {}): Promise<T> {
+  const { json, activeOnly = false, layout, ...rest } = init;
+  const pinned = layout !== undefined;
   const request: RequestInit = { ...rest };
-  const headers: Record<string, string> = { ...layoutHeaders(openLayout, activeOnly), ...((rest.headers as Record<string, string>) || {}) };
+  const headers: Record<string, string> = { ...layoutHeaders(pinned ? layout : openLayout, activeOnly), ...((rest.headers as Record<string, string>) || {}) };
   if (json !== undefined) {
     request.body = JSON.stringify(json);
     headers['Content-Type'] = 'application/json';
@@ -47,7 +53,7 @@ async function call<T>(path: string, init: RequestInit & { json?: unknown; activ
     const message = Array.isArray(detail)
       ? detail.map((item: { msg?: string }) => item.msg).join('; ')
       : detail || `Request failed (${response.status})`;
-    if (response.status === 404 && message === MISSING_LAYOUT && openLayout && !activeOnly && !goneReported) {
+    if (response.status === 404 && message === MISSING_LAYOUT && openLayout && !activeOnly && !pinned && !goneReported) {
       goneReported = true;
       layoutGone?.();
     }
@@ -150,8 +156,13 @@ export const api = {
   addSetup: (name: string, index: number) => call<Placement[]>(`${room(name)}/setups/apply`, { method: 'POST', json: { index } }),
   setFloor: (name: string, photo: Pt[], plan: Pt[]) => call<Room>(`${room(name)}/photo/floor`, { method: 'PUT', json: { photo, plan } }),
   clearFloor: (name: string) => call<Room>(`${room(name)}/photo/floor`, { method: 'DELETE' }),
-  suggest: (name: string, body: { mode: string; at?: string; palette_id?: string; count?: number; seed?: number }, activeOnly = false) =>
+  suggest: (name: string, body: { mode: string; at?: string; palette_id?: string; count?: number; seed?: number; glare?: GlareLimits }, activeOnly = false) =>
     call<Suggestion[]>(`${room(name)}/suggest`, { method: 'POST', json: body, activeOnly }),
+  captureLook: (name: string) =>
+    call<{ look: RoomLook; skipped: string[]; at: string }>(`${room(name)}/look`, { method: 'POST' }),
+  /** `layout` is the one the look was captured in (null = Active); left out, the open one. */
+  applyLook: (name: string, look: RoomLook, layout?: string | null) =>
+    call<{ results: { light_id: string; label: string; ok: boolean; error?: string }[]; failed: number }>(`${room(name)}/look/apply`, { method: 'POST', json: { look }, layout }),
   applySuggestion: (name: string, scene: Scene, activeOnly = false) =>
     call<{ scene: string; results: SceneResult[] }>(`${room(name)}/suggest/apply`, { method: 'POST', json: scene, activeOnly }),
   palettes: (params: { tag?: string; q?: string; limit?: number } = {}) => {
