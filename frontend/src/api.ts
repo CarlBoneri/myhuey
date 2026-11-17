@@ -26,10 +26,15 @@ export function onLayoutGone(handler: (() => void) | null) {
   layoutGone = handler;
 }
 
-async function call<T>(path: string, init: RequestInit & { json?: unknown; activeOnly?: boolean } = {}): Promise<T> {
-  const { json, activeOnly = false, ...rest } = init;
+/**
+ * `layout`, when given, names the layout this one call works in (null = Active) in place of the open
+ * one: Undo goes back in the layout its look was captured in, whichever is open now.
+ */
+async function call<T>(path: string, init: RequestInit & { json?: unknown; activeOnly?: boolean; layout?: string | null } = {}): Promise<T> {
+  const { json, activeOnly = false, layout, ...rest } = init;
+  const pinned = layout !== undefined;
   const request: RequestInit = { ...rest };
-  const headers: Record<string, string> = { ...layoutHeaders(openLayout, activeOnly), ...((rest.headers as Record<string, string>) || {}) };
+  const headers: Record<string, string> = { ...layoutHeaders(pinned ? layout : openLayout, activeOnly), ...((rest.headers as Record<string, string>) || {}) };
   if (json !== undefined) {
     request.body = JSON.stringify(json);
     headers['Content-Type'] = 'application/json';
@@ -48,7 +53,7 @@ async function call<T>(path: string, init: RequestInit & { json?: unknown; activ
     const message = Array.isArray(detail)
       ? detail.map((item: { msg?: string }) => item.msg).join('; ')
       : detail || `Request failed (${response.status})`;
-    if (response.status === 404 && message === MISSING_LAYOUT && openLayout && !activeOnly && !goneReported) {
+    if (response.status === 404 && message === MISSING_LAYOUT && openLayout && !activeOnly && !pinned && !goneReported) {
       goneReported = true;
       layoutGone?.();
     }
@@ -155,8 +160,9 @@ export const api = {
     call<Suggestion[]>(`${room(name)}/suggest`, { method: 'POST', json: body, activeOnly }),
   captureLook: (name: string) =>
     call<{ look: RoomLook; skipped: string[]; at: string }>(`${room(name)}/look`, { method: 'POST' }),
-  applyLook: (name: string, look: RoomLook) =>
-    call<{ results: { light_id: string; label: string; ok: boolean; error?: string }[]; failed: number }>(`${room(name)}/look/apply`, { method: 'POST', json: { look } }),
+  /** `layout` is the one the look was captured in (null = Active); left out, the open one. */
+  applyLook: (name: string, look: RoomLook, layout?: string | null) =>
+    call<{ results: { light_id: string; label: string; ok: boolean; error?: string }[]; failed: number }>(`${room(name)}/look/apply`, { method: 'POST', json: { look }, layout }),
   applySuggestion: (name: string, scene: Scene, activeOnly = false) =>
     call<{ scene: string; results: SceneResult[] }>(`${room(name)}/suggest/apply`, { method: 'POST', json: scene, activeOnly }),
   palettes: (params: { tag?: string; q?: string; limit?: number } = {}) => {

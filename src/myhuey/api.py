@@ -24,7 +24,7 @@ from .hue_scenes import gallery
 from .palette import MOODS
 from .palettes import search as search_palettes
 from .room_view import room_json
-from .scenes import Scene
+from .scenes import WHITE_RANGE, Scene
 from .service import HueRoomService
 from .discovery import discover
 from . import setup as setup_flow
@@ -203,15 +203,18 @@ class HueSceneRequest(Body):
     name: str = Field(..., max_length=60)
 
 
+MAX_GLARE_CAPS = 64  # more limits than any room has lights
+
+
 class GlareCap(Body):
-    brightness: float = Field(..., ge=0, le=100)
-    kelvin: StrictInt | None = None
+    brightness: float = Field(..., ge=1, le=100)
+    kelvin: StrictInt | None = Field(None, ge=WHITE_RANGE[0], le=WHITE_RANGE[1])
     reason: Literal["reflection", "direct", "peripheral"]
 
 
 class Glare(Body):
     checked: bool
-    caps: dict[str, GlareCap] = {}
+    caps: dict[str, GlareCap] = Field(default_factory=dict, max_length=MAX_GLARE_CAPS)
 
 
 class SuggestRequest(Body):

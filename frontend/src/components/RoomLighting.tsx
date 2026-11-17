@@ -14,6 +14,7 @@ import type { PaletteEntry, Room, Suggestion } from '../types';
 const MODES = Object.keys(MODE_LABELS);
 const TAGS = ['', 'warm', 'cool', 'muted', 'vivid', 'analogous', 'accent'];
 
+const lightCount = (n: number) => `${n} light${n === 1 ? '' : 's'}`;
 const clock = (ms: number) => { const d = new Date(ms); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
 
 /** Lights a room from where you are: presets that explain themselves, shown before they are tried, tried with Keep and Undo. */
@@ -81,7 +82,7 @@ export function RoomLighting({ room, onClose, photo = false }: {
   useEffect(() => { void load(); }, [load, layoutKey]);
 
   const times = useMemo(quarterHours, []);
-  const sandbox = layout ? layouts.find((entry) => entry.id === layout)?.name ?? layout : null;
+  const layoutName = (id: string | null) => (id ? `sandbox ${layouts.find((entry) => entry.id === id)?.name ?? id}` : 'Active');
   const mine = showing && showing.room === room.name ? showing : null;
 
   async function tryOn(item: Suggestion, title: string) {
@@ -93,15 +94,18 @@ export function RoomLighting({ room, onClose, photo = false }: {
       // Every try captures first, so a light the first capture missed is still put back by Undo.
       // The first capture wins for lights in both: Undo goes back to before the first try, not the second.
       const captured = await api.captureLook(room.name);
-      const current: TryRecord = record
-        ? mergeTry(record, captured, title)
-        : { at: Date.now(), look: captured.look, skipped: captured.skipped, title, layout, capturedAt: captured.at };
+      const current: TryRecord = {
+        ...(record
+          ? mergeTry(record, captured, title)
+          : { at: Date.now(), look: captured.look, skipped: captured.skipped, title, layout, capturedAt: captured.at }),
+        time: at || undefined,
+      };
       saveTry(room.name, current);
       setRecord(current);
       setLive(true);
       const { results } = await api.applySuggestion(room.name, item.scene);
       const failed = results.filter((r) => r.error);
-      if (failed.length) toast(`${failed.length} lights did not change: ${failed[0].error}`, true);
+      if (failed.length) toast(`${lightCount(failed.length)} did not change: ${failed[0].error}`, true);
     } catch (e) {
       setActionError((e as Error).message);
     }
@@ -112,10 +116,11 @@ export function RoomLighting({ room, onClose, photo = false }: {
     if (!record) return;
     try {
       setActionError('');
-      const { results, failed } = await api.applyLook(room.name, record.look);
+      // The layout the look was captured in, not the open one: the room may be drawn differently there.
+      const { results, failed } = await api.applyLook(room.name, record.look, record.layout);
       if (failed > 0) {
         const first = results.find((r) => !r.ok);
-        setActionError(`${failed} lights did not go back: ${first?.error ?? 'no answer'}`);
+        setActionError(`${lightCount(failed)} did not go back: ${first?.error ?? 'no answer'}`);
         return;
       }
       clearTry(room.name);
@@ -145,13 +150,15 @@ export function RoomLighting({ room, onClose, photo = false }: {
         <div className="try-bar" role="status">
           <span>
             {live
-              ? `Trying ${record.title} on ${room.name}`
+              ? `Trying ${record.title}${record.time ? ` for ${record.time}` : ''} on ${room.name}`
               : `You tried a scene on ${room.name} at ${clock(record.at)}`}
-            {record.layout && sandbox && ` (as drawn in sandbox ${sandbox})`}
-            {record.skipped.length > 0 && ` · ${record.skipped.length} planned lights skipped`}
+            {record.layout !== layout
+              ? ` (captured in ${layoutName(record.layout)})`
+              : record.layout && ` (as drawn in ${layoutName(record.layout)})`}
+            {record.skipped.length > 0 && ` · ${lightCount(record.skipped.length)} skipped (planned or not on the bridge)`}
           </span>
           <button type="button" className="button small" onClick={keep}>Keep</button>
-          <button type="button" className="button small subtle" onClick={() => void undo()}>Undo</button>
+          <button type="button" className="button small subtle" title={`Puts back how ${room.name} was at ${record.capturedAt}`} onClick={() => void undo()}>Undo</button>
         </div>
       )}
       {notice && <p className="hint" role="status">{notice}</p>}

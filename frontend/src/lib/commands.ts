@@ -43,6 +43,11 @@ export type Intent =
   | { kind: 'error'; message: string };
 
 export const MODES = ['code', 'work', 'study', 'read', 'relax'];
+/** The name each mode goes by in the prompt: the relax preset is shown, and typed, as chill. */
+const MODE_NAMES: Record<string, string> = { relax: 'chill' };
+const modeName = (mode: string) => MODE_NAMES[mode] ?? mode;
+/** A typed mode to its id: "chill" is the relax preset, as in the CLI and the API. */
+const modeId = (typed: string) => Object.keys(MODE_NAMES).find((id) => MODE_NAMES[id] === typed) ?? typed;
 export const DESK_MODES = ['code', 'work', 'study'];
 
 export const HELP: [string, string][] = [
@@ -157,8 +162,8 @@ export function plan(line: string, snapshot: Snapshot): Intent {
   if (verb === 'suggest') {
     const room = roomNamed(snapshot, text(flags.room) ?? action);
     if (typeof room !== 'string') return room;
-    const mode = (text(flags.mode) ?? 'code').toLowerCase();
-    if (!MODES.includes(mode)) return fail(`--mode is one of ${MODES.join(', ')}`);
+    const mode = modeId((text(flags.mode) ?? 'code').toLowerCase());
+    if (!MODES.includes(mode)) return fail(`--mode is one of ${MODES.map(modeName).join(', ')}`);
     return { kind: 'suggest', room, mode, apply: flags.apply === true };
   }
 
@@ -301,7 +306,7 @@ export function shortcuts(snapshot: Snapshot): Shortcut[] {
       { group: 'Glare', title: `Check glare in ${room}`, detail: 'Which lights reflect in a screen or sit in your view', command: `room glare ${r}` },
       { group: 'Glare', title: `Sit down in ${room}`, detail: 'Back to the seated view', command: `room posture ${r} seated` },
     );
-    for (const mode of MODES) list.push({ group: 'Suggest', title: `Suggest for ${mode} in ${room}`, detail: 'Shows the suggestions without sending them', command: `suggest --room ${r} --mode ${mode}` });
+    for (const mode of MODES.map(modeName)) list.push({ group: 'Suggest', title: `Suggest for ${mode} in ${room}`, detail: 'Shows the suggestions without sending them', command: `suggest --room ${r} --mode ${mode}` });
   }
   for (const group of snapshot.groups) list.push({ group: 'Groups', title: `Apply ${group.name}`, detail: 'Puts the group back to its saved look', command: `groups apply ${quote(group.name)}` });
   for (const item of snapshot.rooms) {

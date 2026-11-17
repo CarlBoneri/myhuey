@@ -29,3 +29,15 @@ describe('home-screen calls skip the open sandbox', () => {
     expect(sent).toEqual([undefined, 'sb', undefined, 'sb', undefined, 'sb', undefined, 'sb']);
   });
 });
+
+describe('Undo goes to the layout the look was captured in', () => {
+  it('sends the given layout instead of the open one, and the open one when none is given', async () => {
+    setOpenLayout('sb');
+    const sent = record();
+    const look = { l1: { on: true } };
+    await api.applyLook('Office', look, 'other');
+    await api.applyLook('Office', look, null);
+    await api.applyLook('Office', look);
+    expect(sent).toEqual(['other', undefined, 'sb']);
+  });
+});

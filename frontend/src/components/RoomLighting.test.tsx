@@ -109,7 +109,7 @@ describe('RoomLighting', () => {
     await mount();
     await tryFirst();
     expect(await screen.findByText(/\(as drawn in sandbox Plan B\)/)).toBeTruthy();
-    expect(screen.getByText(/2 planned lights skipped/)).toBeTruthy();
+    expect(screen.getByText(/2 lights skipped \(planned or not on the bridge\)/)).toBeTruthy();
   });
 
   it('captures again on a second try: the first capture wins, lights new since then keep their own state', async () => {
@@ -128,7 +128,7 @@ describe('RoomLighting', () => {
     expect(saved.skipped).toEqual(['l3']);
     expect(saved.capturedAt).toBe('09:41');
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
-    await waitFor(() => expect(api_.applyLook).toHaveBeenCalledWith('Office', saved.look));
+    await waitFor(() => expect(api_.applyLook).toHaveBeenCalledWith('Office', saved.look, null));
   });
 
   it('refuses a second try when its capture fails, and keeps the first record', async () => {
@@ -148,7 +148,7 @@ describe('RoomLighting', () => {
     await screen.findByText('Trying Code · Dune on Office');
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
     expect(await screen.findByText('Put back how Office was at 09:41.')).toBeTruthy();
-    expect(api_.applyLook).toHaveBeenCalledWith('Office', look);
+    expect(api_.applyLook).toHaveBeenCalledWith('Office', look, null);
     expect(loadTry('Office')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Keep' })).toBeNull();
   });
@@ -199,7 +199,7 @@ describe('RoomLighting', () => {
     await tryFirst();
     await screen.findByText('Trying Code · Dune on Office');
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
-    expect(await screen.findByText('1 lights did not go back: unreachable')).toBeTruthy();
+    expect(await screen.findByText('1 light did not go back: unreachable')).toBeTruthy();
     expect(loadTry('Office')).not.toBeNull();
     expect(screen.getByRole('button', { name: 'Undo' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
@@ -246,5 +246,44 @@ describe('RoomLighting', () => {
     await waitFor(() => expect(api_.suggest.mock.calls.length).toBeGreaterThan(calls));
     expect(await screen.findByRole('button', { name: 'Showing' })).toBeTruthy();
     expect(screen.getAllByRole('button', { name: 'Show' })).toHaveLength(1);
+  });
+
+  it('says "1 light" for one skipped light and one that did not change', async () => {
+    api_.captureLook.mockResolvedValue({ look, skipped: ['a'], at: '09:41' } as never);
+    api_.applySuggestion.mockResolvedValue({ scene: 's', results: [{ light_id: 'l1', error: 'unreachable' }] } as never);
+    const toast = vi.fn();
+    useStore.setState({ toast: toast as never });
+    await mount();
+    await tryFirst();
+    expect(await screen.findByText(/· 1 light skipped \(planned or not on the bridge\)/)).toBeTruthy();
+    await waitFor(() => expect(toast).toHaveBeenCalledWith('1 light did not change: unreachable', true));
+  });
+
+  it('names the time of a try that is not for now, and says what Undo puts back', async () => {
+    await mount();
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: '21:00' } });
+    await waitFor(() => expect(api_.suggest.mock.calls.at(-1)![1].at).toBe('21:00'));
+    await screen.findAllByRole('button', { name: /Try on lights/ });
+    await tryFirst();
+    expect(await screen.findByText('Trying Code · Dune for 21:00 on Office')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Undo' }).getAttribute('title')).toBe('Puts back how Office was at 09:41');
+  });
+
+  it('undoes into the layout the look was captured in, and names it when another is open', async () => {
+    useStore.setState({ layout: 'sb2', layouts: [{ id: 'sb1', name: 'Plan B' }, { id: 'sb2', name: 'Plan C' }] as never });
+    saveTry('Office', { at: Date.now() - 60_000, look, skipped: [], title: 'Code · Dune', layout: 'sb1', capturedAt: '09:41' });
+    await mount();
+    expect(screen.getByText(/\(captured in sandbox Plan B\)/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    await waitFor(() => expect(api_.applyLook).toHaveBeenCalledWith('Office', look, 'sb1'));
+  });
+
+  it('names Active when the look was captured there and a sandbox is open', async () => {
+    useStore.setState({ layout: 'sb2', layouts: [{ id: 'sb2', name: 'Plan C' }] as never });
+    saveTry('Office', { at: Date.now() - 60_000, look, skipped: [], title: 'Code · Dune', layout: null, capturedAt: '09:41' });
+    await mount();
+    expect(screen.getByText(/\(captured in Active\)/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    await waitFor(() => expect(api_.applyLook).toHaveBeenCalledWith('Office', look, null));
   });
 });

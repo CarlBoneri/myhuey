@@ -10,6 +10,8 @@ export interface TryRecord {
   layout: string | null;
   /** The server's "HH:MM" for when the look was captured. */
   capturedAt: string;
+  /** The time of day the latest try was suggested for ("HH:MM"); left out when it was for now. */
+  time?: string;
 }
 
 export const TRY_LIFETIME_MS = 12 * 3600_000;
@@ -25,7 +27,7 @@ export function loadTry(room: string, now: number = Date.now()): TryRecord | nul
     if (!raw) return null;
     const record = JSON.parse(raw) as TryRecord;
     if (!record || typeof record.at !== 'number' || !record.look || now - record.at > TRY_LIFETIME_MS) return null;
-    return record;
+    return { ...record, layout: record.layout ?? null, skipped: record.skipped ?? [] };
   } catch {
     return null;
   }
