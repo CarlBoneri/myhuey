@@ -237,3 +237,87 @@ def test_palette_id_count_is_capped_at_its_colors():
     chosen = next(p for p in load() if len(set(p.colors)) >= 3)
     items = suggest(_office(), "code", at=dt(12), wake="07:00", bed="23:00", palette_id=chosen.id, count=20)
     assert len(items) == len(chosen.colors)
+
+
+# --- glare caps, guide lines, Chill ---
+
+def _cap(brightness, reason, kelvin=None):
+    return {"brightness": brightness, "kelvin": kelvin, "reason": reason}
+
+
+def test_caps_hold_lights_under_their_glare_limit():
+    room = _office()
+    plain = _one(room, "code", dt(12))["scene"].overrides
+    glare = {"checked": True, "caps": {VIEW_LAMP: _cap(15, "direct")}}
+    for item in suggest(room, "code", at=dt(12), wake="07:00", bed="23:00", glare=glare):
+        capped = item["scene"].overrides[VIEW_LAMP]
+        assert capped["brightness"] <= 15
+    first = _one(room, "code", dt(12), glare=glare)["scene"].overrides[VIEW_LAMP]
+    assert len(first.get("colors", [])) == len(plain[VIEW_LAMP].get("colors", []))
+
+
+def test_reflection_cap_makes_one_warm_white():
+    glare = {"checked": True, "caps": {GRADIENT_STRIP: _cap(18, "reflection", 2700)}}
+    override = _one(_office(), "code", dt(12), glare=glare)["scene"].overrides[GRADIENT_STRIP]
+    assert override["white"] <= 2700 and override["brightness"] <= 18
+    assert "colors" not in override and "mode" not in override
+
+
+def test_cap_wins_over_role_and_unknown_ids_are_ignored():
+    glare = {"checked": True, "caps": {DESK_LAMP: _cap(15, "direct"), "nope": _cap(10, "direct")}}
+    item = _one(_office(), "code", dt(12), glare=glare)
+    assert item["scene"].overrides[DESK_LAMP]["brightness"] <= 15
+    assert "nope" not in item["scene"].overrides
+    assert item["guide"]["glare"] == ["t held at 15%: it sits in your view of the screen."]
+
+
+def test_caps_are_ignored_for_read_and_chill():
+    glare = {"checked": True, "caps": {VIEW_LAMP: _cap(5, "direct")}}
+    for mode in ("read", "relax"):
+        plain = _one(_office(), mode, dt(12))["scene"].overrides
+        item = _one(_office(), mode, dt(12), glare=glare)
+        assert item["scene"].overrides == plain
+        assert item["guide"]["checked"] is False
+        assert item["guide"]["glare"] == ["Glare is checked for the desk presets (Code, Work, Study)."]
+
+
+def test_no_desk_says_so():
+    item = _one(_office(), "code", dt(12), glare={"checked": False, "caps": {}})
+    assert item["guide"]["glare"] == ["No desk with a screen in this room, so glare was not checked. Add one in the Room plan."]
+    assert item["guide"]["checked"] is False
+
+
+def test_checked_with_nothing_to_cap():
+    item = _one(_office(), "code", dt(12), glare={"checked": True, "caps": {}})
+    assert item["guide"]["glare"] == ["No light would glare at the desk."] and item["guide"]["checked"] is True
+
+
+def test_glare_lines_name_the_light_and_why():
+    room = _office()
+    caps = {VIEW_LAMP: _cap(15, "direct"), GRADIENT_STRIP: _cap(18, "reflection", 2700), FAR_LAMP: _cap(35, "peripheral")}
+    lines = _one(room, "code", dt(12), glare={"checked": True, "caps": caps})["guide"]["glare"]
+    assert "v held at 15%: it sits in your view of the screen." in lines
+    assert "g held at 18%, warm white: it would reflect in the screen." in lines
+    assert "f held at 35%: it sits at the edge of your view." in lines
+
+
+def test_no_glare_means_no_guide_lines():
+    item = _one(_office(), "code", dt(12))
+    assert item["guide"]["glare"] == [] and item["guide"]["checked"] is False
+
+
+def test_time_guide():
+    from myhuey.suggest import time_guide
+
+    assert time_guide(dt(8, 10), "07:00", "23:00").startswith("Morning, 1 h 10 after waking")
+    assert time_guide(dt(21, 40), "07:00", "23:00") == "21:40, 1 h 20 before bed: warm whites, no blue palettes"
+    assert time_guide(dt(23, 30), "07:00", "23:00").startswith("Past bedtime")
+    midday = time_guide(dt(13, 5), "07:00", "23:00")
+    assert "13:05" in midday and "follow your day" in midday
+
+
+def test_chill_is_relax():
+    from myhuey.modes import get_mode
+
+    assert get_mode("chill") is get_mode("relax") and MODES["relax"].title == "Chill"
+    assert _one(_office(), "chill", dt(20))["scene"].name.startswith("Chill")

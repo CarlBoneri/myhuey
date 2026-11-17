@@ -199,7 +199,7 @@ def catalog() -> dict[str, Any]:
 def suggest(service: HueRoomService, room: str, mode: str, at: str | None = None, layout: str | None = None) -> list[dict[str, Any]]:
     """Suggested scenes for a room, as previews: nothing is saved and no light changes.
 
-    `mode` is "code", "work", "study", "read", or "relax". `at` is the time of day to suggest
+    `mode` is "code", "work", "study", "read", or "relax" ("chill" is the same preset). `at` is the time of day to suggest
     for, as 24-hour "HH:MM" (such as "21:00"); without it, now. Whites get warmer and dimmer
     toward the person's bedtime."""
     if at is not None and not _is_clock(at):

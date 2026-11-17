@@ -102,10 +102,31 @@ def test_cli_suggest_and_save(service, db_path, capsys):
 def test_cli_suggest_lists_without_saving(service, db_path, capsys):
     assert _cli(db_path, "suggest", "--room", "Den", "--mode", "relax", "--count", "2") == 0
     out = capsys.readouterr().out
-    assert out.count("Relax ·") == 2 and service.scenes("Den") == []
+    assert out.count("Chill ·") == 2 and service.scenes("Den") == []
 
 
 def test_cli_palettes(service, db_path, capsys):
     assert _cli(db_path, "palettes", "--tag", "warm", "--limit", "3") == 0
     lines = [line for line in capsys.readouterr().out.splitlines() if line.strip()]
     assert len(lines) == 3 and all("#" in line for line in lines)
+
+
+def test_preview_matches_the_capped_scene(service, fake_bridge):
+    fake_bridge()
+    glare = {"checked": True, "caps": {"1": {"brightness": 15, "kelvin": None, "reason": "direct"}}}
+    for item in service.suggest("Den", "code", at="12:00", glare=glare):
+        shown = next(light for light in item["preview"] if light["light_id"] == "1")
+        assert shown["brightness"] <= 15
+        assert item["scene"]["overrides"]["1"]["brightness"] <= 15
+
+
+def test_api_accepts_glare_and_chill(service, db_path):
+    web = TestClient(create_app(db_path))
+    body = {"mode": "chill", "at": "20:00", "count": 1, "glare": {"checked": False, "caps": {}}}
+    response = web.post("/api/rooms/Den/suggest", json=body)
+    assert response.status_code == 200 and response.json()[0]["guide"]["checked"] is False
+
+
+def test_cli_accepts_chill(service, db_path, capsys):
+    assert _cli(db_path, "suggest", "--room", "Den", "--mode", "chill", "--at", "20:00", "--count", "1") == 0
+    assert "Chill" in capsys.readouterr().out

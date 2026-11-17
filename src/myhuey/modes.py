@@ -23,8 +23,11 @@ class Mode:
 
     @property
     def title(self) -> str:
-        return self.name.capitalize()
+        return _TITLES.get(self.name, self.name.capitalize())
 
+
+_TITLES = {"relax": "Chill"}  # the id stays "relax"; people see "Chill"
+ALIASES = {"chill": "relax"}
 
 MODES: dict[str, Mode] = {
     mode.name: mode
@@ -39,6 +42,7 @@ MODES: dict[str, Mode] = {
 
 
 def get_mode(name: str) -> Mode:
+    name = ALIASES.get(name, name)
     if name not in MODES:
         raise ValueError(f"Mode must be one of {', '.join(MODES)}")
     return MODES[name]

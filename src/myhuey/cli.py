@@ -11,7 +11,7 @@ from typing import Any, Sequence, TextIO
 
 from .errors import HueError
 from .hue import PAIRING_WINDOW, HueBridgeClient
-from .modes import MODES
+from .modes import ALIASES, MODES
 from .layouts import using_layout
 from .service import HueRoomService
 from .setup import run_setup
@@ -151,7 +151,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     suggest = subparsers.add_parser("suggest", help="Suggest scenes for a room from a mode, the time, and its layout")
     suggest.add_argument("--room", required=True, help="Room name")
-    suggest.add_argument("--mode", required=True, choices=list(MODES), help="What you are doing")
+    suggest.add_argument("--mode", required=True, choices=[*MODES, *ALIASES], help="What you are doing")
     suggest.add_argument("--at", help="Time of day HH:MM (default now)")
     suggest.add_argument("--palette", help="Palette ID (see `myhuey palettes`); default: myhuey picks")
     suggest.add_argument("--count", type=int, default=4, choices=range(1, 7), metavar="1-6")

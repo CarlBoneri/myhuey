@@ -1142,7 +1142,7 @@ class HueRoomService:
 
     def suggest(
         self, room_name: str, mode: str, *, at: str | None = None, palette_id: str | None = None,
-        count: int = 4, seed: int = 0,
+        count: int = 4, seed: int = 0, glare: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         """Suggested scenes for a room, as previews: nothing is saved and no light changes.
 
@@ -1152,7 +1152,7 @@ class HueRoomService:
         prefs = self.preferences()
         when = _clock(at)
         items = suggest_scenes(room, mode, at=when, wake=prefs["wake_time"], bed=prefs["bed_time"],
-                               palette_id=palette_id, count=count, seed=seed)
+                               palette_id=palette_id, count=count, seed=seed, glare=glare)
         return [
             {**item, "scene": item["scene"].to_dict(), "preview": evaluate(item["scene"], room)}
             for item in items
