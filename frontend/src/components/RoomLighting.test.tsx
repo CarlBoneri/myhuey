@@ -24,7 +24,7 @@ const room = { name: 'Office', units: 'imperial', outline: [[0, 0], [4, 0], [4, 
 const item = (name: string, id: string) => ({
   scene: { id, name: `Scene ${name}` }, palette: { id: `p${id}`, name, colors: ['#fff'], tags: [], source: 'generated', credit: {} },
   roles: {}, preview: [{ light_id: 'l1', label: 'Lamp', on: true }], white: 'x', kelvin: 3000,
-  guide: { time: 'Mid-morning light, 4000 K.', glare: ['Lamp is held to 10%.'], checked: true },
+  guide: { time: 'Mid-morning light, 4000 K.', glare: ['Lamp held at 10%, warm white: it would reflect in the screen.'], checked: true, held: 1 },
 });
 const look = { l1: { on: true, bri: 50 } };
 const api_ = vi.mocked(api, true);
@@ -58,18 +58,30 @@ describe('RoomLighting', () => {
     expect(api_.suggest.mock.calls.at(-1)![1].glare).toEqual({ checked: false, caps: {} });
   });
 
-  it('shows every card its time and glare lines, and the header the time line once', async () => {
+  it('shows the time line and the glare line once at the top, and each card how many lights it holds', async () => {
     await mount();
-    expect(screen.getAllByText('Lamp is held to 10%.')).toHaveLength(2);
-    expect(screen.getAllByText('Mid-morning light, 4000 K.')).toHaveLength(3);
-    expect(screen.getAllByTestId('lighting-time')).toHaveLength(1);
+    expect(screen.getAllByText('Mid-morning light, 4000 K.')).toHaveLength(1);
+    expect(screen.getByTestId('lighting-glare').textContent).toBe('Held for glare at the desk: Lamp (reflect in the screen: ≤10%, warm white).');
+    expect(screen.getAllByText('1 light held for glare')).toHaveLength(2);
+    expect(screen.queryByText(/Lamp held at 10%/)).toBeNull();
+  });
+
+  it('keeps the server\'s line at the top when glare was not checked', async () => {
+    const line = 'Glare is checked for the desk presets (Code, Work, Study).';
+    await mount();
+    api_.suggest.mockResolvedValue([{ ...item('Dune', 'a'), guide: { time: 'Evening.', glare: [line], checked: false, held: 0 } }] as never);
+    mode('Read');
+    await screen.findByText('Evening.');
+    expect(screen.getByTestId('lighting-glare').textContent).toBe(line);
+    expect(screen.getAllByText(line)).toHaveLength(1);
+    expect(screen.queryByText(/held for glare/)).toBeNull();
   });
 
   it('shows a card without touching the lights, and Show live clears it', async () => {
     await mount();
     const show = screen.getAllByRole('button', { name: 'Show' })[0];
     fireEvent.click(show);
-    expect(useUi.getState().showing).toEqual({ room: 'Office', id: 'a', title: 'Code · Dune', results: item('Dune', 'a').preview });
+    expect(useUi.getState().showing).toEqual({ room: 'Office', id: 'code|pa|0|', title: 'Code · Dune', results: item('Dune', 'a').preview, roles: {} });
     fireEvent.click(screen.getByRole('button', { name: 'Showing' }));
     expect(useUi.getState().showing).toBeNull();
     fireEvent.click(screen.getAllByRole('button', { name: 'Show' })[0]);
@@ -215,16 +227,24 @@ describe('RoomLighting', () => {
     expect(screen.getByText('no bridge')).toBeTruthy();
   });
 
-  it('drops what is showing when the room changes or the panel goes away', async () => {
-    const other = { ...(room as object), name: 'Den' } as never;
+  it('leaves what is showing alone when it unmounts: the screen around it decides when that ends', async () => {
     const view = render(<RoomLighting room={room} />);
     await screen.findAllByText('Mid-morning light, 4000 K.');
     fireEvent.click(screen.getAllByRole('button', { name: 'Show' })[0]);
-    expect(useUi.getState().showing).not.toBeNull();
-    view.rerender(<RoomLighting room={other} />);
-    expect(useUi.getState().showing).toBeNull();
-    useUi.getState().setShowing({ room: 'Den', id: 'a', title: 't', results: [] });
     view.unmount();
-    expect(useUi.getState().showing).toBeNull();
+    expect(useUi.getState().showing?.id).toBe('code|pa|0|');
+  });
+
+  it('marks the shown card by mode, palette, shuffle and time, so a refetch with new scene ids keeps it marked', async () => {
+    const view = render(<RoomLighting room={room} />);
+    await screen.findAllByText('Mid-morning light, 4000 K.');
+    fireEvent.click(screen.getAllByRole('button', { name: 'Show' })[0]);
+    const refetched = [{ ...item('Dune', 'a'), scene: { id: 'new-a', name: 'Scene Dune' } }, { ...item('Fern', 'b'), scene: { id: 'new-b', name: 'Scene Fern' } }];
+    api_.suggest.mockResolvedValue(refetched as never);
+    const calls = api_.suggest.mock.calls.length;
+    view.rerender(<RoomLighting room={{ ...(room as object), lights: [{ light_id: 'l1', x: 1, y: 1 }] } as never} />);
+    await waitFor(() => expect(api_.suggest.mock.calls.length).toBeGreaterThan(calls));
+    expect(await screen.findByRole('button', { name: 'Showing' })).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: 'Show' })).toHaveLength(1);
   });
 });

@@ -255,6 +255,8 @@ export interface SuggestionGuide {
   time: string;
   glare: string[];
   checked: boolean;
+  /** How many lights this card holds for glare. */
+  held?: number;
 }
 
 export interface LookEntry {

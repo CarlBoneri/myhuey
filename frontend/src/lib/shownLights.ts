@@ -1,7 +1,7 @@
 // What the plan and the 3D view draw while a lighting card is being shown: the live lights with
 // the card's results laid over them. Pure; nothing here touches a light.
 import type { BridgeLight, SceneResult } from '../types';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useStore } from '../store';
 import { useUi } from '../uiStore';
 import { kelvinToHex } from './color';
@@ -70,4 +70,19 @@ export function useDrawnLights(room: string): { lights: Record<string, BridgeLig
   const mine = showing && showing.room === room ? showing : null;
   const lights = useMemo(() => shownLights(live, mine?.results ?? null), [live, mine]);
   return { lights, showing: mine };
+}
+
+/** Stops showing a card, if one is being shown for this room. */
+export function dropShowing(room: string): void {
+  const now = useUi.getState().showing;
+  if (now && now.room === room) useUi.getState().setShowing(null);
+}
+
+/**
+ * For the screen that holds the lighting panel: what is shown ends when the room changes, when the
+ * panel closes (`open` false), and when the screen goes. Switching views inside the screen keeps it.
+ */
+export function useShowingFor(room: string, open: boolean): void {
+  useEffect(() => () => dropShowing(room), [room]);
+  useEffect(() => { if (!open) dropShowing(room); }, [open, room]);
 }

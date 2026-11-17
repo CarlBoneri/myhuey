@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { autoRoleLabel, cardTitle, creditText, lightFill, nowHHMM, quarterHours, scheduleWarning } from './suggest';
+import { autoRoleLabel, cardTitle, creditText, fullStrength, glowOpacity, lightFill, nowHHMM, quarterHours, scheduleWarning } from './suggest';
+import { hexToRgb } from './color';
 
 describe('suggest helpers', () => {
   it('titles a card by mode and palette', () => {
@@ -30,7 +31,23 @@ describe('suggest helpers', () => {
 
   it('fills a light from its preview, dark when off', () => {
     expect(lightFill({ on: false, color: null, brightness: 0 })).toEqual({ fill: '#2a2a2a', opacity: 1 });
-    expect(lightFill({ on: true, color: '#ff8800', brightness: 50 })).toEqual({ fill: '#ff8800', opacity: 0.6 });
+    expect(lightFill({ on: true, color: '#ff8800', brightness: 50 })).toEqual({ fill: '#ff8800', opacity: 0.5 });
+  });
+
+  it('fades a dim light toward transparent and never darkens its color', () => {
+    const dim = lightFill({ on: true, color: '#ffb46b', brightness: 5 });
+    const bright = lightFill({ on: true, color: '#ffb46b', brightness: 100 });
+    expect(dim.fill).toBe('#ffb46b');
+    expect(bright).toEqual({ fill: '#ffb46b', opacity: 1 });
+    expect(dim.opacity).toBeLessThan(0.2);
+    expect(dim.opacity).toBeGreaterThan(0);
+    // A dark palette color is drawn at the light's full strength: how bright it is goes in the opacity.
+    const brown = lightFill({ on: true, color: '#3b2a1d', brightness: 10 });
+    expect(Math.max(...hexToRgb(brown.fill))).toBe(255);
+    expect(brown.opacity).toBe(glowOpacity(10));
+    expect(fullStrength('#3b3b3b')).toBe('#ffffff');
+    expect(fullStrength('#000000')).toBe('#ffffff');
+    expect(glowOpacity(1)).toBeLessThan(glowOpacity(30));
   });
 });
 
@@ -116,5 +133,33 @@ describe('the relax preset is shown as Chill', () => {
   it('labels relax as Chill', async () => {
     const { MODE_LABELS } = await import('./suggest');
     expect(MODE_LABELS.relax).toBe('Chill');
+  });
+});
+
+import { glareHeldLine, heldText } from './suggest';
+
+describe('glare lines for the panel', () => {
+  const cap = (brightness: number, reason: 'reflection' | 'direct' | 'peripheral', kelvin: number | null = null) => ({ brightness, kelvin, reason });
+  const labels = { a: 'Desktop left', b: 'gradient_tube', c: 'Spot right', d: 'Desk lamp', e: 'Floor lamp' };
+
+  it('names the held lights once, grouped by why and with the limit the request sent', () => {
+    const limits = { checked: true, caps: { a: cap(18, 'reflection', 2700), d: cap(15, 'direct'), b: cap(18, 'reflection', 2700), c: cap(18, 'reflection', 2700) } };
+    expect(glareHeldLine(limits, labels)).toBe(
+      'Held for glare at the desk: Desktop left, gradient_tube, Spot right (reflect in the screen: ≤18%, warm white); Desk lamp (in view: ≤15%).',
+    );
+    expect(glareHeldLine({ checked: true, caps: { e: cap(35, 'peripheral'), x: cap(15, 'direct') } }, labels))
+      .toBe('Held for glare at the desk: x (in view: ≤15%); Floor lamp (at the edge of view: ≤35%).');
+  });
+
+  it('says nothing when nothing is held or nothing was checked', () => {
+    expect(glareHeldLine({ checked: true, caps: {} }, labels)).toBe('');
+    expect(glareHeldLine({ checked: false, caps: { a: cap(18, 'reflection', 2700) } }, labels)).toBe('');
+  });
+
+  it('gives each card one short line', () => {
+    expect(heldText({ time: '', glare: [], checked: true, held: 5 })).toBe('5 lights held for glare');
+    expect(heldText({ time: '', glare: [], checked: true, held: 1 })).toBe('1 light held for glare');
+    expect(heldText({ time: '', glare: ['No light would glare at the desk.'], checked: true, held: 0 })).toBe('');
+    expect(heldText(undefined)).toBe('');
   });
 });

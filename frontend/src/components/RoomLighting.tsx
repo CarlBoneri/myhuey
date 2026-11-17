@@ -6,7 +6,7 @@ import { useUi } from '../uiStore';
 import { bounds } from '../lib/geometry';
 import { glareLimits, glareModeFor } from '../lib/glareLimits';
 import { roomGlare } from '../lib/roomGlare';
-import { MODE_LABELS, cardTitle, creditText, latestOnly, lightFill, quarterHours } from '../lib/suggest';
+import { MODE_LABELS, cardTitle, creditText, glareHeldLine, heldText, latestOnly, lightFill, quarterHours, showKey } from '../lib/suggest';
 import { clearTry, loadTry, mergeTry, saveTry, type TryRecord } from '../lib/tryLook';
 import { Field, IconButton, Panel, Segmented, TextInput } from './ui';
 import type { PaletteEntry, Room, Suggestion } from '../types';
@@ -17,12 +17,12 @@ const TAGS = ['', 'warm', 'cool', 'muted', 'vivid', 'analogous', 'accent'];
 const clock = (ms: number) => { const d = new Date(ms); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
 
 /** Lights a room from where you are: presets that explain themselves, shown before they are tried, tried with Keep and Undo. */
-export function RoomLighting({ room, onClose, onShow, shownId }: {
+export function RoomLighting({ room, onClose, photo = false }: {
   room: Room;
   /** Left out where the panel always shows (the workbench). */
   onClose?: () => void;
-  /** On the photo: show a card's colors there. */
-  onShow?: (item: Suggestion) => void; shownId?: string;
+  /** On the photo, where a shown card is drawn on the photo. */
+  photo?: boolean;
 }) {
   const { refreshScenes, toast, lights, profiles, layout, layouts } = useStore();
   const posture = useUi((state) => state.posture);
@@ -43,25 +43,21 @@ export function RoomLighting({ room, onClose, onShow, shownId }: {
   /** True once a try was pressed in this visit; a record found on mount reads as an earlier try. */
   const [live, setLive] = useState(false);
 
-  // What is shown belongs to the room it was shown for: leaving the room or the panel drops it.
-  const roomRef = useRef(room.name);
-  roomRef.current = room.name;
-  const dropShowing = (name: string) => {
-    const now = useUi.getState().showing;
-    if (now && now.room === name) useUi.getState().setShowing(null);
-  };
-  useEffect(() => () => dropShowing(roomRef.current), []);
-  useEffect(() => { const name = room.name; return () => dropShowing(name); }, [room.name]);
+  // When what is shown ends (another room, the panel closed, the screen left) is the screen's call:
+  // switching between the plan and 3D remounts this panel and must keep it.
   useEffect(() => { setRecord(loadTry(room.name)); setNotice(''); setActionError(''); setLive(false); }, [room.name]);
 
   // The glare check for the desk presets, judged from the room as it is now; part of the request key.
   // Read and Chill send an unchecked one with no limits, so the server answers which presets are checked.
-  const glare = useMemo(() => {
+  // The report's labels name the held lights in the panel's glare line.
+  const check = useMemo(() => {
     const glareMode = glareModeFor(mode);
-    if (!glareMode) return { checked: false, caps: {} };
+    if (!glareMode) return { limits: { checked: false, caps: {} }, labels: {} };
     const { scene, report } = roomGlare(room, posture, glareMode, lights, profiles);
-    return glareLimits(report, !!scene.eye);
+    const labels: Record<string, string> = Object.fromEntries(report.lights.map((light) => [light.light_id, light.label]));
+    return { limits: glareLimits(report, !!scene.eye), labels };
   }, [room, posture, mode, lights, profiles]);
+  const glare = check.limits;
   const glareKey = JSON.stringify(glare);
 
   const requests = useRef(latestOnly());
@@ -138,7 +134,10 @@ export function RoomLighting({ room, onClose, onShow, shownId }: {
     setNotice('');
   }
 
+  // The time and glare lines are the same for every card, so they are said once, at the top.
   const firstTime = items[0]?.guide?.time;
+  const heldLine = glareHeldLine(glare, check.labels);
+  const glareLine = heldLine || (items[0]?.guide?.glare ?? []).join(' ');
   return (
     <Panel className="suggest-panel" title={<><Sparkles size={16} /> Light this room</>}
       actions={onClose && <IconButton label="Close suggestions" onClick={onClose}><X size={16} /></IconButton>}>
@@ -159,6 +158,7 @@ export function RoomLighting({ room, onClose, onShow, shownId }: {
       <Segmented label="Mode" value={mode} onChange={(next) => { setMode(next); setSeed(0); }}
         options={MODES.map((value) => ({ value, label: MODE_LABELS[value] }))} />
       {firstTime && <p className="hint" data-testid="lighting-time">{firstTime}</p>}
+      {glareLine && <p className="hint" data-testid="lighting-glare">{glareLine}</p>}
       <div className="field-row">
         <Field label="Time">
           <select className="input" value={at} onChange={(e) => setAt(e.target.value)}>
@@ -182,13 +182,11 @@ export function RoomLighting({ room, onClose, onShow, shownId }: {
       <div className="suggest-cards" aria-busy={loading}>
         {items.map((item) => {
           const title = cardTitle(mode, item.palette);
-          const shown = onShow && shownId ? shownId === item.scene.id : mine?.id === item.scene.id;
+          const key = showKey(mode, item.palette.id, seed, at);
+          const shown = mine?.id === key;
           return (
-            <SuggestionCard key={`${item.palette.id}-${seed}`} room={room} item={item} mode={mode} shown={!!shown} photo={!!onShow}
-              onShow={() => {
-                setShowing(mine?.id === item.scene.id ? null : { room: room.name, id: item.scene.id, title, results: item.preview });
-                onShow?.(item);
-              }}
+            <SuggestionCard key={`${item.palette.id}-${seed}`} room={room} item={item} mode={mode} shown={shown} photo={photo}
+              onShow={() => setShowing(shown ? null : { room: room.name, id: key, title, results: item.preview, roles: item.roles })}
               onSaved={async (name) => {
                 try {
                   const saved = await api.createScene({ ...item.scene, name });
@@ -215,6 +213,7 @@ function SuggestionCard({ room, item, mode, onSaved, onTry, onShow, shown, photo
   const [name, setName] = useState(cardTitle(mode, item.palette));
   useEffect(() => setName(cardTitle(mode, item.palette)), [mode, item.palette]);
   const credit = creditText(item.palette);
+  const held = heldText(item.guide);
   return (
     <article className={`suggest-card${shown ? ' shown' : ''}`}>
       <MiniRoom room={room} item={item} />
@@ -224,12 +223,7 @@ function SuggestionCard({ room, item, mode, onSaved, onTry, onShow, shown, photo
           {item.palette.colors.map((color) => <span key={color} style={{ background: color }} title={color} />)}
         </div>
         <p className="hint">{item.kelvin} K white{credit ? ` · ${credit}` : ''}</p>
-        {item.guide && (
-          <>
-            <p className="hint guide-line">{item.guide.time}</p>
-            {item.guide.glare.map((line) => <p key={line} className="hint guide-line">{line}</p>)}
-          </>
-        )}
+        {held && <p className="hint guide-line">{held}</p>}
         {naming ? (
           <form className="button-row" onSubmit={(e) => { e.preventDefault(); if (name.trim()) { onSaved(name.trim()); setNaming(false); } }}>
             <TextInput value={name} onChange={(e) => setName(e.target.value)} aria-label="Scene name" autoFocus />

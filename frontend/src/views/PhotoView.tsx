@@ -12,7 +12,7 @@ import { floorMapper, type Pt2 } from '../lib/homography';
 import { bounds, pointInPolygon } from '../lib/geometry';
 import { roomCenter } from '../lib/photo';
 import { formatLength } from '../lib/units';
-import type { CatalogItem, PhotoSpot, Pt, Room, Suggestion } from '../types';
+import type { CatalogItem, PhotoSpot, Pt, Room } from '../types';
 import { LightControls } from '../components/LightControls';
 import { useUi } from '../uiStore';
 import { RoomLighting } from '../components/RoomLighting';
@@ -34,9 +34,9 @@ export function PhotoView({ room }: { room: Room }) {
   const [selected, setSelected] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const suggesting = useUi((state) => state.lightingOpen);
-  const [shown, setShown] = useState<Suggestion | null>(null);
-  // Closing the panel from the Studio's Light button also drops what it was showing.
-  useEffect(() => { if (!suggesting) { setShown(null); useUi.getState().setShowing(null); } }, [suggesting]);
+  // The card being shown is the Studio's, so it carries over from the plan and 3D; the designer ends it.
+  const showing = useUi((state) => state.showing);
+  const shown = showing && showing.room === room.name ? showing : null;
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   // Mapping the floor: four clicks on the photo, each matched to a corner of the plan outline.
   const [mapping, setMapping] = useState<{ photo: Pt2[]; corners: (number | null)[] } | null>(null);
@@ -173,7 +173,7 @@ export function PhotoView({ room }: { room: Room }) {
     }
   }
   const allSpots = { ...autoSpots, ...spots };
-  const blobs = shown ? glowLayout(shown.preview, allSpots, size) : [];
+  const blobs = shown ? glowLayout(shown.results, allSpots, size) : [];
 
   return (
     <div className="split">
@@ -204,7 +204,7 @@ export function PhotoView({ room }: { room: Room }) {
             // Two layers: a multiply layer darkens the photo to the scene's level, then a screen
             // layer adds light, the way light adds up on a real wall.
             <svg className="photo-glow dim" viewBox={`0 0 ${size.width} ${size.height}`} preserveAspectRatio="none" aria-hidden="true">
-              <rect width={size.width} height={size.height} fill="#000" opacity={darkness(shown.preview)} />
+              <rect width={size.width} height={size.height} fill="#000" opacity={darkness(shown.results)} />
             </svg>
           )}
           {shown && (
@@ -267,7 +267,7 @@ export function PhotoView({ room }: { room: Room }) {
             const bridge = lights[tag.id];
             const profile = placedProfile(placement, bridge, profiles);
             const color = liveColor(bridge);
-            const role = shown?.roles[tag.id];
+            const role = shown?.roles?.[tag.id];
             return (
               <button
                 key={key}
@@ -295,15 +295,14 @@ export function PhotoView({ room }: { room: Room }) {
       <Sidebar name="photo">
         {shown && (
           <div className="button-row">
-            <button type="button" className="button subtle" onClick={() => { setShown(null); useUi.getState().setShowing(null); }}>Show live colors</button>
+            <button type="button" className="button subtle" onClick={() => useUi.getState().setShowing(null)}>Show live colors</button>
           </div>
         )}
         {suggesting && (
-          <RoomLighting room={room} onClose={() => { useUi.getState().setLightingOpen(false); setShown(null); useUi.getState().setShowing(null); }}
-            shownId={shown?.scene.id} onShow={(item) => setShown(item && shown?.scene.id === item.scene.id ? null : item)} />
+          <RoomLighting room={room} photo onClose={() => useUi.getState().setLightingOpen(false)} />
         )}
         {shown && (
-          <p className="hint">Showing “{shown.scene.name}” on the photo. Badges mark lights near your eyes and screen: <strong>view</strong> and <strong>behind</strong> are glare and reflection risks, kept dim and near white.</p>
+          <p className="hint">Showing “{shown.title}” on the photo. Badges mark lights near your eyes and screen: <strong>view</strong> and <strong>behind</strong> are glare and reflection risks, kept dim and near white.</p>
         )}
         {selected && selectedSpot && (
           <Panel title="On the photo" actions={

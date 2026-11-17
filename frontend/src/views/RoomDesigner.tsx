@@ -21,11 +21,11 @@ import { Empty, Field, HueIcon, IconButton, LengthInput, Panel, Segmented, Sideb
 import { PhotoView } from './PhotoView';
 import { OutlineHandles } from '../components/OutlineHandles';
 import { PlanLightsPanel } from '../components/PlanLightsPanel';
-import { autoRoleLabel, placementNeedsRefresh } from '../lib/suggest';
+import { autoRoleLabel, fullStrength, placementNeedsRefresh } from '../lib/suggest';
 import { Studio3D } from '../components/Studio3D';
 import { roomGlare } from '../lib/roomGlare';
 import { useUi } from '../uiStore';
-import { useDrawnLights } from '../lib/shownLights';
+import { useDrawnLights, useShowingFor } from '../lib/shownLights';
 import { ShowingLabel } from '../components/ShowingLabel';
 
 type Selection = { type: 'light'; id: string } | { type: 'furniture'; id: string } | { type: 'opening'; id: string } | null;
@@ -98,7 +98,9 @@ function PlacedLight({ lights, placement, selected, onSelect, onChange, onCommit
   const bridge = lights[placement.light_id];
   const profile = placedProfile(placement, liveLights[placement.light_id], profiles);
   const length = effectiveLength(placement, profile);
-  const colors = liveColors(bridge);
+  // Drawn as the light shows them: each color at full strength, with a dim light's glow fading instead of darkening.
+  const colors = liveColors(bridge)?.map(fullStrength) ?? null;
+  const level = bridge?.brightness != null ? (bridge.brightness / 254) * 100 : undefined;
   const latest = useRef(placement);
   latest.current = placement;
   const rad = (placement.rotation * Math.PI) / 180;
@@ -138,7 +140,7 @@ function PlacedLight({ lights, placement, selected, onSelect, onChange, onCommit
       }}
     >
       <g transform={`rotate(${placement.rotation})`}>
-        <LightSilhouette profile={profile} length={length} colors={colors} on={!!colors} selected={selected} cmPerPx={cmPerPx} mode={bridge?.gradient?.mode} />
+        <LightSilhouette profile={profile} length={length} colors={colors} on={!!colors} selected={selected} cmPerPx={cmPerPx} mode={bridge?.gradient?.mode} level={level} />
         {/* A generous invisible hit area for thin strips. */}
         <rect x={-Math.max(length, profile.length) / 2 - 6 * cmPerPx} y={-10 * cmPerPx} width={Math.max(length, profile.length) + 12 * cmPerPx} height={20 * cmPerPx} fill="transparent" />
       </g>
@@ -220,6 +222,9 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
   // Every hook sits above the early return below: a room that goes away must not change the hook count.
   const { posture, glareMode, lightingOpen } = useUi();
   const { lights: drawnLights, showing: shownCard } = useDrawnLights(draft?.name ?? name);
+  // This screen decides when a shown card ends: another room, the panel closed, or leaving the
+  // designer. Switching between Room plan, 3D and Photo keeps it.
+  useShowingFor(source?.name ?? name, lightingOpen);
 
   const fit = useMemo(() => {
     if (!source) return { x: 0, y: 0, w: 450, h: 300 };

@@ -5,6 +5,12 @@ import type { Posture } from './lib/rig';
 import type { SceneResult } from './types';
 import { normalizePlacement, normalizeRail, normalizeTabs, type TabPlacement, type TabRail, type TabState } from './lib/tabs';
 
+/**
+ * The card being shown. `id` is the card's stable key (mode, palette, shuffle and time), since a
+ * scene's id changes on every fetch; `roles` are the light roles the photo badges.
+ */
+export interface Showing { room: string; id: string; title: string; results: SceneResult[]; roles?: Record<string, string> }
+
 export interface Entry { id: number; command: string; output: string; ok: boolean; ms: number; at: number }
 
 interface UiState {
@@ -25,9 +31,9 @@ interface UiState {
   tabRail: TabRail;
   /** Sidebar panels that are folded, by panel key. */
   folded: Record<string, true>;
-  /** A suggestion drawn on the plan and 3D view without touching the lights; not persisted. */
-  showing: { room: string; id: string; title: string; results: SceneResult[] } | null;
-  setShowing: (next: { room: string; id: string; title: string; results: SceneResult[] } | null) => void;
+  /** A suggestion drawn on the plan, 3D view and photo without touching the lights; not persisted. */
+  showing: Showing | null;
+  setShowing: (next: Showing | null) => void;
   setDraft: (draft: string) => void;
   setTabs: (tabs: TabState) => void;
   setTabPlacement: (placement: TabPlacement) => void;

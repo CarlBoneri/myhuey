@@ -126,7 +126,7 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
       <div className="studio3d-main" ref={column}>
         <section className="pane" ref={viewPane} style={{ flex: collapsed.view ? '0 0 auto' : collapsed.audit ? '1 1 0' : `0 0 calc(${sizes.split * 100}% - 5px)` }}>
           <PaneHead label="the 3D view" collapsed={collapsed.view} onToggle={() => fold('view')} command={`room posture ${quote(room.name)} ${posture}`}>
-            <span className={`pane-badge${over.size || report.hazards ? ' flagged' : ''}`}>{scene.eye ? glareBadge(over.size, watch) : 'No desk to check from'}</span>
+            <span className={`pane-badge${over.size > 0 ? ' flagged' : ''}`}>{scene.eye ? glareBadge(over.size, watch) : 'No desk to check from'}</span>
             <Segmented label="Camera" value={view} onChange={setView} options={[
               { value: 'orbit', label: <><Box size={13} /> Isometric cutaway</>, title: 'Look at the room from outside' },
               { value: 'seat', label: <><ScanEye size={13} /> Desk eye-level</>, title: scene.eye ? 'Sit at the desk and look at the screen' : 'Add a desk or a screen to sit here' },

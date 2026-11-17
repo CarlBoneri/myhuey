@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
-import { fireEvent, render, screen } from '../test/dom';
+import { act, fireEvent, render, screen } from '../test/dom';
 import { waitFor } from '@testing-library/react';
 import { api } from '../api';
 import { useStore } from '../store';
@@ -59,5 +59,32 @@ describe('RoomDesigner', () => {
     expect(screen.getByDisplayValue('Standing desk')).toBeTruthy();
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(vi.mocked(api.suggest).mock.calls.length).toBe(calls);
+  });
+
+  const shown = (room: string) => ({ room, id: 'code|p1|0|', title: 'Code · Dune', results: [] });
+
+  it('keeps the shown card and one lighting panel when switching between the plan and 3D', () => {
+    useUi.setState({ lightingOpen: true, showing: shown('Office') });
+    const view = render(<RoomDesigner name="Office" tab="plan" />);
+    view.rerender(<RoomDesigner name="Office" tab="3d" />);
+    expect(useUi.getState().showing).toEqual(shown('Office'));
+    expect(view.container.querySelectorAll('.suggest-panel')).toHaveLength(1);
+    view.rerender(<RoomDesigner name="Office" tab="plan" />);
+    expect(useUi.getState().showing).toEqual(shown('Office'));
+    expect(view.container.querySelectorAll('.suggest-panel')).toHaveLength(1);
+  });
+
+  it('drops the shown card when the room changes, the panel closes, or the designer goes', () => {
+    useStore.setState({ rooms: [office, { ...(office as object), name: 'Den' } as never] });
+    useUi.setState({ lightingOpen: true, showing: shown('Office') });
+    const view = render(<RoomDesigner name="Office" tab="plan" />);
+    view.rerender(<RoomDesigner name="Den" tab="plan" />);
+    expect(useUi.getState().showing).toBeNull();
+    act(() => useUi.setState({ showing: shown('Den') }));
+    act(() => useUi.getState().setLightingOpen(false));
+    expect(useUi.getState().showing).toBeNull();
+    act(() => useUi.setState({ showing: shown('Den') }));
+    view.unmount();
+    expect(useUi.getState().showing).toBeNull();
   });
 });

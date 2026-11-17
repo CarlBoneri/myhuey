@@ -7,6 +7,7 @@ import { attempt, sendLight, setRoomPower, useStore } from '../store';
 import { href } from '../lib/router';
 import { formatLength } from '../lib/units';
 import { roomSummary } from '../lib/roomControls';
+import { useShowingFor } from '../lib/shownLights';
 import { LightControls } from '../components/LightControls';
 import { RoomDimmer } from '../components/RoomDimmer';
 import { RoomLighting } from '../components/RoomLighting';
@@ -16,6 +17,8 @@ export function RoomWorkbench({ name }: { name: string }) {
   const { rooms, lights, scenes, refreshLights } = useStore();
   const room = rooms.find((item) => item.name === name);
   const [selected, setSelected] = useState<string | null>(null);
+  // The workbench always shows its lighting panel; a card shown there ends with the room or the screen.
+  useShowingFor(name, true);
 
   if (!room) {
     return <div className="page"><Empty title={`No room named “${name}”`}><a className="button" href="#/">Back home</a></Empty></div>;
