@@ -75,3 +75,10 @@ describe('fixGlareState', () => {
     expect(fixGlareState(true, 2)).toEqual({ disabled: true, title: 'Fix glare changes your real lights. Show live first.' });
   });
 });
+
+describe('a shown planned light', () => {
+  it('has a real profile, so nothing that reads it can throw', () => {
+    const out = shownLights({}, [result('p', { label: 'Planned lamp' })]);
+    expect(out.p.profile.label).toBeTruthy();
+  });
+});

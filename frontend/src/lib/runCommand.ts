@@ -64,6 +64,9 @@ async function execute(intent: Intent): Promise<Outcome> {
       };
     }
     case 'glare': {
+      if (intent.fix && ui.showing?.room === intent.room) {
+        return { output: `A scene is being shown for ${intent.room}. Show live first, then fix glare.`, ok: false };
+      }
       const room = store.rooms.find((item) => item.name === intent.room)!;
       const { scene, report } = roomGlare(room, ui.posture, intent.mode, store.lights, store.profiles);
       if (!scene.eye) return { output: `${intent.room}: no desk or screen to check from. Add one in the Studio.`, ok: false };

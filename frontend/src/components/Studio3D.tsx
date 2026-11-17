@@ -217,7 +217,7 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
 
             {selectedLight && selectedPosed && (() => {
               const live = lights[selectedLight.light_id];
-              const profile = placedProfile(selectedLight, live, profiles);
+              const profile = placedProfile(selectedLight, liveLights[selectedLight.light_id], profiles);
               const entry = status.get(selectedLight.light_id);
               const height = heightOf(selectedLight);
               const axes: { label: string; value: string; nudge: (delta: number) => Placement }[] = [

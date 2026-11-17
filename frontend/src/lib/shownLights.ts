@@ -35,7 +35,8 @@ function planned(result: SceneResult): BridgeLight {
   return {
     id: result.light_id, name: result.label, type: 'planned', on: true, reachable: true, brightness: 254, color: null, color_temp: null,
     supports_color: true, supports_color_temp: true, archetype: '', productname: '', modelid: '', gradient_points: 0,
-    profile: undefined as never, gradient: null, effect: null,
+    profile: { kind: 'round', length: 15, width: 15, icon: 'bulb-classic', gradient: false, adjustable: false, linear: false, label: 'Planned light' },
+    gradient: null, effect: null,
   };
 }
 
