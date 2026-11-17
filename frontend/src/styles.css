@@ -1352,3 +1352,7 @@ kbd { padding: 2px 7px; border-radius: 5px; border: 1px solid var(--border-stron
 .try-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--accent); border-radius: var(--radius-m); background: var(--surface-2); font-size: 13px; }
 .try-bar > span { flex: 1; min-width: 160px; }
 .guide-line { margin: 0; }
+
+.showing-label { position: absolute; top: 12px; left: 12px; z-index: 5; display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 12px; border-radius: 999px; background: var(--glass-strong); backdrop-filter: blur(var(--glass-blur)); box-shadow: var(--shadow); font-size: 12px; color: var(--text-2); }
+.showing-label button { font-size: 12px; padding: 3px 10px; border-radius: 999px; }
+.level-over { color: var(--warn-text); font-weight: 600; }

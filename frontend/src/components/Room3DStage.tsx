@@ -6,6 +6,7 @@ import { Compass, Maximize2, Minus, Plus, RotateCw, Square } from 'lucide-react'
 import { useStore } from '../store';
 import { bounds, round1 } from '../lib/geometry';
 import { CM_PER_FOOT, formatLength, snap } from '../lib/units';
+import { useDrawnLights } from '../lib/shownLights';
 import { effectiveLength, liveColors, placedProfile } from '../lib/lights';
 import { displayCorners, isDisplay, statusTone, type GlareReport, type GlareScene } from '../lib/glareMath';
 import { covers, heightOf, moveRig, riders, topOf } from '../lib/rig';
@@ -44,7 +45,8 @@ export function Room3DStage({ room, posed, view, selection, onSelect, onLight, o
   onRoom: (room: Room) => void; onRigCommit: (lightIds: string[]) => void;
   scene: GlareScene; report: GlareReport;
 }) {
-  const { lights: bridge, profiles } = useStore();
+  const { profiles } = useStore();
+  const { lights: bridge } = useDrawnLights(room.name);
   const frame = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState({ width: 800, height: 520 });
   const fitted = useMemo(() => fitOrbit(room, viewport), [room.outline, room.ceiling, viewport]); // eslint-disable-line react-hooks/exhaustive-deps
