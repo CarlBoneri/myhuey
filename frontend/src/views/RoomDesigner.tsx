@@ -15,6 +15,8 @@ import { PlanCanvas, useDrag, usePlan } from '../components/PlanCanvas';
 import { FURNITURE_CATALOG, FurnitureShape, LightSilhouette, OpeningShape } from '../components/Shapes';
 import { LightControls } from '../components/LightControls';
 import { StudioHead } from '../components/StudioHead';
+import { LightToggle } from '../components/LightToggle';
+import { RoomLighting } from '../components/RoomLighting';
 import { Empty, Field, HueIcon, IconButton, LengthInput, Panel, Segmented, Sidebar, Slider, TextInput } from '../components/ui';
 import { PhotoView } from './PhotoView';
 import { OutlineHandles } from '../components/OutlineHandles';
@@ -399,8 +401,10 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
   const selectedFurniture = selection?.type === 'furniture' ? draft.furniture.find((f) => f.id === selection.id) : undefined;
   const selectedOpening = selection?.type === 'opening' ? draft.openings.find((o) => o.id === selection.id) : undefined;
 
+  const lightingOpen = useUi((state) => state.lightingOpen);
   const inspectorPanels = (
     <>
+    {lightingOpen && tab !== 'photo' && <RoomLighting room={draft} onClose={() => useUi.getState().setLightingOpen(false)} />}
     {selectedLight && (
       <Panel id="light" title={selectedLight.planned ? 'Planned light' : 'Light'} actions={<IconButton label="Remove from room" danger onClick={removeSelected}><Trash2 size={16} /></IconButton>}>
         {selectedLight.planned ? (
@@ -495,6 +499,7 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
   return (
     <div className="page room">
       <StudioHead view={tab} room={draft.name}>
+        <LightToggle />
         <a className="button" href={href({ view: 'room', room: draft.name })}><Lightbulb size={15} /> Open workbench</a>
       </StudioHead>
 

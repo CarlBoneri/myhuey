@@ -1,7 +1,7 @@
 // A photo of the real room with plan items tagged on it: lights, furniture, windows and doors.
 // The plan stays the source of truth; the photo is where you tag things and see suggestions.
 import { useEffect, useRef, useState } from 'react';
-import { Crosshair, ImagePlus, MapPin, Plus, ShoppingBag, Sparkles, Trash2, Upload } from 'lucide-react';
+import { Crosshair, ImagePlus, MapPin, Plus, ShoppingBag, Trash2, Upload } from 'lucide-react';
 import { api } from '../api';
 import { href } from '../lib/router';
 import { attempt, useStore } from '../store';
@@ -33,8 +33,10 @@ export function PhotoView({ room }: { room: Room }) {
   const spotsRef = useRef(spots);
   const [selected, setSelected] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [suggesting, setSuggesting] = useState(false);
+  const suggesting = useUi((state) => state.lightingOpen);
   const [shown, setShown] = useState<Suggestion | null>(null);
+  // Closing the panel from the Studio's Light button also drops what it was showing.
+  useEffect(() => { if (!suggesting) { setShown(null); useUi.getState().setShowing(null); } }, [suggesting]);
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   // Mapping the floor: four clicks on the photo, each matched to a corner of the plan outline.
   const [mapping, setMapping] = useState<{ photo: Pt2[]; corners: (number | null)[] } | null>(null);
@@ -291,15 +293,13 @@ export function PhotoView({ room }: { room: Room }) {
         </div>
       </div>
       <Sidebar name="photo">
-        <div className="button-row">
-          <button type="button" className={`button${suggesting ? ' active' : ''}`} aria-pressed={suggesting}
-            onClick={() => { setSuggesting(!suggesting); if (suggesting) setShown(null); }}>
-            <Sparkles size={15} /> Suggest
-          </button>
-          {shown && <button type="button" className="button subtle" onClick={() => { setShown(null); useUi.getState().setShowing(null); }}>Show live colors</button>}
-        </div>
+        {shown && (
+          <div className="button-row">
+            <button type="button" className="button subtle" onClick={() => { setShown(null); useUi.getState().setShowing(null); }}>Show live colors</button>
+          </div>
+        )}
         {suggesting && (
-          <RoomLighting room={room} onClose={() => { setSuggesting(false); setShown(null); useUi.getState().setShowing(null); }}
+          <RoomLighting room={room} onClose={() => { useUi.getState().setLightingOpen(false); setShown(null); useUi.getState().setShowing(null); }}
             shownId={shown?.scene.id} onShow={(item) => setShown(item && shown?.scene.id === item.scene.id ? null : item)} />
         )}
         {shown && (

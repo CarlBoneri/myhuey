@@ -15,6 +15,8 @@ interface UiState {
   busy: boolean;
   paletteOpen: boolean;
   workflowsOpen: boolean;
+  /** The Studio's lighting panel (the Light button), kept across room views and reloads. */
+  lightingOpen: boolean;
   /** The prompt's text, so help pages and other screens can put a command in it. */
   draft: string;
   tabs: TabState;
@@ -39,6 +41,7 @@ interface UiState {
   setBusy: (busy: boolean) => void;
   setPalette: (open: boolean) => void;
   setWorkflows: (open: boolean) => void;
+  setLightingOpen: (open: boolean) => void;
 }
 
 export const HISTORY_LIMIT = 100;
@@ -47,6 +50,7 @@ const TABS_KEY = 'myhuey.tabs';
 const PLACEMENT_KEY = 'myhuey.tabPlacement';
 const RAIL_KEY = 'myhuey.tabRail';
 const PANELS_KEY = 'myhuey.panels';
+const LIGHTING_KEY = 'myhuey.lightingOpen';
 
 function stored<T>(key: string, fallback: T): T {
   try { return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback; } catch { return fallback; }
@@ -68,6 +72,7 @@ export const useUi = create<UiState>((set, get) => ({
   busy: false,
   paletteOpen: false,
   workflowsOpen: false,
+  lightingOpen: stored<unknown>(LIGHTING_KEY, false) === true,
   draft: '',
   tabs: normalizeTabs(stored(TABS_KEY, null)),
   tabPlacement: normalizePlacement(stored(PLACEMENT_KEY, null)),
@@ -112,4 +117,8 @@ export const useUi = create<UiState>((set, get) => ({
   setBusy: (busy) => set({ busy }),
   setPalette: (paletteOpen) => set({ paletteOpen }),
   setWorkflows: (workflowsOpen) => set({ workflowsOpen }),
+  setLightingOpen(lightingOpen) {
+    store(LIGHTING_KEY, lightingOpen);
+    set({ lightingOpen });
+  },
 }));
