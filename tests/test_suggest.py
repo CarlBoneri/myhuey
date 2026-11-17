@@ -279,6 +279,7 @@ def test_caps_are_ignored_for_read_and_chill():
         assert item["scene"].overrides == plain
         assert item["guide"]["checked"] is False
         assert item["guide"]["glare"] == ["Glare is checked for the desk presets (Code, Work, Study)."]
+        assert item["guide"]["held"] == 0
 
 
 def test_no_desk_says_so():
@@ -299,6 +300,17 @@ def test_glare_lines_name_the_light_and_why():
     assert "v held at 15%: it sits in your view of the screen." in lines
     assert "g held at 18%, warm white: it would reflect in the screen." in lines
     assert "f held at 35%: it sits at the edge of your view." in lines
+    assert _one(room, "code", dt(12), glare={"checked": True, "caps": caps})["guide"]["held"] == 3
+
+
+def test_a_reflection_cap_that_only_changes_the_color_says_so():
+    room = _office()
+    plain = _one(room, "code", dt(12))["scene"].overrides[GRADIENT_STRIP]
+    assert "colors" in plain  # the strip is colored without a cap
+    roomy = {"checked": True, "caps": {GRADIENT_STRIP: _cap(plain["brightness"] + 10, "reflection", 2700)}}
+    item = _one(room, "code", dt(12), glare=roomy)
+    assert item["scene"].overrides[GRADIENT_STRIP]["brightness"] == plain["brightness"]
+    assert item["guide"]["glare"] == ["g made warm white: it would reflect in the screen."]
 
 
 def test_no_glare_means_no_guide_lines():
@@ -309,11 +321,33 @@ def test_no_glare_means_no_guide_lines():
 def test_time_guide():
     from myhuey.suggest import time_guide
 
-    assert time_guide(dt(8, 10), "07:00", "23:00").startswith("Morning, 1 h 10 after waking")
+    assert time_guide(dt(7, 30), "07:00", "23:00") == "07:30, 30 min after waking: warm and gentle while you wake."
+    assert time_guide(dt(8, 10), "07:00", "23:00") == "08:10, 14 h 50 before bed: daylight whites."
+    day = time_guide(dt(13, 5), "07:00", "23:00")
+    assert day == "13:05, 9 h 55 before bed: daylight whites." and "midday" not in day
+    assert time_guide(dt(19, 30), "07:00", "23:00") == "19:30, 3 h 30 before bed: whites warming for the evening."
     assert time_guide(dt(21, 40), "07:00", "23:00") == "21:40, 1 h 20 before bed: warm whites, no blue palettes."
     assert time_guide(dt(23, 30), "07:00", "23:00").startswith("Past bedtime")
-    midday = time_guide(dt(13, 5), "07:00", "23:00")
-    assert "13:05" in midday and "follow your day" in midday
+
+
+def test_time_guide_phases_follow_the_curve():
+    from datetime import timedelta
+
+    from myhuey.curve import EVENING_MIN, WARM_UP_MIN, baseline
+    from myhuey.suggest import NIGHT_WINDOW_MIN, time_guide
+
+    wake, bed = datetime(2026, 1, 1, 7, 0), datetime(2026, 1, 1, 23, 0)
+    at = lambda moment: time_guide(moment, "07:00", "23:00")  # noqa: E731
+    # The warm-up ends where the curve reaches its daylight anchor; the evening warming starts where it leaves it.
+    assert baseline((wake + timedelta(minutes=WARM_UP_MIN)).time(), "07:00", "23:00")[0] == 5000
+    assert baseline((bed - timedelta(minutes=EVENING_MIN)).time(), "07:00", "23:00")[0] == 5000
+    assert baseline((bed - timedelta(minutes=EVENING_MIN - 30)).time(), "07:00", "23:00")[0] < 5000
+    assert "while you wake" in at(wake + timedelta(minutes=WARM_UP_MIN - 1))
+    assert "daylight whites" in at(wake + timedelta(minutes=WARM_UP_MIN))
+    assert "daylight whites" in at(bed - timedelta(minutes=EVENING_MIN))
+    assert "warming for the evening" in at(bed - timedelta(minutes=EVENING_MIN - 1))
+    assert "warming for the evening" in at(bed - timedelta(minutes=NIGHT_WINDOW_MIN + 1))
+    assert "no blue palettes" in at(bed - timedelta(minutes=NIGHT_WINDOW_MIN))
 
 
 def test_chill_is_relax():
@@ -328,7 +362,7 @@ def test_a_light_already_under_its_cap_gets_no_line():
     low = _one(room, "code", dt(12))["scene"].overrides[VIEW_LAMP]["brightness"]
     easy = {"checked": True, "caps": {VIEW_LAMP: _cap(low + 20, "direct")}}
     item = _one(room, "code", dt(12), glare=easy)
-    assert item["guide"]["glare"] == ["No light would glare at the desk."]
+    assert item["guide"]["glare"] == ["No light would glare at the desk."] and item["guide"]["held"] == 0
     assert item["scene"].overrides[VIEW_LAMP]["brightness"] == low
     tight = {"checked": True, "caps": {VIEW_LAMP: _cap(low - 5, "direct")}}
     line = _one(room, "code", dt(12), glare=tight)["guide"]["glare"]

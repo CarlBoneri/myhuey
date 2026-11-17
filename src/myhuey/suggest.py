@@ -15,7 +15,7 @@ from typing import Any
 
 from .color import color_temperature_to_rgb, rgb_to_hex
 from .catalog import color_of
-from .curve import baseline, minutes_since_wake, minutes_until_bed
+from .curve import EVENING_MIN, WARM_UP_MIN, baseline, minutes_since_wake, minutes_until_bed
 from .models import LayoutLight, Room, new_id
 from .modes import Mode, get_mode
 from .palettes import Palette, by_id, lab, load, mix
@@ -24,7 +24,6 @@ from .scenes import MAX_GRADIENT_POINTS, WHITE_RANGE, Scene, placed_profile
 
 NIGHT_WINDOW_MIN = 180  # no blue-heavy palettes from this long before bed until wake
 NIGHT_TASK_KELVIN = 2700  # in the night window the task light drops the mode's floor to this
-MORNING_MIN = 180  # "morning" runs this long after waking
 GLARE_MODES = ("code", "work", "study")  # the desk presets; read and chill get no glare limits
 BIAS_RANGE = (10.0, 20.0)
 BIAS_SHARE = 0.2
@@ -51,7 +50,7 @@ def _span(minutes: int) -> str:
 
 
 def time_guide(at: datetime, wake: str, bed: str) -> str:
-    """One line on why the whites look as they do at this time of day."""
+    """One line on why the whites look as they do at this time of day; its phases are the curve's."""
     stamp = at.strftime("%H:%M")
     left = minutes_until_bed(at.time(), wake, bed)
     if left is None:
@@ -59,9 +58,11 @@ def time_guide(at: datetime, wake: str, bed: str) -> str:
     if _night(at, wake, bed):
         return f"{stamp}, {_span(left)} before bed: warm whites, no blue palettes."
     since = minutes_since_wake(at.time(), wake)
-    if since < MORNING_MIN:
-        return f"Morning, {_span(since)} after waking: whites are cool and bright for the day ahead."
-    return f"{stamp}, midday: whites follow your day, cooler and brighter than evening."
+    if since < WARM_UP_MIN:
+        return f"{stamp}, {_span(since)} after waking: warm and gentle while you wake."
+    if left < EVENING_MIN:
+        return f"{stamp}, {_span(left)} before bed: whites warming for the evening."
+    return f"{stamp}, {_span(left)} before bed: daylight whites."
 
 
 def _percent(value: float) -> str:
@@ -82,10 +83,13 @@ def apply_caps(
         brightness = min(override.get("brightness", limit), limit)
         if reason == "reflection":
             warm = min(override.get("white", kelvin), cap.get("kelvin") or WHITE_RANGE[1])
-            changed = "white" not in override or "colors" in override or warm != override["white"] or brightness != override.get("brightness")
+            dimmed = brightness != override.get("brightness")
+            recolored = "white" not in override or "colors" in override or warm != override["white"]
             overrides[light.light_id] = {"white": warm, "brightness": brightness}
-            if changed:
+            if dimmed:
                 lines.append(f"{light.label} held at {_percent(limit)}%, warm white: it would reflect in the screen.")
+            elif recolored:
+                lines.append(f"{light.label} made warm white: it would reflect in the screen.")
         else:
             if brightness != override.get("brightness"):
                 override["brightness"] = brightness
@@ -181,7 +185,9 @@ def suggest(
             origin={"mode": chosen_mode.name, "palette_id": palette.id, "palette_name": palette.name, "at": stamp},
         )
         results.append({"scene": scene, "palette": palette.to_dict(), "roles": roles, "white": white, "kelvin": kelvin,
-                        "guide": {"time": time_guide(at, wake, bed), "glare": notes, "checked": checked}})
+                        # `held` counts the lights this card holds for glare (its lines say which), so a
+                        # card can say "2 lights held for glare" without reading its own lines.
+                        "guide": {"time": time_guide(at, wake, bed), "glare": notes, "checked": checked, "held": len(lines)}})
     return results
 
 
