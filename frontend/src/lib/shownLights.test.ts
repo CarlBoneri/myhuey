@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { BridgeLight, SceneResult } from '../types';
 import type { GlareReport } from './glareMath';
 import { overLimit } from './glareLimits';
-import { glareBadge, shownLevels, shownLights } from './shownLights';
+import { fixGlareState, glareBadge, shownLevels, shownLights } from './shownLights';
 
 const live = (id: string, extra: Partial<BridgeLight> = {}): BridgeLight => ({
   id, name: id, type: 'x', on: true, reachable: true, brightness: 254, color: '#ff0000', color_temp: null,
@@ -39,8 +39,10 @@ describe('shownLights', () => {
     const g = shownLights({ a: live('a') }, [result('a', { gradient: ['#111111', '#222222'] })]).a;
     expect(g.gradient?.points).toEqual(['#111111', '#222222']);
   });
-  it('ignores results for lights the bridge does not list', () => {
-    expect(shownLights({}, [result('z')])).toEqual({});
+  it('draws a planned light (no live entry) from its result, and not at all when nothing is shown', () => {
+    const out = shownLights({}, [result('p', { label: 'Planned lamp', brightness: 40 })]);
+    expect(out.p).toMatchObject({ id: 'p', name: 'Planned lamp', on: true, reachable: true, color: '#00ff00', brightness: 102 });
+    expect(shownLights({}, null)).toEqual({});
   });
 });
 
@@ -62,4 +64,14 @@ describe('glareBadge', () => {
     expect(glareBadge(2, 1)).toBe('2 over the limit · 1 to watch');
   });
   it('says so when there is nothing', () => expect(glareBadge(0, 0)).toBe('No glare risk'));
+});
+
+describe('fixGlareState', () => {
+  it('works as before when nothing is shown', () => {
+    expect(fixGlareState(false, 2).disabled).toBe(false);
+    expect(fixGlareState(false, 0).disabled).toBe(true);
+  });
+  it('is off, and says why, while a card is shown', () => {
+    expect(fixGlareState(true, 2)).toEqual({ disabled: true, title: 'Fix glare changes your real lights. Show live first.' });
+  });
 });

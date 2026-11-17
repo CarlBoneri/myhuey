@@ -46,7 +46,7 @@ export function Room3DStage({ room, posed, view, selection, onSelect, onLight, o
   scene: GlareScene; report: GlareReport;
 }) {
   const { profiles } = useStore();
-  const { lights: bridge } = useDrawnLights(room.name);
+  const { lights: bridge, showing } = useDrawnLights(room.name);
   const frame = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState({ width: 800, height: 520 });
   const fitted = useMemo(() => fitOrbit(room, viewport), [room.outline, room.ceiling, viewport]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -241,12 +241,13 @@ export function Room3DStage({ room, posed, view, selection, onSelect, onLight, o
   });
   const fixtures = posed.lights.map((placement) => {
     const live = bridge[placement.light_id];
-    const profile = placedProfile(placement, live, profiles);
+    const shownPlanned = !!placement.planned && !!showing?.results.some((r) => r.light_id === placement.light_id);
+    const profile = placedProfile(placement, shownPlanned ? undefined : live, profiles);
     const z = heightOf(placement);
     return {
       type: 'light' as const, id: placement.light_id, placement, profile, z, live,
       span: profile.linear ? effectiveLength(placement, profile) : 0,
-      colors: placement.planned ? null : liveColors(live),
+      colors: placement.planned && !shownPlanned ? null : liveColors(live),
       level: live?.brightness != null ? Math.round((live.brightness / 254) * 100) : 50,
       depth: depthOf([placement.x, placement.y, z]),
     };

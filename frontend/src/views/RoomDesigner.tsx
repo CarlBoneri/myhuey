@@ -9,7 +9,7 @@ import { designerRoom, markRename } from '../lib/studio';
 import { area, bounds, pathOf, round1 } from '../lib/geometry';
 import { formatArea, formatLength, snap } from '../lib/units';
 import { effectiveLength, liveColors, placedProfile } from '../lib/lights';
-import type { Furniture, Opening, PinnableRole, Placement, Pt, Room, Units } from '../types';
+import type { BridgeLight, Furniture, Opening, PinnableRole, Placement, Pt, Room, Units } from '../types';
 import { openingAt, reanchorOpenings } from '../lib/plan';
 import { PlanCanvas, useDrag, usePlan } from '../components/PlanCanvas';
 import { FURNITURE_CATALOG, FurnitureShape, LightSilhouette, OpeningShape } from '../components/Shapes';
@@ -87,15 +87,14 @@ function WallHits({ outline, onPick }: { outline: Pt[]; onPick: (point: Pt) => v
   );
 }
 
-function PlacedLight({ room, placement, selected, onSelect, onChange, onCommit, units }: {
-  room: string; placement: Placement; selected: boolean; onSelect: () => void; onChange: (p: Placement) => void; onCommit: (p: Placement) => void; units: Units;
+function PlacedLight({ lights, placement, selected, onSelect, onChange, onCommit, units }: {
+  lights: Record<string, BridgeLight>; placement: Placement; selected: boolean; onSelect: () => void; onChange: (p: Placement) => void; onCommit: (p: Placement) => void; units: Units;
 }) {
   const drag = useDrag();
   const { cmPerPx } = usePlan();
-  const { profiles } = useStore();
-  const { lights } = useDrawnLights(room);
+  const { profiles, lights: liveLights } = useStore();
   const bridge = lights[placement.light_id];
-  const profile = placedProfile(placement, bridge, profiles);
+  const profile = placedProfile(placement, liveLights[placement.light_id], profiles);
   const length = effectiveLength(placement, profile);
   const colors = liveColors(bridge);
   const latest = useRef(placement);
@@ -217,7 +216,7 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
   const [tool, setTool] = useState<Tool>('select');
   const [openingKind, setOpeningKind] = useState<Opening['kind']>('window');
   const { posture, glareMode } = useUi();
-  const { showing: shownCard } = useDrawnLights(name);
+  const { lights: drawnLights, showing: shownCard } = useDrawnLights(draft?.name ?? name);
 
   const fit = useMemo(() => {
     if (!source) return { x: 0, y: 0, w: 450, h: 300 };
@@ -544,7 +543,7 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
                     onSelect={() => setSelection({ type: 'furniture', id: item.id })} onChange={updateLocalFurniture} onCommit={commitFurniture} />
                 ))}
                 {draft.lights.map((placement) => (
-                  <PlacedLight key={placement.light_id} room={draft.name} placement={placement} units={draft.units} selected={selection?.type === 'light' && selection.id === placement.light_id}
+                  <PlacedLight key={placement.light_id} lights={drawnLights} placement={placement} units={draft.units} selected={selection?.type === 'light' && selection.id === placement.light_id}
                     onSelect={() => setSelection({ type: 'light', id: placement.light_id })} onChange={updateLocalLight} onCommit={saveLight} />
                 ))}
               </g>

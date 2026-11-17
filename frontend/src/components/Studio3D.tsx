@@ -10,7 +10,7 @@ import { round1 } from '../lib/geometry';
 import { placedProfile } from '../lib/lights';
 import { EYE_SEATED, EYE_STANDING, heightPreset, type HeightPreset } from '../lib/photo';
 import { STANDING_DESK_CM, heightOf, type Posture } from '../lib/rig';
-import { useDrawnLights, shownLevels, glareBadge } from '../lib/shownLights';
+import { fixGlareState, useDrawnLights, shownLevels, glareBadge } from '../lib/shownLights';
 import { overLimit } from '../lib/glareLimits';
 import { ShowingLabel } from './ShowingLabel';
 import { lightsToDim, type RoomGlare } from '../lib/roomGlare';
@@ -108,6 +108,7 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
   const toDim = lightsToDim(room, report, liveLights);
   const levels = shownLevels(lights);
   const over = new Set(overLimit(report, levels));
+  const fix = fixGlareState(!!showing, toDim.length);
   const watch = Math.max(0, report.hazards - over.size);
   const unit = room.units === 'imperial' ? CM_PER_INCH : 1;
   const unitName = room.units === 'imperial' ? 'in' : 'cm';
@@ -152,8 +153,7 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
         <section className="pane" style={{ flex: collapsed.audit ? '0 0 auto' : '1 1 0' }}>
           <PaneHead label="the glare table" collapsed={collapsed.audit} onToggle={() => fold('audit')} command={`room glare ${quote(room.name)} --mode ${glareMode}`}>
             <Segmented label="Mode" value={glareMode} onChange={setGlareMode} options={DESK_MODES.map((value) => ({ value, label: MODE_LABELS[value] ?? value }))} />
-            <button type="button" className="button small primary" disabled={!toDim.length}
-              title={toDim.length ? 'Lowers only the lit lights that are over their limit. Nothing is brightened.' : 'No lit light is over its limit right now.'}
+            <button type="button" className="button small primary" disabled={fix.disabled} title={fix.title}
               onClick={() => {
                 for (const item of toDim) sendLight(item.id, { brightness: item.level }, { brightness: item.level });
                 toast(`Dimmed ${toDim.length} light${toDim.length === 1 ? '' : 's'}.`, false);
@@ -163,6 +163,7 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
           </PaneHead>
           {!collapsed.audit && (
             <div className="pane-body audit">
+              {showing && <p className="hint audit-note">Showing {showing.title}: this table describes that scene, not your lights.</p>}
               <table>
                 <thead>
                   <tr><th>Light</th><th>Role</th><th>Position (x, y, height · {unitName})</th><th>Off your gaze</th><th>Level</th><th>Glare</th></tr>
@@ -184,8 +185,8 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
                         <td className="mono">{inUnits(placement.x)}, {inUnits(placement.y)}, <strong>{inUnits(heightOf(placement))}</strong></td>
                         <td className="mono">{entry?.angle != null ? `${Math.round(entry.angle)}°` : '—'}</td>
                         <td className="mono">
-                          {placement.planned ? 'Planned' : !live ? '—' : live.on ? `${levels[placement.light_id].brightness}%` : 'Off'}
-                          {!placement.planned && entry?.cap && <span className={over.has(placement.light_id) ? 'level-over' : 'level-limit'}> · limit {entry.cap.brightness}%{over.has(placement.light_id) ? ' · over' : ''}</span>}
+                          {placement.planned && !live ? 'Planned' : !live ? '—' : live.on ? `${levels[placement.light_id].brightness}%` : 'Off'}
+                          {live && entry?.cap && <span className={over.has(placement.light_id) ? 'level-over' : 'level-limit'}> · limit {entry.cap.brightness}%{over.has(placement.light_id) ? ' · over' : ''}</span>}
                         </td>
                         <td>{entry && <span className={`glare-badge tone-${statusTone(entry.status)}`} title={capText(entry.cap) || undefined}>{STATUS_LABELS[entry.status]}</span>}</td>
                       </tr>

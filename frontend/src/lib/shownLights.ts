@@ -8,19 +8,18 @@ import { kelvinToHex } from './color';
 
 type ShowingState = ReturnType<typeof useUi.getState>['showing'];
 
-const toBridge = (percent: number, on: boolean): number => (on ? Math.max(1, Math.round((percent / 100) * 254)) : 1);
+const toBridge = (percent: number): number => Math.max(1, Math.round((percent / 100) * 254));
 
 export function shownLights(live: Record<string, BridgeLight>, showing: SceneResult[] | null): Record<string, BridgeLight> {
   if (!showing) return live;
   const out = { ...live };
   for (const result of showing) {
-    const base = live[result.light_id];
-    if (!base) continue;
+    const base = live[result.light_id] ?? planned(result);
     const color = result.color ?? (result.color_temp ? kelvinToHex(result.color_temp) : base.color);
     out[result.light_id] = {
       ...base,
       on: result.on,
-      brightness: result.on ? toBridge(result.brightness, true) : base.brightness,
+      brightness: result.on ? toBridge(result.brightness) : base.brightness,
       color,
       color_temp: result.color_temp ?? base.color_temp,
       gradient: result.gradient?.length
@@ -29,6 +28,24 @@ export function shownLights(live: Record<string, BridgeLight>, showing: SceneRes
     };
   }
   return out;
+}
+
+/** A planned light has no bridge entry; a shown result gets a neutral record so it can be drawn. */
+function planned(result: SceneResult): BridgeLight {
+  return {
+    id: result.light_id, name: result.label, type: 'planned', on: true, reachable: true, brightness: 254, color: null, color_temp: null,
+    supports_color: true, supports_color_temp: true, archetype: '', productname: '', modelid: '', gradient_points: 0,
+    profile: undefined as never, gradient: null, effect: null,
+  };
+}
+
+/** Fix glare dims real lights, so it waits while a card is being shown. */
+export function fixGlareState(showing: boolean, toDimCount: number): { disabled: boolean; title: string } {
+  if (showing) return { disabled: true, title: 'Fix glare changes your real lights. Show live first.' };
+  return {
+    disabled: !toDimCount,
+    title: toDimCount ? 'Lowers only the lit lights that are over their limit. Nothing is brightened.' : 'No lit light is over its limit right now.',
+  };
 }
 
 /** Each light's level in percent (0-100), the unit glare limits are written in. The bridge's 1-254 is converted here. */
