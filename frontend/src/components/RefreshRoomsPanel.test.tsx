@@ -4,7 +4,8 @@ import { fireEvent, render, screen } from '../test/dom';
 import type { RefreshPlan, RoomRefresh } from '../types';
 import { RefreshRoomsPanel } from './RefreshRoomsPanel';
 
-const row = (over: Partial<RoomRefresh>): RoomRefresh => ({ room: 'Office', hue_room: 'Office', status: 'unchanged', arrive: [], leave: [], link: false, ...over });
+const row = (over: Partial<RoomRefresh>): RoomRefresh => ({ room: 'Office', hue_room: '1', hue_name: 'Office', status: 'unchanged', arrive: [], leave: [], link: false, ...over });
+const move = (light_id: string, label: string, other: string | null, also = false) => ({ light_id, label, other, also });
 const plan = (...rooms: RoomRefresh[]): RefreshPlan => ({ rooms, fingerprint: 'fp' });
 const setup = (p: RefreshPlan, busy = false) => {
   const onApply = vi.fn();
@@ -17,8 +18,8 @@ describe('RefreshRoomsPanel', () => {
   it('lists arrivals and departures, with and without the other room', () => {
     setup(plan(row({
       room: 'Bedroom', status: 'changed',
-      arrive: [{ light_id: '1', label: 'Desk strip', other: 'Office' }, { light_id: '2', label: 'Lamp', other: null }],
-      leave: [{ light_id: '3', label: 'Bulb', other: 'Hall' }, { light_id: '4', label: 'Spot', other: null }],
+      arrive: [move('1', 'Desk strip', 'Office'), move('2', 'Lamp', null)],
+      leave: [move('3', 'Bulb', 'Hall'), move('4', 'Spot', null)],
     })));
     expect(screen.getByText('Bedroom')).toBeTruthy();
     expect(screen.getByLabelText('Desk strip arrives from Office').textContent).toBe('+ Desk strip (from Office)');
@@ -29,8 +30,8 @@ describe('RefreshRoomsPanel', () => {
 
   it('counts the lights of a new room', () => {
     setup(plan(
-      row({ room: 'Den', status: 'new', arrive: [{ light_id: '1', label: 'A', other: null }] }),
-      row({ room: 'Hall', status: 'new', arrive: [{ light_id: '2', label: 'B', other: null }, { light_id: '3', label: 'C', other: null }] }),
+      row({ room: 'Den', hue_name: 'Den', status: 'new', arrive: [move('1', 'A', null)] }),
+      row({ room: 'Hall', hue_name: 'Hall', status: 'new', arrive: [move('2', 'B', null), move('3', 'C', null)] }),
     ));
     expect(screen.getByText('Den: new room, 1 light')).toBeTruthy();
     expect(screen.getByText('Hall: new room, 2 lights')).toBeTruthy();
@@ -79,5 +80,26 @@ describe('RefreshRoomsPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: /Done/ }));
     expect(onCancel).toHaveBeenCalledTimes(1);
     expect(onApply).not.toHaveBeenCalled();
+  });
+
+  it('says a light that arrives from a room left alone stays there too', () => {
+    setup(plan(row({ room: 'Bedroom', status: 'changed', arrive: [move('1', 'Desk strip', 'Garage', true)] })));
+    expect(screen.getByLabelText('Desk strip arrives, and stays in Garage too').textContent).toBe('+ Desk strip (also in Garage)');
+  });
+
+  it('shows the Hue name of a room linked this time under another name', () => {
+    setup(plan(
+      row({ room: 'Family room', hue_name: 'Den', link: true, status: 'changed', arrive: [move('1', 'Lamp', null)] }),
+      row({ room: 'Office', hue_name: 'Den', link: false, status: 'changed', arrive: [move('2', 'Bulb', null)] }),
+      row({ room: 'Office 2', hue_name: 'Office', link: true, status: 'new', arrive: [move('3', 'Spot', null)] }),
+    ));
+    expect(screen.getByText('Family room (Hue: Den)')).toBeTruthy();
+    expect(screen.getByText('Office')).toBeTruthy();
+    expect(screen.getByText('Office 2 (Hue: Office): new room, 1 light')).toBeTruthy();
+  });
+
+  it('disables Done while busy', () => {
+    setup(plan(row({ link: true })), true);
+    expect((screen.getByRole('button', { name: /Done/ }) as HTMLButtonElement).disabled).toBe(true);
   });
 });

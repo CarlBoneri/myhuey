@@ -180,7 +180,8 @@ export interface Room {
   hue_room?: string | null;
 }
 
-export interface RefreshMove { light_id: string; label: string; other: string | null }
+/** `also`: on an arrival, the room it comes from is left alone, so the light stays there too. */
+export interface RefreshMove { light_id: string; label: string; other: string | null; also: boolean }
 export interface RoomRefresh {
   room: string;
   hue_room: string | null;
@@ -188,6 +189,8 @@ export interface RoomRefresh {
   arrive: RefreshMove[];
   leave: RefreshMove[];
   link: boolean;
+  /** The Hue room's name; null when the room is left alone. */
+  hue_name: string | null;
 }
 export interface RefreshPlan { rooms: RoomRefresh[]; fingerprint: string }
 
