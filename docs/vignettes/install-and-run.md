@@ -86,7 +86,9 @@ You can also pair from a terminal:
 .venv/bin/myhuey bridge setup
 ```
 
-MyHuey stores its database, uploads, and pinned bridge certificate under `~/.myhuey`. If you skip
+There's no `.env` file and no database step: the first command creates what it needs. MyHuey
+stores its database, uploads, and pinned bridge certificate under `~/.myhuey`, and the README's
+[What gets created](../../README.md#what-gets-created) lists every file it makes and when. If you skip
 pairing, you can still open the app and draw rooms; importing rooms and controlling Hue lights
 will wait until you connect a bridge.
 

@@ -55,6 +55,37 @@ There's no separate frontend server in normal use: `myhuey serve` runs the API a
 | Run it in the background | `nohup .venv/bin/myhuey serve --port 8000 > ~/.myhuey/serve.log 2>&1 &` |
 | Check it's up | `curl -s localhost:8000/api/health` should answer `{"status":"ok","api":6}` |
 
+### What gets created
+
+Setting MyHuey up touches three places: the folder you cloned, a folder in your home directory, and your bridge. There's no `.env` to fill in, no settings file to edit, and no database to set up. The first command you run creates what it needs.
+
+Building it puts three things in the folder you cloned. All three are git-ignored, and deleting them only means building again.
+
+| Path | What it is |
+| --- | --- |
+| `.venv/` | Python, MyHuey's packages (FastAPI, Uvicorn, Pillow, the MCP library), and the `myhuey` command |
+| `frontend/node_modules/` | The tools that build the web app. Only the build uses them |
+| `static/app/` | The built web app that `myhuey serve` hands to your browser. Rebuild it after you pull changes |
+
+Running it creates `~/.myhuey/`, and everything MyHuey knows about your home lives there.
+
+| Path | When it appears | What it is |
+| --- | --- | --- |
+| `myhuey.db` | The first time you start the server or run a command that reads your setup | One SQLite file with your pairing, preferences, rooms, layouts, scenes, and saved groups. Only your user account can read it, since it holds the bridge key. When an update changes its format, the older copy is kept inside the same file |
+| `certs/` | When you pair | The bridge's certificate and ID. Every connection is checked against them, so MyHuey only ever talks to your bridge |
+| `uploads/` | The first time you add a floor plan, room photo, or scene image | Your images, re-encoded with location data stripped |
+| `serve.log` | Only if you start the server in the background as shown above | The server's log |
+
+`--db PATH` on any command puts the database somewhere else, with its `certs/` and `uploads/` next to it. The assistant server (`myhuey mcp`) uses the same database and creates nothing of its own: the layouts it builds are sandboxes stored in `myhuey.db` like any other.
+
+On the bridge, pairing adds one entry to its list of connected apps, named `myhuey#` plus your computer's name. That entry is the key MyHuey uses. MyHuey never creates rooms, zones, scenes, or groups on the bridge. The scenes and groups you save live in `myhuey.db`, and a light only changes when you ask for it.
+
+In your browser, the app remembers how you left the window: tab order and placement, folded panels, the 3D view's pane sizes, the last room and layout you had open, and your theme, so the first paint isn't a flash of the wrong colors. A scene you're trying on a room keeps its Undo there for 12 hours. All of it stays in that browser, and clearing it only resets the window.
+
+Nothing runs when you aren't using it. MyHuey adds no background service or login item. It serves only on `127.0.0.1`, so other devices can't reach it, and the only call that leaves your network goes to Hue's discovery service while it's looking for a bridge.
+
+To remove it, stop the server and delete the folder you cloned and `~/.myhuey/`. The bridge keeps the `myhuey#…` entry, but its key only ever lived in `myhuey.db`, so nothing can use the entry once that's gone.
+
 ### The window
 
 The app is laid out like a terminal. Tabs along the top open each screen: the 3D view and the workbench for the room you were last in, Home, the floor plan, Scenes, Lights and groups, Settings, and Help. The tabs are yours to arrange: drag one to move it (or Alt-Shift-← → with it focused), close it with its × or a middle click, and bring closed tabs back, or reset them all, from the + at the end. Opening a screen whose tab is closed reopens it. You can move the tabs to a strip above the prompt or to a rail down the left or right side, in Settings, by right-clicking the tab bar, or by typing `tabs bottom`, `tabs left`, `tabs right` or `tabs top`. A rail can be dragged wider or narrower by its inner edge and folded to icons (`tabs collapse`, `tabs expand`, `tabs width 260`). The top bar also shows the bridge's address and whether it is answering, the theme menu, Workflows, and ⌘K.
