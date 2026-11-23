@@ -134,7 +134,7 @@ This is the part the whole app exists for. You pick a mode and a time (now, by d
 Each suggestion card shows a mini map of the room in the suggested colors and the white temperature near the desk. It has Preview on lights and Save as scene. A saved suggestion is just a scene, so you can edit it like any other. The palettes come from a built-in library, including colors pulled from public-domain paintings at The Met. You can shuffle, browse by tag, or let MyHuey pick.
 
 ### Scenes
-![alt text](docs/img/scene_img.png)
+![alt text](docs/img/scene_img1.png)
 A scene paints light onto one room. You draw zones (rectangle, ellipse, or freehand) with a color and brightness, and each light takes the color of whatever it sits under. Gradient lights take colors along their length. Lights outside every zone can turn off, stay as they are, take a base color, or take the nearest zone's color.
 ![alt text](docs/img/Hue%20Scene%20Creation.jpg)
 You can also drop an image on the room. MyHuey pulls a theme from it by mood (colorful, bright, muted, deep, dark), gives every swatch a picker you can drag around the image, and lights take the color beneath them. Any light can be overridden with its own colors, mode, effect, or brightness. You can also recreate any scene from the Hue app's gallery in a room. The color picker works in OKLCH and HCT, with tonal palettes, harmonies, and shades, tints, and tones.
