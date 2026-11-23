@@ -65,9 +65,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     room.add_argument(
         "action",
-        choices=["list", "show", "create", "update", "assign", "remove-light", "delete", "import", "photo", "remove-photo", "on", "off", "dim",
+        choices=["list", "show", "create", "update", "assign", "remove-light", "delete", "import", "refresh", "photo", "remove-photo", "on", "off", "dim",
                  "tags", "tag", "untag", "plan-light", "swap"],
     )
+    room.add_argument("--apply", action="store_true", help="Apply the refresh after showing it (refresh)")
     room.add_argument("--name", help="Room name")
     room.add_argument("--new-name", help="Rename the room (update)")
     room.add_argument("--light-id", help="Hue light ID")
@@ -385,10 +386,36 @@ def handle_prefs(args: argparse.Namespace) -> int:
     return 0
 
 
+def _refresh_line(change: dict) -> str:
+    name = change["room"]
+    if change["status"] == "left_alone":
+        return f"{name}: not on the bridge, left alone"
+    if change["status"] == "new":
+        count = len(change["arrive"])
+        return f"{name}: new room, {count} light{'' if count == 1 else 's'}"
+
+    def part(sign: str, move: dict, word: str) -> str:
+        where = f" ({word} {move['other']})" if move["other"] else ""
+        return f"{sign} {move['label']}{where}"
+
+    parts = [part("+", m, "from") for m in change["arrive"]] + [part("−", m, "to") for m in change["leave"]]
+    return f"{name}: {', '.join(parts)}"
+
+
 def handle_room(args: argparse.Namespace) -> int:
     service = HueRoomService(args.db)
     if args.action == "list":
         print(json.dumps([room.to_dict() for room in service.rooms()], indent=2))
+        return 0
+    if args.action == "refresh":
+        preview = service.refresh_preview()
+        lines = [_refresh_line(change) for change in preview["rooms"] if change["status"] != "unchanged"]
+        if not any(change["status"] in ("new", "changed") for change in preview["rooms"]):
+            lines.append("Rooms already match Hue.")
+        print("\n".join(lines))
+        if args.apply and any(change["status"] in ("new", "changed") or change["link"] for change in preview["rooms"]):
+            service.refresh_rooms(preview["fingerprint"])
+            print("Applied.")
         return 0
     if args.action == "import":
         added = service.import_rooms()

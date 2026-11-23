@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StringConstraints
 
-from .errors import BridgeNotConfigured, GroupNotFound, HueError, LayoutChanged, LayoutNotFound, LinkButtonNotPressed, PairingInProgress, RoomNotFound, SceneNotFound
+from .errors import BridgeNotConfigured, GroupNotFound, HueError, LayoutChanged, LayoutNotFound, LinkButtonNotPressed, PairingInProgress, RefreshChanged, RoomNotFound, SceneNotFound
 from .light_groups import MAX_GROUP_LIGHTS, MAX_GROUP_NAME
 from .layouts import MAX_NAME, using_layout
 from .hue import COLLECTIONS, PAIRING_WINDOW, HueBridgeClient
@@ -36,7 +36,7 @@ APP_DIR = BASE_DIR / "static" / "app"
 CM = Field(None, ge=-10000, le=10000)
 # What the web app expects of this server. Raise it when routes are added, so a page
 # served from a newer build tells a person to restart an older running server.
-API_REVISION = 5
+API_REVISION = 6
 
 _NOT_BUILT = """<!doctype html><meta charset="utf-8"><title>MyHuey</title>
 <body style="font-family:system-ui;background:#0f0e17;color:#e8e6f0;padding:3rem">
@@ -59,6 +59,10 @@ class PairRequest(Body):
 class PairAnyRequest(Body):
     bridge_ips: list[str] = Field(..., min_length=1, max_length=8)
     app_name: str = "myhuey"
+
+
+class RefreshApply(Body):
+    fingerprint: str = Field(..., min_length=1, max_length=64)
 
 
 class RoomCreate(Body):
@@ -280,7 +284,7 @@ class EffectChange(BaseModel):
 def _status_for(exc: Exception) -> int:
     if isinstance(exc, (RoomNotFound, SceneNotFound, LayoutNotFound, GroupNotFound)):
         return 404
-    if isinstance(exc, (LinkButtonNotPressed, PairingInProgress, LayoutChanged)):
+    if isinstance(exc, (LinkButtonNotPressed, PairingInProgress, LayoutChanged, RefreshChanged)):
         return 409
     if isinstance(exc, (BridgeNotConfigured, ValueError)):
         return 400
@@ -389,6 +393,14 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
     @app.post("/api/rooms/import")
     def import_rooms() -> dict[str, Any]:
         return {"added": service.import_rooms()}
+
+    @app.get("/api/rooms/refresh")
+    def refresh_preview() -> dict[str, Any]:
+        return service.refresh_preview()
+
+    @app.post("/api/rooms/refresh")
+    def refresh_rooms(body: RefreshApply) -> dict[str, Any]:
+        return service.refresh_rooms(body.fingerprint)
 
     @app.get("/api/rooms/{room_name}")
     def get_room(room_name: str) -> dict[str, Any]:
