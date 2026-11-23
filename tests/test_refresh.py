@@ -105,3 +105,34 @@ def test_room_keeps_its_hue_link_through_from_dict_and_to_dict():
     assert Room.from_dict({"name": "A", "hue_room": " 4 "}).to_dict()["hue_room"] == "4"
     assert Room.from_dict({"name": "A", "hue_room": "  "}).hue_room is None
     assert Room.from_dict({"name": "A"}).to_dict()["hue_room"] is None
+
+
+def test_linked_rooms_claim_their_groups_before_name_matches():
+    rooms = [room("Office", ["1"]), room("Study", ["2"], hue_room="1")]
+    groups = {"1": group("Office", ["2"]), "5": group("Other", ["1"])}
+    changes = {c.room: c for c in plan_refresh(rooms, groups, LIGHTS)}
+    assert changes["Study"].hue_room == "1" and changes["Study"].status == "unchanged"
+    assert changes["Office"].status == "left_alone"
+    assert [c.room for c in plan_refresh(rooms, groups, LIGHTS)][:2] == ["Office", "Study"]
+
+
+def test_an_arrival_takes_the_stored_label_not_the_bridge_name():
+    rooms = [room("Office", ["2"]), room("Hallway", [])]
+    lights = {"2": {"name": "Bridge name"}}
+    groups = {"1": group("Office", []), "4": group("Hallway", ["2"])}
+    hallway = {c.room: c for c in plan_refresh(rooms, groups, lights)}["Hallway"]
+    assert [m.label for m in hallway.arrive] == ["Light two"]
+
+
+def test_a_planned_light_in_another_room_does_not_supply_the_label():
+    rooms = [room("Office", [], planned=["2"]), room("Hallway", [])]
+    lights = {"2": {"name": "Bridge name"}}
+    groups = {"4": group("Hallway", ["2"])}
+    hallway = {c.room: c for c in plan_refresh(rooms, groups, lights)}["Hallway"]
+    assert [(m.label, m.other) for m in hallway.arrive] == [("Bridge name", None)]
+
+
+def test_a_stored_light_with_no_id_is_skipped():
+    rooms = [{"name": "Office", "outline": OUTLINE, "lights": [{"label": "x"}, {"light_id": "1", "label": "a"}]}]
+    changes = plan_refresh(rooms, {"1": group("Office", ["1"])}, LIGHTS)
+    assert changes[0].status == "unchanged"

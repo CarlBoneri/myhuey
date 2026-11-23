@@ -37,7 +37,7 @@ def _order(light_id: str) -> tuple[int, str]:
 
 
 def _real_ids(room: dict) -> list[str]:
-    return [str(l["light_id"]) for l in room.get("lights") or [] if not l.get("planned")]
+    return [str(l["light_id"]) for l in room.get("lights") or [] if l.get("light_id") and not l.get("planned")]
 
 
 def plan_refresh(rooms: list[dict], groups: dict[str, dict], lights: dict[str, dict]) -> list[RoomChange]:
@@ -51,6 +51,8 @@ def plan_refresh(rooms: list[dict], groups: dict[str, dict], lights: dict[str, d
             if link in room_groups and link not in claimed:
                 matched[index] = link
                 claimed.add(link)
+    for index, room in enumerate(rooms):
+        if room.get("hue_room"):
             continue
         wanted = hue_room_name(room.get("name"))
         for gid in sorted(room_groups, key=_order):
@@ -85,7 +87,7 @@ def plan_refresh(rooms: list[dict], groups: dict[str, dict], lights: dict[str, d
             if i == own:
                 continue
             for light in other.get("lights") or []:
-                if str(light["light_id"]) == lid and not light.get("planned"):
+                if str(light.get("light_id")) == lid and not light.get("planned"):
                     return Move(lid, str(light.get("label") or f"Light {lid}"), str(other.get("name")))
         name = (lights.get(lid) or {}).get("name")
         return Move(lid, str(name) if name else f"Light {lid}", None)
@@ -100,7 +102,11 @@ def plan_refresh(rooms: list[dict], groups: dict[str, dict], lights: dict[str, d
         have = _real_ids(room)
         want = [str(l) for l in room_groups[gid].get("lights") or []]
         arrive = [arrival(l, index) for l in sorted(set(want) - set(have), key=_order)]
-        labels = {str(l["light_id"]): str(l.get("label") or f"Light {l['light_id']}") for l in room.get("lights") or [] if not l.get("planned")}
+        labels = {
+            str(l["light_id"]): str(l.get("label") or f"Light {l['light_id']}")
+            for l in room.get("lights") or []
+            if l.get("light_id") and not l.get("planned")
+        }
         leave = [Move(l, labels[l], holder_of_light.get(l)) for l in sorted(set(have) - set(want), key=_order)]
         status = "changed" if arrive or leave else "unchanged"
         changes.append(RoomChange(name, gid, status, arrive, leave, link=str(room.get("hue_room") or "") != gid))
