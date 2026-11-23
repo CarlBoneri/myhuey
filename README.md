@@ -94,7 +94,7 @@ The ⋮ in a tile's corner is the two-tap path. It opens three eye-comfort sugge
 ### Room workbench
 
 The workbench is for using and tuning one room. There's no shape or furniture editing here on purpose; that lives in the Studio.
-![alt text](docs/img/image-1.png)
+![alt text](docs/img/iroom_workbench.jpg)
 You get All on, All off, the room dimmer, and a card per light. Click a card for that light's brightness, white temperature (2000 to 6500 K), and color. Gradient lights also get a gradient editor (2 to 5 colors, as a blend, mirrored, bands, or scatter) and effects like candle and fire. The right side lists the room's scenes with Apply, and the full suggestions panel stays open below the lights.
 
 ### Studio
