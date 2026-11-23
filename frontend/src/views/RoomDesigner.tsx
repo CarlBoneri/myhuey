@@ -411,6 +411,16 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
     <>
     {/* The saved room, not the draft: a drag would otherwise ask for new suggestions at every step. */}
     {lightingOpen && tab !== 'photo' && <RoomLighting room={source} onClose={() => useUi.getState().setLightingOpen(false)} />}
+    {draft.lights.some((l) => l.metadata?.arrived === true) && (
+      <Panel id="arrived" title="New from Hue">
+        <p className="hint">Drag these into place.</p>
+        <div className="button-row">
+          {draft.lights.filter((l) => l.metadata?.arrived === true).map((l) => (
+            <button key={l.light_id} type="button" className="button" onClick={() => setSelection({ type: 'light', id: l.light_id })}>{l.label}</button>
+          ))}
+        </div>
+      </Panel>
+    )}
     {selectedLight && (
       <Panel id="light" title={selectedLight.planned ? 'Planned light' : 'Light'} actions={<IconButton label="Remove from room" danger onClick={removeSelected}><Trash2 size={16} /></IconButton>}>
         {selectedLight.planned ? (

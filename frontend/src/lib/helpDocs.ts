@@ -29,7 +29,7 @@ export const TOPICS: Topic[] = [
       { p: 'MyHuey runs on your computer and talks to your Hue bridge over your own network. Nothing leaves the house. It is built for long days at a desk: light that is easy on your eyes, set up once and then changed with a tap or a command.' },
       { steps: [
         'Pair the bridge. Settings & CLI has the setup guide: find the bridge, press its link button, done.',
-        'Make a room. On the floor plan, draw the room or import the rooms you already have in the Hue app.',
+        'Make a room. On the floor plan, draw the room, or bring in the rooms you already have in the Hue app with Refresh from Hue.',
         'Design it. Open the room in the Studio and add the desk, the screens, doors and windows, then drag each light to where it really is.',
         'Use it. Home turns rooms on and off and dims them. The workbench tunes one room and suggests scenes for what you are doing.',
       ] },

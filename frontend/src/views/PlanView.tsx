@@ -1,8 +1,8 @@
 // The whole home over a scanned floor plan. Set the plan's scale from a printed dimension,
 // then click inside a room to trace it, or draw rooms by hand with snapping.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Check, Download, Hand, ImagePlus, PenLine, Plus, Ruler, ScanLine, Square, Trash2 } from 'lucide-react';
-import { api } from '../api';
+import { Check, Hand, ImagePlus, PenLine, Plus, RefreshCw, Ruler, ScanLine, Square, Trash2 } from 'lucide-react';
+import { api, ApiError } from '../api';
 import { attempt, useStore } from '../store';
 import { area, bounds, pathOf, rectPoints, round1 } from '../lib/geometry';
 import { calibrate, imageToPlan, lightsOutside, planToImage, snapCorner, snapPoint } from '../lib/plan';
@@ -10,9 +10,10 @@ import { go, href } from '../lib/router';
 import { OutlineHandles } from '../components/OutlineHandles';
 import { scaleToFit, simplifyPolygon, toGray, traceHint, traceRoom, type Gray } from '../lib/trace';
 import { formatArea, formatLength, parseLength } from '../lib/units';
-import type { HomePlan, Pt, Room, Units } from '../types';
+import type { HomePlan, Pt, RefreshPlan, Room, Units } from '../types';
 import { PlanCanvas, usePlan } from '../components/PlanCanvas';
 import { Empty, Field, IconButton, LengthInput, Panel, Segmented, Sidebar, Slider, TextInput } from '../components/ui';
+import { RefreshRoomsPanel } from '../components/RefreshRoomsPanel';
 import { LayoutsPanel } from '../components/LayoutsPanel';
 import { RoomOnPlan } from '../components/RoomOnPlan';
 import { StudioHead } from '../components/StudioHead';
@@ -343,11 +344,31 @@ export function PlanView({ focus }: { focus?: string } = {}) {
     }
   };
 
-  const importRooms = async () => {
-    const result = await attempt(() => api.importRooms());
-    if (result) {
-      toast(result.added.length ? `Imported ${result.added.join(', ')}` : 'No new rooms to import.', false);
+  const [refresh, setRefresh] = useState<RefreshPlan | null>(null);
+  const [refreshBusy, setRefreshBusy] = useState(false);
+
+  const previewRefresh = async () => {
+    const preview = await attempt(() => api.refreshPreview());
+    if (preview) setRefresh(preview);
+  };
+
+  const applyRefresh = async () => {
+    if (!refresh) return;
+    setRefreshBusy(true);
+    try {
+      const applied = await api.refreshApply(refresh.fingerprint);
+      const names = applied.rooms.filter((r) => r.status === 'new' || r.status === 'changed').map((r) => r.room);
+      toast(names.length ? `Refreshed ${names.join(', ')}` : 'Rooms linked to Hue.', false);
       await refreshRooms();
+      setRefresh(null);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Could not refresh from Hue.', true);
+      if (error instanceof ApiError && error.status === 409) {
+        const fresh = await attempt(() => api.refreshPreview());
+        if (fresh) setRefresh(fresh);
+      }
+    } finally {
+      setRefreshBusy(false);
     }
   };
 
@@ -406,7 +427,8 @@ export function PlanView({ focus }: { focus?: string } = {}) {
 
         <Sidebar name="floorplan">
           <LayoutsPanel />
-          {!pending && !scaleLine && !(tool === 'select' && selectedRoom) && (
+          {refresh && <RefreshRoomsPanel plan={refresh} busy={refreshBusy} onCancel={() => setRefresh(null)} onApply={applyRefresh} />}
+          {!refresh && !pending && !scaleLine && !(tool === 'select' && selectedRoom) && (
             <Panel title="Add a room">
               <Field label="Name"><TextInput value={roomName} onChange={(e) => setRoomName(e.target.value)} placeholder="Living room" /></Field>
               <div className="field-row">
@@ -415,7 +437,7 @@ export function PlanView({ focus }: { focus?: string } = {}) {
               </div>
               <div className="button-row">
                 <button type="button" className="button primary" onClick={addRoomBySize}><Plus size={16} /> Add room</button>
-                {setup?.configured && <button type="button" className="button" onClick={importRooms}><Download size={16} /> Import from Hue</button>}
+                {setup?.configured && <button type="button" className="button" onClick={previewRefresh}><RefreshCw size={16} /> Refresh from Hue</button>}
               </div>
               <p className="hint">Or trace and draw rooms over a plan image with the tools on the left.</p>
             </Panel>

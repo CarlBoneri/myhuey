@@ -176,7 +176,20 @@ export interface Room {
   photo: RoomPhoto | null;
   ceiling: number;
   openings: Opening[];
+  /** The Hue room this room follows, once refresh has linked them. */
+  hue_room?: string | null;
 }
+
+export interface RefreshMove { light_id: string; label: string; other: string | null }
+export interface RoomRefresh {
+  room: string;
+  hue_room: string | null;
+  status: 'new' | 'changed' | 'unchanged' | 'left_alone';
+  arrive: RefreshMove[];
+  leave: RefreshMove[];
+  link: boolean;
+}
+export interface RefreshPlan { rooms: RoomRefresh[]; fingerprint: string }
 
 export interface Swatch {
   color: string;

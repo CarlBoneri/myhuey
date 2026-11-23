@@ -87,4 +87,19 @@ describe('RoomDesigner', () => {
     view.unmount();
     expect(useUi.getState().showing).toBeNull();
   });
+  it('lists lights new from Hue, and pressing one selects it', () => {
+    const arrived = { light_id: 'l9', label: 'Desk strip', x: 10, y: 10, rotation: 0, length: null, product: {}, metadata: { arrived: true } };
+    useStore.setState({ rooms: [{ ...(office as object), lights: [arrived] } as never] });
+    render(<RoomDesigner name="Office" tab="plan" />);
+    expect(screen.getByText('New from Hue')).toBeTruthy();
+    expect(screen.getByText('Drag these into place.')).toBeTruthy();
+    expect(screen.queryByText('Desk strip is not on the bridge right now.')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Desk strip' }));
+    expect(screen.getByText('Desk strip is not on the bridge right now.')).toBeTruthy();
+  });
+
+  it('shows no New from Hue panel when no light arrived', () => {
+    render(<RoomDesigner name="Office" tab="plan" />);
+    expect(screen.queryByText('New from Hue')).toBeNull();
+  });
 });
