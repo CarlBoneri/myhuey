@@ -21,7 +21,7 @@ vi.mock('../lib/roomGlare', () => ({
 }));
 vi.mock('../api', async (original) => ({
   ...(await original<typeof import('../api')>()),
-  api: { suggest: vi.fn(async () => []), palettes: vi.fn(async () => []), catalog: vi.fn(async () => []), updateRoom: vi.fn(() => new Promise(() => {})) },
+  api: { suggest: vi.fn(async () => []), palettes: vi.fn(async () => []), catalog: vi.fn(async () => []), updateRoom: vi.fn(() => new Promise(() => {})), placeLight: vi.fn(async () => ({})) },
 }));
 
 const office = {
@@ -101,5 +101,21 @@ describe('RoomDesigner', () => {
   it('shows no New from Hue panel when no light arrived', () => {
     render(<RoomDesigner name="Office" tab="plan" />);
     expect(screen.queryByText('New from Hue')).toBeNull();
+  });
+  it('drops a light from New from Hue once it is moved, and keeps it when it only turns', async () => {
+    const arrived = { light_id: 'l9', label: 'Desk strip', x: 10, y: 10, rotation: 0, length: null, product: {}, metadata: { arrived: true } };
+    const withLight = { ...(office as object), lights: [arrived] } as never;
+    // Like the real store: replaceRoom puts the saved room back in the list.
+    useStore.setState({
+      rooms: [withLight],
+      replaceRoom: ((name: string, next: never) => useStore.setState((st) => ({ rooms: st.rooms.map((r) => (r.name === name ? next : r)) }))) as never,
+    });
+    render(<RoomDesigner name="Office" tab="plan" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Desk strip' }));
+    act(() => { window.dispatchEvent(new KeyboardEvent('keydown', { key: 'r' })); });
+    await waitFor(() => expect(api.placeLight).toHaveBeenCalledTimes(1));
+    expect(screen.getByText('New from Hue')).toBeTruthy();
+    act(() => { window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' })); });
+    await waitFor(() => expect(screen.queryByText('New from Hue')).toBeNull());
   });
 });

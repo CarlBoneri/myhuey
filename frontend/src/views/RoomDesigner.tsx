@@ -260,7 +260,13 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
       light_id: placement.light_id, x: placement.x, y: placement.y, rotation: placement.rotation, length: placement.length, label: placement.label,
       elevation: placement.elevation === null ? 'auto' : placement.elevation, role: placement.role,
     }));
-    if (ok) replaceRoom(current.name, { ...current, lights: current.lights.map((l) => (l.light_id === placement.light_id ? placement : l)) });
+    // The server clears the arrived mark when a light's position changes; mirror that here.
+    let stored = placement;
+    if (saved && placement.metadata?.arrived === true && (saved.x !== placement.x || saved.y !== placement.y)) {
+      const { arrived: _arrived, ...metadata } = placement.metadata;
+      stored = { ...placement, metadata };
+    }
+    if (ok) replaceRoom(current.name, { ...current, lights: current.lights.map((l) => (l.light_id === placement.light_id ? stored : l)) });
     // The worked-out height and role depend on the whole room, so read them back.
     // Only a height or role change needs that; moves and nudges don't.
     if (ok && placementNeedsRefresh(saved, placement)) await refreshRooms();
