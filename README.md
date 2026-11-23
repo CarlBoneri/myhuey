@@ -86,7 +86,7 @@ Side panels fold like an editor's tool windows. Click a panel's title, or the tr
 ### Home
 
 Home is the everyday screen, and it always controls your active home, even while you're trying ideas in a sandbox.
-![alt text](docs/img/HueHome.jpg)
+![alt text](docs/img/huehome.jpg)
 Down the left, Quick settings gives each room a row with how many lights are on, All on, All off, and a brightness slider that moves every lit light in the room together. Next to that is a square tile per room. Each tile shows whether the room is on, how bright it is, and up to five chips of the colors its lights are showing right now. A lit tile glows in its main color.
 
 The ⋮ in a tile's corner is the two-tap path. It opens three eye-comfort suggestions for right now, with a mode picker (Code, Work, Study, Read, Relax) that your browser remembers, plus the room's saved scenes. Tap one and it goes to the lights. Clicking anywhere else on the tile opens that room's workbench.
@@ -94,7 +94,7 @@ The ⋮ in a tile's corner is the two-tap path. It opens three eye-comfort sugge
 ### Room workbench
 
 The workbench is for using and tuning one room. There's no shape or furniture editing here on purpose; that lives in the Studio.
-![alt text](docs/img/iroom_workbench.jpg)
+![alt text](docs/img/room_workbench.png)
 You get All on, All off, the room dimmer, and a card per light. Click a card for that light's brightness, white temperature (2000 to 6500 K), and color. Gradient lights also get a gradient editor (2 to 5 colors, as a blend, mirrored, bands, or scatter) and effects like candle and fire. The right side lists the room's scenes with Apply, and the full suggestions panel stays open below the lights.
 
 ### Studio
