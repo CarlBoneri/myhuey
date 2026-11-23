@@ -107,7 +107,7 @@ Upload a floor plan image (JPEG, PNG, or WebP) and set its scale by dragging a l
 **Layouts and sandboxes.** A layout is a whole home: rooms, scenes, and plan. One is Active and runs the app, and the rest are sandboxes. You can duplicate, rename, delete, or start one fresh. A banner shows while a sandbox is open, with Make active and Back to Active. Sandboxes can still preview on the real lights, which is the point of trying things out.
 
 **Room designer.** Each room opens to scale in feet and inches or meters. Here you edit:
-![alt text](<Living Room Floor Plan.jpg>)
+![alt text](docs/img/Living%20Room%20Floor%20Plan.jpg)
 - the outline, with labeled edge lengths
 - doors and windows, which count as daylight for glare checks
 - furniture at real sizes, including monitors
