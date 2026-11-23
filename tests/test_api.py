@@ -256,3 +256,14 @@ def test_refresh_routes_preview_then_apply_and_409_on_a_stale_fingerprint(web, d
     assert stale.status_code == 409
     assert "Look again" in stale.json()["detail"]
     assert web.post("/api/rooms/refresh", json={"fingerprint": ""}).status_code == 422
+
+
+def test_the_app_expects_the_api_revision_the_server_reports():
+    import re
+    from pathlib import Path
+
+    from myhuey.api import API_REVISION
+
+    source = (Path(__file__).resolve().parents[1] / "frontend" / "src" / "api.ts").read_text()
+    match = re.search(r"export const API_VERSION = (\d+);", source)
+    assert match and int(match.group(1)) == API_REVISION

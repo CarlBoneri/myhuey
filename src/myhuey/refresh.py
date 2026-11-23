@@ -7,7 +7,7 @@ import json
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
-from .geometry import as_points, bounds
+from .geometry import as_points, bounds, point_in_polygon
 
 
 def hue_room_name(raw: object) -> str:
@@ -19,6 +19,8 @@ class Move:
     light_id: str
     label: str
     other: str | None = None
+    # On an arrival: the room it comes from is left alone, so the light stays there too.
+    also: bool = False
 
 
 @dataclass
@@ -29,6 +31,7 @@ class RoomChange:
     arrive: list[Move] = field(default_factory=list)
     leave: list[Move] = field(default_factory=list)
     link: bool = False
+    hue_name: str | None = None  # the Hue room's cleaned name; None when left alone
 
 
 def _order(light_id: str) -> tuple[int, str]:
@@ -60,6 +63,21 @@ def plan_refresh(rooms: list[dict], groups: dict[str, dict], lights: dict[str, d
                 matched[index] = gid
                 claimed.add(gid)
                 break
+    # A room renamed before links existed: match it to the Hue room holding most of its lights.
+    for index, room in enumerate(rooms):
+        if index in matched or room.get("hue_room"):
+            continue
+        mine = set(_real_ids(room))
+        shared = {
+            gid: len(mine & {str(l) for l in g.get("lights") or []})
+            for gid, g in room_groups.items()
+            if gid not in claimed
+        }
+        best = max(shared.values(), default=0)
+        winners = [gid for gid, n in shared.items() if n == best]
+        if best and len(winners) == 1:
+            matched[index] = winners[0]
+            claimed.add(winners[0])
 
     taken = {str(r.get("name")) for r in rooms}
     new_groups: list[tuple[str, str]] = []
@@ -88,7 +106,8 @@ def plan_refresh(rooms: list[dict], groups: dict[str, dict], lights: dict[str, d
                 continue
             for light in other.get("lights") or []:
                 if str(light.get("light_id")) == lid and not light.get("planned"):
-                    return Move(lid, str(light.get("label") or f"Light {lid}"), str(other.get("name")))
+                    label = str(light.get("label") or f"Light {lid}")
+                    return Move(lid, label, str(other.get("name")), also=i not in matched)
         name = (lights.get(lid) or {}).get("name")
         return Move(lid, str(name) if name else f"Light {lid}", None)
 
@@ -109,10 +128,13 @@ def plan_refresh(rooms: list[dict], groups: dict[str, dict], lights: dict[str, d
         }
         leave = [Move(l, labels[l], holder_of_light.get(l)) for l in sorted(set(have) - set(want), key=_order)]
         status = "changed" if arrive or leave else "unchanged"
-        changes.append(RoomChange(name, gid, status, arrive, leave, link=str(room.get("hue_room") or "") != gid))
+        link = str(room.get("hue_room") or "") != gid
+        hue_name = hue_room_name(room_groups[gid].get("name"))
+        changes.append(RoomChange(name, gid, status, arrive, leave, link=link, hue_name=hue_name))
     for gid, name in new_groups:
         want = sorted({str(l) for l in room_groups[gid].get("lights") or []}, key=_order)
-        changes.append(RoomChange(name, gid, "new", [arrival(l, None) for l in want], [], True))
+        hue_name = hue_room_name(room_groups[gid].get("name"))
+        changes.append(RoomChange(name, gid, "new", [arrival(l, None) for l in want], [], True, hue_name))
     return changes
 
 
@@ -121,13 +143,32 @@ def fingerprint(changes: list[RoomChange]) -> str:
     return hashlib.sha256(text.encode()).hexdigest()[:16]
 
 
-def arrival_spots(outline: list[list[float]], count: int) -> list[tuple[float, float]]:
+def _grid_walk(outline: list[list[float]]):
+    """Spots 60 cm apart from 40 cm inside the top-left of the bounds, row by row, without end."""
     min_x, min_y, max_x, _ = bounds(as_points(outline))
-    spots: list[tuple[float, float]] = []
     x, y = min_x + 40, min_y + 40
-    for _ in range(count):
-        spots.append((round(x, 2), round(y, 2)))
+    while True:
+        yield (round(x, 2), round(y, 2))
         x += 60
         if x > max_x - 40:
             x, y = min_x + 40, y + 60
+
+
+def arrival_spots(outline: list[list[float]], count: int) -> list[tuple[float, float]]:
+    """Where arriving lights line up: the grid walk, skipping spots outside the room's outline.
+    If the outline holds too few spots, the rest come from the walk unchecked."""
+    polygon = as_points(outline)
+    spots: list[tuple[float, float]] = []
+    walk = _grid_walk(outline)
+    for _ in range(count * 50):
+        if len(spots) == count:
+            return spots
+        spot = next(walk)
+        if point_in_polygon(spot, polygon):
+            spots.append(spot)
+    unchecked = _grid_walk(outline)
+    while len(spots) < count:
+        spot = next(unchecked)
+        if spot not in spots:
+            spots.append(spot)
     return spots

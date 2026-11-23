@@ -388,6 +388,8 @@ def handle_prefs(args: argparse.Namespace) -> int:
 
 def _refresh_line(change: dict) -> str:
     name = change["room"]
+    if change["link"] and change.get("hue_name") and change["hue_name"] != name:
+        name = f"{name} (Hue: {change['hue_name']})"
     if change["status"] == "left_alone":
         return f"{name}: not on the bridge, left alone"
     if change["status"] == "new":
@@ -395,6 +397,8 @@ def _refresh_line(change: dict) -> str:
         return f"{name}: new room, {count} light{'' if count == 1 else 's'}"
 
     def part(sign: str, move: dict, word: str) -> str:
+        if move["other"] and move.get("also"):
+            word = "also in"
         where = f" ({word} {move['other']})" if move["other"] else ""
         return f"{sign} {move['label']}{where}"
 

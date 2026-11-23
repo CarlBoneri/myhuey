@@ -230,3 +230,25 @@ def test_cli_room_refresh_prints_the_preview_and_applies_with_apply(run, db_path
 
     code, out, _ = run("room", "refresh")
     assert "Rooms already match Hue." in out
+
+
+def test_cli_room_refresh_names_lights_that_stay_and_the_hue_name_of_a_renamed_room(run, db_path, fake_bridge):
+    service = HueRoomService(db_path)
+    service.set_bridge("10.0.0.77", USERNAME)
+    service.add_room("Hallway")
+    service.add_room("Garage")
+    service.add_room("Family room")
+    service.assign_light("Garage", "2", label="Floor lamp")
+    service.assign_light("Family room", "1", label="Desk")
+    groups = {
+        "2": {"name": "Hallway", "type": "Room", "lights": ["2"]},
+        "3": {"name": "Den", "type": "Room", "lights": ["1", "10"]},
+    }
+    fake_bridge(LIGHTS, groups)
+
+    code, out, _ = run("room", "refresh")
+    assert code == 0
+    assert "Hallway: + Floor lamp (also in Garage)" in out
+    assert "Family room (Hue: Den): + Porch" in out
+    assert "Garage: not on the bridge, left alone" in out
+    assert "Den: new room" not in out

@@ -117,3 +117,68 @@ def test_import_links_the_rooms_it_adds(db_path, fake_bridge):
     fake_bridge(BRIDGE_LIGHTS, BEFORE)
     service.import_rooms()
     assert {r.name: r.hue_room for r in service.rooms()} == {"Office": "1", "Hallway": "4"}
+
+
+def test_refresh_rooms_never_writes_to_the_bridge(paired, fake_bridge):
+    session = fake_bridge(BRIDGE_LIGHTS, AFTER, BRIDGE_LIGHTS, AFTER)
+    paired.refresh_rooms(paired.refresh_preview()["fingerprint"])
+    assert session.calls and all(c["method"] == "GET" for c in session.calls)
+    assert all(c["method"] == "GET" for c in session.clip_calls)
+
+
+def test_an_unchanged_room_only_gets_its_link_on_apply(paired, fake_bridge):
+    fake_bridge(BRIDGE_LIGHTS, BEFORE, BRIDGE_LIGHTS, BEFORE)
+    before = {r.name: r.to_dict() for r in paired.rooms()}
+    preview = paired.refresh_preview()
+    assert [(c["room"], c["status"], c["link"]) for c in preview["rooms"]] == [("Office", "unchanged", True), ("Hallway", "unchanged", True)]
+    paired.refresh_rooms(preview["fingerprint"])
+    after = {r.name: r.to_dict() for r in paired.rooms()}
+    assert (after["Office"]["hue_room"], after["Hallway"]["hue_room"]) == ("1", "4")
+    for name in before:
+        assert {**after[name], "hue_room": None} == {**before[name], "hue_room": None}
+
+
+def test_refresh_in_a_sandbox_changes_the_sandbox_not_the_active_home(paired, fake_bridge):
+    from myhuey.layouts import using_layout
+
+    active = paired.layouts()[0]["id"]
+    sandbox = paired.new_layout("Try", from_layout=active)["id"]
+    before = [r.to_dict() for r in paired.rooms()]
+    fake_bridge(BRIDGE_LIGHTS, AFTER, BRIDGE_LIGHTS, AFTER)
+    with using_layout(sandbox):
+        paired.refresh_rooms(paired.refresh_preview()["fingerprint"])
+        assert [l.light_id for l in rooms_by_name(paired)["Hallway"].lights] == ["2"]
+    assert [r.to_dict() for r in paired.rooms()] == before
+
+
+def test_a_linked_room_keeps_its_link_through_a_rename(paired, fake_bridge):
+    fake_bridge(BRIDGE_LIGHTS, BEFORE, BRIDGE_LIGHTS, BEFORE)
+    paired.refresh_rooms(paired.refresh_preview()["fingerprint"])
+    paired.update_room("Office", new_name="Study")
+    assert rooms_by_name(paired)["Study"].hue_room == "1"
+
+
+def test_import_skips_a_hue_room_already_linked_under_another_name(db_path, fake_bridge):
+    service = HueRoomService(db_path)
+    service.set_bridge("10.0.0.77", USERNAME)
+    service.add_room("My office", hue_room="1")
+    fake_bridge(BRIDGE_LIGHTS, BEFORE)
+    assert service.import_rooms() == ["Hallway"]
+    assert service.list_rooms() == ["My office", "Hallway"]
+
+
+def test_refresh_reads_the_bridge_before_loading_the_rooms(paired, fake_bridge, monkeypatch):
+    # Loading the rooms last keeps the window for overwriting another edit as small as it can be.
+    fake_bridge(BRIDGE_LIGHTS, AFTER, BRIDGE_LIGHTS, AFTER)
+    order: list[str] = []
+    client = paired.client()
+    real_lights, real_groups, real_load = client.get_lights, client.get_groups, paired._load
+    monkeypatch.setattr(client, "get_lights", lambda: order.append("lights") or real_lights())
+    monkeypatch.setattr(client, "get_groups", lambda: order.append("groups") or real_groups())
+    monkeypatch.setattr(paired, "client", lambda: client)
+    monkeypatch.setattr(paired, "_load", lambda *a, **k: order.append("load") or real_load(*a, **k))
+    fp = paired.refresh_preview()["fingerprint"]
+    assert order == ["lights", "groups", "load"]
+    order.clear()
+    paired.refresh_rooms(fp)
+    assert order[:3] == ["lights", "groups", "load"]

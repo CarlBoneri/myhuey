@@ -892,6 +892,8 @@ class HueRoomService:
             name = str(group.get("name") or "").strip().replace("/", "-")
             if group.get("type") != "Room" or not name or name in self.list_rooms():
                 continue
+            if str(group_id) in {room.hue_room for room in self.rooms()}:
+                continue  # already here under another name
             self.add_room(name, hue_room=str(group_id))
             for index, light_id in enumerate(group.get("lights", [])):
                 raw = lights.get(str(light_id)) or {}
@@ -906,21 +908,22 @@ class HueRoomService:
             added.append(name)
         return added
 
-    def _refresh_plan(self, config: dict[str, Any]):
+    def _refresh_plan(self):
+        """Read the bridge first, then the stored rooms, so the rooms are loaded as late as they can be."""
         client = self.client()
         lights = client.get_lights()
         groups = client.get_groups()
-        return plan_refresh(config["rooms"], groups, lights), lights
+        config = self._load()
+        return config, plan_refresh(config["rooms"], groups, lights), lights
 
     def refresh_preview(self) -> dict[str, Any]:
         """What a refresh against the Hue rooms would change. Reads the bridge, writes nothing."""
-        changes, _ = self._refresh_plan(self._load())
+        _, changes, _ = self._refresh_plan()
         return {"rooms": [asdict(change) for change in changes], "fingerprint": fingerprint(changes)}
 
     def refresh_rooms(self, fingerprint_seen: str) -> dict[str, Any]:
         """Apply the refresh the person previewed. Refuses, saving nothing, if Hue has changed since."""
-        config = self._load()
-        changes, lights = self._refresh_plan(config)
+        config, changes, lights = self._refresh_plan()
         current = fingerprint(changes)
         if current != fingerprint_seen:
             raise RefreshChanged()
