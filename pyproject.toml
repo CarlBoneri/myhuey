@@ -3,6 +3,7 @@ name = "myhuey"
 version = "0.2.0"
 description = "Philips Hue room planner and control client"
 readme = "README.md"
+license = { file = "LICENSE" }
 requires-python = ">=3.11"
 dependencies = [
   "fastapi>=0.115.0",
@@ -15,6 +16,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+dev = [
+  "pytest>=8.0.0",
+  "pytest-cov>=5.0.0",
+]
+
+# What `uv sync` installs by default, so `uv run pytest` works in a fresh clone. Keep it in step
+# with the `dev` extra above, which is what `pip install -e '.[dev]'` reads.
+[dependency-groups]
 dev = [
   "pytest>=8.0.0",
   "pytest-cov>=5.0.0",

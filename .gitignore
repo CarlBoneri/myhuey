@@ -10,3 +10,8 @@ frontend/node_modules/
 
 # Theme extensions dropped in for scripts/import_editor_themes.py; their files are not ours to redistribute
 scripts/extra-themes/
+
+# Local tool scratch: build-run ledgers and working copies
+.superpowers/
+.claude/worktrees/
+.claude/settings.local.json

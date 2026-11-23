@@ -370,7 +370,7 @@ The simulated browser has no layout, so these tests cannot check sizes, scrollin
 
 ### Credits and license
 
-MyHuey is free for non-commercial use.
+MyHuey is free for non-commercial use under the [PolyForm Noncommercial License 1.0.0](LICENSE): use it, change it, and share it for any purpose that isn't commercial. Commercial use needs permission.
 
 Light and room icons are path data from [hass-hue-icons](https://github.com/arallsopp/hass-hue-icons) by Andrew Allsopp, licensed [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/), which is non-commercial only (see `frontend/src/components/HUE_ICONS_LICENSE.txt`). Go check out his project, it's what makes the lights look like lights.
 
