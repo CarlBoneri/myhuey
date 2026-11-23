@@ -86,7 +86,7 @@ Side panels fold like an editor's tool windows. Click a panel's title, or the tr
 ### Home
 
 Home is the everyday screen, and it always controls your active home, even while you're trying ideas in a sandbox.
-
+![alt text](docs/img/HueHome.jpg)
 Down the left, Quick settings gives each room a row with how many lights are on, All on, All off, and a brightness slider that moves every lit light in the room together. Next to that is a square tile per room. Each tile shows whether the room is on, how bright it is, and up to five chips of the colors its lights are showing right now. A lit tile glows in its main color.
 
 The ⋮ in a tile's corner is the two-tap path. It opens three eye-comfort suggestions for right now, with a mode picker (Code, Work, Study, Read, Relax) that your browser remembers, plus the room's saved scenes. Tap one and it goes to the lights. Clicking anywhere else on the tile opens that room's workbench.
@@ -94,19 +94,20 @@ The ⋮ in a tile's corner is the two-tap path. It opens three eye-comfort sugge
 ### Room workbench
 
 The workbench is for using and tuning one room. There's no shape or furniture editing here on purpose; that lives in the Studio.
-
+![alt text](docs/img/image-1.png)
 You get All on, All off, the room dimmer, and a card per light. Click a card for that light's brightness, white temperature (2000 to 6500 K), and color. Gradient lights also get a gradient editor (2 to 5 colors, as a blend, mirrored, bands, or scatter) and effects like candle and fire. The right side lists the room's scenes with Apply, and the full suggestions panel stays open below the lights.
 
 ### Studio
-
 The Studio is where you build. Changes here go to whichever layout is open. It is one module with a room menu and four views (the whole-home plan, a room's plan, its 3D view, and its photo): pick any room in the menu and you stay on the same view of it, and its tab opens it without going through the workbench first.
 
-**Floor plan.** Upload a floor plan image (JPEG, PNG, or WebP) and set its scale by dragging a line over a printed dimension and typing its length, like `12' 6"` or `3.8 m`. Then hover inside a room to preview its traced outline and click to keep it. If a spot won't trace, the hint tells you why before you click: it leaks through a doorway, it's on a wall, or it's too small. The Close door gaps slider fixes most doorway leaks. You can also draw rooms by hand (rectangle, L-shape, or corner by corner, snapping to neighbors), drag rooms around, reshape their corners over the image, add a room by width and depth, or press Refresh from Hue. It reads the rooms in the Hue app and shows what would change before it saves anything: lights that moved between rooms, Hue rooms you don't have yet, and rooms it leaves alone because they aren't on the bridge. Apply puts each light in the room it now belongs to; lights that arrive line up inside the top wall, and the room designer lists them under New from Hue until you drag them into place. Refresh only reads the bridge. Room fill sets how see-through the room shapes are so you can trace without fighting them.
+#### **Floor plan.** 
+![alt text](docs/img/Home%20Plan.jpg)
+Upload a floor plan image (JPEG, PNG, or WebP) and set its scale by dragging a line over a printed dimension and typing its length, like `12' 6"` or `3.8 m`. Then hover inside a room to preview its traced outline and click to keep it. If a spot won't trace, the hint tells you why before you click: it leaks through a doorway, it's on a wall, or it's too small. The Close door gaps slider fixes most doorway leaks. You can also draw rooms by hand (rectangle, L-shape, or corner by corner, snapping to neighbors), drag rooms around, reshape their corners over the image, add a room by width and depth, or press Refresh from Hue. It reads the rooms in the Hue app and shows what would change before it saves anything: lights that moved between rooms, Hue rooms you don't have yet, and rooms it leaves alone because they aren't on the bridge. Apply puts each light in the room it now belongs to; lights that arrive line up inside the top wall, and the room designer lists them under New from Hue until you drag them into place. Refresh only reads the bridge. Room fill sets how see-through the room shapes are so you can trace without fighting them.
 
 **Layouts and sandboxes.** A layout is a whole home: rooms, scenes, and plan. One is Active and runs the app, and the rest are sandboxes. You can duplicate, rename, delete, or start one fresh. A banner shows while a sandbox is open, with Make active and Back to Active. Sandboxes can still preview on the real lights, which is the point of trying things out.
 
 **Room designer.** Each room opens to scale in feet and inches or meters. Here you edit:
-
+![alt text](<Living Room Floor Plan.jpg>)
 - the outline, with labeled edge lengths
 - doors and windows, which count as daylight for glare checks
 - furniture at real sizes, including monitors
@@ -125,7 +126,7 @@ The glare check is made from the desk seat. It flags lights that bounce off a sc
 ### Eye-comfort suggestions
 
 This is the part the whole app exists for. You pick a mode and a time (now, by default), and MyHuey builds scenes from three inputs: what you're doing, the clock, and where every light sits relative to your desk and screen.
-
+![alt text](docs/img/Desk%20Plan.jpg)
 - The clock. White light cools and brightens after your wake time. It warms and dims over the four hours before bed. Blue-heavy palettes drop out from three hours before bed until you wake. You set both times in Settings.
 - Your eyes. Lights by the desk stay white (task) and a light just behind the monitor stays dim (bias). Lights in your line of sight or behind your chair get dimmed and kept near white, so the screen isn't fighting glare or reflections. The palette colors the rest of the room.
 - Where things sit. Each light's role is worked out per focus (desk, reading chair, sofa) from the plan, which is why it matters to put your monitor on it.
@@ -133,9 +134,9 @@ This is the part the whole app exists for. You pick a mode and a time (now, by d
 Each suggestion card shows a mini map of the room in the suggested colors and the white temperature near the desk. It has Preview on lights and Save as scene. A saved suggestion is just a scene, so you can edit it like any other. The palettes come from a built-in library, including colors pulled from public-domain paintings at The Met. You can shuffle, browse by tag, or let MyHuey pick.
 
 ### Scenes
-
+![alt text](docs/img/scene_img.png)
 A scene paints light onto one room. You draw zones (rectangle, ellipse, or freehand) with a color and brightness, and each light takes the color of whatever it sits under. Gradient lights take colors along their length. Lights outside every zone can turn off, stay as they are, take a base color, or take the nearest zone's color.
-
+![alt text](docs/img/Hue%20Scene%20Creation.jpg)
 You can also drop an image on the room. MyHuey pulls a theme from it by mood (colorful, bright, muted, deep, dark), gives every swatch a picker you can drag around the image, and lights take the color beneath them. Any light can be overridden with its own colors, mode, effect, or brightness. You can also recreate any scene from the Hue app's gallery in a room. The color picker works in OKLCH and HCT, with tonal palettes, harmonies, and shades, tints, and tones.
 
 ### Lights and saved groups
