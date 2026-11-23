@@ -3,7 +3,7 @@ import { MISSING_LAYOUT, layoutHeaders } from './lib/layout';
 import type { GlareLimits } from './lib/glareLimits';
 import type { Preferences } from './types';
 import type { LayoutSummary, LightGroup } from './types';
-import type { CatalogItem, HueSceneSet, HomePlan, Placement, Opening, ImageLayer, Mood, PaletteEntry, Setup, PinnableRole, ProfileTable, Room, Scene, SceneResult, SetupStatus, Suggestion, RoomLook, Swatch, BridgeLight, Furniture, PhotoSpot, Pt } from './types';
+import type { CatalogItem, HueSceneSet, HomePlan, Placement, Opening, ImageLayer, Mood, PaletteEntry, Setup, PinnableRole, ProfileTable, Room, Scene, SceneResult, SetupStatus, Suggestion, RoomLook, Swatch, BridgeLight, Furniture, PhotoSpot, Pt, RefreshPlan } from './types';
 
 export class ApiError extends Error {
   constructor(message: string, readonly status: number) {
@@ -63,7 +63,7 @@ async function call<T>(path: string, init: RequestInit & { json?: unknown; activ
 }
 
 /** The document version this page was built for. A server reporting less was started before an update. */
-export const API_VERSION = 5;
+export const API_VERSION = 6;
 
 const room = (name: string) => `/api/rooms/${encodeURIComponent(name)}`;
 
@@ -102,6 +102,8 @@ export const api = {
   deleteLayout: (id: string) => call(`/api/layouts/${encodeURIComponent(id)}`, { method: 'DELETE' }),
   createRoom: (name: string, width: number, height: number, extra: { outline?: Pt[]; x?: number; y?: number } = {}) =>
     call<Room>('/api/rooms', { method: 'POST', json: { name, width, height, ...extra } }),
+  refreshPreview: () => call<RefreshPlan>('/api/rooms/refresh'),
+  refreshApply: (fingerprint: string) => call<RefreshPlan>('/api/rooms/refresh', { method: 'POST', json: { fingerprint } }),
   importRooms: () => call<{ added: string[] }>('/api/rooms/import', { method: 'POST' }),
   updateRoom: (
     name: string,

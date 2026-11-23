@@ -75,3 +75,10 @@ class LayoutChanged(HueError):
 class GroupNotFound(HueError, LookupError):
     def __init__(self, key: str) -> None:
         super().__init__(f"Group '{key}' not found")
+
+
+class RefreshChanged(HueError):
+    """The Hue rooms are not what the preview showed."""
+
+    def __init__(self) -> None:
+        super().__init__("The Hue rooms changed since the preview. Look again before applying.")

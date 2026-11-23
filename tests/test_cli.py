@@ -198,3 +198,57 @@ def test_serve_refuses_a_port_that_is_already_in_use(run):
     assert code == 1
     assert f"Cannot listen on 127.0.0.1:{port}" in err
     assert "--port" in err
+
+
+def test_cli_room_refresh_prints_the_preview_and_applies_with_apply(run, db_path, fake_bridge):
+    service = HueRoomService(db_path)
+    service.set_bridge("10.0.0.77", USERNAME)
+    service.add_room("Office")
+    service.add_room("Hallway")
+    service.add_room("Garage")
+    service.assign_light("Office", "1", label="Desk")
+    service.assign_light("Office", "2", label="Floor lamp")
+    groups = {
+        "1": {"name": "Office", "type": "Room", "lights": ["1"]},
+        "2": {"name": "Hallway", "type": "Room", "lights": ["2"]},
+        "3": {"name": "Den", "type": "Room", "lights": ["1", "10"]},
+    }
+    fake_bridge(*[LIGHTS, groups] * 4)  # each call reads lights, then groups
+
+    code, out, _ = run("room", "refresh")
+    assert code == 0
+    assert "Office: − Floor lamp (to Hallway)" in out
+    assert "Hallway: + Floor lamp (from Office)" in out
+    assert "Den: new room, 2 lights" in out
+    assert "Garage: not on the bridge, left alone" in out
+    assert "Applied." not in out
+    assert [light.light_id for light in service.get_room("Office").lights] == ["1", "2"]
+
+    code, out, _ = run("room", "refresh", "--apply")
+    assert code == 0 and "Applied." in out
+    assert [light.light_id for light in service.get_room("Office").lights] == ["1"]
+
+    code, out, _ = run("room", "refresh")
+    assert "Rooms already match Hue." in out
+
+
+def test_cli_room_refresh_names_lights_that_stay_and_the_hue_name_of_a_renamed_room(run, db_path, fake_bridge):
+    service = HueRoomService(db_path)
+    service.set_bridge("10.0.0.77", USERNAME)
+    service.add_room("Hallway")
+    service.add_room("Garage")
+    service.add_room("Family room")
+    service.assign_light("Garage", "2", label="Floor lamp")
+    service.assign_light("Family room", "1", label="Desk")
+    groups = {
+        "2": {"name": "Hallway", "type": "Room", "lights": ["2"]},
+        "3": {"name": "Den", "type": "Room", "lights": ["1", "10"]},
+    }
+    fake_bridge(LIGHTS, groups)
+
+    code, out, _ = run("room", "refresh")
+    assert code == 0
+    assert "Hallway: + Floor lamp (also in Garage)" in out
+    assert "Family room (Hue: Den): + Porch" in out
+    assert "Garage: not on the bridge, left alone" in out
+    assert "Den: new room" not in out

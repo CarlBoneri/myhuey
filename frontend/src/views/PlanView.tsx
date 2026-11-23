@@ -1,7 +1,7 @@
 // The whole home over a scanned floor plan. Set the plan's scale from a printed dimension,
 // then click inside a room to trace it, or draw rooms by hand with snapping.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Check, Download, Hand, ImagePlus, PenLine, Plus, Ruler, ScanLine, Square, Trash2 } from 'lucide-react';
+import { Check, Hand, ImagePlus, PenLine, Plus, RefreshCw, Ruler, ScanLine, Square, Trash2 } from 'lucide-react';
 import { api } from '../api';
 import { attempt, useStore } from '../store';
 import { area, bounds, pathOf, rectPoints, round1 } from '../lib/geometry';
@@ -13,6 +13,8 @@ import { formatArea, formatLength, parseLength } from '../lib/units';
 import type { HomePlan, Pt, Room, Units } from '../types';
 import { PlanCanvas, usePlan } from '../components/PlanCanvas';
 import { Empty, Field, IconButton, LengthInput, Panel, Segmented, Sidebar, Slider, TextInput } from '../components/ui';
+import { RefreshRoomsPanel } from '../components/RefreshRoomsPanel';
+import { useRefreshFromHue } from '../lib/useRefreshFromHue';
 import { LayoutsPanel } from '../components/LayoutsPanel';
 import { RoomOnPlan } from '../components/RoomOnPlan';
 import { StudioHead } from '../components/StudioHead';
@@ -343,13 +345,9 @@ export function PlanView({ focus }: { focus?: string } = {}) {
     }
   };
 
-  const importRooms = async () => {
-    const result = await attempt(() => api.importRooms());
-    if (result) {
-      toast(result.added.length ? `Imported ${result.added.join(', ')}` : 'No new rooms to import.', false);
-      await refreshRooms();
-    }
-  };
+  // Refresh from Hue. The hook drops a held preview when another layout is opened.
+  const refreshFromHue = useRefreshFromHue();
+  const refresh = refreshFromHue.plan;
 
   const hint = {
     select: selectedRoom
@@ -406,7 +404,8 @@ export function PlanView({ focus }: { focus?: string } = {}) {
 
         <Sidebar name="floorplan">
           <LayoutsPanel />
-          {!pending && !scaleLine && !(tool === 'select' && selectedRoom) && (
+          {refresh && <RefreshRoomsPanel plan={refresh} busy={refreshFromHue.busy} onCancel={refreshFromHue.cancel} onApply={refreshFromHue.apply} />}
+          {!refresh && !pending && !scaleLine && !(tool === 'select' && selectedRoom) && (
             <Panel title="Add a room">
               <Field label="Name"><TextInput value={roomName} onChange={(e) => setRoomName(e.target.value)} placeholder="Living room" /></Field>
               <div className="field-row">
@@ -415,7 +414,7 @@ export function PlanView({ focus }: { focus?: string } = {}) {
               </div>
               <div className="button-row">
                 <button type="button" className="button primary" onClick={addRoomBySize}><Plus size={16} /> Add room</button>
-                {setup?.configured && <button type="button" className="button" onClick={importRooms}><Download size={16} /> Import from Hue</button>}
+                {setup?.configured && <button type="button" className="button" onClick={refreshFromHue.preview}><RefreshCw size={16} /> Refresh from Hue</button>}
               </div>
               <p className="hint">Or trace and draw rooms over a plan image with the tools on the left.</p>
             </Panel>

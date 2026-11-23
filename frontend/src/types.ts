@@ -176,7 +176,23 @@ export interface Room {
   photo: RoomPhoto | null;
   ceiling: number;
   openings: Opening[];
+  /** The Hue room this room follows, once refresh has linked them. */
+  hue_room?: string | null;
 }
+
+/** `also`: on an arrival, the room it comes from is left alone, so the light stays there too. */
+export interface RefreshMove { light_id: string; label: string; other: string | null; also: boolean }
+export interface RoomRefresh {
+  room: string;
+  hue_room: string | null;
+  status: 'new' | 'changed' | 'unchanged' | 'left_alone';
+  arrive: RefreshMove[];
+  leave: RefreshMove[];
+  link: boolean;
+  /** The Hue room's name; null when the room is left alone. */
+  hue_name: string | null;
+}
+export interface RefreshPlan { rooms: RoomRefresh[]; fingerprint: string }
 
 export interface Swatch {
   color: string;

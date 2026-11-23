@@ -10,19 +10,21 @@ import copy
 import functools
 import threading
 import time
+from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
 
 from .color import hex_to_rgb, light_state_to_hex, mired_to_color_temperature, rgb_to_xy, xy_to_hex, xy_to_kelvin
 from .discovery import discover
-from .errors import BridgeNotConfigured, BridgeUnreachable, GroupNotFound, HueError, LayoutChanged, LayoutNotFound, RoomNotFound, SceneNotFound
+from .errors import BridgeNotConfigured, BridgeUnreachable, GroupNotFound, HueError, LayoutChanged, LayoutNotFound, RefreshChanged, RoomNotFound, SceneNotFound
 from .geometry import rectangle
 from .hue import HueBridgeClient
 from .images import ImageSampler, extract_palette, image_path, prune_unreferenced, store_image
 from .catalog import catalog_item
 from .hue_scenes import hue_scene
 from .setups import generate_setups
+from .refresh import arrival_spots, fingerprint, plan_refresh
 from .models import Furniture, HomePlan, LayoutLight, Opening, Room, RoomPhoto, floor_transform, new_id, opening_fits, reanchor_openings, validate_outline
 from .preferences import chosen as chosen_preferences, merged as merged_preferences, validate as validate_preferences
 from .scenes import Scene, evaluate
@@ -556,23 +558,29 @@ class HueRoomService:
         outline: list | None = None,
         x: float | None = None,
         y: float | None = None,
+        hue_room: str | None = None,
     ) -> Room:
         normalized = _clean_name(name)
         config = self._load()
         if any(room.get("name") == normalized for room in config["rooms"]):
             raise ValueError(f"Room '{normalized}' already exists")
 
-        index = len(config["rooms"])
-        room = Room(
-            name=normalized,
-            units=self.preferences()["default_units"],
-            outline=validate_outline(outline or [list(p) for p in rectangle(width, height)]),
-            x=round(float(x), 2) if x is not None else (index % _GRID_COLUMNS) * _GRID_CELL_CM[0],
-            y=round(float(y), 2) if y is not None else (index // _GRID_COLUMNS) * _GRID_CELL_CM[1],
-        )
+        room = self._new_room(config, normalized, outline or [list(p) for p in rectangle(width, height)], x, y, hue_room)
         config["rooms"].append(room.to_dict())
         self._save(config)
         return room
+
+    def _new_room(self, config: dict[str, Any], name: str, outline: list, x: float | None = None, y: float | None = None, hue_room: str | None = None) -> Room:
+        """A room with the defaults add_room uses, at the next grid spot among the rooms in `config`."""
+        index = len(config["rooms"])
+        return Room(
+            name=name,
+            units=self.preferences()["default_units"],
+            outline=validate_outline(outline),
+            x=round(float(x), 2) if x is not None else (index % _GRID_COLUMNS) * _GRID_CELL_CM[0],
+            y=round(float(y), 2) if y is not None else (index // _GRID_COLUMNS) * _GRID_CELL_CM[1],
+            hue_room=hue_room,
+        )
 
     def get_room(self, name: str) -> Room:
         return Room.from_dict(self._room_data(self._load(), name))
@@ -700,6 +708,9 @@ class HueRoomService:
         config = self._load()
         lights = self._room_data(config, room_name).setdefault("lights", [])
         existing = next((item for item in lights if str(item.get("light_id")) == light_id), None) or {}
+        moved = bool(existing) and (float(x) != float(existing.get("x", 0)) or float(y) != float(existing.get("y", 0)))
+        if metadata is None:
+            metadata = {k: v for k, v in (existing.get("metadata") or {}).items() if not (moved and k == "arrived")}
         light = LayoutLight.from_dict(
             {
                 **existing,
@@ -711,7 +722,7 @@ class HueRoomService:
                 "length": length if length is not None else existing.get("length"),
                 "brightness": brightness,
                 "on": on,
-                "metadata": metadata if metadata is not None else existing.get("metadata") or {},
+                "metadata": metadata,
                 "product": product or existing.get("product") or {},
                 "elevation": existing.get("elevation") if elevation is None else elevation,
                 "role": role or existing.get("role") or "auto",
@@ -877,11 +888,13 @@ class HueRoomService:
         client = self.client()
         lights = client.get_lights()
         added: list[str] = []
-        for group in client.get_groups().values():
+        for group_id, group in client.get_groups().items():
             name = str(group.get("name") or "").strip().replace("/", "-")
             if group.get("type") != "Room" or not name or name in self.list_rooms():
                 continue
-            self.add_room(name)
+            if str(group_id) in {room.hue_room for room in self.rooms()}:
+                continue  # already here under another name
+            self.add_room(name, hue_room=str(group_id))
             for index, light_id in enumerate(group.get("lights", [])):
                 raw = lights.get(str(light_id)) or {}
                 self.assign_light(
@@ -894,6 +907,76 @@ class HueRoomService:
                 )
             added.append(name)
         return added
+
+    def _refresh_plan(self):
+        """Read the bridge first, then the stored rooms, so the rooms are loaded as late as they can be."""
+        client = self.client()
+        lights = client.get_lights()
+        groups = client.get_groups()
+        config = self._load()
+        return config, plan_refresh(config["rooms"], groups, lights), lights
+
+    def refresh_preview(self) -> dict[str, Any]:
+        """What a refresh against the Hue rooms would change. Reads the bridge, writes nothing."""
+        _, changes, _ = self._refresh_plan()
+        return {"rooms": [asdict(change) for change in changes], "fingerprint": fingerprint(changes)}
+
+    def refresh_rooms(self, fingerprint_seen: str) -> dict[str, Any]:
+        """Apply the refresh the person previewed. Refuses, saving nothing, if Hue has changed since."""
+        config, changes, lights = self._refresh_plan()
+        current = fingerprint(changes)
+        if current != fingerprint_seen:
+            raise RefreshChanged()
+
+        # Where each light was stored before this apply, so a departure removed
+        # earlier in the apply does not take its product and length with it.
+        stored: dict[str, dict[str, Any]] = {}
+        for room_data in config["rooms"]:
+            for item in room_data.get("lights") or []:
+                if item.get("light_id") and not item.get("planned"):
+                    stored.setdefault(str(item["light_id"]), item)
+
+        def build(move: Any, x: float, y: float, arrived: bool) -> dict[str, Any]:
+            known = stored.get(move.light_id) or {}
+            raw = lights.get(move.light_id) or {}
+            return LayoutLight.from_dict(
+                {
+                    "light_id": move.light_id,
+                    "label": move.label,
+                    "x": x,
+                    "y": y,
+                    "rotation": 0,
+                    "length": known.get("length") if known else None,
+                    "product": known.get("product") if known else (_product(raw) if raw else {}),
+                    "metadata": {"arrived": True} if arrived else {},
+                }
+            ).to_dict()
+
+        by_name = {room_data.get("name"): room_data for room_data in config["rooms"]}
+        for change in changes:
+            if change.status == "changed":
+                room_data = by_name[change.room]
+                leaving = {move.light_id for move in change.leave}
+                if leaving:
+                    room_data["lights"] = [item for item in room_data.get("lights") or [] if item.get("planned") or str(item.get("light_id")) not in leaving]
+                    tags = (room_data.get("photo") or {}).get("tags") or {}
+                    for light_id in leaving:
+                        tags.pop(f"light:{light_id}", None)
+                spots = arrival_spots(room_data["outline"], len(change.arrive))
+                room_data.setdefault("lights", []).extend(
+                    build(move, x, y, True) for move, (x, y) in zip(change.arrive, spots)
+                )
+            if change.link and change.status in ("changed", "unchanged"):
+                by_name[change.room]["hue_room"] = change.hue_room
+            elif change.status == "new":
+                room = self._new_room(config, change.room, [list(p) for p in rectangle(450, 300)], hue_room=change.hue_room)
+                data = room.to_dict()
+                data["lights"] = [
+                    build(move, 75 + (i % 4) * 100, 75 + (i // 4) * 75, False) for i, move in enumerate(change.arrive)
+                ]
+                config["rooms"].append(data)
+        self._save(config)
+        return {"rooms": [asdict(change) for change in changes], "fingerprint": current}
 
     def room_summary(self, room_name: str) -> dict[str, Any]:
         room = self.get_room(room_name)

@@ -487,6 +487,8 @@ class Room:
     photo: RoomPhoto | None = None
     ceiling: float = DEFAULT_CEILING_CM
     openings: list[Opening] = field(default_factory=list)
+    # The id of the Hue room this room mirrors, once a refresh has linked them.
+    hue_room: str | None = None
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Room:
@@ -513,6 +515,7 @@ class Room:
             photo=RoomPhoto.from_dict(data.get("photo")),
             ceiling=ceiling,
             openings=openings,
+            hue_room=str(data.get("hue_room") or "").strip() or None,
         )
 
     @property
@@ -568,4 +571,5 @@ class Room:
             "photo": self.photo.to_dict() if self.photo else None,
             "ceiling": self.ceiling,
             "openings": [opening.to_dict() for opening in self.openings],
+            "hue_room": self.hue_room,
         }

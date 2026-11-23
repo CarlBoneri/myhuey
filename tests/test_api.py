@@ -33,6 +33,8 @@ def test_health_and_index(web):
         ("get", "/api/hue/groups", None),
         ("get", "/api/hue/lights/1", None),
         ("post", "/api/rooms/import", None),
+        ("get", "/api/rooms/refresh", None),
+        ("post", "/api/rooms/refresh", {"fingerprint": "abc"}),
         ("put", "/api/lights/1/state", {"on": True}),
     ],
 )
@@ -233,3 +235,35 @@ def test_importing_rooms_copies_hue_rooms_and_their_lights(web, db_path, fake_br
         ("2", "Hall"),
     ]
     assert (rooms["Office"]["x"], rooms["Porch-Yard"]["x"]) == (0, 500)  # laid out side by side
+
+
+def test_refresh_routes_preview_then_apply_and_409_on_a_stale_fingerprint(web, db_path, fake_bridge):
+    HueRoomService(db_path).set_bridge("10.0.0.77", USERNAME)
+    gone = {**GROUPS, "1": {**GROUPS["1"], "lights": ["1"]}}
+    fake_bridge(LIGHTS, GROUPS, *[LIGHTS, gone] * 3)  # each call reads lights, then groups
+    web.post("/api/rooms/import")
+    preview = web.get("/api/rooms/refresh")
+    assert preview.status_code == 200
+    body = preview.json()
+    office = next(c for c in body["rooms"] if c["room"] == "Office")
+    assert (office["status"], [m["light_id"] for m in office["leave"]]) == ("changed", ["2"])
+
+    applied = web.post("/api/rooms/refresh", json={"fingerprint": body["fingerprint"]})
+    assert applied.status_code == 200 and applied.json()["fingerprint"] == body["fingerprint"]
+    assert [light["light_id"] for light in web.get("/api/rooms/Office").json()["lights"]] == ["1"]
+
+    stale = web.post("/api/rooms/refresh", json={"fingerprint": "0123456789abcdef"})
+    assert stale.status_code == 409
+    assert "Look again" in stale.json()["detail"]
+    assert web.post("/api/rooms/refresh", json={"fingerprint": ""}).status_code == 422
+
+
+def test_the_app_expects_the_api_revision_the_server_reports():
+    import re
+    from pathlib import Path
+
+    from myhuey.api import API_REVISION
+
+    source = (Path(__file__).resolve().parents[1] / "frontend" / "src" / "api.ts").read_text()
+    match = re.search(r"export const API_VERSION = (\d+);", source)
+    assert match and int(match.group(1)) == API_REVISION

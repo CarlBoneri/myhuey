@@ -85,5 +85,5 @@ def test_layouts_endpoints_ignore_a_stale_header(web):
     assert web.get("/api/layouts", headers={H: "gone"}).status_code == 200
 
 
-def test_health_reports_api_5(web):
-    assert web.get("/api/health").json()["api"] == 5
+def test_health_reports_api_6(web):
+    assert web.get("/api/health").json()["api"] == 6
