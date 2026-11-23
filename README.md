@@ -53,7 +53,7 @@ There's no separate frontend server in normal use: `myhuey serve` runs the API a
 | --- | --- |
 | Stop it | `pkill -f "myhuey serve"` |
 | Run it in the background | `nohup .venv/bin/myhuey serve --port 8000 > ~/.myhuey/serve.log 2>&1 &` |
-| Check it's up | `curl -s localhost:8000/api/health` should answer `{"status":"ok","api":5}` |
+| Check it's up | `curl -s localhost:8000/api/health` should answer `{"status":"ok","api":6}` |
 
 ### The window
 
@@ -101,7 +101,7 @@ You get All on, All off, the room dimmer, and a card per light. Click a card for
 
 The Studio is where you build. Changes here go to whichever layout is open. It is one module with a room menu and four views (the whole-home plan, a room's plan, its 3D view, and its photo): pick any room in the menu and you stay on the same view of it, and its tab opens it without going through the workbench first.
 
-**Floor plan.** Upload a floor plan image (JPEG, PNG, or WebP) and set its scale by dragging a line over a printed dimension and typing its length, like `12' 6"` or `3.8 m`. Then hover inside a room to preview its traced outline and click to keep it. If a spot won't trace, the hint tells you why before you click: it leaks through a doorway, it's on a wall, or it's too small. The Close door gaps slider fixes most doorway leaks. You can also draw rooms by hand (rectangle, L-shape, or corner by corner, snapping to neighbors), drag rooms around, reshape their corners over the image, add a room by width and depth, or import rooms straight from your Hue bridge. Room fill sets how see-through the room shapes are so you can trace without fighting them.
+**Floor plan.** Upload a floor plan image (JPEG, PNG, or WebP) and set its scale by dragging a line over a printed dimension and typing its length, like `12' 6"` or `3.8 m`. Then hover inside a room to preview its traced outline and click to keep it. If a spot won't trace, the hint tells you why before you click: it leaks through a doorway, it's on a wall, or it's too small. The Close door gaps slider fixes most doorway leaks. You can also draw rooms by hand (rectangle, L-shape, or corner by corner, snapping to neighbors), drag rooms around, reshape their corners over the image, add a room by width and depth, or press Refresh from Hue. It reads the rooms in the Hue app and shows what would change before it saves anything: lights that moved between rooms, Hue rooms you don't have yet, and rooms it leaves alone because they aren't on the bridge. Apply puts each light in the room it now belongs to; lights that arrive line up inside the top wall, and the room designer lists them under New from Hue until you drag them into place. Refresh only reads the bridge. Room fill sets how see-through the room shapes are so you can trace without fighting them.
 
 **Layouts and sandboxes.** A layout is a whole home: rooms, scenes, and plan. One is Active and runs the app, and the rest are sandboxes. You can duplicate, rename, delete, or start one fresh. A banner shows while a sandbox is open, with Make active and Back to Active. Sandboxes can still preview on the real lights, which is the point of trying things out.
 
@@ -170,7 +170,7 @@ Everything the web app does with rooms, scenes, lights, layouts, and groups also
 | `myhuey serve` | `--port` | Runs the web app and API |
 | `myhuey discover` | | Lists Hue bridges on the network |
 | `myhuey bridge` | setup, register, status | Pairs with a bridge or checks the pairing |
-| `myhuey room` | list, show, create, update, assign, remove-light, delete, import, photo, remove-photo, on, off, dim, tags, tag, untag, plan-light, swap | Rooms, outlines, lights, photos, power, and brightness |
+| `myhuey room` | list, show, create, update, assign, remove-light, delete, import, refresh, photo, remove-photo, on, off, dim, tags, tag, untag, plan-light, swap | Rooms, outlines, lights, photos, power, and brightness |
 | `myhuey furniture` | list, add, remove | Furniture in a room |
 | `myhuey layouts` | list, new, duplicate, rename, activate, delete | Saved layouts and sandboxes |
 | `myhuey scene` | list, show, create, zone, image, preview, apply, delete | Scenes painted onto rooms |
@@ -188,6 +188,7 @@ A typical first session:
 
 ```bash
 myhuey room import                                   # copy your Hue rooms and their lights
+myhuey room refresh [--apply]                        # later: see what changed in the Hue rooms; --apply saves it
 myhuey room update --name Office --outline "0,0 14,0 14,8 8,8 8,12 0,12"   # an L-shaped room, in feet
 myhuey room assign --name Office --light-id 28 --x 120 --y 40 --rotation 90 --length 2m
 myhuey furniture add --room Office --kind desk --width 5ft --depth 30in --x 200 --y 80
@@ -290,7 +291,7 @@ The web app talks to a local JSON API on the same port, and anything else on you
 | --- | --- |
 | Setup and bridge | `GET /api/setup/status`, `GET /api/bridges/discover`, `GET /api/bridges/check`, `POST /api/bridge/register`, `POST /api/bridge/register-any` |
 | Lights | `GET /api/lights`, `GET /api/light-profiles`, `PUT /api/lights/{id}/state`, `PUT /api/lights/{id}/gradient`, `PUT /api/lights/{id}/effect` |
-| Rooms | `GET/POST /api/rooms`, `POST /api/rooms/import`, `GET/PATCH/DELETE …`, `POST …/power`, `POST …/brightness`, `POST …/lights`, `DELETE …/lights/{id}` |
+| Rooms | `GET/POST /api/rooms`, `POST /api/rooms/import`, `GET /api/rooms/refresh`, `POST /api/rooms/refresh`, `GET/PATCH/DELETE …`, `POST …/power`, `POST …/brightness`, `POST …/lights`, `DELETE …/lights/{id}` |
 | Planning | `GET /api/catalog`, `POST …/planned-lights`, `POST …/planned-lights/{id}/swap`, `GET …/setups`, `POST …/setups/apply` |
 | Room photo | `POST/DELETE …/photo`, `PUT …/photo/tags`, `PUT …/photo/placements`, `PUT/DELETE …/photo/floor` |
 | Floor plan | `GET/PATCH/DELETE /api/plan`, `POST /api/plan/image` |
@@ -308,7 +309,7 @@ Errors come back as `{"detail": "…"}`:
 | --- | --- |
 | 400 | Bad input |
 | 404 | No such room, scene, layout, or group |
-| 409 | A race, like pairing already in progress or the active layout just changed |
+| 409 | A race, like pairing already in progress, the active layout just changed, or the Hue rooms changed since a refresh preview |
 | 502 | The bridge failed |
 
 ## Notes

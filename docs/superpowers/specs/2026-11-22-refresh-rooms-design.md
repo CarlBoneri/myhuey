@@ -68,4 +68,19 @@ Exact copy, panel layout, and the fingerprint's form, within the above.
 
 ## As built
 
-(filled in after the build)
+- Matching runs in three passes. Rooms linked by `hue_room` claim their Hue rooms first, then
+  unlinked rooms match by cleaned name. Last, an unlinked room still unmatched takes the unclaimed
+  Hue room that holds the most of its real lights: at least one shared light, and a tie links
+  nothing. That catches a room renamed before links existed, so it isn't duplicated.
+- An arrival's label, product, and cut length come from the rooms as they were loaded before the
+  apply, so a light removed earlier in the same apply still carries them.
+- A light that arrives from a room left alone also stays there, since rooms left alone are never
+  changed. The preview says so: `+ Desk strip (also in Garage)`, and `Move.also` is true.
+- Each change carries `hue_name`, the Hue room's name. When a room is linked this time under a
+  different name, the panel and the CLI show it: `Family room (Hue: Den)`.
+- `myhuey room refresh --apply` with nothing new or changed and nothing to link prints the preview
+  and applies nothing.
+- Arrival spots walk the same grid but skip points outside the room's outline, so an L-shaped room
+  doesn't get lights in its notch. If the outline holds too few, the rest fall back to the grid.
+- The bridge is read before the rooms are loaded, to keep the window for overwriting another edit
+  small. Opening another layout drops a held preview.
