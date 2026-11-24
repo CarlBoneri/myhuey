@@ -1372,3 +1372,5 @@ kbd { padding: 2px 7px; border-radius: 5px; border: 1px solid var(--border-stron
 .pane-body.stage .showing-label { left: auto; right: 12px; top: 12px; bottom: auto; transform: none; }
 .level-over { color: var(--warn-text); font-weight: 600; }
 .level-limit { color: var(--text-2); font-size: 12px; }
+.v3-halo { pointer-events: none; }
+.v3-loop { fill: none; stroke-linejoin: round; stroke-linecap: round; }

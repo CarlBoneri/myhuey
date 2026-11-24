@@ -10,6 +10,7 @@ import { useDrawnLights } from '../lib/shownLights';
 import { effectiveLength, liveColors, placedProfile } from '../lib/lights';
 import { displayCorners, isDisplay, statusTone, type GlareReport, type GlareScene } from '../lib/glareMath';
 import { covers, heightOf, moveRig, riders, topOf } from '../lib/rig';
+import { haloOf, loopOf } from '../lib/halo';
 import {
   PITCH_RANGE, ZOOM_RANGE, centroid, clamp, facesCamera, fitOrbit, floorCircle, floorGrid, lightPool, orbitCamera, prism, project, projectPolygon,
   seatCamera, shade, toView, unprojectToHeight, wallFacing, wallOpacity, walls, zoomAt, type Camera, type Orbit, type Vec3,
@@ -253,6 +254,13 @@ export function Room3DStage({ room, posed, view, selection, onSelect, onLight, o
     };
   });
   const drawn = [...solids, ...fixtures].sort((a, b) => b.depth - a.depth);
+  // A lit light on a screen's back lights the wall behind that screen.
+  const screenOf = (placement: Placement) => (placement.mount ? posed.furniture.find((item) => item.id === placement.mount!.screen) : undefined);
+  const halos = fixtures.flatMap((f) => {
+    const screen = screenOf(f.placement);
+    const halo = f.colors && screen ? haloOf(posed, screen) : null;
+    return halo ? [{ id: f.id, halo, color: f.colors![0], level: f.level }] : [];
+  });
   const eye = scene.eye && !seated ? project(scene.eye, camera, viewport, pan) : null;
 
   return (
@@ -261,6 +269,7 @@ export function Room3DStage({ room, posed, view, selection, onSelect, onLight, o
       <svg width={viewport.width} height={viewport.height} role="img" aria-label={`${room.name} in 3D`}>
         <defs>
           <clipPath id="view3d-floor"><polygon points={points(floor)} /></clipPath>
+          <filter id="view3d-halo" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="14" /></filter>
         </defs>
         <polygon className="v3-floor" points={points(floor)} />
         <g clipPath="url(#view3d-floor)" className="v3-grid" aria-hidden="true">
@@ -275,6 +284,11 @@ export function Room3DStage({ room, posed, view, selection, onSelect, onLight, o
             <polygon points={points(poly(wall.quad))} style={{ fillOpacity: wallOpacity(facing) }} />
             {wall.openings.map(({ opening, quad }) => <polygon key={opening.id} className={`v3-opening ${opening.kind}`} points={points(poly(quad))} />)}
           </g>
+        ))}
+
+        {halos.map(({ id, halo, color, level }) => (
+          <polygon key={id} data-halo={id} className="v3-halo" points={points(poly(halo.corners))} filter="url(#view3d-halo)"
+            style={{ fill: color, fillOpacity: halo.opacity * (0.4 + level / 160) }} aria-hidden="true" />
         ))}
 
         {showPools && fixtures.filter((f) => f.colors).map((f) => {
@@ -335,7 +349,12 @@ export function Room3DStage({ room, posed, view, selection, onSelect, onLight, o
               <line className="v3-drop" x1={head.x} y1={head.y} x2={foot.x} y2={foot.y} />
               <circle className="v3-foot" cx={foot.x} cy={foot.y} r={2} />
               {colors && <circle className="v3-glow" cx={head.x} cy={head.y} r={clamp(26 * head.scale, [10, 60])} style={{ fill: colors[0], fillOpacity: 0.1 + entry.level / 500 }} />}
-              {span > 0 ? stops.map((color, i) => {
+              {screenOf(placement) ? (() => {
+                // On a screen's back: the strip's run around the back of the screen.
+                const run = loopOf(screenOf(placement)!, placement.length).map((p) => project(p, camera, viewport, pan));
+                return <polyline className="v3-loop" points={points(run.map((p) => [p.x, p.y] as Pt))}
+                  style={{ stroke: stops[0], strokeWidth: clamp(profile.width * head.scale, [3, 10]) }} />;
+              })() : span > 0 ? stops.map((color, i) => {
                 const a = project(lerp(ends[0], ends[1], i / stops.length), camera, viewport, pan);
                 const b = project(lerp(ends[0], ends[1], (i + 1) / stops.length), camera, viewport, pan);
                 return <line key={i} className="v3-bar" x1={a.x} y1={a.y} x2={b.x} y2={b.y} style={{ stroke: color, strokeWidth: clamp(profile.width * head.scale, [4, 14]) }} />;
