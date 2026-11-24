@@ -29,6 +29,15 @@ desk, not tuned to the owner's.
 5. The 3D view draws a mounted light as a loop on the screen's back and its **halo on whatever
    surface is behind the screen**, sized by the gap; nothing close behind means no halo.
 6. Peripherals in the catalog: laptop (closed), keyboard, speaker.
+7. **Your eyes are your setting, not a desk's** (owner, 2026-11-24): sitting eye height (above the
+   seat, default 69 cm), standing eye height (default 155 cm), and screen distance (default 60 cm),
+   saved with the preferences on the server so the browser tracer and Python roles agree.
+8. **Chair controls** (owner, 2026-11-24): a chair can be marked "I sit here" with a seat height
+   (default 46 cm). With a seat chair, the eye sits over that chair at seat + sitting eye height
+   (standing: standing eye height at the same spot); without one, as today (60 cm in front of the
+   screens, seated eyes 46 + 69 = 115 cm, the current number). A chair added in the desk designer
+   is the seat. Edited in the chair's inspector, the Studio posture panel (eyes shown as
+   "seat + sitting eye"), and Settings.
 
 ## Non-goals
 
@@ -73,6 +82,8 @@ desk, not tuned to the owner's.
   at the screen's back-face middle, at the screen's middle height, turned like the screen, with
   role `bias`. A mount whose screen is gone is dropped and the light stays where it was. A set
   whose base is gone dissolves (members released).
+- **Furniture** also gains `seat: float | null` (seat height in cm, 30–90): non-null means "I
+  sit here". **Preferences** gain `eye_sitting` (69), `eye_standing` (155), `screen_distance` (60).
 - **Peripherals**: `laptop` (31 × 22, 2 high), `keyboard` (44 × 14, 3 high), `speaker`
   (12 × 15, 20 high) in `FURNITURE_SIZES`, `FURNITURE_HEIGHTS`, and `FURNITURE_CATALOG`. A
   closed laptop is not a screen.
@@ -120,6 +131,34 @@ Python: model round-trips with old data; mount resolution (follows, dropped when
 forces bias); place (ids, mapping, sandbox rule for the tools); release; set dissolves without
 its base; save-as-design never stores a real id. TS: halo geometry (wall, window edge, too far,
 clipping); set moves carry members and mounted lights; designer and room designer flows.
+
+## Builder check answers (my calls, on the owner's "build full feature on auto")
+
+1. **The lock is the app's; the server keeps data consistent.** Every room save re-places
+   mounted lights from their screens, drops mounts whose screen is gone, and dissolves sets whose
+   base is gone. Moving a set is **one server call** (`move_desk_set(room, set, x, y, rotation)`),
+   so a failure cannot leave a light behind. `update_room(furniture=...)` may rewrite mounted
+   lights' geometry in the same save. The assistant's `set_furniture` passes `id`, `set`, and
+   `seat` through when given, so a rewrite that keeps ids keeps sets.
+2. **The halo lands on the room outline only** (walls and windows). Furniture behind a screen
+   neither catches nor blocks it. Possible follow-up.
+3. **Mounting keeps the strip's stored `length`.** The loop is drawn around the screen's back,
+   inset 6 cm: a full loop when the strip is long enough, otherwise a U open at the bottom. For
+   the glare check, a mounted light is one point at its mount (it is behind the screen and pinned
+   bias), not points spread along its length.
+4. **Joining a set**: by placing a design, or by editing the placed set in the desk designer
+   (which adds catalog furniture and lights). Real lights enter as planned lights swapped later
+   (`swap_planned_light` keeps `set` and `mount`). Mounting a light on a set's screen makes it a
+   member. No bridge-light tray in the designer.
+5. **Locked on a member in the room**: position, rotation, height off the floor, size, and the
+   screen's shape, curve and tilt, and a light's mount. Label and light controls (on, colour,
+   brightness) stay editable. Python does not refuse member edits; the inspector hides them.
+6. **Standing**: in a set whose base is a sit-stand desk, every member at or above the desk's top
+   rises with it, arm-mounted screens included (the chair stays). Pieces outside sets keep today's
+   footprint riders.
+7. **Saved data may gain null or empty keys** (`set`, `mount`, `seat`, `desk_sets`), as `curve`
+   and `tilt` did; no schema bump. "Nothing changes" means behaviour and results.
+8. See 1: one call per set move.
 
 ## Left to the builder
 
