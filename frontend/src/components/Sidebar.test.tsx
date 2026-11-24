@@ -36,4 +36,9 @@ describe('Sidebar resizing', () => {
     expect(useUi.getState().sidebarWidths.designer).toBeUndefined();
     expect(aside().style.getPropertyValue('--side-w')).toBe('360px');
   });
+  it('draws no resize bar when it is not resizable, as in the 3D inspector', () => {
+    render(<Sidebar name="designer" resizable={false}><p>panels</p></Sidebar>);
+    expect(screen.queryByRole('separator')).toBeNull();
+    expect(aside().style.getPropertyValue('--side-w')).toBe('');
+  });
 });

@@ -30,6 +30,9 @@ export const diagonalOf = (item: Furniture): number => round1(Math.hypot(item.wi
 /** Curved, and landscape: a curve saved on a portrait screen is ignored. */
 export const isCurved = (item: Furniture): boolean => !!item.curve && item.width >= (item.height ?? 0);
 
+/** The piece as it may be saved: a screen made taller than wide loses its curve (the API refuses a curved portrait). */
+export const legalCurve = (item: Furniture): Furniture => (item.curve != null && (item.height ?? 0) > item.width ? { ...item, curve: null } : item);
+
 /** The arc the panel follows: radius (cm), the angle it spans (radians), its chord, and how far the wings reach forward. */
 export function arcOf(item: Furniture): { radius: number; angle: number; chord: number; sagitta: number } {
   if (!isCurved(item)) return { radius: Infinity, angle: 0, chord: item.width, sagitta: 0 };

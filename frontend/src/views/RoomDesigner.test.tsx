@@ -143,4 +143,16 @@ describe('RoomDesigner', () => {
     const saved = vi.mocked(api.updateRoom).mock.calls.at(-1)![1].furniture!;
     expect(saved.at(-1)).toMatchObject({ kind: 'monitor-49', curve: 1800, tilt: -5, elevation: 80, height: 33.7 });
   });
+
+  it('flattens a curved screen made taller than wide in the Height field, so the save is not refused', () => {
+    const g9 = { id: 'g9', kind: 'monitor-49', label: 'G9', x: 200, y: 60, width: 119.8, depth: 12, rotation: 0, shape: 'rect', elevation: 80, height: 33.7, curve: 1000 };
+    useStore.setState({ rooms: [{ ...(office as object), furniture: [g9] } as never] });
+    const { container } = render(<RoomDesigner name="Office" tab="plan" />);
+    fireEvent.pointerDown(container.querySelector('.placed-furniture')!);
+    const height = screen.getByLabelText('Height');
+    fireEvent.change(height, { target: { value: '130cm' } });
+    fireEvent.blur(height);
+    const saved = vi.mocked(api.updateRoom).mock.calls.at(-1)![1].furniture!;
+    expect(saved.at(-1)).toMatchObject({ height: 130, curve: null });
+  });
 });

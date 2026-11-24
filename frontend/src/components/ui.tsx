@@ -32,7 +32,11 @@ const SidebarContext = createContext<{ name: string; keys: Set<string> } | null>
  * left edge (or focus it and use the arrow keys) to make it wider or narrower; double-click the bar
  * for the usual width. The width is remembered per sidebar.
  */
-export function Sidebar({ name, children, className = '' }: { name: string; children: ReactNode; className?: string }) {
+export function Sidebar({ name, children, className = '', resizable = true }: {
+  name: string; children: ReactNode; className?: string;
+  /** False where the sidebar sits in a pane that has its own resize bar (the 3D inspector). */
+  resizable?: boolean;
+}) {
   const keys = useRef(new Set<string>());
   const saved = useUi((state) => state.sidebarWidths[name]);
   const setWidth = useUi((state) => state.setSidebarWidth);
@@ -56,13 +60,13 @@ export function Sidebar({ name, children, className = '' }: { name: string; chil
     event.preventDefault();
     setWidth(name, clamp(width + step, [SIDEBAR_WIDTH.min, SIDEBAR_WIDTH.max]));
   };
-  const size = { '--side-w': `${width}px` } as CSSProperties;
+  const size = resizable ? ({ '--side-w': `${width}px` } as CSSProperties) : undefined;
   return (
     <SidebarContext.Provider value={{ name, keys: keys.current }}>
-      <div className="sidebar-grip" role="separator" aria-orientation="vertical" aria-label="Resize the sidebar" tabIndex={0}
+      {resizable && <div className="sidebar-grip" role="separator" aria-orientation="vertical" aria-label="Resize the sidebar" tabIndex={0}
         aria-valuenow={width} aria-valuemin={SIDEBAR_WIDTH.min} aria-valuemax={SIDEBAR_WIDTH.max}
         title="Drag to resize · double-click to reset" style={size} onPointerDown={drag} onKeyDown={nudge}
-        onDoubleClick={() => setWidth(name, null)}><span /></div>
+        onDoubleClick={() => setWidth(name, null)}><span /></div>}
       <aside className={`inspector ${className}`} style={size}>{children}</aside>
     </SidebarContext.Provider>
   );

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Furniture } from '../types';
 import { covers } from './rig';
-import { arcOf, DEFAULT_CURVES, diagonalOf, footprintOf, isCurved, screenSummary, sizeFromDiagonal } from './screen';
+import { arcOf, DEFAULT_CURVES, diagonalOf, footprintOf, isCurved, legalCurve, screenSummary, sizeFromDiagonal } from './screen';
 
 // The Samsung Odyssey G9: 49", 32:9, 1000R. At rotation 0 its front faces +y.
 const g9 = (more: Partial<Furniture> = {}): Furniture => ({
@@ -64,4 +64,12 @@ describe('curved or not', () => {
     expect(screenSummary(g9({ curve: null, width: 33.6, height: 59.8 }))).toBe('27" portrait');
     expect(screenSummary(g9({ curve: null, width: 59.8, height: 33.6 }))).toBe('27" 16:9');
   });
+
+describe('keeping a curve legal', () => {
+  it('drops the curve when a screen becomes portrait, and leaves anything else alone', () => {
+    expect(legalCurve(g9({ height: 130 })).curve).toBeNull();
+    expect(legalCurve(g9())).toEqual(g9());
+    expect(legalCurve(g9({ curve: null, height: 130 }))).toEqual(g9({ curve: null, height: 130 }));
+  });
+});
 });

@@ -240,6 +240,25 @@ describe('curved screens', () => {
     expect(statuses(room(lamp, [g9({ curve: null })]))).toEqual({ wing: 'bias_ok' });
     expect(statuses(room(lamp, [g9()]))).toEqual({ wing: 'bias_ok' });
   });
+  it('calls a light stuck to the back of a wing a bias light, and one in front of it not', () => {
+    // Facet 0 (the left wing's tip) has its middle near (147.8, 115.7), facing (0.522, 0.853):
+    // in front of the panel-middle plane, so only the strip itself can say what is behind it.
+    const z = 75 + 33.7 / 2;
+    const lamps = [light('back', 147.8 - 0.522 * 3, 115.7 - 0.853 * 3, z), light('front', 147.8 + 0.522 * 3, 115.7 + 0.853 * 3, z)];
+    const got = statuses(room(lamps, [g9()]));
+    expect(got.back).toBe('bias_ok');
+    expect(got.front).not.toBe('bias_ok');
+  });
+  it('never shows a lamp that the flat screen\'s body hides', () => {
+    // A grid behind a 24": where the flat body hides a lamp, the curved screen must too (its body
+    // still stands behind the strips). A grazing line used to slip over a strip's top edge.
+    const lamps = [];
+    for (let x = 150; x <= 250; x += 10) for (let y = 0; y <= 95; y += 5) for (let z = 80; z <= 130; z += 5) lamps.push(light(`${x},${y},${z}`, x, y, z));
+    const small = (curve: number | null) => monitor({ id: 's', kind: 'monitor-24', width: 53.1, height: 29.9, curve, tilt: undefined });
+    const [flat, curved] = [statuses(room(lamps, [small(null)])), statuses(room(lamps, [small(10000)]))];
+    const shown = Object.keys(flat).filter((id) => flat[id] === 'clear' && ['direct_fov', 'peripheral_warn'].includes(curved[id]));
+    expect(shown).toEqual([]);
+  });
   it('traces a gently curved 24-inch like a flat one', () => {
     const lamps = [light('back', 200, 300, 115), light('behind_left', 160, 320, 120), light('ceiling', 200, 300, 240), light('side', 330, 60, 130), light('halo', 200, 90, 95)];
     const small = (curve: number | null) => monitor({ id: 's', kind: 'monitor-24', width: 53.1, height: 29.9, curve });

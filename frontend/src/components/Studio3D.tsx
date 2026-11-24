@@ -213,7 +213,7 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
         <>
           <div className="splitter col" role="separator" aria-orientation="vertical" aria-label="Resize the inspector"
             title="Drag to resize · double-click to reset" onPointerDown={resizeInspector} onDoubleClick={() => setSizes((s) => ({ ...s, inspector: DEFAULT_SIZES.inspector }))}><span /></div>
-          <Sidebar name="designer">
+          <Sidebar name="designer" resizable={false}>
             <header className="inspector-head">
               <span>Spatial inspector</span>
               <button type="button" className="pane-fold" onClick={() => fold('inspector')} aria-label="Hide the inspector" title="Hide the inspector"><PanelRightClose size={14} /></button>

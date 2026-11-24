@@ -533,7 +533,7 @@ a.chrome-button { text-decoration: none; }
 /* The sidebar sets its own width (--side-w, dragged with .sidebar-grip); the grip sits in the gap beside it. */
 .split { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; flex: 1; min-height: 0; position: relative; }
 .split > .inspector { width: var(--side-w, 360px); }
-.sidebar-grip {
+.split > .sidebar-grip {
   position: absolute; top: 0; bottom: 0; right: var(--side-w, 360px); width: 16px; z-index: 2;
   display: grid; place-items: center; cursor: col-resize; touch-action: none; user-select: none; -webkit-user-select: none;
 }

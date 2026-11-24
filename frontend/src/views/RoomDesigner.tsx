@@ -25,7 +25,7 @@ import { autoRoleLabel, fullStrength, placementNeedsRefresh } from '../lib/sugge
 import { Studio3D } from '../components/Studio3D';
 import { roomGlare } from '../lib/roomGlare';
 import { isDisplay } from '../lib/glareMath';
-import { DEFAULT_CURVES } from '../lib/screen';
+import { DEFAULT_CURVES, legalCurve } from '../lib/screen';
 import { ScreenFields } from '../components/ScreenFields';
 import { useUi } from '../uiStore';
 import { useDrawnLights, useShowingFor } from '../lib/shownLights';
@@ -279,7 +279,9 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
     const current = draftRef.current!;
     setDraft({ ...current, lights: current.lights.map((l) => (l.light_id === placement.light_id ? placement : l)) });
   };
-  const updateLocalFurniture = (item: Furniture) => {
+  const updateLocalFurniture = (edited: Furniture) => {
+    // Width, height, the resize handle, and the Screen panel all land here; a curved screen they make portrait goes flat.
+    const item = legalCurve(edited);
     const current = draftRef.current!;
     setDraft({ ...current, furniture: current.furniture.map((f) => (f.id === item.id ? item : f)) });
   };

@@ -186,10 +186,10 @@ export function glareScene(room: Room, posture: Posture, mode: string, lengthOf:
       }
       return { light_id: light.light_id, label: light.label, points, pinned_bias: light.role === 'bias' };
     }),
-    // A curved screen blocks light with its facets (see crossesFacet), not with a box that would
-    // fill the hollow in front of it.
-    boxes: room.furniture.filter((item) => item.kind !== 'rug' && !(isDisplay(item) && isCurved(item))).map((item) => ({
-      id: item.id, x: item.x, y: item.y, rotation: item.rotation, width: item.width, depth: item.depth,
+    // A curved screen blocks light with its facets (see crossesFacet) and with its body, a box
+    // as wide as its chord behind them, so the hollow in front of it stays empty.
+    boxes: room.furniture.filter((item) => item.kind !== 'rug').map((item) => ({
+      id: item.id, x: item.x, y: item.y, rotation: item.rotation, width: isDisplay(item) ? arcOf(item).chord : item.width, depth: item.depth,
       z0: item.elevation ?? 0, z1: (item.elevation ?? 0) + (item.height ?? 75),
     })),
   };
@@ -263,9 +263,18 @@ function reflection(point: Vec3, eye: Vec3, display: Display, scene: GlareScene)
   return hit;
 }
 
-const behindScreen = (point: Vec3, { bias }: Display) => {
-  const side = dot(sub(point, bias.center), bias.normal);
-  return side < 0 && side >= -BIAS_BEHIND_CM && Math.abs(dot(sub(point, bias.center), bias.u)) <= bias.half + BIAS_SIDE_CM;
+/**
+ * Behind the screen as a whole (its bias plane, with room past the sides), or, on a curved screen,
+ * right behind one of its strips: a light stuck to the back of a wing sits in front of the middle plane.
+ */
+const behindScreen = (point: Vec3, display: Display) => {
+  const behind = (center: Vec3, normal: Vec3, u: Vec3, half: number) => {
+    const side = dot(sub(point, center), normal);
+    return side < 0 && side >= -BIAS_BEHIND_CM && Math.abs(dot(sub(point, center), u)) <= half;
+  };
+  const { bias } = display;
+  return behind(bias.center, bias.normal, bias.u, bias.half + BIAS_SIDE_CM) ||
+    (display.curved && behind(display.center, display.normal, display.u, display.width / 2));
 };
 
 /** Each light's glare status from the eye, with the bounce paths to draw and the level to keep it under. */

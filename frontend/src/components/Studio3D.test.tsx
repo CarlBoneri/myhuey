@@ -59,4 +59,10 @@ describe('Studio3D', () => {
     expect(screen.getByText('screen · 49" 32:9 · 1000R')).toBeTruthy();
     expect(screen.getByText('screen · 27" portrait')).toBeTruthy();
   });
+
+  it('leaves resizing its inspector to its own bar, with no sidebar bar inside it', () => {
+    mount();
+    expect(screen.queryByRole('separator', { name: 'Resize the sidebar' })).toBeNull();
+    expect(screen.getByRole('separator', { name: 'Resize the inspector' })).toBeTruthy();
+  });
 });
