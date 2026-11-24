@@ -26,6 +26,7 @@ from .hue_scenes import hue_scene
 from .setups import generate_setups
 from .refresh import arrival_spots, fingerprint, plan_refresh
 from .models import Furniture, HomePlan, LayoutLight, Opening, Room, RoomPhoto, floor_transform, new_id, opening_fits, reanchor_openings, validate_outline
+from .roles import Body
 from .desks import apply_local, clean_design, move_set, release_set, settle, stamp, to_local
 from .preferences import chosen as chosen_preferences, merged as merged_preferences, validate as validate_preferences
 from .scenes import Scene, evaluate
@@ -747,6 +748,12 @@ class HueRoomService:
         room_data.update(room.to_dict())
         self._save(config)
         return next(item for item in room.lights if item.light_id == light_id)
+
+    def body(self) -> Body:
+        """Your own numbers from the preferences: eye heights and how far you sit from the screens."""
+        prefs = self.preferences()
+        return Body(eye_sitting=float(prefs["eye_sitting"]), eye_standing=float(prefs["eye_standing"]),
+                    screen_distance=float(prefs["screen_distance"]))
 
     # Desk designs: app-wide (outside the layout keys, like groups), so every layout can place them.
 

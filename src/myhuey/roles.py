@@ -11,6 +11,9 @@ side of a desk, sofa, or bed) face +y at rotation 0 and turn clockwise with it.
 from __future__ import annotations
 
 import math
+from collections.abc import Iterator
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass
 
 from .models import Furniture, LayoutLight, Room
@@ -35,6 +38,34 @@ EYE_SEATED, EYE_STANDING, EYE_LOUNGING = 115.0, 155.0, 105.0
 DESKS = ("desk", "desk-l", "desk-standing")
 SOFAS = ("sofa", "sectional")
 MONITOR_PREFIX = "monitor"
+
+
+@dataclass(frozen=True)
+class Body:
+    """The person's own numbers (preferences): eyes above the seat when sitting, eyes when standing,
+    and how far the eyes are from the screens when no chair is marked as the seat."""
+
+    eye_sitting: float = 69.0
+    eye_standing: float = 155.0
+    screen_distance: float = 60.0
+
+
+DEFAULT_SEAT_CM = 46.0  # a desk chair's seat; 46 + 69 = 115 cm, the seated eye height before seats existed
+_body: ContextVar[Body] = ContextVar("body", default=Body())
+
+
+@contextmanager
+def using_body(body: Body) -> Iterator[None]:
+    """Work out seats with these numbers for the rest of the block (the API sets it per request)."""
+    token = _body.set(body)
+    try:
+        yield
+    finally:
+        _body.reset(token)
+
+
+def current_body() -> Body:
+    return _body.get()
 
 
 @dataclass(frozen=True)
@@ -78,15 +109,28 @@ def _desk_focus(room: Room) -> Focus | None:
     desk, screens = best
     if desk is None and monitors:
         screens = monitors
-    eye = EYE_STANDING if desk is not None and desk.kind == "desk-standing" else EYE_SEATED
+    body = current_body()
+    standing = desk is not None and desk.kind == "desk-standing"
+    chairs = [item for item in room.furniture if item.seat is not None]
     if screens:
         cx = sum(item.x for item in screens) / len(screens)
         cy = sum(item.y for item in screens) / len(screens)
         facing = _unit((sum(_front(item)[0] for item in screens), sum(_front(item)[1] for item in screens)))
-        seat = (cx + facing[0] * SEAT_FROM_SCREEN_CM, cy + facing[1] * SEAT_FROM_SCREEN_CM)
         half = max(abs(item.x - cx) + item.width / 2 for item in screens) if len(screens) > 1 else screens[0].width / 2
         height = sum(item.elevation + item.height / 2 for item in screens) / len(screens)
+        if chairs:
+            # The chair you marked as your seat: the one nearest the screens, if there are several.
+            chair = min(chairs, key=lambda item: math.hypot(item.x - cx, item.y - cy))
+            eye = body.eye_standing if standing else chair.seat + body.eye_sitting
+            gaze = _unit((cx - chair.x, cy - chair.y)) if (cx, cy) != (chair.x, chair.y) else _front(chair)
+            return Focus((chair.x, chair.y), gaze, eye, (cx, cy), height, half)
+        eye = body.eye_standing if standing else DEFAULT_SEAT_CM + body.eye_sitting
+        seat = (cx + facing[0] * body.screen_distance, cy + facing[1] * body.screen_distance)
         return Focus(seat, (-facing[0], -facing[1]), eye, (cx, cy), height, half)
+    if chairs:
+        chair = chairs[0] if desk is None else min(chairs, key=lambda item: math.hypot(item.x - desk.x, item.y - desk.y))
+        return _seated_at(chair, body.eye_standing if standing else chair.seat + body.eye_sitting)
+    eye = body.eye_standing if standing else DEFAULT_SEAT_CM + body.eye_sitting
     if desk is None:
         return None
     front = _front(desk)

@@ -17,6 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictInt, StringConstraints
 from .errors import BridgeNotConfigured, GroupNotFound, HueError, LayoutChanged, LayoutNotFound, LinkButtonNotPressed, PairingInProgress, RefreshChanged, RoomNotFound, SceneNotFound
 from .light_groups import MAX_GROUP_LIGHTS, MAX_GROUP_NAME
 from .layouts import MAX_NAME, using_layout
+from .roles import using_body
 from .hue import COLLECTIONS, PAIRING_WINDOW, HueBridgeClient
 from .images import MAX_UPLOAD_BYTES, media_type
 from .catalog import CATALOG
@@ -130,7 +131,9 @@ class LayoutMiddleware:
             await JSONResponse(status_code=404, content={"detail": str(exc)})(scope, receive, send)
             return
         with using_layout(layout_id):
-            await self.app(scope, receive, send)
+            body = await run_in_threadpool(self.service.body)
+            with using_body(body):  # seats and roles use the person's own eye heights
+                await self.app(scope, receive, send)
 
 
 class PlanUpdate(Body):
