@@ -136,3 +136,30 @@ describe('what rests on a desk', () => {
     expect(up.lights.map((l) => l.resolved_elevation)).toEqual([115, 20, 80]);
   });
 });
+
+// Flat screens must trace exactly as they did before curved screens existed.
+describe('flat screens stay as they were', () => {
+  const desk: Furniture = { id: 'desk', kind: 'desk', label: 'Desk', x: 200, y: 120, width: 160, depth: 70, rotation: 0, shape: 'rect', elevation: 0, height: 75 };
+  const left = monitor({ id: 'left', x: 167, y: 100, tilt: undefined });
+  const right = monitor({ id: 'right', x: 233, y: 100, tilt: undefined });
+  const rooms: Record<string, Room> = {
+    behind: room([light('back', 200, 300, 115)]),
+    ceiling: room([light('ceiling', 200, 300, 240)]),
+    mixed: room([
+      light('ahead', 230, 20, 130), light('side', 330, 60, 130), light('halo', 200, 90, 95),
+      light('hidden', 200, 20, 100), light('pinned', 330, 60, 130, { role: 'bias' }),
+    ]),
+    strip: room([light('strip', 400, 300, 115, { length: 300 })]),
+    turned: room([light('back', 200, 300, 180)], [monitor({ rotation: 180 })]),
+    office: room([
+      light('bias', 200, 85, 80, { length: 120 }),
+      light('lamp_left', 90, 110, 120), light('lamp_right', 310, 110, 120),
+      light('overhead', 200, 200, 240), light('floor_behind', 200, 320, 150),
+    ], [desk, left, right]),
+  };
+  for (const [name, r] of Object.entries(rooms)) {
+    it(`traces the ${name} room as before`, () => {
+      expect(trace(r)).toMatchSnapshot();
+    });
+  }
+});
