@@ -155,6 +155,8 @@ class FurnitureItem(Body):
     height: float | None = Field(None, gt=0, le=1000)
     curve: float | None = Field(None, ge=500, le=10000)  # mm, as printed on the box (1000R)
     tilt: float | None = Field(None, ge=-45, le=45)
+    set: str | None = Field(None, max_length=40)
+    seat: float | None = Field(None, ge=30, le=90)  # cm; set on the chair you sit in
 
 
 class RoomUpdate(Body):

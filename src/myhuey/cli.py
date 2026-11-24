@@ -381,7 +381,8 @@ def handle_prefs(args: argparse.Namespace) -> int:
         service.update_preferences({args.key: parse_value(args.value, args.key)})
     for key, value in service.preferences().items():
         _, allowed = PREFERENCES[key]
-        options = "true/false" if allowed is bool else "/".join(str(item) for item in allowed)
+        options = ("true/false" if allowed is bool else f"{allowed.start}-{allowed.stop - 1}" if isinstance(allowed, range)
+                   else "/".join(str(item) for item in allowed))
         print(f"{key}: {str(value).lower() if isinstance(value, bool) else value}  ({options})")
     return 0
 

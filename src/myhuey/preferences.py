@@ -51,6 +51,10 @@ PREFERENCES: dict[str, tuple[Any, Any]] = {
     # Your day, which suggested scenes read the clock against
     "wake_time": ("07:00", QUARTER_HOURS),
     "bed_time": ("23:00", QUARTER_HOURS),
+    # You: where your eyes are, for the glare check, the seat view, and light roles (whole cm).
+    "eye_sitting": (69, range(50, 91)),  # above the chair's seat; 46 cm seat + 69 = 115 cm
+    "eye_standing": (155, range(100, 201)),
+    "screen_distance": (60, range(30, 151)),  # eyes to screens when no chair is marked as your seat
 }
 
 
@@ -82,6 +86,8 @@ def _valid(key: str, value: Any) -> bool:
     _, allowed = PREFERENCES[key]
     if allowed is bool:
         return isinstance(value, bool)
+    if isinstance(allowed, range):
+        return type(value) is int and value in allowed
     return value in allowed and type(value) is type(allowed[0])
 
 
@@ -91,7 +97,9 @@ def validate(changes: dict[str, Any]) -> dict[str, Any]:
             raise ValueError(f"Unknown preference '{key}'. Known: {', '.join(PREFERENCES)}")
         if not _valid(key, value):
             _, allowed = PREFERENCES[key]
-            expected = "true or false" if allowed is bool else ", ".join(str(item) for item in allowed)
+            expected = ("true or false" if allowed is bool
+                        else f"a whole number from {allowed.start} to {allowed.stop - 1}" if isinstance(allowed, range)
+                        else ", ".join(str(item) for item in allowed))
             raise ValueError(f"Preference '{key}' takes {expected}")
     return dict(changes)
 
