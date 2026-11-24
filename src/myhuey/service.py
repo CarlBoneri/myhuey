@@ -26,6 +26,7 @@ from .hue_scenes import hue_scene
 from .setups import generate_setups
 from .refresh import arrival_spots, fingerprint, plan_refresh
 from .models import Furniture, HomePlan, LayoutLight, Opening, Room, RoomPhoto, floor_transform, new_id, opening_fits, reanchor_openings, validate_outline
+from .desks import move_set, release_set, settle
 from .preferences import chosen as chosen_preferences, merged as merged_preferences, validate as validate_preferences
 from .scenes import Scene, evaluate
 from .suggest import suggest as suggest_scenes
@@ -652,6 +653,7 @@ class HueRoomService:
                     scene["room"] = renamed
             room.name = renamed
         room = Room.from_dict(room.to_dict())  # validates the ceiling and everything together
+        settle(room)  # mounted lights follow their screens; a set without its base dissolves
         room.prune_photo_tags()
         room_data.clear()
         room_data.update(room.to_dict())
@@ -694,10 +696,13 @@ class HueRoomService:
         elevation: float | str | None = None,
         role: str | None = None,
         planned: bool | None = None,
+        mount: dict[str, str] | None | str = "keep",
     ) -> LayoutLight:
         """Place a light in a room, or move it if it is already there.
 
         `elevation` and `role` are kept when left out; elevation "auto" clears a set height.
+        `mount` ({"screen": <furniture id>} or None) sticks the light on a screen's back or takes
+        it off; left out, it is kept. A mounted light's place comes from its screen.
         """
         light_id = str(light_id).strip()
         if not light_id:
@@ -727,14 +732,40 @@ class HueRoomService:
                 "elevation": existing.get("elevation") if elevation is None else elevation,
                 "role": role or existing.get("role") or "auto",
                 "planned": existing.get("planned", False) if planned is None else planned,
+                "mount": existing.get("mount") if mount == "keep" else mount,
             }
         )
         if not existing:
             lights.append(light.to_dict())
         else:
             existing.update(light.to_dict())
+        room_data = self._room_data(config, room_name)
+        room = Room.from_dict(room_data)
+        if light.mount and not any(item.id == light.mount["screen"] for item in room.furniture):
+            raise ValueError(f"There is no piece '{light.mount['screen']}' in '{room_name}' to mount the light on")
+        settle(room)
+        room_data.update(room.to_dict())
         self._save(config)
-        return light
+        return next(item for item in room.lights if item.light_id == light_id)
+
+    def move_desk_set(self, room_name: str, set_id: str, *, x: float, y: float, rotation: float) -> Room:
+        """Move and turn a desk set as one piece: its base lands at (x, y), turned to `rotation`."""
+        return self._change_room(room_name, lambda room: move_set(room, set_id, x, y, rotation))
+
+    def release_desk_set(self, room_name: str, set_id: str) -> Room:
+        """Unlock a desk set: its pieces stay where they are as ordinary pieces."""
+        return self._change_room(room_name, lambda room: release_set(room, set_id))
+
+    def _change_room(self, room_name: str, change: Callable[[Room], Any]) -> Room:
+        config = self._load()
+        room_data = self._room_data(config, room_name)
+        room = Room.from_dict(room_data)
+        change(room)
+        settle(room)
+        room_data.clear()
+        room_data.update(room.to_dict())
+        self._save(config)
+        return room
 
     @_one_bridge_write
     def set_room_brightness(self, room_name: str, percent: float, *, pause: float | None = None) -> list[dict[str, Any]]:

@@ -172,6 +172,16 @@ class RoomUpdate(Body):
     ceiling: float | None = Field(None, ge=150, le=1000)
 
 
+class Mount(Body):
+    screen: str = Field(..., min_length=1, max_length=40)
+
+
+class SetMove(Body):
+    x: float = Field(..., ge=-10000, le=10000)
+    y: float = Field(..., ge=-10000, le=10000)
+    rotation: float = 0
+
+
 class LightPlacement(Body):
     light_id: str
     x: float = 0
@@ -181,6 +191,7 @@ class LightPlacement(Body):
     length: float | None = Field(None, ge=5, le=5000)
     elevation: float | Literal["auto"] | None = None  # cm; "auto" goes back to the product's guess
     role: Literal["auto", "bias", "task", "view"] | None = None
+    mount: Mount | None = None  # null takes the light off its screen; left out keeps it
 
 
 class PlannedLightRequest(Body):
@@ -438,8 +449,18 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
             length=body.length,
             elevation=body.elevation,
             role=body.role,
+            mount=(body.mount.model_dump() if body.mount else None) if "mount" in body.model_fields_set else "keep",
         )
         return light.to_dict()
+
+    @app.patch("/api/rooms/{room_name}/sets/{set_id}")
+    def move_desk_set(room_name: str, set_id: str, body: SetMove) -> dict[str, Any]:
+        return room_json(service.move_desk_set(room_name, set_id, x=body.x, y=body.y, rotation=body.rotation))
+
+    @app.delete("/api/rooms/{room_name}/sets/{set_id}")
+    def release_desk_set(room_name: str, set_id: str) -> dict[str, Any]:
+        """Unlock a desk set; its pieces stay in the room."""
+        return room_json(service.release_desk_set(room_name, set_id))
 
     @app.post("/api/rooms/{room_name}/power")
     def room_power(room_name: str, body: RoomPower) -> dict[str, Any]:

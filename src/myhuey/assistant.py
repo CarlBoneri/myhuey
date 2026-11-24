@@ -557,7 +557,7 @@ def set_furniture(service: HueRoomService, layout: str | None, room: str, furnit
                     data[key] = _plan_cm(item[key], key)
             if item.get("rotation") is not None:
                 data["rotation"] = item["rotation"]
-            for key in ("curve", "tilt"):
+            for key in ("curve", "tilt", "id", "set", "seat"):
                 if item.get(key) is not None:
                     data[key] = item[key]
             if kind in DEFAULT_CURVES and "curve" not in item:
