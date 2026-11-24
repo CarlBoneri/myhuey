@@ -17,6 +17,7 @@ import { lightsToDim, type RoomGlare } from '../lib/roomGlare';
 import { MODE_LABELS, autoRoleLabel } from '../lib/suggest';
 import { CM_PER_INCH, formatLength } from '../lib/units';
 import { clamp } from '../lib/view3d';
+import { screenSummary } from '../lib/screen';
 import type { Placement, Room } from '../types';
 import { Room3DStage, type Selection3D, type View3D } from './Room3DStage';
 import { isMac, isResizePress } from '../lib/pointer';
@@ -294,7 +295,7 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
                         <button type="button" className={active ? 'active' : ''} aria-pressed={active} onClick={() => onSelect({ type: 'furniture', id: item.id })}>
                           <span>{item.label}</span>
                           <small>{isDisplay(item)
-                            ? `screen · ${formatLength(item.width, room.units)} wide`
+                            ? `screen · ${screenSummary(item)}`
                             : `${formatLength(item.width, room.units)} × ${formatLength(item.depth, room.units)}`}</small>
                         </button>
                       </li>

@@ -48,4 +48,15 @@ describe('Studio3D', () => {
     act(() => useUi.getState().setLightingOpen(true));
     expect(screen.getByText('panels')).toBeTruthy();
   });
+
+  it('sums up a screen in the item list', () => {
+    const withScreens = { ...(room as object), furniture: [
+      { id: 'g9', kind: 'monitor-49', label: 'G9', x: 150, y: 40, width: 119.8, depth: 12, rotation: 0, shape: 'rect', height: 33.7, curve: 1000 },
+      { id: 'dell', kind: 'monitor-27', label: 'Dell', x: 60, y: 40, width: 33.6, depth: 20, rotation: 30, shape: 'rect', height: 59.8 },
+    ] } as never;
+    render(<Studio3D room={withScreens} glare={glare} selection={null} onSelect={() => {}} onLight={() => {}} onLightCommit={() => {}}
+      onRoom={() => {}} onRigCommit={() => {}}><p>panels</p></Studio3D>);
+    expect(screen.getByText('screen · 49" 32:9 · 1000R')).toBeTruthy();
+    expect(screen.getByText('screen · 27" portrait')).toBeTruthy();
+  });
 });

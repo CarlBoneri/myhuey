@@ -24,6 +24,9 @@ import { PlanLightsPanel } from '../components/PlanLightsPanel';
 import { autoRoleLabel, fullStrength, placementNeedsRefresh } from '../lib/suggest';
 import { Studio3D } from '../components/Studio3D';
 import { roomGlare } from '../lib/roomGlare';
+import { isDisplay } from '../lib/glareMath';
+import { DEFAULT_CURVES } from '../lib/screen';
+import { ScreenFields } from '../components/ScreenFields';
 import { useUi } from '../uiStore';
 import { useDrawnLights, useShowingFor } from '../lib/shownLights';
 import { ShowingLabel } from '../components/ShowingLabel';
@@ -316,7 +319,8 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
     }
   };
 
-  const addFurniture = (preset: (typeof FURNITURE_CATALOG)[number]) => {
+  /** Adds a catalog piece, or a copy of a placed one (`preset` is then the piece itself, and its screen shape and heights come along). */
+  const addFurniture = (preset: (typeof FURNITURE_CATALOG)[number] & Partial<Furniture>) => {
     const current = draftRef.current!;
     const box = bounds(current.outline);
     const item: Furniture = {
@@ -325,6 +329,10 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
       x: round1((box.minX + box.maxX) / 2 + Math.cos(current.furniture.length * 2.4) * 40 * Math.sqrt(current.furniture.length)),
       y: round1((box.minY + box.maxY) / 2 + Math.sin(current.furniture.length * 2.4) * 40 * Math.sqrt(current.furniture.length)),
       width: preset.width, depth: preset.depth, rotation: 0, shape: preset.shape ?? 'rect',
+      curve: preset.curve !== undefined ? preset.curve : DEFAULT_CURVES[preset.kind] ?? null,
+      ...(preset.tilt != null && { tilt: preset.tilt }),
+      ...(preset.height != null && { height: preset.height }),
+      ...(preset.elevation != null && { elevation: preset.elevation }),
     };
     setDraft({ ...current, furniture: [...current.furniture, item] });
     setSelection({ type: 'furniture', id: item.id });
@@ -473,6 +481,9 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
           onChange={(rotation) => updateLocalFurniture({ ...selectedFurniture, rotation })} onCommit={commitFurniture} />
         <Segmented label="Shape" value={selectedFurniture.shape} onChange={(shape) => { updateLocalFurniture({ ...selectedFurniture, shape }); void commitFurniture(); }}
           options={[{ value: 'rect', label: 'Rectangle' }, { value: 'ellipse', label: 'Round' }]} />
+        {isDisplay(selectedFurniture) && (
+          <ScreenFields item={selectedFurniture} onChange={updateLocalFurniture} onCommit={() => void commitFurniture()} />
+        )}
       </Panel>
     )}
     {!selection && (

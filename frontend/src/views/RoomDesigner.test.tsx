@@ -118,4 +118,29 @@ describe('RoomDesigner', () => {
     act(() => { window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' })); });
     await waitFor(() => expect(screen.queryByText('New from Hue')).toBeNull());
   });
+
+  it('adds the 49-inch curved, as the Odyssey G9 comes', () => {
+    render(<RoomDesigner name="Office" tab="plan" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Super ultrawide 49"' }));
+    const saved = vi.mocked(api.updateRoom).mock.calls.at(-1)![1].furniture!;
+    expect(saved.at(-1)).toMatchObject({ kind: 'monitor-49', width: 119.8, curve: 1000 });
+  });
+
+  it('shows the screen fields for a screen and not for a desk', () => {
+    const { container } = render(<RoomDesigner name="Office" tab="plan" />);
+    fireEvent.pointerDown(container.querySelector('.placed-furniture')!);
+    expect(screen.queryByLabelText('Diagonal (in)')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Super ultrawide 49"' }));
+    expect(screen.getByLabelText('Diagonal (in)')).toBeTruthy();
+  });
+
+  it('duplicates a screen with its curve, tilt, and height', () => {
+    const g9 = { id: 'g9', kind: 'monitor-49', label: 'G9', x: 200, y: 60, width: 119.8, depth: 12, rotation: 0, shape: 'rect', elevation: 80, height: 33.7, curve: 1800, tilt: -5 };
+    useStore.setState({ rooms: [{ ...(office as object), furniture: [g9] } as never] });
+    const { container } = render(<RoomDesigner name="Office" tab="plan" />);
+    fireEvent.pointerDown(container.querySelector('.placed-furniture')!);
+    fireEvent.click(screen.getByRole('button', { name: 'Duplicate' }));
+    const saved = vi.mocked(api.updateRoom).mock.calls.at(-1)![1].furniture!;
+    expect(saved.at(-1)).toMatchObject({ kind: 'monitor-49', curve: 1800, tilt: -5, elevation: 80, height: 33.7 });
+  });
 });
