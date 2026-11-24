@@ -191,3 +191,14 @@ def test_api_mounts_moves_and_releases(db_path):
     assert web.patch("/api/rooms/Den/sets/s1", json={"y": 0}).status_code == 422
     released = web.delete("/api/rooms/Den/sets/s1")
     assert released.status_code == 200 and released.json()["desk_sets"] == []
+
+
+def test_taking_a_light_off_its_screen_unpins_its_bias_role(service):
+    _with_set(service)
+    strip = service.assign_light("Den", "3", x=50, y=50, mount=None)
+    assert strip.mount is None and strip.role == "auto"
+
+
+def test_a_pinned_role_given_with_the_unmount_is_kept(service):
+    _with_set(service)
+    assert service.assign_light("Den", "3", x=50, y=50, mount=None, role="task").role == "task"

@@ -149,3 +149,28 @@ def test_a_piece_without_a_size_takes_its_catalog_size_and_curve(service):
     made = service.create_desk("Bare", [{"key": "desk", "kind": "desk"}, {"key": "g9", "kind": "monitor-49", "y": -16}])
     g9 = made["items"][1]
     assert (g9["width"], g9["depth"], g9["height"], g9["curve"], g9["label"]) == (119.8, 12.0, 33.7, 1000.0, 'Super ultrawide 49"')
+
+
+def test_saving_a_set_never_keeps_a_bridge_id_anywhere(service):
+    set_id = service.place_desk("Den", _design(service)["id"], x=200, y=300)["set"]
+    real = "00:17:88:01:aa:bb:cc-0b"
+    service.assign_light("Den", real, x=200, y=290, product={"archetype": "huelightstriptv"})
+    config = service._load()
+    next(light for light in service._room_data(config, "Den")["lights"] if light["light_id"] == real)["set"] = set_id
+    service._save(config)
+    design = service.desk_from_set("Den", set_id, "Clean")["design"]
+    planned = {light.light_id for light in service.get_room("Den").lights if light.planned}
+    for light in design["lights"]:
+        assert real not in light.values() and f"Light {real}" not in light.values()
+        assert not planned & set(map(str, light.values()))
+
+
+def test_editing_a_set_prunes_photo_tags_of_what_it_removed(service):
+    set_id = service.place_desk("Den", _design(service)["id"], x=200, y=300)["set"]
+    planned = next(light for light in service.get_room("Den").lights if light.set == set_id).light_id
+    config = service._load()
+    service._room_data(config, "Den")["photo"] = {"file": "p.png", "width": 10, "height": 10, "tags": {f"light:{planned}": {"x": 0.5, "y": 0.5}}}
+    service._save(config)
+    local = service.desk_set_local("Den", set_id)
+    room = service.apply_desk_set("Den", set_id, local["items"], [])
+    assert room.photo.tags == {}

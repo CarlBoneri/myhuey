@@ -734,6 +734,8 @@ class HueRoomService:
                 "role": role or existing.get("role") or "auto",
                 "planned": existing.get("planned", False) if planned is None else planned,
                 "mount": existing.get("mount") if mount == "keep" else mount,
+                # Off its screen, a light is no longer a bias light by mounting: its role goes back to auto.
+                **({"role": role or "auto"} if mount is None and existing.get("mount") else {}),
             }
         )
         if not existing:
@@ -824,9 +826,15 @@ class HueRoomService:
 
     def desk_from_set(self, room_name: str, set_id: str, name: str) -> dict[str, Any]:
         """Save a placed set as a new design. Real lights become their catalog kind; one with none is left out."""
+        from .catalog import CATALOG
+
         local = to_local(self.get_room(room_name), set_id)
         skipped = [light["label"] for light in local["lights"] if not light["catalog"]]
-        lights = [{k: v for k, v in light.items() if k not in ("light_id", "planned")} for light in local["lights"] if light["catalog"]]
+        # A design is for reuse: no light keeps its bridge or planned id, not even as its key or default label.
+        lights = []
+        for index, light in enumerate(item for item in local["lights"] if item["catalog"]):
+            label = light["label"] if light["label"] != f"Light {light['light_id']}" else CATALOG[light["catalog"]].label
+            lights.append({**{k: v for k, v in light.items() if k not in ("light_id", "planned")}, "key": f"light{index + 1}", "label": label})
         items = [{k: v for k, v in item.items() if k != "id"} for item in local["items"]]
         return {"design": self.create_desk(name, items, lights), "skipped": skipped}
 
@@ -843,7 +851,9 @@ class HueRoomService:
         room_data = self._room_data(config, room_name)
         room = Room.from_dict(room_data)
         change(room)
+        room = Room.from_dict(room.to_dict())  # validates everything together, as update_room does
         settle(room)
+        room.prune_photo_tags()
         room_data.clear()
         room_data.update(room.to_dict())
         self._save(config)

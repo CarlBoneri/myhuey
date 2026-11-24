@@ -81,6 +81,13 @@ describe('standing at a desk set', () => {
     expect(room.furniture.find((f) => f.id === 'c1')!.elevation).toBe(0);
     expect(byId(room, '3').resolved_elevation).toBe(130);
   });
+  it('raises a light mounted on a screen that rises, even off the desk footprint and with no set', () => {
+    const desk = { ...DESK, set: null };
+    const screen = { ...SCREEN, set: null, y: 120 }; // still over the desk, so it rides
+    const strip = light({ light_id: '3', mount: { screen: 'm1' } });
+    const room = posedRoom(settle({ ...den([desk, screen], [strip]), desk_sets: [] }), 'standing');
+    expect(byId(room, '3').resolved_elevation).toBe(130);
+  });
   it('does not raise that screen when there is no set', () => {
     const loose = [{ ...DESK, set: null }, { ...SCREEN, x: 300, set: null }];
     const room = posedRoom({ ...den(loose, []), desk_sets: [] }, 'standing');

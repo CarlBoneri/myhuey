@@ -183,6 +183,23 @@ describe('RoomDesigner', () => {
       expect(vi.mocked(api.moveDeskSet).mock.calls[0]).toEqual(['Office', 's1', { x: 129.5, y: 99.1, rotation: 0 }]);
     });
 
+    it('moves the set by the drag, not by the drag again on every step', () => {
+      withSet();
+      drag.play = (h) => { h.move([0, 0], [10, 0], {}); h.move([0, 0], [20, 0], {}); h.move([0, 0], [30, 0], {}); h.end(true); };
+      const { container } = render(<RoomDesigner name="Office" tab="plan" />);
+      fireEvent.pointerDown(container.querySelectorAll('.placed-furniture')[1]);
+      expect(vi.mocked(api.moveDeskSet).mock.calls.at(-1)).toEqual(['Office', 's1', { x: 129.5, y: 99.1, rotation: 0 }]);
+    });
+
+    it('carries a mounted light along while its screen is dragged', () => {
+      useStore.setState({ rooms: [{ ...(office as object), furniture: [member('tv', 'tv', 200, { set: null, depth: 8 })],
+        lights: [{ light_id: 'l9', label: 'Strip', x: 200, y: 96, rotation: 0, length: 200, product: {}, metadata: {}, mount: { screen: 'tv' } }] } as never] });
+      drag.play = (h) => h.move([0, 0], [50.8, 0], {});
+      const { container } = render(<RoomDesigner name="Office" tab="plan" />);
+      fireEvent.pointerDown(container.querySelector('.placed-furniture')!);
+      expect(container.querySelector('.placed-light')!.getAttribute('transform')).toBe('translate(251.5,95.1)'); // the TV snaps to whole inches (y 100 -> 99.1); the strip sits 4 cm behind it
+    });
+
     it('shows a member the set panel instead of its size fields', () => {
       withSet();
       const { container } = render(<RoomDesigner name="Office" tab="plan" />);

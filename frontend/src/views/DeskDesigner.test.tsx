@@ -13,7 +13,7 @@ vi.mock('../components/PlanCanvas', () => ({
   usePlan: () => ({ cmPerPx: 1, toPlan: () => [0, 0] }),
   useDrag: () => () => {},
 }));
-vi.mock('../components/Room3DStage', () => ({ Room3DStage: () => <div>stage</div> }));
+vi.mock('../components/Room3DStage', () => ({ Room3DStage: ({ scene }: { scene: { eye: number[] | null } }) => <div data-eye={scene.eye?.join(',')}>stage</div> }));
 vi.mock('../api', async (original) => ({
   ...(await original<typeof import('../api')>()),
   api: {
@@ -68,5 +68,12 @@ describe('DeskDesigner', () => {
     render(<DeskDesigner design="dz" />);
     fireEvent.click(await screen.findByRole('button', { name: 'Place in Office' }));
     await waitFor(() => expect(api.placeDesk).toHaveBeenCalledWith('Office', { design: 'dz', x: 200, y: 150, rotation: 0 }));
+  });
+
+  it('previews from your own eye height', async () => {
+    useStore.setState({ preferences: { ...useStore.getState().preferences, eye_sitting: 80 } });
+    const { container } = render(<DeskDesigner />);
+    fireEvent.click(screen.getByRole('radio', { name: /3D/ }));
+    await waitFor(() => expect(container.querySelector('[data-eye]')!.getAttribute('data-eye')!.split(',')[2]).toBe('126'));
   });
 });

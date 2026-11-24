@@ -8,7 +8,7 @@ import { attempt, useStore } from '../store';
 import { go } from '../lib/router';
 import { bounds, pathOf, round1 } from '../lib/geometry';
 import { settle } from '../lib/desks';
-import { glareScene, isDisplay, traceGlare } from '../lib/glareMath';
+import { bodyOf, glareScene, isDisplay, traceGlare } from '../lib/glareMath';
 import { DEFAULT_CURVES } from '../lib/screen';
 import { FURNITURE_CATALOG } from '../components/Shapes';
 import { PlanCanvas } from '../components/PlanCanvas';
@@ -56,7 +56,7 @@ function benchRoom(draft: Draft, gap: number, catalog: CatalogItem[]): Room {
 }
 
 export function DeskDesigner({ design, room, set }: { design?: string; room?: string; set?: string }) {
-  const { rooms, replaceRoom, toast } = useStore();
+  const { rooms, replaceRoom, toast, preferences } = useStore();
   const [designs, setDesigns] = useState<DeskDesign[]>([]);
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   const [draft, setDraft] = useState<Draft>(blank);
@@ -79,9 +79,9 @@ export function DeskDesigner({ design, room, set }: { design?: string; room?: st
 
   const bench = useMemo(() => benchRoom(draft, gap, catalog), [draft, gap, catalog]);
   const glare = useMemo(() => {
-    const scene = glareScene(bench, 'seated', 'code', () => 0);
+    const scene = glareScene(bench, 'seated', 'code', () => 0, bodyOf(preferences));
     return { scene, report: traceGlare(scene) };
-  }, [bench]);
+  }, [bench, preferences]);
   const fit = useMemo(() => {
     const box = bounds(bench.outline);
     return { x: box.minX, y: box.minY, w: box.maxX - box.minX, h: box.maxY - box.minY };

@@ -88,5 +88,5 @@ export function posedRoom(room: Room, posture: Posture): Room {
       lights: next.lights.map((light) => (riding.lights.includes(light.light_id) ? { ...light, resolved_elevation: heightOf(light) + delta } : light)),
     };
   }
-  return next;
+  return settle(next); // lights mounted on a raised screen rise with it
 }

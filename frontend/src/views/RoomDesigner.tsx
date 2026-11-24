@@ -30,7 +30,7 @@ import { ScreenFields } from '../components/ScreenFields';
 import { ChairFields } from '../components/ChairFields';
 import { DeskSetPanel } from '../components/DeskSetPanel';
 import { DeskDesignsPanel } from '../components/DeskDesignsPanel';
-import { baseOf, moveSetBy, setOf } from '../lib/desks';
+import { baseOf, moveSetBy, setOf, settle } from '../lib/desks';
 import { useUi } from '../uiStore';
 import { useDrawnLights, useShowingFor } from '../lib/shownLights';
 import { ShowingLabel } from '../components/ShowingLabel';
@@ -167,10 +167,12 @@ export function PlacedLight({ lights, placement, selected, onSelect, onChange, o
   );
 }
 
-export function PlacedFurniture({ item, selected, onSelect, onChange, onCommit, units, locked = false }: {
+export function PlacedFurniture({ item, selected, onSelect, onChange, onCommit, units, locked = false, turnable = true }: {
   item: Furniture; selected: boolean; onSelect: () => void; onChange: (f: Furniture) => void; onCommit: (f: Furniture) => void; units: Units;
   /** In a desk set: its size is changed in the desk designer, so there is no resize handle. */
   locked?: boolean;
+  /** False for a desk set member that is not its base: the set turns about its base, from the base's handle. */
+  turnable?: boolean;
 }) {
   const drag = useDrag();
   const { cmPerPx } = usePlan();
@@ -192,7 +194,7 @@ export function PlacedFurniture({ item, selected, onSelect, onChange, onCommit, 
       <FurnitureShape item={item} selected={selected} cmPerPx={cmPerPx} />
       {selected && (
         <>
-          <g className="end-handle" transform={`translate(0,${-item.depth / 2 - 18 * cmPerPx})`}
+          {turnable && <g className="end-handle" transform={`translate(0,${-item.depth / 2 - 18 * cmPerPx})`}
             onPointerDown={(event) =>
               drag(event, {
                 move: (point, _d, e) => onChange({ ...latest.current, rotation: snapAngle(angleOf([item.x, item.y], point) + 90, e.altKey) }),
@@ -201,7 +203,7 @@ export function PlacedFurniture({ item, selected, onSelect, onChange, onCommit, 
             }>
             <circle r={7 * cmPerPx} strokeWidth={1.5 * cmPerPx} />
             <title>Drag to rotate (hold Alt for free rotation)</title>
-          </g>
+          </g>}
           {!locked && <rect className="resize-handle" x={item.width / 2 - 5 * cmPerPx} y={item.depth / 2 - 5 * cmPerPx} width={10 * cmPerPx} height={10 * cmPerPx}
             onPointerDown={(event) => {
               const start = latest.current;
@@ -293,13 +295,20 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
     // Width, height, the resize handle, and the Screen panel all land here; a curved screen they make portrait goes flat.
     const item = legalCurve(edited);
     const current = draftRef.current!;
-    setDraft({ ...current, furniture: current.furniture.map((f) => (f.id === item.id ? item : f)) });
+    // A light mounted on a moved screen follows it right away, before the server answers.
+    setDraft(settle({ ...current, furniture: current.furniture.map((f) => (f.id === item.id ? item : f)) }));
   };
   const commitFurniture = () => saveRoom({ furniture: draftRef.current!.furniture });
 
-  /** A desk set member dragged to `to` (or a member light): the whole set moves by the same amount. */
-  const moveMember = (setId: string, from: { x: number; y: number; rotation: number }, to: { x: number; y: number; rotation: number }) => {
-    setDraft(moveSetBy(draftRef.current!, setId, to.x - from.x, to.y - from.y, to.rotation - from.rotation));
+  /**
+   * A desk set member (piece or light, by id) dragged to `to`: the whole set moves by the same amount.
+   * `from` is where the member stands in the draft now, so each pointer step adds only its own change.
+   */
+  const moveMember = (setId: string, id: string, to: { x: number; y: number; rotation: number }) => {
+    const current = draftRef.current!;
+    const from = current.furniture.find((item) => item.id === id) ?? current.lights.find((light) => light.light_id === id);
+    if (!from) return;
+    setDraft(moveSetBy(current, setId, to.x - from.x, to.y - from.y, to.rotation - from.rotation));
   };
   /** Save a moved set in one call, where its base now stands. */
   const commitSet = async (setId: string) => {
@@ -643,14 +652,15 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
                 {draft.furniture.map((item) => (
                   <PlacedFurniture key={item.id} item={item} units={draft.units} selected={selection?.type === 'furniture' && selection.id === item.id}
                     locked={!!setOf(draft, item.id)} onSelect={() => setSelection({ type: 'furniture', id: item.id })}
-                    onChange={(next) => (setOf(draft, item.id) ? moveMember(item.set!, item, next) : updateLocalFurniture(next))}
+                    turnable={!setOf(draft, item.id) || setOf(draft, item.id)!.base === item.id}
+                    onChange={(next) => (setOf(draft, item.id) ? moveMember(item.set!, item.id, next) : updateLocalFurniture(next))}
                     onCommit={() => (setOf(draft, item.id) ? commitSet(item.set!) : commitFurniture())} />
                 ))}
                 {draft.lights.map((placement) => (
                   <PlacedLight key={placement.light_id} lights={drawnLights} placement={placement} units={draft.units} selected={selection?.type === 'light' && selection.id === placement.light_id}
                     mountedOn={placement.mount ? draft.furniture.find((item) => item.id === placement.mount!.screen) : undefined}
                     onSelect={() => setSelection({ type: 'light', id: placement.light_id })}
-                    onChange={(next) => (setOf(draft, placement.light_id) ? moveMember(placement.set!, placement, next) : updateLocalLight(next))}
+                    onChange={(next) => (setOf(draft, placement.light_id) ? moveMember(placement.set!, placement.light_id, next) : updateLocalLight(next))}
                     onCommit={(next) => (setOf(draft, placement.light_id) ? commitSet(placement.set!) : saveLight(next))} />
                 ))}
               </g>
