@@ -58,7 +58,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   ...readCachedTheme(),
   reduce_transparency: 'auto',
   room_sliders: true, room_sliders_when_on_only: true, show_light_glow: true, poll_seconds: 5, command_gap_ms: 100, default_units: 'imperial',
-  wake_time: '07:00', bed_time: '23:00',
+  wake_time: '07:00', bed_time: '23:00', eye_sitting: 69, eye_standing: 155, screen_distance: 60,
 };
 
 export const useStore = create<State>((set, get) => ({

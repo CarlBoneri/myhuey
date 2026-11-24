@@ -2,7 +2,7 @@ import type { BridgeInfo } from './lib/setupFlow';
 import { MISSING_LAYOUT, layoutHeaders } from './lib/layout';
 import type { GlareLimits } from './lib/glareLimits';
 import type { Preferences } from './types';
-import type { LayoutSummary, LightGroup } from './types';
+import type { DeskDesign, DeskItem, DeskLight, DeskSetLocal, LayoutSummary, LightGroup } from './types';
 import type { CatalogItem, HueSceneSet, HomePlan, Placement, Opening, ImageLayer, Mood, PaletteEntry, Setup, PinnableRole, ProfileTable, Room, Scene, SceneResult, SetupStatus, Suggestion, RoomLook, Swatch, BridgeLight, Furniture, PhotoSpot, Pt, RefreshPlan } from './types';
 
 export class ApiError extends Error {
@@ -118,7 +118,7 @@ export const api = {
     call<{ results: { light_id: string; label: string; ok: boolean; error?: string }[]; failed: number }>(`${room(name)}/power`, { method: 'POST', json: { on }, activeOnly }),
   placeLight: (name: string, body: {
     light_id: string; x: number; y: number; rotation?: number; length?: number | null; label?: string;
-    elevation?: number | 'auto'; role?: PinnableRole;
+    elevation?: number | 'auto'; role?: PinnableRole; mount?: { screen: string } | null;
   }) =>
     call(`${room(name)}/lights`, { method: 'POST', json: body }),
   removeLight: (name: string, id: string) => call(`${room(name)}/lights/${encodeURIComponent(id)}`, { method: 'DELETE' }),
@@ -171,6 +171,22 @@ export const api = {
     const query = new URLSearchParams(Object.entries(params).filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => [k, String(v)]));
     return call<PaletteEntry[]>(`/api/palettes?${query}`);
   },
+  desks: () => call<DeskDesign[]>('/api/desks'),
+  createDesk: (body: { name: string; items: DeskItem[]; lights: DeskLight[] }) => call<DeskDesign>('/api/desks', { method: 'POST', json: body }),
+  updateDesk: (id: string, changes: { name?: string; items?: DeskItem[]; lights?: DeskLight[] }) =>
+    call<DeskDesign>(`/api/desks/${encodeURIComponent(id)}`, { method: 'PATCH', json: changes }),
+  deleteDesk: (id: string) => call(`/api/desks/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  placeDesk: (room: string, body: { design: string; x: number; y: number; rotation?: number }) =>
+    call<{ set: string; room: Room }>(`/api/rooms/${encodeURIComponent(room)}/desks`, { method: 'POST', json: body }),
+  deskSet: (room: string, set: string) => call<DeskSetLocal>(`/api/rooms/${encodeURIComponent(room)}/sets/${encodeURIComponent(set)}`),
+  moveDeskSet: (room: string, set: string, to: { x: number; y: number; rotation: number }) =>
+    call<Room>(`/api/rooms/${encodeURIComponent(room)}/sets/${encodeURIComponent(set)}`, { method: 'PATCH', json: to }),
+  applyDeskSet: (room: string, set: string, body: { items: DeskItem[]; lights: DeskLight[] }) =>
+    call<Room>(`/api/rooms/${encodeURIComponent(room)}/sets/${encodeURIComponent(set)}`, { method: 'PUT', json: body }),
+  releaseDeskSet: (room: string, set: string) =>
+    call<Room>(`/api/rooms/${encodeURIComponent(room)}/sets/${encodeURIComponent(set)}`, { method: 'DELETE' }),
+  deskFromSet: (room: string, set: string, name: string) =>
+    call<{ design: DeskDesign; skipped: string[] }>(`/api/rooms/${encodeURIComponent(room)}/sets/${encodeURIComponent(set)}/design`, { method: 'POST', json: { name } }),
   groups: () => call<LightGroup[]>('/api/groups'),
   createGroup: (name: string, lights: string[]) => call<LightGroup>('/api/groups', { method: 'POST', json: { name, lights } }),
   updateGroup: (id: string, changes: { name?: string; lights?: string[] }) =>
