@@ -265,3 +265,34 @@ describe('curved screens', () => {
     expect(statuses(room(lamps, [small(3800)]))).toEqual(statuses(room(lamps, [small(null)])));
   });
 });
+
+describe('where you sit and how high your eyes are', () => {
+  const desk: Furniture = { id: 'd', kind: 'desk', label: 'Desk', x: 200, y: 150, width: 140, depth: 70, rotation: 0, shape: 'rect', elevation: 0, height: 75 };
+  const screen = monitor({ x: 200, y: 130, width: 61, depth: 20 });
+  const chair = (more: Partial<Furniture> = {}): Furniture => ({ id: 'c', kind: 'chair', label: 'Chair', x: 200, y: 215, width: 50, depth: 50, rotation: 180, shape: 'rect', elevation: 0, height: 90, seat: 50, ...more });
+
+  it('keeps today\'s seat without a seat chair: 60 cm in front of the screens, eyes 46 + 69', () => {
+    expect(seatOf(room([], [desk, screen]))!.eye).toEqual([200, 190, 115]);
+  });
+  it('puts the eyes over the chair marked as your seat, at its seat height plus your sitting eye height', () => {
+    const seat = seatOf(room([], [desk, screen, chair(), chair({ id: 'plain', x: 350, y: 350, seat: null })]))!;
+    expect(seat.eye).toEqual([200, 215, 119]);
+    expect(seat.target.slice(0, 2)).toEqual([200, 130]);
+  });
+  it('looks the way a seat chair faces when it is alone', () => {
+    const seat = seatOf(room([], [chair({ x: 100, y: 100, rotation: 0, seat: 46 })]))!;
+    expect(seat.eye).toEqual([100, 100, 115]);
+    expect(seat.target).toEqual([100, 200, 115]);
+  });
+  it('uses your own numbers', () => {
+    const body = { eye_sitting: 80, eye_standing: 170, screen_distance: 70 };
+    expect(seatOf(room([], [desk, screen]), 'seated', body)!.eye).toEqual([200, 200, 126]);
+    expect(seatOf(room([], [desk, screen]), 'standing', body)!.eye).toEqual([200, 200, 170]);
+  });
+  it('traces a strip mounted on a screen as one bias point behind it', () => {
+    const strip = light('strip', 0, 0, 0, { length: 200, mount: { screen: 'm' }, role: 'bias', x: 200, y: 99, elevation: 95, resolved_elevation: 95 });
+    const scene = glareScene(room([strip], [desk, screen]), 'seated', 'code', () => 200);
+    expect(scene.lights[0].points).toHaveLength(1);
+    expect(traceGlare(scene).lights[0].status).toBe('bias_ok');
+  });
+});

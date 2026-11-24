@@ -5,7 +5,7 @@ import { ArrowUpDown, Box, Maximize2, Minus, Monitor, PanelRightClose, PanelRigh
 import { sendLight, useStore } from '../store';
 import { useUi } from '../uiStore';
 import { quote } from '../lib/commands';
-import { STATUS_LABELS, capText, isDisplay, statusTone } from '../lib/glareMath';
+import { STATUS_LABELS, bodyOf, capText, isDisplay, statusTone } from '../lib/glareMath';
 import { round1 } from '../lib/geometry';
 import { placedProfile } from '../lib/lights';
 import { EYE_SEATED, EYE_STANDING, heightPreset, type HeightPreset } from '../lib/photo';
@@ -66,7 +66,7 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
   /** The designer's own panels (selected light, furniture, room), shown under the 3D cards. */
   children: ReactNode;
 }) {
-  const { lights: liveLights, profiles, toast } = useStore();
+  const { lights: liveLights, profiles, toast, preferences } = useStore();
   const { lights, showing } = useDrawnLights(room.name);
   const { posture, setPosture, glareMode, setGlareMode } = useUi();
   const [sizes, setSizes] = useState(loadSizes);
@@ -256,7 +256,7 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
                       onCommit={(value) => onLightCommit({ ...selectedLight, elevation: Math.round(value), resolved_elevation: Math.round(value) })} />
                     <div className="button-row">
                       {PRESETS.map((preset) => {
-                        const value = heightPreset(preset.id, room, selectedLight);
+                        const value = heightPreset(preset.id, room, selectedLight, bodyOf(preferences));
                         if (preset.id !== 'auto' && value === null) return null;
                         const active = preset.id === 'auto' ? selectedLight.elevation == null : selectedLight.elevation != null && Math.abs(height - (value ?? 0)) < 1;
                         return (

@@ -37,6 +37,11 @@ describe('height presets', () => {
   it('eye level is standing height when the room has a standing desk', () => {
     expect(heightPreset('eye', room(), light(0, 0))).toBe(115);
     expect(heightPreset('eye', room([desk({ kind: 'desk-standing' })]), light(0, 0))).toBe(155);
+    // Your own numbers, and the chair marked as your seat.
+    const body = { eye_sitting: 80, eye_standing: 170, screen_distance: 60 };
+    expect(heightPreset('eye', room(), light(0, 0), body)).toBe(126);
+    expect(heightPreset('eye', room([desk({ kind: 'desk-standing' })]), light(0, 0), body)).toBe(170);
+    expect(heightPreset('eye', room([desk(), desk({ id: 'c', kind: 'chair', seat: 50 })]), light(0, 0))).toBe(119);
   });
 });
 

@@ -4,11 +4,10 @@ import { api } from '../api';
 import { sendLight, useStore } from '../store';
 import { useUi, type Entry } from '../uiStore';
 import { HELP, plan, type Intent, type Snapshot } from './commands';
-import { STATUS_LABELS, summary } from './glareMath';
+import { DEFAULT_SEAT_CM, STATUS_LABELS, bodyOf, seatOf, summary } from './glareMath';
 import { go } from './router';
 import { lightsToDim, roomGlare } from './roomGlare';
 import { STANDING_DESK_CM } from './rig';
-import { EYE_SEATED, EYE_STANDING } from './photo';
 import { THEMES } from './theme';
 import { DEFAULT_TABS, isNarrowWindow, tabsPlaceReply, tabsRailReply } from './tabs';
 import { formatLength } from './units';
@@ -56,8 +55,9 @@ async function execute(intent: Intent): Promise<Outcome> {
       ui.setPosture(intent.posture);
       go({ view: 'design', room: intent.room, tab: '3d' });
       const room = store.rooms.find((item) => item.name === intent.room)!;
-      const eyes = formatLength(intent.posture === 'standing' ? EYE_STANDING : EYE_SEATED, room.units);
-      const { report } = roomGlare(room, intent.posture, ui.glareMode, store.lights, store.profiles);
+      const body = bodyOf(store.preferences);
+      const eyes = formatLength(seatOf(room, intent.posture, body)?.eye[2] ?? (intent.posture === 'standing' ? body.eye_standing : DEFAULT_SEAT_CM + body.eye_sitting), room.units);
+      const { report } = roomGlare(room, intent.posture, ui.glareMode, store.lights, store.profiles, body);
       return {
         output: `${intent.room}: ${intent.posture}, eyes at ${eyes}${intent.posture === 'standing' ? `, sit-stand desks at ${formatLength(STANDING_DESK_CM, room.units)}` : ''} (a preview, not saved) · ${summary(report)}`,
         ok: true,
@@ -68,7 +68,7 @@ async function execute(intent: Intent): Promise<Outcome> {
         return { output: `A scene is being shown for ${intent.room}. Show live first, then fix glare.`, ok: false };
       }
       const room = store.rooms.find((item) => item.name === intent.room)!;
-      const { scene, report } = roomGlare(room, ui.posture, intent.mode, store.lights, store.profiles);
+      const { scene, report } = roomGlare(room, ui.posture, intent.mode, store.lights, store.profiles, bodyOf(store.preferences));
       if (!scene.eye) return { output: `${intent.room}: no desk or screen to check from. Add one in the Studio.`, ok: false };
       const flagged = report.lights.filter((light) => light.cap);
       const names = flagged.map((light) => `${store.lights[light.light_id]?.name ?? light.label} (${STATUS_LABELS[light.status].toLowerCase()})`).join(', ');

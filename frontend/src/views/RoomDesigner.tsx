@@ -24,7 +24,7 @@ import { PlanLightsPanel } from '../components/PlanLightsPanel';
 import { autoRoleLabel, fullStrength, placementNeedsRefresh } from '../lib/suggest';
 import { Studio3D } from '../components/Studio3D';
 import { roomGlare } from '../lib/roomGlare';
-import { isDisplay } from '../lib/glareMath';
+import { bodyOf, isDisplay } from '../lib/glareMath';
 import { DEFAULT_CURVES, legalCurve } from '../lib/screen';
 import { ScreenFields } from '../components/ScreenFields';
 import { useUi } from '../uiStore';
@@ -214,7 +214,8 @@ function PlacedFurniture({ item, selected, onSelect, onChange, onCommit, units }
 }
 
 export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
-  const { rooms, lights, profiles, replaceRoom, refreshRooms } = useStore();
+  const { rooms, lights, profiles, replaceRoom, refreshRooms, preferences } = useStore();
+  const body = useMemo(() => bodyOf(preferences), [preferences]);
   // The rename this designer just sent to the address; until the address catches up, the room is found under its new name.
   const sentRename = useRef<{ from: string; to: string } | null>(null);
   const source = designerRoom(rooms, name, sentRename.current);
@@ -399,8 +400,8 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
   // The 3D view: the room as it stands in the chosen posture, and the glare from its seat.
   // Recomputed from the draft, so it follows a drag without a request.
   const glare = useMemo(
-    () => (draft && tab === '3d' ? roomGlare(draft, posture, glareMode, lights, profiles) : null),
-    [draft, posture, glareMode, lights, profiles, tab],
+    () => (draft && tab === '3d' ? roomGlare(draft, posture, glareMode, lights, profiles, body) : null),
+    [draft, posture, glareMode, lights, profiles, tab, body],
   );
 
   /** After a desk moved with what was on it: save the lights it carried, then the furniture. */

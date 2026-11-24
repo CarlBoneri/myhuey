@@ -3,7 +3,6 @@
 // drag without a request. Plan coordinates: cm, x right, y down, z up; furniture fronts face +y
 // at rotation 0 and turn clockwise, as in roles.py.
 import type { Furniture, Placement, Room } from '../types';
-import { EYE_SEATED, EYE_STANDING } from './photo';
 import { heightOf, type Posture } from './rig';
 import { arcOf, isCurved } from './screen';
 import { add, dot, length, scale, sub, type Vec3 } from './view3d';
@@ -27,7 +26,6 @@ export const DEFAULT_MONITOR_TILT = -12;
 /** A curved screen is traced as this many flat strips along its arc. */
 export const FACETS = 12;
 const SEAM_SHRINK_CM = 0.01;
-const SEAT_FROM_SCREEN_CM = 60;
 const SEAT_FROM_DESK_EDGE_CM = 30;
 const DESKS = ['desk', 'desk-l', 'desk-standing'];
 
@@ -68,8 +66,19 @@ const front = (item: Furniture): [number, number] => [-Math.sin(rad(item.rotatio
 const isMonitor = (item: Furniture) => item.kind.startsWith('monitor');
 export const isDisplay = (item: Furniture) => item.display ?? (isMonitor(item) || item.kind === 'tv');
 
-/** Where the eyes are at the desk and the point they look at, or null without a desk or screen. */
-export function seatOf(room: Room, posture: Posture = 'seated'): { eye: Vec3; target: Vec3 } | null {
+/** The person's own numbers (preferences), the same as src/myhuey/roles.py Body. */
+export interface Body { eye_sitting: number; eye_standing: number; screen_distance: number }
+export const DEFAULT_BODY: Body = { eye_sitting: 69, eye_standing: 155, screen_distance: 60 };
+/** A desk chair's seat when none is marked: 46 + 69 = 115 cm, the seated eye height before seats existed. */
+export const DEFAULT_SEAT_CM = 46;
+export const bodyOf = (prefs: Partial<Body> | null | undefined): Body => ({ ...DEFAULT_BODY, ...(prefs ?? {}) }) as Body;
+
+/**
+ * Where the eyes are at the desk and the point they look at, or null without a desk, screen, or
+ * seat chair. A chair marked as your seat (`seat` set) puts the eyes over it, at its seat height
+ * plus your sitting eye height; without one, the eyes are `screen_distance` in front of the screens.
+ */
+export function seatOf(room: Room, posture: Posture = 'seated', body: Body = DEFAULT_BODY): { eye: Vec3; target: Vec3 } | null {
   const desks = room.furniture.filter((item) => DESKS.includes(item.kind));
   const monitors = room.furniture.filter(isMonitor);
   let desk: Furniture | undefined;
@@ -80,7 +89,10 @@ export function seatOf(room: Room, posture: Posture = 'seated'): { eye: Vec3; ta
     if (!desk || onDesk.length > screens.length) [desk, screens] = [candidate, onDesk];
   }
   if (!desk && monitors.length) screens = monitors;
-  const eyeZ = posture === 'standing' || desk?.kind === 'desk-standing' ? EYE_STANDING : EYE_SEATED;
+  const standing = posture === 'standing' || desk?.kind === 'desk-standing';
+  const chairs = room.furniture.filter((item) => item.seat != null);
+  const eyeAt = (seat: number) => (standing ? body.eye_standing : seat + body.eye_sitting);
+  const eyeZ = eyeAt(DEFAULT_SEAT_CM);
   if (screens.length) {
     const cx = screens.reduce((sum, s) => sum + s.x, 0) / screens.length;
     const cy = screens.reduce((sum, s) => sum + s.y, 0) / screens.length;
@@ -89,7 +101,18 @@ export function seatOf(room: Room, posture: Posture = 'seated'): { eye: Vec3; ta
     const len = Math.hypot(fx, fy);
     const facing: [number, number] = len ? [fx / len, fy / len] : [0, -1];
     const height = screens.reduce((sum, s) => sum + (s.elevation ?? 0) + (s.height ?? 40) / 2, 0) / screens.length;
-    return { eye: [cx + facing[0] * SEAT_FROM_SCREEN_CM, cy + facing[1] * SEAT_FROM_SCREEN_CM, eyeZ], target: [cx, cy, height] };
+    if (chairs.length) {
+      const chair = chairs.reduce((best, c) => (Math.hypot(c.x - cx, c.y - cy) < Math.hypot(best.x - cx, best.y - cy) ? c : best));
+      return { eye: [chair.x, chair.y, eyeAt(chair.seat!)], target: [cx, cy, height] };
+    }
+    return { eye: [cx + facing[0] * body.screen_distance, cy + facing[1] * body.screen_distance, eyeZ], target: [cx, cy, height] };
+  }
+  if (chairs.length) {
+    const near = (c: Furniture) => (desk ? Math.hypot(c.x - desk.x, c.y - desk.y) : 0);
+    const chair = chairs.reduce((best, c) => (near(c) < near(best) ? c : best));
+    const f = front(chair);
+    const z = eyeAt(chair.seat!);
+    return { eye: [chair.x, chair.y, z], target: [chair.x + f[0] * 100, chair.y + f[1] * 100, z] };
   }
   if (!desk) return null;
   const f = front(desk);
@@ -164,8 +187,8 @@ export function displayCorners(display: Display): Vec3[] {
  * Everything the tracer needs, as numbers. `lengthOf` gives a light's physical length when it
  * is a strip, bar, or tube (0 for a bulb); long lights are sampled along their length.
  */
-export function glareScene(room: Room, posture: Posture, mode: string, lengthOf: (light: Placement) => number): GlareScene {
-  const seat = seatOf(room, posture);
+export function glareScene(room: Room, posture: Posture, mode: string, lengthOf: (light: Placement) => number, body: Body = DEFAULT_BODY): GlareScene {
+  const seat = seatOf(room, posture, body);
   return {
     mode,
     eye: seat?.eye ?? null,
@@ -173,7 +196,7 @@ export function glareScene(room: Room, posture: Posture, mode: string, lengthOf:
     displays: room.furniture.filter(isDisplay).flatMap(facetsOf),
     lights: room.lights.map((light) => {
       const z = heightOf(light);
-      const span = lengthOf(light);
+      const span = light.mount ? 0 : lengthOf(light); // a mounted strip is one point behind its screen
       const points: Vec3[] = [];
       if (span > 30) {
         const [ux, uy] = [Math.cos(rad(light.rotation)), Math.sin(rad(light.rotation))];

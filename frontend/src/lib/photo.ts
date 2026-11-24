@@ -1,4 +1,5 @@
 /** Photo helpers: tag keys, height presets, and the glow drawn over a room photo. */
+import { DEFAULT_BODY, DEFAULT_SEAT_CM, type Body } from './glareMath';
 import type { Placement, Pt, Room } from '../types';
 import { bounds, pointInPolygon } from './geometry';
 import { covers } from './rig';
@@ -21,12 +22,16 @@ export const EYE_STANDING = 155;
 
 
 /** The height (cm) a preset means for this light, or null for "auto" (or no desk to use). */
-export function heightPreset(preset: HeightPreset, room: Room, light: Placement): number | null {
+export function heightPreset(preset: HeightPreset, room: Room, light: Placement, body: Body = DEFAULT_BODY): number | null {
   if (preset === 'floor') return 0;
   if (preset === 'ceiling') return room.ceiling;
   if (preset === 'auto') return null;
   const desks = room.furniture.filter((item) => DESKS.includes(item.kind));
-  if (preset === 'eye') return desks.some((item) => item.kind === 'desk-standing') ? EYE_STANDING : EYE_SEATED;
+  if (preset === 'eye') {
+    if (desks.some((item) => item.kind === 'desk-standing')) return body.eye_standing;
+    const chair = room.furniture.find((item) => item.seat != null);
+    return (chair?.seat ?? DEFAULT_SEAT_CM) + body.eye_sitting;
+  }
   if (!desks.length) return null;
   const under = desks.find((item) => covers(item, light.x, light.y));
   const pick = under ?? desks.reduce((best, item) =>
