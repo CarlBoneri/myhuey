@@ -2,6 +2,7 @@
 import { useId } from 'react';
 import type { Furniture, Opening, Profile, Pt } from '../types';
 import { openingSegment } from '../lib/plan';
+import { arcOf, isCurved } from '../lib/screen';
 import { renderStops } from '../lib/color';
 import { glowColor as glowTint, glowOpacity } from '../lib/suggest';
 
@@ -83,6 +84,22 @@ export function LightSilhouette({
   );
 }
 
+/**
+ * A curved screen on the plan, in the piece's own frame (body centered on the origin, front toward
+ * +y): the band between its front face (radius R) and back (R + depth), both bent around an axis R
+ * in front of the panel's middle, and the front arc alone for the screen line.
+ */
+function screenArc(item: Furniture): { band: string; front: string } {
+  const { radius: r, angle } = arcOf(item);
+  const axis = item.depth / 2 + r;
+  const half = angle / 2;
+  const large = angle > Math.PI ? 1 : 0;
+  const at = (radius: number, phi: number) => `${(radius * Math.sin(phi)).toFixed(2)},${(axis - radius * Math.cos(phi)).toFixed(2)}`;
+  const back = r + item.depth;
+  const front = `M ${at(r, -half)} A ${r} ${r} 0 ${large} 1 ${at(r, half)}`;
+  return { front, band: `${front} L ${at(back, half)} A ${back} ${back} 0 ${large} 0 ${at(back, -half)} Z` };
+}
+
 /** A piece of furniture centered on (0, 0); width runs along x and depth along y. */
 export function FurnitureShape({ item, selected, cmPerPx }: { item: Furniture; selected?: boolean; cmPerPx: number }) {
   const { width: w, depth: d } = item;
@@ -109,7 +126,9 @@ export function FurnitureShape({ item, selected, cmPerPx }: { item: Furniture; s
       case 'monitor-24':
       case 'monitor-27':
       case 'monitor-34':
+      case 'monitor-49':
         // The screen faces +y (toward the viewer's chair); its stand sits behind.
+        if (isCurved(item)) return <path d={screenArc(item).front} fill="none" stroke="var(--accent-2)" strokeWidth={2 * cmPerPx} />;
         return <line x1={-w / 2 + 2} x2={w / 2 - 2} y1={d / 2 - 2} y2={d / 2 - 2} stroke="var(--accent-2)" strokeWidth={2 * cmPerPx} />;
       default:
         return null;
@@ -119,6 +138,8 @@ export function FurnitureShape({ item, selected, cmPerPx }: { item: Furniture; s
     <g>
       {item.shape === 'ellipse' ? (
         <ellipse rx={w / 2} ry={d / 2} className={`furniture furniture-${item.kind}`} stroke={stroke} strokeWidth={strokeWidth} />
+      ) : isCurved(item) ? (
+        <path d={screenArc(item).band} className={`furniture furniture-${item.kind} furniture-screen-arc`} stroke={stroke} strokeWidth={strokeWidth} />
       ) : (
         <rect x={-w / 2} y={-d / 2} width={w} height={d} rx={Math.min(w, d) * 0.08} className={`furniture furniture-${item.kind}`} stroke={stroke} strokeWidth={strokeWidth} />
       )}
