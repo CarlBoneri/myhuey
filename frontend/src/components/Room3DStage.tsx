@@ -293,12 +293,14 @@ export function Room3DStage({ room, posed, view, selection, onSelect, onLight, o
               onPointerLeave: () => setHover(''),
             };
             if (isDisplay(item)) {
-              const display = scene.displays.find((d) => d.id === item.id);
-              if (!display) return null;
-              const front = display.normal[0] * (camera.eye[0] - display.center[0]) + display.normal[1] * (camera.eye[1] - display.center[1]) + display.normal[2] * (camera.eye[2] - display.center[2]) > 0;
+              // A curved screen is its strips; each one shows its face or its back on its own.
+              const faces = scene.displays.filter((d) => d.id === item.id);
+              if (!faces.length) return null;
+              const facing = (d: (typeof faces)[number]) =>
+                d.normal[0] * (camera.eye[0] - d.center[0]) + d.normal[1] * (camera.eye[1] - d.center[1]) + d.normal[2] * (camera.eye[2] - d.center[2]) > 0;
               return (
-                <g key={item.id} className={`v3-solid v3-screen${front ? ' front' : ''}${selected ? ' selected' : ''}`} {...handlers}>
-                  <polygon points={points(poly(displayCorners(display)))} />
+                <g key={item.id} data-screen={item.id} className={`v3-solid v3-screen${selected ? ' selected' : ''}`} {...handlers}>
+                  {faces.map((d) => <polygon key={d.facet} className={facing(d) ? 'front' : undefined} points={points(poly(displayCorners(d)))} />)}
                 </g>
               );
             }

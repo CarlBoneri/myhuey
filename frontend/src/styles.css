@@ -1131,7 +1131,7 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .v3-solid.flat polygon { fill-opacity: 0.5; }
 .v3-solid.selected polygon { stroke: var(--accent); stroke-width: 2; }
 .v3-screen polygon { fill: color-mix(in srgb, var(--text-3) 35%, var(--stage)); stroke: var(--text-3); stroke-width: 1.5; }
-.v3-screen.front polygon { fill: color-mix(in srgb, var(--accent) 22%, #05060a); stroke: var(--accent); }
+.v3-screen polygon.front { fill: color-mix(in srgb, var(--accent) 22%, #05060a); stroke: var(--accent); }
 .v3-light { cursor: pointer; }
 .v3-drop { stroke: var(--text-3); stroke-width: 1; stroke-dasharray: 3 3; stroke-opacity: 0.6; }
 .v3-foot { fill: var(--text-3); }
