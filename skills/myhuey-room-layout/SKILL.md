@@ -45,7 +45,9 @@ You never make the sandbox active; the person does that in the app once they lik
    desk. Two 27-inch monitors side by side sit about 66 cm apart, centre to centre. A screen
    takes `curve` (the R-rating in mm, such as 1000 for 1000R; "monitor-49" comes at 1000) and
    `tilt` (degrees, negative leans back, -45 to 45). Portrait is `height` above `width`, and a
-   portrait screen cannot be curved.
+   portrait screen cannot be curved. A chair with `seat` (its seat height in cm) is where the
+   person sits: the eyes go over it. `desk_designs` lists saved desk designs and `place_desk` puts
+   a copy in the sandbox room as a locked desk set (desk, screens, chair, and planned lights together).
 6. **Lights.** `place_light` with `layout`, `room`, `x`, `y`, and exactly one of `light_id` (a
    paired light from `list_lights`) or `catalog` (a planned light, such as "gradient-strip",
    "play-bar", "floor-lamp", "table-lamp", "desk-lamp", "ceiling"). Optional: `rotation`,

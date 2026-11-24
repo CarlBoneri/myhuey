@@ -26,7 +26,7 @@ from .hue_scenes import hue_scene
 from .setups import generate_setups
 from .refresh import arrival_spots, fingerprint, plan_refresh
 from .models import Furniture, HomePlan, LayoutLight, Opening, Room, RoomPhoto, floor_transform, new_id, opening_fits, reanchor_openings, validate_outline
-from .desks import move_set, release_set, settle
+from .desks import apply_local, clean_design, move_set, release_set, settle, stamp, to_local
 from .preferences import chosen as chosen_preferences, merged as merged_preferences, validate as validate_preferences
 from .scenes import Scene, evaluate
 from .suggest import suggest as suggest_scenes
@@ -747,6 +747,81 @@ class HueRoomService:
         room_data.update(room.to_dict())
         self._save(config)
         return next(item for item in room.lights if item.light_id == light_id)
+
+    # Desk designs: app-wide (outside the layout keys, like groups), so every layout can place them.
+
+    def _desks(self, config: dict[str, Any]) -> list[dict[str, Any]]:
+        desks = config.get("desks")
+        if not isinstance(desks, list):
+            desks = config["desks"] = []
+        return desks
+
+    def _desk(self, config: dict[str, Any], key: str) -> dict[str, Any]:
+        text = str(key or "").strip()
+        for design in self._desks(config):
+            if design.get("id") == text or str(design.get("name", "")).casefold() == text.casefold():
+                return design
+        raise ValueError(f"There is no desk design '{text}'")
+
+    def _check_desk_name(self, config: dict[str, Any], name: str, own_id: str | None = None) -> None:
+        if any(d.get("id") != own_id and str(d.get("name", "")).casefold() == name.casefold() for d in self._desks(config)):
+            raise ValueError(f"A desk design named '{name}' already exists")
+
+    def desks(self) -> list[dict[str, Any]]:
+        return [dict(design) for design in self._desks(self._load())]
+
+    def create_desk(self, name: str, items: list[dict], lights: list[dict] | None = None) -> dict[str, Any]:
+        """Save a new desk design (pieces and catalog lights in desk-local cm)."""
+        config = self._load()
+        name, items, lights = clean_design(name, items, lights or [])
+        self._check_desk_name(config, name)
+        design = {"id": new_id(), "name": name, "items": items, "lights": lights}
+        self._desks(config).append(design)
+        self._save(config)
+        return dict(design)
+
+    def update_desk(self, key: str, *, name: str | None = None, items: list[dict] | None = None,
+                    lights: list[dict] | None = None) -> dict[str, Any]:
+        config = self._load()
+        design = self._desk(config, key)
+        cleaned_name, cleaned_items, cleaned_lights = clean_design(
+            design["name"] if name is None else name, design["items"] if items is None else items,
+            design["lights"] if lights is None else lights)
+        self._check_desk_name(config, cleaned_name, design["id"])
+        design.update(name=cleaned_name, items=cleaned_items, lights=cleaned_lights)
+        self._save(config)
+        return dict(design)
+
+    def delete_desk(self, key: str) -> None:
+        """Remove a design from the library. Desk sets already placed from it stay as they are."""
+        config = self._load()
+        design = self._desk(config, key)
+        config["desks"] = [d for d in self._desks(config) if d is not design]
+        self._save(config)
+
+    def place_desk(self, room_name: str, design_key: str, *, x: float, y: float, rotation: float = 0) -> dict[str, Any]:
+        """Stamp a copy of a design into a room as a locked desk set; returns the set id and the room."""
+        design = self._desk(self._load(), design_key)
+        set_id = new_id()
+        room = self._change_room(room_name, lambda room: stamp(room, set_id, design["name"], design["items"], design["lights"],
+                                                                x=x, y=y, rotation=rotation))
+        return {"set": set_id, "room": room}
+
+    def desk_set_local(self, room_name: str, set_id: str) -> dict[str, Any]:
+        """A placed desk set in desk-local coordinates, for editing it in the desk designer."""
+        return to_local(self.get_room(room_name), set_id)
+
+    def apply_desk_set(self, room_name: str, set_id: str, items: list[dict], lights: list[dict]) -> Room:
+        """Replace a placed set with its edited local version, where it stands."""
+        return self._change_room(room_name, lambda room: apply_local(room, set_id, items, lights))
+
+    def desk_from_set(self, room_name: str, set_id: str, name: str) -> dict[str, Any]:
+        """Save a placed set as a new design. Real lights become their catalog kind; one with none is left out."""
+        local = to_local(self.get_room(room_name), set_id)
+        skipped = [light["label"] for light in local["lights"] if not light["catalog"]]
+        lights = [{k: v for k, v in light.items() if k not in ("light_id", "planned")} for light in local["lights"] if light["catalog"]]
+        items = [{k: v for k, v in item.items() if k != "id"} for item in local["items"]]
+        return {"design": self.create_desk(name, items, lights), "skipped": skipped}
 
     def move_desk_set(self, room_name: str, set_id: str, *, x: float, y: float, rotation: float) -> Room:
         """Move and turn a desk set as one piece: its base lands at (x, y), turned to `rotation`."""

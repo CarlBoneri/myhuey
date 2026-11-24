@@ -119,8 +119,8 @@ class LayoutMiddleware:
 
     async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
         path = scope.get("path", "") if scope["type"] == "http" else ""
-        # Layouts and light groups are app-wide: a stale or deleted sandbox never blocks them.
-        if not path.startswith("/api/") or path.startswith(("/api/layouts", "/api/groups")):
+        # Layouts, light groups, and desk designs are app-wide: a stale or deleted sandbox never blocks them.
+        if not path.startswith("/api/") or path.startswith(("/api/layouts", "/api/groups", "/api/desks")):
             await self.app(scope, receive, send)
             return
         named = dict(scope.get("headers") or []).get(b"x-myhuey-layout", b"").decode("latin-1").strip()
@@ -180,6 +180,28 @@ class SetMove(Body):
     x: float = Field(..., ge=-10000, le=10000)
     y: float = Field(..., ge=-10000, le=10000)
     rotation: float = 0
+
+
+class DeskDesignBody(Body):
+    name: str | None = Field(None, max_length=80)
+    items: list[dict[str, Any]] | None = Field(None, max_length=60)
+    lights: list[dict[str, Any]] | None = Field(None, max_length=40)
+
+
+class DeskPlacement(Body):
+    design: str = Field(..., min_length=1, max_length=80)
+    x: float = Field(..., ge=-10000, le=10000)
+    y: float = Field(..., ge=-10000, le=10000)
+    rotation: float = 0
+
+
+class DeskSetBody(Body):
+    items: list[dict[str, Any]] = Field(..., max_length=60)
+    lights: list[dict[str, Any]] = Field(default_factory=list, max_length=40)
+
+
+class DeskName(Body):
+    name: str = Field(..., min_length=1, max_length=80)
 
 
 class LightPlacement(Body):
@@ -452,6 +474,40 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
             mount=(body.mount.model_dump() if body.mount else None) if "mount" in body.model_fields_set else "keep",
         )
         return light.to_dict()
+
+    @app.get("/api/desks")
+    def list_desks() -> list[dict[str, Any]]:
+        return service.desks()
+
+    @app.post("/api/desks")
+    def create_desk(body: DeskDesignBody) -> dict[str, Any]:
+        return service.create_desk(body.name or "", body.items or [], body.lights or [])
+
+    @app.patch("/api/desks/{desk_id}")
+    def update_desk(desk_id: str, body: DeskDesignBody) -> dict[str, Any]:
+        return service.update_desk(desk_id, name=body.name, items=body.items, lights=body.lights)
+
+    @app.delete("/api/desks/{desk_id}")
+    def delete_desk(desk_id: str) -> dict[str, str]:
+        service.delete_desk(desk_id)
+        return {"deleted": desk_id}
+
+    @app.post("/api/rooms/{room_name}/desks")
+    def place_desk(room_name: str, body: DeskPlacement) -> dict[str, Any]:
+        out = service.place_desk(room_name, body.design, x=body.x, y=body.y, rotation=body.rotation)
+        return {"set": out["set"], "room": room_json(out["room"])}
+
+    @app.get("/api/rooms/{room_name}/sets/{set_id}")
+    def desk_set_local(room_name: str, set_id: str) -> dict[str, Any]:
+        return service.desk_set_local(room_name, set_id)
+
+    @app.put("/api/rooms/{room_name}/sets/{set_id}")
+    def apply_desk_set(room_name: str, set_id: str, body: DeskSetBody) -> dict[str, Any]:
+        return room_json(service.apply_desk_set(room_name, set_id, body.items, body.lights))
+
+    @app.post("/api/rooms/{room_name}/sets/{set_id}/design")
+    def desk_from_set(room_name: str, set_id: str, body: DeskName) -> dict[str, Any]:
+        return service.desk_from_set(room_name, set_id, body.name)
 
     @app.patch("/api/rooms/{room_name}/sets/{set_id}")
     def move_desk_set(room_name: str, set_id: str, body: SetMove) -> dict[str, Any]:

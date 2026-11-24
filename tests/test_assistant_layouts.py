@@ -4,7 +4,7 @@ import pytest
 import requests
 
 from myhuey.assistant import (
-    WRITES_LAYOUT, Refused, add_room, check_layout, create_sandbox, get_room, open_in_app, place_light,
+    WRITES_LAYOUT, Refused, add_room, check_layout, create_sandbox, get_room, open_in_app, place_desk, place_light,
     remove_light, remove_room, set_furniture, set_openings, update_room,
 )
 from myhuey.errors import RoomNotFound
@@ -79,6 +79,8 @@ def test_the_refusal_says_what_to_do(service):
 
 def _writers(service, box):
     id_ = box["id"]
+    if not service.desks():
+        service.create_desk("Plain desk", [{"kind": "desk"}])
     return {
         "add_room": lambda: add_room(service, id_, "New", width=300, depth=300, ceiling=260),
         "update_room": lambda: update_room(service, id_, "Den", ceiling=260),
@@ -87,6 +89,7 @@ def _writers(service, box):
         "set_furniture": lambda: set_furniture(service, id_, "Den", []),
         "place_light": lambda: place_light(service, id_, "Den", 10, 10, catalog="go", length=50),
         "remove_light": lambda: remove_light(service, id_, "Den", "1"),
+        "place_desk": lambda: place_desk(service, id_, "Den", "Plain desk", 10, 10),
     }
 
 
@@ -157,7 +160,7 @@ def test_a_plain_layout_naming_the_active_one_still_reads_the_active_home(servic
 
 
 def test_every_writer_is_listed():
-    assert WRITES_LAYOUT == ("add_room", "update_room", "remove_room", "set_openings", "set_furniture", "place_light", "remove_light")
+    assert WRITES_LAYOUT == ("add_room", "update_room", "remove_room", "set_openings", "set_furniture", "place_light", "remove_light", "place_desk")
 
 
 # Review Focus 4
