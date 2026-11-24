@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Furniture, Placement, Room } from '../types';
-import { blocked, capText, dimTo, displayOf, glareScene, seatOf, summary, traceGlare, type GlareStatus } from './glareMath';
+import { blocked, capText, dimTo, displayOf, FACETS, facetsOf, glareScene, seatOf, summary, traceGlare, type GlareStatus } from './glareMath';
 import { moveRig, posedRoom, riders } from './rig';
 
 // One upright screen, so the numbers can be checked by hand: the screen plane is y = 101, its
@@ -162,4 +162,80 @@ describe('flat screens stay as they were', () => {
       expect(trace(r)).toMatchSnapshot();
     });
   }
+});
+
+// The Samsung Odyssey G9, 49" 1000R, upright, in the same spot as the 27" above. Its front-face
+// middle is (200, 101, 91.85) and its center of curvature 100 cm in front: (200, 201). The eye is
+// at (200, 160, 115), inside that radius, which shapes everything below: the wings face you, so
+// side lamps bounce away, and lamps behind the seat spread across the whole curve.
+// Coordinates were chosen with a scratch model of the same geometry.
+describe('curved screens', () => {
+  const g9 = (more: Partial<Furniture> = {}) => monitor({ id: 'g9', kind: 'monitor-49', width: 119.8, height: 33.7, curve: 1000, ...more });
+  const edge = (d: ReturnType<typeof facetsOf>[number], side: 1 | -1) =>
+    [0, 1, 2].map((i) => d.center[i] + side * d.u[i] * (d.width / 2));
+
+  it('splits a curved screen into facets and leaves a flat one whole', () => {
+    expect(facetsOf(g9())).toHaveLength(FACETS);
+    expect(facetsOf(g9({ curve: null }))).toHaveLength(1);
+    expect(facetsOf(g9({ width: 33.6, height: 59.8 }))).toHaveLength(1); // portrait is never curved
+  });
+  it('points every facet at the axis of curvature', () => {
+    for (const f of facetsOf(g9())) {
+      const [cx, cy] = [200 - f.center[0], 201 - f.center[1]];
+      expect(Math.abs(f.normal[0] * cy - f.normal[1] * cx)).toBeLessThan(0.5); // on the line
+      expect(f.normal[0] * cx + f.normal[1] * cy).toBeGreaterThan(0); // facing it
+    }
+    const facets = facetsOf(g9());
+    // Each strip spans 1.198 / 12 rad, so the outer ones turn in by 0.549 rad toward the middle.
+    expect(facets[0].normal[0]).toBeCloseTo(Math.sin(0.549), 2);
+    expect(facets[11].normal[0]).toBeCloseTo(-Math.sin(0.549), 2);
+    expect(facets[0].width).toBeCloseTo(9.98, 2); // the chord of one strip
+  });
+  it('tiles the arc edge to edge, wing tip to wing tip', () => {
+    const facets = facetsOf(g9());
+    for (let i = 0; i + 1 < facets.length; i++) {
+      edge(facets[i], 1).forEach((value, axis) => expect(value).toBeCloseTo(edge(facets[i + 1], -1)[axis], 2));
+    }
+    const [tipX, tipY] = edge(facets[0], -1);
+    expect(tipX).toBeCloseTo(143.6, 1);
+    expect(tipY).toBeCloseTo(118.4, 1);
+  });
+  it('keeps the 8 cm margin for the outer edges only', () => {
+    const facets = facetsOf(g9());
+    const half = facets[0].width / 2;
+    expect([facets[0].uMin, facets[0].uMax]).toEqual([-half - 8, half]);
+    expect([facets[11].uMin, facets[11].uMax]).toEqual([-half, half + 8]);
+    expect([facets[5].uMin, facets[5].uMax]).toEqual([-half, half]);
+  });
+  it('lets a side lamp that a flat screen would show bounce away from the eye', () => {
+    const side = light('side', 330, 170, 105);
+    expect(statuses(room([side], [g9({ curve: null })]))).toEqual({ side: 'screen_reflection' });
+    expect(statuses(room([side], [g9()])).side).not.toBe('screen_reflection');
+  });
+  it('flags a lamp behind the seat once, though it spreads across the curve', () => {
+    const report = trace(room([light('back', 200, 300, 115)], [g9()]));
+    expect(report.lights[0].status).toBe('screen_reflection');
+    expect(report.lights[0].hazards).toHaveLength(1);
+    expect(report.lights[0].hazards[0].display).toBe('g9');
+  });
+  it('counts a bounce on the seam between the middle facets once', () => {
+    const report = trace(room([light('seam', 200, 150, 115)], [g9()]));
+    expect(report.lights[0].status).toBe('screen_reflection');
+    expect(report.lights[0].hazards).toHaveLength(1);
+  });
+  it('lets one wing shade the other', () => {
+    // From an eye off to the right and close in, a lamp beside the left tip would bounce off the
+    // right wing, but the way there runs behind the left half of the panel.
+    const r = room([light('beside', 140, 114, 92)], [g9()]);
+    const scene = { ...glareScene(r, 'seated', 'code', lengthOf), eye: [250, 125, 95] as [number, number, number] };
+    expect(traceGlare(scene).lights[0].hazards.filter((h) => h.kind === 'screen_reflection')).toEqual([]);
+  });
+  it('hides a lamp behind the curved panel from view, and calls one just behind it a bias light', () => {
+    expect(statuses(room([light('hidden', 200, 60, 92), light('halo', 200, 90, 92)], [g9()]))).toEqual({ hidden: 'clear', halo: 'bias_ok' });
+  });
+  it('traces a gently curved 24-inch like a flat one', () => {
+    const lamps = [light('back', 200, 300, 115), light('behind_left', 160, 320, 120), light('ceiling', 200, 300, 240), light('side', 330, 60, 130), light('halo', 200, 90, 95)];
+    const small = (curve: number | null) => monitor({ id: 's', kind: 'monitor-24', width: 53.1, height: 29.9, curve });
+    expect(statuses(room(lamps, [small(3800)]))).toEqual(statuses(room(lamps, [small(null)])));
+  });
 });
