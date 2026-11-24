@@ -5,10 +5,11 @@ import { ArrowUpDown, Box, Maximize2, Minus, Monitor, PanelRightClose, PanelRigh
 import { sendLight, useStore } from '../store';
 import { useUi } from '../uiStore';
 import { quote } from '../lib/commands';
-import { STATUS_LABELS, bodyOf, capText, isDisplay, statusTone } from '../lib/glareMath';
+import { DEFAULT_SEAT_CM, STATUS_LABELS, bodyOf, capText, isDisplay, seatOf, statusTone, type Body } from '../lib/glareMath';
 import { round1 } from '../lib/geometry';
 import { placedProfile } from '../lib/lights';
-import { EYE_SEATED, EYE_STANDING, heightPreset, type HeightPreset } from '../lib/photo';
+import { heightPreset, type HeightPreset } from '../lib/photo';
+import { EyeFields } from './EyeFields';
 import { STANDING_DESK_CM, heightOf, type Posture } from '../lib/rig';
 import { fixGlareState, useDrawnLights, shownLevels, glareBadge } from '../lib/shownLights';
 import { overLimit } from '../lib/glareLimits';
@@ -58,6 +59,14 @@ function PaneHead({ label, collapsed, onToggle, command, children }: { label: st
   );
 }
 
+/** "Seated · eyes 3'9"", with the seat and your sitting eye height when a chair is marked as your seat. */
+function seatedLabel(room: Room, body: Body): string {
+  const chair = room.furniture.find((item) => item.seat != null);
+  const eye = seatOf(room, 'seated', body)?.eye[2] ?? DEFAULT_SEAT_CM + body.eye_sitting;
+  const parts = chair ? ` (seat ${formatLength(chair.seat!, room.units)} + ${formatLength(body.eye_sitting, room.units)})` : '';
+  return `Seated · eyes ${formatLength(eye, room.units)}${parts}`;
+}
+
 export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCommit, onRoom, onRigCommit, children }: {
   room: Room; glare: RoomGlare;
   selection: Selection3D; onSelect: (selection: Selection3D) => void;
@@ -66,7 +75,7 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
   /** The designer's own panels (selected light, furniture, room), shown under the 3D cards. */
   children: ReactNode;
 }) {
-  const { lights: liveLights, profiles, toast, preferences } = useStore();
+  const { lights: liveLights, profiles, toast, preferences, setPreferences } = useStore();
   const { lights, showing } = useDrawnLights(room.name);
   const { posture, setPosture, glareMode, setGlareMode } = useUi();
   const [sizes, setSizes] = useState(loadSizes);
@@ -279,9 +288,10 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
 
             <Panel title="Posture">
               <Segmented<Posture> label="Posture" value={posture} onChange={setPosture} options={[
-                { value: 'seated', label: `Seated · eyes ${formatLength(EYE_SEATED, room.units)}` },
-                { value: 'standing', label: `Standing · eyes ${formatLength(EYE_STANDING, room.units)}` },
+                { value: 'seated', label: seatedLabel(room, bodyOf(preferences)) },
+                { value: 'standing', label: `Standing · eyes ${formatLength(bodyOf(preferences).eye_standing, room.units)}` },
               ]} />
+              <EyeFields eyes={bodyOf(preferences)} units={room.units} onChange={(changes) => void setPreferences(changes)} />
               <p className="hint">Standing is a preview: it raises your eyes and lifts sit-stand desks to {formatLength(STANDING_DESK_CM, room.units)}, with the screens and lights on them. Nothing is saved.</p>
             </Panel>
 

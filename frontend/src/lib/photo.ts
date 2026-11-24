@@ -17,8 +17,6 @@ export function parseTag(key: string): { kind: TagKind; id: string } | null {
 }
 
 const DESKS = ['desk', 'desk-l', 'desk-standing'];
-export const EYE_SEATED = 115;
-export const EYE_STANDING = 155;
 
 
 /** The height (cm) a preset means for this light, or null for "auto" (or no desk to use). */

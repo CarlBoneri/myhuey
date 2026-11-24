@@ -1,3 +1,4 @@
+import { EyeFields } from '../components/EyeFields';
 import { useEffect, useState } from 'react';
 import { Copy, Link2, Search } from 'lucide-react';
 import { api } from '../api';
@@ -196,6 +197,9 @@ function PreferencesPanel() {
         <TimeSelect label="Bedtime" value={p.bed_time} onChange={(bed_time) => set({ bed_time })} />
       </PreferenceRow>
       {scheduleNote && <p className="warn-text" role="status">{scheduleNote}</p>}
+      <h3 className="pref-group">You</h3>
+      <p className="hint">Where your eyes are, for the glare check, the seat view, and light roles.</p>
+      <EyeFields eyes={p} units={p.default_units} onChange={set} />
       <h3 className="pref-group">Bridge</h3>
       <PreferenceRow label="Refresh light states" hint="How often this page reads the lights while it is open.">
         {choice('poll_seconds', [2, 5, 10, 30, 0], (v) => (v ? `${v}s` : 'Off'))}
