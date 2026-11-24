@@ -8,6 +8,13 @@ export const splitAfterDrag = (startSplit: number, startY: number, y: number, he
 export const inspectorAfterDrag = (startWidth: number, startX: number, x: number) =>
   clamp(startWidth + (startX - x), [280, 680]);
 
+/** How wide a side column of panels can be (px). */
+export const SIDEBAR_WIDTH = { min: 280, max: 760, initial: 360 };
+
+/** A sidebar's width after dragging its bar: sidebars sit on the right, so moving left widens them. */
+export const sidebarAfterDrag = (startWidth: number, startX: number, x: number) =>
+  clamp(startWidth + (startX - x), [SIDEBAR_WIDTH.min, SIDEBAR_WIDTH.max]);
+
 /** Folding the glare table in a narrow window leaves the 3D view in a long column: bring it to the top. Unfolding, or a wide window, scrolls nothing. */
 export const shouldScrollOnFold = (folding: boolean, narrow: boolean) => folding && narrow;
 

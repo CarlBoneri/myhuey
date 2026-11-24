@@ -1,7 +1,10 @@
-import { Children, createContext, isValidElement, useContext, useEffect, useId, useRef, useState, type ReactNode, type CSSProperties, type InputHTMLAttributes } from 'react';
+import { Children, createContext, isValidElement, useContext, useEffect, useId, useRef, useState, type ReactNode, type CSSProperties, type InputHTMLAttributes, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import { useUi } from '../uiStore';
 import type { Units } from '../types';
 import { formatLength, parseLength } from '../lib/units';
+import { SIDEBAR_WIDTH, sidebarAfterDrag } from '../lib/paneDrag';
+import { isMac, isResizePress } from '../lib/pointer';
+import { clamp } from '../lib/view3d';
 import { HUE_ICONS } from './hueIcons';
 
 export function HueIcon({ name, size = 20, className }: { name: string; size?: number; className?: string }) {
@@ -24,12 +27,43 @@ function textOf(node: ReactNode): string {
 /** Inside a sidebar, panels fold. The sidebar knows its panels so one Alt-click can fold or open them all. */
 const SidebarContext = createContext<{ name: string; keys: Set<string> } | null>(null);
 
-/** A side column of panels that fold away, like the tool windows of an editor. */
+/**
+ * A side column of panels that fold away, like the tool windows of an editor. Drag the bar on its
+ * left edge (or focus it and use the arrow keys) to make it wider or narrower; double-click the bar
+ * for the usual width. The width is remembered per sidebar.
+ */
 export function Sidebar({ name, children, className = '' }: { name: string; children: ReactNode; className?: string }) {
   const keys = useRef(new Set<string>());
+  const saved = useUi((state) => state.sidebarWidths[name]);
+  const setWidth = useUi((state) => state.setSidebarWidth);
+  const width = saved ?? SIDEBAR_WIDTH.initial;
+  const drag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!isResizePress(event, isMac())) return;
+    const bar = event.currentTarget;
+    // Claim the press: left alone, the browser starts a text selection and cancels the resize.
+    event.preventDefault();
+    bar.setPointerCapture(event.pointerId);
+    const [startX, startWidth] = [event.clientX, width];
+    const move = (e: PointerEvent) => setWidth(name, sidebarAfterDrag(startWidth, startX, e.clientX));
+    const stop = () => { bar.removeEventListener('pointermove', move); bar.removeEventListener('pointerup', stop); bar.removeEventListener('pointercancel', stop); };
+    bar.addEventListener('pointermove', move);
+    bar.addEventListener('pointerup', stop);
+    bar.addEventListener('pointercancel', stop);
+  };
+  const nudge = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    const step = event.key === 'ArrowLeft' ? 16 : event.key === 'ArrowRight' ? -16 : 0;
+    if (!step) return;
+    event.preventDefault();
+    setWidth(name, clamp(width + step, [SIDEBAR_WIDTH.min, SIDEBAR_WIDTH.max]));
+  };
+  const size = { '--side-w': `${width}px` } as CSSProperties;
   return (
     <SidebarContext.Provider value={{ name, keys: keys.current }}>
-      <aside className={`inspector ${className}`}>{children}</aside>
+      <div className="sidebar-grip" role="separator" aria-orientation="vertical" aria-label="Resize the sidebar" tabIndex={0}
+        aria-valuenow={width} aria-valuemin={SIDEBAR_WIDTH.min} aria-valuemax={SIDEBAR_WIDTH.max}
+        title="Drag to resize · double-click to reset" style={size} onPointerDown={drag} onKeyDown={nudge}
+        onDoubleClick={() => setWidth(name, null)}><span /></div>
+      <aside className={`inspector ${className}`} style={size}>{children}</aside>
     </SidebarContext.Provider>
   );
 }

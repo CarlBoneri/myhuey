@@ -530,7 +530,17 @@ a.chrome-button { text-decoration: none; }
 .page-head .title-input:focus-visible { border-bottom: 2px solid var(--accent); padding-bottom: 0; }
 .page-head h1:has(.title-input) { display: flex; align-items: baseline; min-width: 0; max-width: 100%; }
 
-.split { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; flex: 1; min-height: 0; }
+/* The sidebar sets its own width (--side-w, dragged with .sidebar-grip); the grip sits in the gap beside it. */
+.split { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; flex: 1; min-height: 0; position: relative; }
+.split > .inspector { width: var(--side-w, 360px); }
+.sidebar-grip {
+  position: absolute; top: 0; bottom: 0; right: var(--side-w, 360px); width: 16px; z-index: 2;
+  display: grid; place-items: center; cursor: col-resize; touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.sidebar-grip span { width: 4px; height: 64px; border-radius: 999px; background: var(--border-strong); opacity: 0; transition: 0.12s; }
+.split:hover > .sidebar-grip span { opacity: 1; }
+.sidebar-grip:hover span, .sidebar-grip:active span, .sidebar-grip:focus-visible span { opacity: 1; background: var(--accent); }
+.sidebar-grip:focus-visible { outline: none; }
 .stage {
   position: relative; border-radius: var(--radius-xl); overflow: hidden; min-height: 420px;
   background: var(--stage); box-shadow: var(--shadow); border: 1px solid var(--glass-border);
@@ -885,6 +895,8 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
   .studio3d.audit-folded .pane-body.stage { height: clamp(320px, calc(100dvh - 190px), 1200px); }
   .studio3d .pane-body.audit { max-height: 50vh; }
   .split { grid-template-columns: 1fr; }
+  .split > .inspector { width: auto; }
+  .sidebar-grip { display: none; }
   .stage { min-height: 60vh; }
   .page { padding: 16px; height: auto; }
 }
