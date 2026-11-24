@@ -31,4 +31,13 @@ describe('routes', () => {
     ];
     for (const route of routes) expect(parseRoute(href(route))).toEqual(route);
   });
+
+  it('addresses the desk designer, a design in it, and a placed desk set', () => {
+    expect(parseRoute('#/studio/desks')).toEqual({ view: 'desks' });
+    expect(parseRoute('#/studio/desks/abc')).toEqual({ view: 'desks', design: 'abc' });
+    expect(parseRoute('#/studio/room/My%20Office/set/s1')).toEqual({ view: 'desk-set', room: 'My Office', set: 's1' });
+    for (const route of [{ view: 'desks' }, { view: 'desks', design: 'abc' }, { view: 'desk-set', room: 'My Office', set: 's1' }] as Route[]) {
+      expect(parseRoute(href(route))).toEqual(route);
+    }
+  });
 });

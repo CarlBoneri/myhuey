@@ -56,6 +56,9 @@ describe('closing and reopening', () => {
 it('every screen has a tab', () => {
   expect(tabForRoute({ view: 'design', room: 'Office', tab: 'plan' })).toBe('3d');
   expect(tabForRoute({ view: 'studio-room', tab: '3d' })).toBe('3d');
+  expect(tabForRoute({ view: 'desks' })).toBe('desks');
+  expect(tabForRoute({ view: 'desk-set', room: 'Office', set: 's1' })).toBe('desks');
+  expect(normalizeTabs({ order: ['home', 'studio'], closed: [] }).order).toContain('desks');
   expect(tabForRoute({ view: 'studio' })).toBe('studio');
   expect(tabForRoute({ view: 'design', room: 'Office', tab: '3d' })).toBe('3d');
   expect(tabForRoute({ view: 'room', room: 'Office' })).toBe('workbench');

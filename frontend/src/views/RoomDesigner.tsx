@@ -96,7 +96,7 @@ function WallHits({ outline, onPick }: { outline: Pt[]; onPick: (point: Pt) => v
   );
 }
 
-function PlacedLight({ lights, placement, selected, onSelect, onChange, onCommit, units, mountedOn }: {
+export function PlacedLight({ lights, placement, selected, onSelect, onChange, onCommit, units, mountedOn }: {
   lights: Record<string, BridgeLight>; placement: Placement; selected: boolean; onSelect: () => void; onChange: (p: Placement) => void; onCommit: (p: Placement) => void; units: Units;
   /** The screen it is stuck on: drawn as a bar across that screen's back, and it does not drag on its own. */
   mountedOn?: Furniture;
@@ -167,7 +167,7 @@ function PlacedLight({ lights, placement, selected, onSelect, onChange, onCommit
   );
 }
 
-function PlacedFurniture({ item, selected, onSelect, onChange, onCommit, units, locked = false }: {
+export function PlacedFurniture({ item, selected, onSelect, onChange, onCommit, units, locked = false }: {
   item: Furniture; selected: boolean; onSelect: () => void; onChange: (f: Furniture) => void; onCommit: (f: Furniture) => void; units: Units;
   /** In a desk set: its size is changed in the desk designer, so there is no resize handle. */
   locked?: boolean;

@@ -37,7 +37,9 @@ const PRESETS: { label: string; yaw: number; pitch: number }[] = [
 const points = (list: Pt[]) => list.map((p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
 const snap15 = (deg: number, free: boolean) => (free ? Math.round(deg) : Math.round(deg / 15) * 15);
 
-export function Room3DStage({ room, posed, view, selection, onSelect, onLight, onLightCommit, onRoom, onRigCommit, scene, report }: {
+export function Room3DStage({ room, posed, view, selection, onSelect, onLight, onLightCommit, onRoom, onRigCommit, scene, report, preview = false }: {
+  /** The desk designer's bench: lights that are not on the bridge show as lit warm white, so their halos can be seen. */
+  preview?: boolean;
   /** The room as saved, and as it stands in the chosen posture (what is drawn). */
   room: Room; posed: Room;
   /** From outside the room, orbiting; or from the desk seat, looking at the screen. */
@@ -259,7 +261,7 @@ export function Room3DStage({ room, posed, view, selection, onSelect, onLight, o
     return {
       type: 'light' as const, id: placement.light_id, placement, profile, z, live,
       span: profile.linear ? effectiveLength(placement, profile) : 0,
-      colors: placement.planned && !shownPlanned ? null : liveColors(live),
+      colors: preview && !live ? ['#ffe7c4'] : placement.planned && !shownPlanned ? null : liveColors(live),
       level: live?.brightness != null ? Math.round((live.brightness / 254) * 100) : 50,
       depth: depthOf([placement.x, placement.y, z]),
     };
