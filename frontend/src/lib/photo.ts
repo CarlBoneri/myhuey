@@ -1,6 +1,7 @@
 /** Photo helpers: tag keys, height presets, and the glow drawn over a room photo. */
-import type { Furniture, Placement, Pt, Room } from '../types';
+import type { Placement, Pt, Room } from '../types';
 import { bounds, pointInPolygon } from './geometry';
+import { covers } from './rig';
 
 export type TagKind = 'light' | 'furniture' | 'opening';
 export type HeightPreset = 'floor' | 'desk' | 'eye' | 'ceiling' | 'auto';
@@ -18,15 +19,6 @@ const DESKS = ['desk', 'desk-l', 'desk-standing'];
 export const EYE_SEATED = 115;
 export const EYE_STANDING = 155;
 
-function covers(item: Furniture, x: number, y: number): boolean {
-  const angle = (-item.rotation * Math.PI) / 180;
-  const dx = x - item.x;
-  const dy = y - item.y;
-  const lx = dx * Math.cos(angle) - dy * Math.sin(angle);
-  const ly = dx * Math.sin(angle) + dy * Math.cos(angle);
-  if (item.shape === 'ellipse') return (lx / (item.width / 2)) ** 2 + (ly / (item.depth / 2)) ** 2 <= 1;
-  return Math.abs(lx) <= item.width / 2 && Math.abs(ly) <= item.depth / 2;
-}
 
 /** The height (cm) a preset means for this light, or null for "auto" (or no desk to use). */
 export function heightPreset(preset: HeightPreset, room: Room, light: Placement): number | null {

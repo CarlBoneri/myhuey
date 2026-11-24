@@ -84,9 +84,12 @@ export interface Furniture {
   /** cm from the floor to the piece's bottom, and its own height. */
   elevation?: number;
   height?: number;
-  /** Not saved yet: the 3D view treats monitors and TVs as screens, monitors leaning back 12°. */
+  /** The 3D view treats monitors and TVs as screens; not saved. */
   display?: boolean;
-  tilt?: number;
+  /** Degrees a screen leans; negative leans back. Unset: monitors lean back 12°. */
+  tilt?: number | null;
+  /** A screen's curve radius in mm, as printed on the box (1000 = 1000R); unset or null is flat. */
+  curve?: number | null;
 }
 
 export interface Opening {

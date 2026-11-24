@@ -1,5 +1,6 @@
 // What sits on what: the things on a desk move with it, and rise with it when you stand.
 import type { Furniture, Placement, Room } from '../types';
+import { footprintOf } from './screen';
 
 export type Posture = 'seated' | 'standing';
 export const STANDING_DESK_CM = 110;
@@ -15,12 +16,13 @@ export const heightOf = (light: Placement) => light.resolved_elevation ?? light.
 
 /** Whether the point (cm) is on the piece's footprint, honoring rotation and shape. */
 export function covers(item: Furniture, x: number, y: number): boolean {
+  const box = footprintOf(item);
   const angle = rad(-item.rotation);
-  const [dx, dy] = [x - item.x, y - item.y];
+  const [dx, dy] = [x - box.x, y - box.y];
   const lx = dx * Math.cos(angle) - dy * Math.sin(angle);
   const ly = dx * Math.sin(angle) + dy * Math.cos(angle);
-  if (item.shape === 'ellipse') return (lx / (item.width / 2)) ** 2 + (ly / (item.depth / 2)) ** 2 <= 1;
-  return Math.abs(lx) <= item.width / 2 && Math.abs(ly) <= item.depth / 2;
+  if (item.shape === 'ellipse') return (lx / (box.width / 2)) ** 2 + (ly / (box.depth / 2)) ** 2 <= 1;
+  return Math.abs(lx) <= box.width / 2 && Math.abs(ly) <= box.depth / 2;
 }
 
 /** The furniture and lights resting on a piece: over its footprint, at or above its top. */
