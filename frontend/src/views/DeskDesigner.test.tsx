@@ -76,4 +76,15 @@ describe('DeskDesigner', () => {
     fireEvent.click(screen.getByRole('radio', { name: /3D/ }));
     await waitFor(() => expect(container.querySelector('[data-eye]')!.getAttribute('data-eye')!.split(',')[2]).toBe('126'));
   });
+
+  it('shows sizes in your units, and switches between feet and inches and meters', () => {
+    localStorage.clear();
+    useStore.setState({ preferences: { ...useStore.getState().preferences, default_units: 'imperial' } });
+    const { container } = render(<DeskDesigner />);
+    fireEvent.pointerDown(container.querySelector('.placed-furniture')!);
+    const width = () => (screen.getByLabelText('Width') as HTMLInputElement).value;
+    expect(width()).toMatch(/'/); // feet and inches
+    fireEvent.click(screen.getByRole('radio', { name: 'Meters' }));
+    expect(width()).toMatch(/m$/);
+  });
 });

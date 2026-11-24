@@ -17,9 +17,11 @@ import { ScreenFields } from '../components/ScreenFields';
 import { ChairFields, DEFAULT_SEAT_HEIGHT } from '../components/ChairFields';
 import { Field, IconButton, LengthInput, Panel, Segmented, Sidebar, Slider, TextInput } from '../components/ui';
 import { PlacedFurniture, PlacedLight } from './RoomDesigner';
-import type { CatalogItem, DeskDesign, DeskItem, DeskLight, Furniture, Placement, Room } from '../types';
+import type { CatalogItem, DeskDesign, DeskItem, DeskLight, Furniture, Placement, Room, Units } from '../types';
+import { formatLength } from '../lib/units';
 
 const DESK_KINDS = ['desk', 'desk-l', 'desk-standing'];
+const UNITS_KEY = 'myhuey.deskUnits';
 /** Elevation and height for pieces that sit on a desk (src/myhuey/models.py FURNITURE_HEIGHTS). */
 const ON_DESK: Record<string, [number, number]> = {
   'monitor-24': [75, 36], 'monitor-27': [75, 40], 'monitor-34': [75, 37], 'monitor-49': [75, 33.7],
@@ -36,7 +38,7 @@ const blank = (): Draft => ({
 });
 
 /** The design laid on a bench with a wall behind the desk, `gap` cm off its back edge, as a room the plan and 3D can draw. */
-function benchRoom(draft: Draft, gap: number, catalog: CatalogItem[]): Room {
+function benchRoom(draft: Draft, gap: number, catalog: CatalogItem[], units: Units): Room {
   const desk = draft.items.find((item) => DESK_KINDS.includes(item.kind)) ?? draft.items[0];
   const back = -((desk?.depth ?? 70) / 2 + gap);
   const product = (id: string | null) => {
@@ -44,7 +46,7 @@ function benchRoom(draft: Draft, gap: number, catalog: CatalogItem[]): Room {
     return item ? { archetype: item.archetype, productname: item.productname, catalog: item.id } : {};
   };
   return settle({
-    name: draft.name, x: 0, y: 0, units: 'metric', outline: [[-170, back], [170, back], [170, back + 260], [-170, back + 260]], width: 340, height: 260,
+    name: draft.name, x: 0, y: 0, units, outline: [[-170, back], [170, back], [170, back + 260], [-170, back + 260]], width: 340, height: 260,
     ceiling: 250, openings: [], photo: null, desk_sets: [],
     furniture: draft.items.map(({ key, id: _id, ...rest }) => ({ ...rest, id: key, label: rest.label || key }) as Furniture),
     lights: draft.lights.map((light): Placement => ({
@@ -57,6 +59,18 @@ function benchRoom(draft: Draft, gap: number, catalog: CatalogItem[]): Room {
 
 export function DeskDesigner({ design, room, set }: { design?: string; room?: string; set?: string }) {
   const { rooms, replaceRoom, toast, preferences } = useStore();
+  // Feet and inches or meters: your "Units for new rooms" until you switch here; this browser remembers the switch.
+  const [units, setUnitsState] = useState<Units>(() => {
+    try {
+      const saved = localStorage.getItem(UNITS_KEY);
+      if (saved === 'imperial' || saved === 'metric') return saved;
+    } catch { /* storage blocked: use the preference */ }
+    return preferences.default_units;
+  });
+  const setUnits = (next: Units) => {
+    setUnitsState(next);
+    try { localStorage.setItem(UNITS_KEY, next); } catch { /* storage blocked: it lasts until reload */ }
+  };
   const [designs, setDesigns] = useState<DeskDesign[]>([]);
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   const [draft, setDraft] = useState<Draft>(blank);
@@ -77,7 +91,7 @@ export function DeskDesigner({ design, room, set }: { design?: string; room?: st
   }, [design, room, set, editingSet]);
   useEffect(() => { if (!target && rooms.length) setTarget(rooms[0].name); }, [rooms, target]);
 
-  const bench = useMemo(() => benchRoom(draft, gap, catalog), [draft, gap, catalog]);
+  const bench = useMemo(() => benchRoom(draft, gap, catalog, units), [draft, gap, catalog, units]);
   const glare = useMemo(() => {
     const scene = glareScene(bench, 'seated', 'code', () => 0, bodyOf(preferences));
     return { scene, report: traceGlare(scene) };
@@ -174,20 +188,22 @@ export function DeskDesigner({ design, room, set }: { design?: string; room?: st
     <div className="page desk-designer">
       <header className="page-head">
         <h1>~ / studio / desks / <span className="as-typed">{draft.name}</span></h1>
+        <Segmented<Units> label="Units" value={units} onChange={setUnits}
+          options={[{ value: 'imperial', label: 'Feet & inches' }, { value: 'metric', label: 'Meters' }]} />
         <Segmented label="View" value={view} onChange={setView}
           options={[{ value: 'plan', label: <><MapIcon size={14} /> Plan</> }, { value: '3d', label: <><Box size={14} /> 3D</> }]} />
       </header>
       <div className="split">
         <div className="stage">
           {view === 'plan' ? (
-            <PlanCanvas fit={fit} units="metric" onBackgroundPointerDown={() => { setSelected(null); return false; }}>
+            <PlanCanvas fit={fit} units={units} onBackgroundPointerDown={() => { setSelected(null); return false; }}>
               <path d={pathOf(bench.outline)} className="room-floor big" />
               {bench.furniture.map((item) => (
-                <PlacedFurniture key={item.id} item={item} units="metric" selected={selected === item.id} onSelect={() => setSelected(item.id)}
+                <PlacedFurniture key={item.id} item={item} units={units} selected={selected === item.id} onSelect={() => setSelected(item.id)}
                   onChange={changePiece} onCommit={changePiece} />
               ))}
               {bench.lights.map((placement) => (
-                <PlacedLight key={placement.light_id} lights={{}} placement={placement} units="metric" selected={selected === placement.light_id}
+                <PlacedLight key={placement.light_id} lights={{}} placement={placement} units={units} selected={selected === placement.light_id}
                   mountedOn={placement.mount ? bench.furniture.find((item) => item.id === placement.mount!.screen) : undefined}
                   onSelect={() => setSelected(placement.light_id)}
                   onChange={(next) => changeLight({ key: next.light_id, x: next.x, y: next.y, rotation: next.rotation, length: next.length })}
@@ -240,26 +256,26 @@ export function DeskDesigner({ design, room, set }: { design?: string; room?: st
                 <button type="button" className="button" disabled={!target} onClick={() => void place()}>Place in {target || 'a room'}</button>
               </>
             )}
-            <Slider label="Wall behind the desk (preview)" value={gap} min={0} max={150} format={(v) => `${Math.round(v)} cm`} onChange={setGap} />
+            <Slider label="Wall behind the desk (preview)" value={gap} min={0} max={150} format={(v) => formatLength(v, units)} onChange={setGap} />
           </Panel>
 
           {piece && (
             <Panel id="desk-piece" title={piece.label} actions={<IconButton label="Remove from design" danger onClick={() => remove(piece.id)}><Trash2 size={16} /></IconButton>}>
               <div className="field-row">
-                <LengthInput label="Across" value={piece.x} units="metric" onCommit={(x) => changePiece({ ...piece, x: round1(x) })} />
-                <LengthInput label="Front to back" value={piece.y} units="metric" onCommit={(y) => changePiece({ ...piece, y: round1(y) })} />
+                <LengthInput label="Across" value={piece.x} units={units} onCommit={(x) => changePiece({ ...piece, x: round1(x) })} />
+                <LengthInput label="Front to back" value={piece.y} units={units} onCommit={(y) => changePiece({ ...piece, y: round1(y) })} />
               </div>
               <div className="field-row">
-                <LengthInput label="Off the floor" value={piece.elevation ?? 0} units="metric" onCommit={(elevation) => changePiece({ ...piece, elevation: round1(elevation) })} />
-                <LengthInput label="Height" value={piece.height ?? 75} units="metric" onCommit={(height) => changePiece({ ...piece, height: round1(height) })} />
+                <LengthInput label="Off the floor" value={piece.elevation ?? 0} units={units} onCommit={(elevation) => changePiece({ ...piece, elevation: round1(elevation) })} />
+                <LengthInput label="Height" value={piece.height ?? 75} units={units} onCommit={(height) => changePiece({ ...piece, height: round1(height) })} />
               </div>
               <div className="field-row">
-                <LengthInput label="Width" value={piece.width} units="metric" onCommit={(width) => changePiece({ ...piece, width: round1(width) })} />
-                <LengthInput label="Depth" value={piece.depth} units="metric" onCommit={(depth) => changePiece({ ...piece, depth: round1(depth) })} />
+                <LengthInput label="Width" value={piece.width} units={units} onCommit={(width) => changePiece({ ...piece, width: round1(width) })} />
+                <LengthInput label="Depth" value={piece.depth} units={units} onCommit={(depth) => changePiece({ ...piece, depth: round1(depth) })} />
               </div>
               <Slider label="Turn" value={piece.rotation} min={0} max={359} format={(v) => `${Math.round(v)}°`} onChange={(rotation) => changePiece({ ...piece, rotation })} />
               {isDisplay(piece) && <ScreenFields item={piece} onChange={changePiece} />}
-              {piece.kind === 'chair' && <ChairFields item={piece} units="metric" onChange={changePiece} />}
+              {piece.kind === 'chair' && <ChairFields item={piece} units={units} onChange={changePiece} />}
             </Panel>
           )}
           {light && (
@@ -271,9 +287,9 @@ export function DeskDesigner({ design, room, set }: { design?: string; room?: st
                   {screens.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
                 </select>
               </Field>
-              <LengthInput label="Strip length" value={light.length ?? 200} units="metric" onCommit={(length) => changeLight({ key: light.key, length: round1(length) })} />
+              <LengthInput label="Strip length" value={light.length ?? 200} units={units} onCommit={(length) => changeLight({ key: light.key, length: round1(length) })} />
               {!light.mount && (
-                <LengthInput label="Height" value={light.elevation ?? 100} units="metric" onCommit={(elevation) => changeLight({ key: light.key, elevation: round1(elevation) })} />
+                <LengthInput label="Height" value={light.elevation ?? 100} units={units} onCommit={(elevation) => changeLight({ key: light.key, elevation: round1(elevation) })} />
               )}
             </Panel>
           )}
