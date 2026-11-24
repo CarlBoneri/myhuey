@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 
-from .models import Furniture, LayoutLight, Room
+from .models import DEFAULT_CURVES, FURNITURE_SIZES, Furniture, LayoutLight, Room
 
 
 def _front(item: Furniture) -> tuple[float, float]:
@@ -117,7 +117,14 @@ def _clean_items(items: list[dict]) -> list[dict]:
         if key in keys:
             raise ValueError(f"Two pieces share the key '{key}'")
         keys.add(key)
-        piece = Furniture.from_dict({k: v for k, v in raw.items() if k not in _LOCAL_SKIP and k != "key"}).to_dict()
+        data = {k: v for k, v in raw.items() if k not in _LOCAL_SKIP and k != "key"}
+        # Like set_furniture: a catalog piece left without a size takes its catalog size, label, and curve.
+        if data.get("kind") in FURNITURE_SIZES:
+            label, width, depth, shape = FURNITURE_SIZES[data["kind"]]
+            data = {"label": label, "width": width, "depth": depth, "shape": shape, **{k: v for k, v in data.items() if v is not None}}
+            if data["kind"] in DEFAULT_CURVES and "curve" not in raw:
+                data["curve"] = DEFAULT_CURVES[data["kind"]]
+        piece = Furniture.from_dict(data).to_dict()
         cleaned.append({"key": key, **{k: v for k, v in piece.items() if k not in _LOCAL_SKIP}})
     return cleaned
 

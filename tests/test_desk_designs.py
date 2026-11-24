@@ -143,3 +143,9 @@ def test_assistant_places_only_in_a_sandbox(service):
     out = place_desk(service, box["id"], "Den", "Coding desk", x=200, y=300)
     assert len(out["desk_sets"]) == 1
     assert service.get_room("Den").to_dict() == before
+
+
+def test_a_piece_without_a_size_takes_its_catalog_size_and_curve(service):
+    made = service.create_desk("Bare", [{"key": "desk", "kind": "desk"}, {"key": "g9", "kind": "monitor-49", "y": -16}])
+    g9 = made["items"][1]
+    assert (g9["width"], g9["depth"], g9["height"], g9["curve"], g9["label"]) == (119.8, 12.0, 33.7, 1000.0, 'Super ultrawide 49"')
