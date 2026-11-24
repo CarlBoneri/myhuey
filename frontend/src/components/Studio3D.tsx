@@ -62,7 +62,7 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
   room: Room; glare: RoomGlare;
   selection: Selection3D; onSelect: (selection: Selection3D) => void;
   onLight: (placement: Placement) => void; onLightCommit: (placement: Placement) => void;
-  onRoom: (room: Room) => void; onRigCommit: (lightIds: string[]) => void;
+  onRoom: (room: Room) => void; onRigCommit: (lightIds: string[], setId?: string) => void;
   /** The designer's own panels (selected light, furniture, room), shown under the 3D cards. */
   children: ReactNode;
 }) {

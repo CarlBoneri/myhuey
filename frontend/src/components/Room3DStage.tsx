@@ -11,6 +11,7 @@ import { effectiveLength, liveColors, placedProfile } from '../lib/lights';
 import { displayCorners, isDisplay, statusTone, type GlareReport, type GlareScene } from '../lib/glareMath';
 import { covers, heightOf, moveRig, riders, topOf } from '../lib/rig';
 import { haloOf, loopOf } from '../lib/halo';
+import { setOf } from '../lib/desks';
 import {
   PITCH_RANGE, ZOOM_RANGE, centroid, clamp, facesCamera, fitOrbit, floorCircle, floorGrid, lightPool, orbitCamera, prism, project, projectPolygon,
   seatCamera, shade, toView, unprojectToHeight, wallFacing, wallOpacity, walls, zoomAt, type Camera, type Orbit, type Vec3,
@@ -43,7 +44,7 @@ export function Room3DStage({ room, posed, view, selection, onSelect, onLight, o
   view: View3D;
   selection: Selection3D; onSelect: (selection: Selection3D) => void;
   onLight: (placement: Placement) => void; onLightCommit: (placement: Placement) => void;
-  onRoom: (room: Room) => void; onRigCommit: (lightIds: string[]) => void;
+  onRoom: (room: Room) => void; onRigCommit: (lightIds: string[], setId?: string) => void;
   scene: GlareScene; report: GlareReport;
 }) {
   const { profiles } = useStore();
@@ -151,9 +152,17 @@ export function Room3DStage({ room, posed, view, selection, onSelect, onLight, o
 
   const startLight = (event: ReactPointerEvent, id: string) => {
     event.stopPropagation();
+    const start = room.lights.find((l) => l.light_id === id)!;
+    const set = setOf(room, id);
+    if (set) {
+      // A light in a desk set moves the whole set: drag its base.
+      startFurniture(event, set.base);
+      onSelect({ type: 'light', id });
+      return;
+    }
     capture(event);
     onSelect({ type: 'light', id });
-    const start = room.lights.find((l) => l.light_id === id)!;
+    if (start.mount) return; // it sits on its screen's back
     const z = heightOf(posed.lights.find((l) => l.light_id === id)!);
     const [x, y] = at(event);
     const under = unprojectToHeight([x, y], z, camera, viewport, pan) ?? [start.x, start.y];
@@ -220,7 +229,9 @@ export function Room3DStage({ room, posed, view, selection, onSelect, onLight, o
       if (placed) onLightCommit(placed);
     } else if (state.kind === 'furniture' && state.moved) {
       const base = state.start.furniture.find((f) => f.id === state.id);
-      onRigCommit(base ? riders(state.start, base).lights : []);
+      const set = base && setOf(state.start, base.id);
+      if (set) onRigCommit([], set.id); // the server moves the whole set in one call
+      else onRigCommit(base ? riders(state.start, base).lights : []);
     }
   };
 

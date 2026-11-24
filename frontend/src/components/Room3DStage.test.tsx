@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
-import { describe, expect, it } from 'vitest';
-import { render } from '../test/dom';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render } from '../test/dom';
 import { glareScene, traceGlare } from '../lib/glareMath';
 import type { Furniture, Placement, Room } from '../types';
 import { useStore } from '../store';
@@ -50,5 +50,26 @@ describe('Room3DStage mounted bias lights', () => {
     lit(false);
     show();
     expect(document.querySelectorAll('[data-halo]')).toHaveLength(0);
+  });
+});
+
+describe('Room3DStage desk sets', () => {
+  const member = (id: string, kind: string, x: number, more: Partial<Furniture> = {}): Furniture =>
+    ({ id, kind, label: id, x, y: 200, width: 60, depth: 20, rotation: 0, shape: 'rect', elevation: 75, height: 40, set: 's1', ...more });
+  const setRoom = (): Room => ({ ...room([member('d1', 'desk', 200, { width: 140, depth: 70, elevation: 0, height: 75 }), member('m1', 'monitor-27', 200)]),
+    desk_sets: [{ id: 's1', name: 'Desk', base: 'd1' }] });
+  const drag = (target: Element) => {
+    fireEvent.pointerDown(target, { button: 0, clientX: 400, clientY: 300, pointerId: 1 });
+    fireEvent.pointerMove(target, { clientX: 440, clientY: 300, pointerId: 1 });
+    fireEvent.pointerUp(target, { clientX: 440, clientY: 300, pointerId: 1 });
+  };
+  it('saves a dragged set member as one set move', () => {
+    const r = setRoom();
+    const scene = glareScene(r, 'seated', 'code', () => 0);
+    const onRigCommit = vi.fn();
+    render(<Room3DStage room={r} posed={r} view="orbit" selection={null} onSelect={() => {}} onLight={() => {}} onLightCommit={() => {}}
+      onRoom={() => {}} onRigCommit={onRigCommit} scene={scene} report={traceGlare(scene)} />);
+    drag(document.querySelector('[data-furniture="d1"]')!);
+    expect(onRigCommit).toHaveBeenCalledWith([], 's1');
   });
 });
