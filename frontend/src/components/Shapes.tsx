@@ -151,6 +151,7 @@ export const FURNITURE_CATALOG: { kind: string; label: string; width: number; de
   { kind: 'monitor-24', label: 'Monitor 24"', width: 54, depth: 18 },
   { kind: 'monitor-27', label: 'Monitor 27"', width: 61, depth: 20 },
   { kind: 'monitor-34', label: 'Ultrawide 34"', width: 81, depth: 22 },
+  { kind: 'monitor-49', label: 'Super ultrawide 49"', width: 119.8, depth: 12 },
   { kind: 'chair', label: 'Chair', width: 50, depth: 50 },
   { kind: 'dining-table', label: 'Dining table', width: 180, depth: 90 },
   { kind: 'round-table', label: 'Round table', width: 110, depth: 110, shape: 'ellipse' },

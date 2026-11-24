@@ -23,13 +23,33 @@ _TABLE = {"tableshade", "tablewash", "flexiblelamp", "huego", "hueiris", "hueblo
 _STRIP = {"huelightstrip", "huelightstriptv", "hueplay", "huetube", "hueplaywallwasher"}
 
 
+def footprint(item: Furniture) -> tuple[float, float, float, float]:
+    """The piece's plan footprint as (center x, center y, width, depth), turned like the piece.
+
+    A flat piece is its own box. A curved screen keeps its body at (x, y), so a curve never moves
+    it, and its wings reach toward the front by the arc's sagitta: the box is the chord wide
+    and depth + sagitta deep, its center moved forward by half the sagitta.
+    """
+    if not item.curve:
+        return item.x, item.y, item.width, item.depth
+    radius = item.curve / 10  # mm to cm
+    half = item.width / (2 * radius)
+    chord = 2 * radius * math.sin(half)
+    sagitta = radius * (1 - math.cos(half))
+    angle = math.radians(item.rotation)
+    front_x, front_y = -math.sin(angle), math.cos(angle)
+    return (round(item.x + front_x * sagitta / 2, 2), round(item.y + front_y * sagitta / 2, 2),
+            round(chord, 2), round(item.depth + sagitta, 2))
+
+
 def covers(item: Furniture, x: float, y: float) -> bool:
     """Whether the point (cm) sits on the furniture's footprint, honoring rotation and shape."""
+    cx, cy, width, depth = footprint(item)
     angle = math.radians(-item.rotation)
-    dx, dy = x - item.x, y - item.y
+    dx, dy = x - cx, y - cy
     local_x = dx * math.cos(angle) - dy * math.sin(angle)
     local_y = dx * math.sin(angle) + dy * math.cos(angle)
-    half_w, half_d = item.width / 2, item.depth / 2
+    half_w, half_d = width / 2, depth / 2
     if item.shape == "ellipse":
         return (local_x / half_w) ** 2 + (local_y / half_d) ** 2 <= 1
     return abs(local_x) <= half_w and abs(local_y) <= half_d

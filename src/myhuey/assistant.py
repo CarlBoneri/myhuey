@@ -19,7 +19,7 @@ import requests
 from .catalog import CATALOG, catalog_item
 from .errors import BridgeNotConfigured, HueError, LayoutChanged, LayoutNotFound, RoomNotFound, SceneNotFound
 from .layouts import current_layout, using_layout
-from .models import DEFAULT_FURNITURE_HEIGHT, FURNITURE_HEIGHTS, FURNITURE_SIZES, new_id
+from .models import DEFAULT_CURVES, DEFAULT_FURNITURE_HEIGHT, FURNITURE_HEIGHTS, FURNITURE_SIZES, new_id
 from .room_text import draw_room, layout_problems
 from .room_view import room_json
 from .scenes import Scene
@@ -557,6 +557,11 @@ def set_furniture(service: HueRoomService, layout: str | None, room: str, furnit
                     data[key] = _plan_cm(item[key], key)
             if item.get("rotation") is not None:
                 data["rotation"] = item["rotation"]
+            for key in ("curve", "tilt"):
+                if item.get(key) is not None:
+                    data[key] = item[key]
+            if kind in DEFAULT_CURVES and "curve" not in item:
+                data["curve"] = DEFAULT_CURVES[kind]
             built.append(data)
         service.update_room(name, furniture=built)
         return _room_dict(service, name)

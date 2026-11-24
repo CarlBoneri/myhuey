@@ -28,6 +28,7 @@ FURNITURE_HEIGHTS: dict[str, tuple[float, float]] = {
     "monitor-24": (75, 36),
     "monitor-27": (75, 40),
     "monitor-34": (75, 37),
+    "monitor-49": (75, 33.7),
     "tv": (60, 84),
     "pillar-round": (0, DEFAULT_CEILING_CM),
     "pillar-square": (0, DEFAULT_CEILING_CM),
@@ -67,6 +68,7 @@ FURNITURE_SIZES: dict[str, tuple[str, float, float, str]] = {
     "monitor-24": ('Monitor 24"', 54.0, 18.0, "rect"),
     "monitor-27": ('Monitor 27"', 61.0, 20.0, "rect"),
     "monitor-34": ('Ultrawide 34"', 81.0, 22.0, "rect"),
+    "monitor-49": ('Super ultrawide 49"', 119.8, 12.0, "rect"),
     "chair": ("Chair", 50.0, 50.0, "rect"),
     "dining-table": ("Dining table", 180.0, 90.0, "rect"),
     "round-table": ("Round table", 110.0, 110.0, "ellipse"),
@@ -80,6 +82,9 @@ FURNITURE_SIZES: dict[str, tuple[str, float, float, str]] = {
     "pillar-round": ("Round pillar", 30.0, 30.0, "ellipse"),
     "pillar-square": ("Square pillar", 30.0, 30.0, "rect"),
 }
+
+# Screens that come curved: kind -> curve radius in mm. The 49" matches the Samsung Odyssey G9.
+DEFAULT_CURVES: dict[str, float] = {"monitor-49": 1000.0}
 
 # Roles a user can pin on a light. Suggestions also use "behind" and "ambient" internally.
 PINNABLE_ROLES = ("auto", "bias", "task", "view")
@@ -200,6 +205,13 @@ class LayoutLight:
 
 
 FURNITURE_SHAPES = ("rect", "ellipse")
+CURVE_RANGE_MM = (500.0, 10000.0)
+TILT_LIMIT_DEG = 45.0
+
+
+def _optional(value: Any) -> float | None:
+    """A number that may be left out: None and "" stay None."""
+    return None if value in (None, "") else _num(value)
 
 
 @dataclass
@@ -217,6 +229,10 @@ class Furniture:
     shape: str = "rect"
     elevation: float = 0.0
     height: float = 75.0
+    # A screen's curve radius in mm, as printed on the box (1000 = 1000R); None is flat.
+    curve: float | None = None
+    # How far a screen leans, in degrees; negative leans back. None is the default for the kind.
+    tilt: float | None = None
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Furniture:
@@ -232,6 +248,14 @@ class Furniture:
         height = _num(data.get("height"), default_height) if data.get("height") is not None else default_height
         if not (0 <= elevation <= 1000 and 0 < height <= 1000):
             raise ValueError("Furniture elevation and height must be between 0 and 10 m")
+        curve = _optional(data.get("curve"))
+        if curve is not None and not CURVE_RANGE_MM[0] <= curve <= CURVE_RANGE_MM[1]:
+            raise ValueError("A screen's curve must be between 500R and 10000R")
+        if curve is not None and height > width:
+            raise ValueError("A portrait screen cannot be curved")
+        tilt = _optional(data.get("tilt"))
+        if tilt is not None and not -TILT_LIMIT_DEG <= tilt <= TILT_LIMIT_DEG:
+            raise ValueError("A screen's tilt must be between -45° and 45°")
         return cls(
             id=str(data.get("id") or new_id()),
             kind=kind,
@@ -244,6 +268,8 @@ class Furniture:
             shape=shape,
             elevation=float(elevation),
             height=float(height),
+            curve=curve,
+            tilt=tilt,
         )
 
     def to_dict(self) -> dict[str, Any]:

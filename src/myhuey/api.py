@@ -153,6 +153,8 @@ class FurnitureItem(Body):
     shape: str = "rect"
     elevation: float | None = Field(None, ge=0, le=1000)
     height: float | None = Field(None, gt=0, le=1000)
+    curve: float | None = Field(None, ge=500, le=10000)  # mm, as printed on the box (1000R)
+    tilt: float | None = Field(None, ge=-45, le=45)
 
 
 class RoomUpdate(Body):

@@ -26,7 +26,7 @@ def test_list_and_get_room(service):
 
 
 def test_catalog_matches_the_web_app():
-    rows = re.findall(r"\{ kind: '([\w-]+)', label: '([^']+)', width: (\d+), depth: (\d+)(?:, shape: '(\w+)')? \}", Path("frontend/src/components/Shapes.tsx").read_text())
+    rows = re.findall(r"\{ kind: '([\w-]+)', label: '([^']+)', width: ([\d.]+), depth: ([\d.]+)(?:, shape: '(\w+)')? \}", Path("frontend/src/components/Shapes.tsx").read_text())
     assert {kind: (label, float(w), float(d), shape or "rect") for kind, label, w, d, shape in rows} == FURNITURE_SIZES
     desk = next(item for item in catalog()["furniture"] if item["kind"] == "desk")
     assert desk == {"kind": "desk", "label": "Desk", "width": 140.0, "depth": 70.0, "shape": "rect", "elevation": 0, "height": 75}
