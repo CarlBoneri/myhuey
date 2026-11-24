@@ -10,8 +10,11 @@ rectangle, so the check is wrong for the owner's own desk:
   centered, with a window behind it;
 - the left screen is a flat Dell turned to portrait on an arm, angled in toward the seat.
 
-A curved screen is a concave mirror facing you. Its wings angle inward, so a lamp off to your right
-can reflect in the left wing (and the reverse). A flat model calls that lamp clear. The point of
+A curved screen is a concave mirror facing you, and a flat model traces it wrong. *(Corrected
+during the build: this first said a lamp off to your right reflects in the left wing. At a 60 cm
+eye inside a 1000R radius, it does the opposite: the wings face the eye, so side lamps bounce
+away, and a lamp behind the seat spreads its reflection across the whole curve, because the eye
+sits near that lamp's mirror image.)* The point of
 this work is **glare warnings the owner can trust at this desk**; the 3D view showing the real
 shape is a side effect, not the goal.
 
@@ -132,16 +135,16 @@ shape is a side effect, not the goal.
 
 ## Tests
 
-- Unit (TS): facet geometry (chord, sagitta, normals converge on the axis); a lamp to the right
-  reflects in the left wing of a 1000R screen and not in a flat one of the same size; a lamp
-  centered behind the seat reflects in the middle facet; seam hit counted once; flat rooms
+- Unit (TS): facet geometry (chord, sagitta, normals converge on the axis); a side lamp that
+  reflects in a flat screen bounces away from a 1000R one; a lamp centered behind the seat
+  reflects in the curve, counted once; seam hit counted once; flat rooms
   unchanged (snapshot of the current fixtures).
 - Python: `curve`/`tilt` round-trip, validation ranges, old room dicts load with `null`s,
   `set_furniture` accepts them.
 - Run `uv run pytest -q` and `npm --prefix frontend test`.
 - Real-desk check: build the owner's desk in a sandbox of the **Office** room (never a new test
-  room): a 1000R G9 in the middle and a flat portrait screen at the left, angled in. Confirm that a
-  lamp on the right of the seat shows in the G9's left wing when it should. Then compare the
+  room): a 1000R G9 in the middle and a flat portrait screen at the left, angled in. Confirm the
+  curve draws and that lamps behind the seat flag the G9. Then compare the
   warnings with what the owner actually sees reflected in the screens.
 
 ## Left to the builder
