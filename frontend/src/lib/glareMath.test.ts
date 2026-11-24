@@ -233,6 +233,13 @@ describe('curved screens', () => {
   it('hides a lamp behind the curved panel from view, and calls one just behind it a bias light', () => {
     expect(statuses(room([light('hidden', 200, 60, 92), light('halo', 200, 90, 92)], [g9()]))).toEqual({ hidden: 'clear', halo: 'bias_ok' });
   });
+  it('keeps a bias light just behind and past the wing a bias light', () => {
+    // 21 cm behind the panel middle and 29 cm past the wing tip: inside the flat screen's limits.
+    // Measured along a wing's own leaning normal it is 45 cm deep, past BIAS_BEHIND_CM.
+    const lamp = [light('wing', 285, 80, 80)];
+    expect(statuses(room(lamp, [g9({ curve: null })]))).toEqual({ wing: 'bias_ok' });
+    expect(statuses(room(lamp, [g9()]))).toEqual({ wing: 'bias_ok' });
+  });
   it('traces a gently curved 24-inch like a flat one', () => {
     const lamps = [light('back', 200, 300, 115), light('behind_left', 160, 320, 120), light('ceiling', 200, 300, 240), light('side', 330, 60, 130), light('halo', 200, 90, 95)];
     const small = (curve: number | null) => monitor({ id: 's', kind: 'monitor-24', width: 53.1, height: 29.9, curve });

@@ -39,6 +39,12 @@ const DESKS = ['desk', 'desk-l', 'desk-standing'];
 export interface Display {
   id: string; facet: number; curved: boolean;
   center: Vec3; normal: Vec3; u: Vec3; v: Vec3; width: number; height: number; uMin: number; uMax: number;
+  /**
+   * The whole screen's plane for the bias check: the face itself when flat; for a curved screen,
+   * the plane at its panel middle, as wide as its chord, shared by every strip. Measured along a
+   * wing's leaning normal, a light just behind the wing would read as too deep.
+   */
+  bias: { center: Vec3; normal: Vec3; u: Vec3; half: number };
 }
 export interface Box { id: string; x: number; y: number; rotation: number; width: number; depth: number; z0: number; z1: number }
 export interface GlareScene {
@@ -98,11 +104,14 @@ export function displayOf(item: Furniture): Display {
   const r = rad(item.rotation);
   const tau = rad(-(item.tilt ?? (isMonitor(item) ? DEFAULT_MONITOR_TILT : 0)));
   const height = item.height ?? 40;
+  const center: Vec3 = [item.x + (f[0] * item.depth) / 2, item.y + (f[1] * item.depth) / 2, (item.elevation ?? 0) + height / 2];
+  const normal: Vec3 = [f[0] * Math.cos(tau), f[1] * Math.cos(tau), Math.sin(tau)];
+  const u: Vec3 = [Math.cos(r), Math.sin(r), 0];
   return {
     id: item.id,
-    center: [item.x + (f[0] * item.depth) / 2, item.y + (f[1] * item.depth) / 2, (item.elevation ?? 0) + height / 2],
-    normal: [f[0] * Math.cos(tau), f[1] * Math.cos(tau), Math.sin(tau)],
-    u: [Math.cos(r), Math.sin(r), 0],
+    center,
+    normal,
+    u,
     v: [-f[0] * Math.sin(tau), -f[1] * Math.sin(tau), Math.cos(tau)],
     width: item.width,
     height,
@@ -110,6 +119,7 @@ export function displayOf(item: Furniture): Display {
     curved: false,
     uMin: -item.width / 2 - SCREEN_MARGIN_CM,
     uMax: item.width / 2 + SCREEN_MARGIN_CM,
+    bias: { center, normal, u, half: item.width / 2 },
   };
 }
 
@@ -121,7 +131,8 @@ export function displayOf(item: Furniture): Display {
 export function facetsOf(item: Furniture): Display[] {
   const base = displayOf(item);
   if (!isCurved(item)) return [base];
-  const { radius, angle } = arcOf(item);
+  const { radius, angle, chord } = arcOf(item);
+  const bias = { ...base.bias, half: chord / 2 };
   const axis = add(base.center, scale(base.normal, radius)); // a point on the axis of curvature
   const step = angle / FACETS;
   const half = step / 2;
@@ -135,7 +146,7 @@ export function facetsOf(item: Furniture): Display[] {
     const u = add(scale(base.u, Math.cos(phi)), scale(base.normal, Math.sin(phi)));
     const width = 2 * radius * Math.sin(half);
     facets.push({
-      id: item.id, facet: i, curved: true, center, normal, u, v: base.v, width, height: base.height,
+      id: item.id, facet: i, curved: true, center, normal, u, v: base.v, width, height: base.height, bias,
       uMin: -width / 2 - (i === 0 ? SCREEN_MARGIN_CM : 0),
       uMax: width / 2 + (i === FACETS - 1 ? SCREEN_MARGIN_CM : 0),
     });
@@ -252,9 +263,9 @@ function reflection(point: Vec3, eye: Vec3, display: Display, scene: GlareScene)
   return hit;
 }
 
-const behindScreen = (point: Vec3, display: Display) => {
-  const side = dot(sub(point, display.center), display.normal);
-  return side < 0 && side >= -BIAS_BEHIND_CM && Math.abs(dot(sub(point, display.center), display.u)) <= display.width / 2 + BIAS_SIDE_CM;
+const behindScreen = (point: Vec3, { bias }: Display) => {
+  const side = dot(sub(point, bias.center), bias.normal);
+  return side < 0 && side >= -BIAS_BEHIND_CM && Math.abs(dot(sub(point, bias.center), bias.u)) <= bias.half + BIAS_SIDE_CM;
 };
 
 /** Each light's glare status from the eye, with the bounce paths to draw and the level to keep it under. */
