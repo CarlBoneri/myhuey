@@ -81,7 +81,11 @@ export function SettingsView() {
           <p><a className="button subtle" href="#/setup">Run the setup guide</a></p>
           <p className="hint">The bridge certificate is pinned on first contact. The pairing key stays on this computer and is never sent to the browser.</p>
         </Panel>
-        <PreferencesPanel />
+        <BridgeTrafficPanel />
+        <LookPanel />
+        <RoomsPanel />
+        <DayPanel />
+        <YouPanel />
         <Panel title="Command line">
           <p className="hint">Everything here also works from the terminal:</p>
           <pre className="code">{`myhuey bridge setup
@@ -143,19 +147,37 @@ function ThemeSelect({ label, value, onChange, kind, withSystem = false }: {
   );
 }
 
-function PreferencesPanel() {
+/** The preferences, read and saved the same way by every settings card. */
+function usePrefs() {
   const { preferences: p, setPreferences } = useStore();
-  const { tabPlacement, setTabPlacement } = useUi();
-  const railNote = narrowRailNote(tabPlacement, useNarrow());
   const set = (changes: Partial<Preferences>) => void setPreferences(changes);
   const choice = <K extends keyof Preferences>(key: K, values: Preferences[K][], format: (v: Preferences[K]) => string) => (
     <Segmented label={key} value={String(p[key])} onChange={(v) => set({ [key]: values.find((x) => String(x) === v) } as Partial<Preferences>)}
       options={values.map((v) => ({ value: String(v), label: format(v) }))} />
   );
-  const scheduleNote = scheduleWarning(p.wake_time, p.bed_time); // a hint only; saving is never blocked
+  return { p, set, choice };
+}
+
+function BridgeTrafficPanel() {
+  const { choice } = usePrefs();
   return (
-    <Panel title="Preferences">
-      <h3 className="pref-group">Look</h3>
+    <Panel title="Bridge traffic">
+      <PreferenceRow label="Refresh light states" hint="How often this page reads the lights while it is open.">
+        {choice('poll_seconds', [2, 5, 10, 30, 0], (v) => (v ? `${v}s` : 'Off'))}
+      </PreferenceRow>
+      <PreferenceRow label="Gap between light commands" hint="Signify advises about 100 ms. Wider is gentler when switches and other apps share the bridge.">
+        {choice('command_gap_ms', [100, 150, 200, 300], (v) => `${v} ms`)}
+      </PreferenceRow>
+    </Panel>
+  );
+}
+
+function LookPanel() {
+  const { p, set, choice } = usePrefs();
+  const { tabPlacement, setTabPlacement } = useUi();
+  const railNote = narrowRailNote(tabPlacement, useNarrow());
+  return (
+    <Panel title="Look">
       <PreferenceRow label="Theme" hint="System follows your computer's light or dark setting, with a theme for each.">
         <ThemeSelect label="Theme" value={p.theme} withSystem onChange={(theme) => set({ theme })} />
       </PreferenceRow>
@@ -176,7 +198,14 @@ function PreferencesPanel() {
       <PreferenceRow label="Reduce transparency" hint="Solid panels instead of frosted glass, and no glow. Auto follows your computer's setting.">
         {choice('reduce_transparency', ['auto', 'on', 'off'], (v) => ({ auto: 'Auto', on: 'On', off: 'Off' })[v])}
       </PreferenceRow>
-      <h3 className="pref-group">Rooms</h3>
+    </Panel>
+  );
+}
+
+function RoomsPanel() {
+  const { p, set, choice } = usePrefs();
+  return (
+    <Panel title="Rooms">
       <PreferenceRow label="Brightness slider on each room" hint="Dims or brightens every light that is on, in the room list and on the room page.">
         <Toggle checked={p.room_sliders} onChange={(room_sliders) => set({ room_sliders })} label="Brightness slider on each room" />
       </PreferenceRow>
@@ -189,24 +218,31 @@ function PreferencesPanel() {
       <PreferenceRow label="Units for new rooms">
         {choice('default_units', ['imperial', 'metric'], (v) => (v === 'imperial' ? 'Feet & inches' : 'Meters'))}
       </PreferenceRow>
-      <h3 className="pref-group">Your day</h3>
-      <PreferenceRow label="Wake time" hint="Suggested scenes brighten and cool after you wake.">
-        <TimeSelect label="Wake time" value={p.wake_time} onChange={(wake_time) => set({ wake_time })} />
-      </PreferenceRow>
-      <PreferenceRow label="Bedtime" hint="Suggested scenes warm and dim over the four hours before it, and leave out blue-heavy palettes.">
-        <TimeSelect label="Bedtime" value={p.bed_time} onChange={(bed_time) => set({ bed_time })} />
-      </PreferenceRow>
+    </Panel>
+  );
+}
+
+function DayPanel() {
+  const { p, set } = usePrefs();
+  const scheduleNote = scheduleWarning(p.wake_time, p.bed_time); // a hint only; saving is never blocked
+  return (
+    <Panel title="Your day">
+      <p className="hint">Suggested scenes brighten and cool after you wake, then warm and dim over the four hours before bed and leave out blue-heavy palettes.</p>
+      <div className="field-row">
+        <Field label="Wake time"><TimeSelect label="Wake time" value={p.wake_time} onChange={(wake_time) => set({ wake_time })} /></Field>
+        <Field label="Bedtime"><TimeSelect label="Bedtime" value={p.bed_time} onChange={(bed_time) => set({ bed_time })} /></Field>
+      </div>
       {scheduleNote && <p className="warn-text" role="status">{scheduleNote}</p>}
-      <h3 className="pref-group">You</h3>
+    </Panel>
+  );
+}
+
+function YouPanel() {
+  const { p, set } = usePrefs();
+  return (
+    <Panel title="You">
       <p className="hint">Where your eyes are, for the glare check, the seat view, and light roles.</p>
       <EyeFields eyes={p} units={p.default_units} onChange={set} />
-      <h3 className="pref-group">Bridge</h3>
-      <PreferenceRow label="Refresh light states" hint="How often this page reads the lights while it is open.">
-        {choice('poll_seconds', [2, 5, 10, 30, 0], (v) => (v ? `${v}s` : 'Off'))}
-      </PreferenceRow>
-      <PreferenceRow label="Gap between light commands" hint="Signify advises about 100 ms. Wider is gentler when switches and other apps share the bridge.">
-        {choice('command_gap_ms', [100, 150, 200, 300], (v) => `${v} ms`)}
-      </PreferenceRow>
     </Panel>
   );
 }
