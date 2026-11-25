@@ -31,6 +31,8 @@ interface UiState {
   tabRail: TabRail;
   /** Sidebar panels that are folded, by panel key. */
   folded: Record<string, true>;
+  /** Sidebar widths the person dragged to, by sidebar name (px); a missing one is the usual width. */
+  sidebarWidths: Record<string, number>;
   /** A suggestion drawn on the plan, 3D view and photo without touching the lights; not persisted. */
   showing: Showing | null;
   setShowing: (next: Showing | null) => void;
@@ -39,6 +41,8 @@ interface UiState {
   setTabPlacement: (placement: TabPlacement) => void;
   setTabRail: (rail: TabRail) => void;
   setFolded: (keys: string[], folded: boolean) => void;
+  /** null goes back to the usual width. */
+  setSidebarWidth: (name: string, width: number | null) => void;
   setCurrentRoom: (room: string | null) => void;
   setPosture: (posture: Posture) => void;
   setGlareMode: (mode: string) => void;
@@ -57,6 +61,7 @@ const PLACEMENT_KEY = 'myhuey.tabPlacement';
 const RAIL_KEY = 'myhuey.tabRail';
 const PANELS_KEY = 'myhuey.panels';
 const LIGHTING_KEY = 'myhuey.lightingOpen';
+const SIDEBARS_KEY = 'myhuey.sidebars';
 
 function stored<T>(key: string, fallback: T): T {
   try { return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback; } catch { return fallback; }
@@ -84,6 +89,8 @@ export const useUi = create<UiState>((set, get) => ({
   tabPlacement: normalizePlacement(stored(PLACEMENT_KEY, null)),
   tabRail: normalizeRail(stored(RAIL_KEY, null)),
   folded: Object.fromEntries((stored<unknown[]>(PANELS_KEY, []) as unknown[]).filter((key): key is string => typeof key === 'string').map((key) => [key, true as const])),
+  sidebarWidths: Object.fromEntries(Object.entries(stored<Record<string, unknown>>(SIDEBARS_KEY, {}))
+    .filter((entry): entry is [string, number] => typeof entry[1] === 'number' && Number.isFinite(entry[1]))),
   showing: null,
   setShowing: (showing) => set({ showing }),
   setDraft: (draft) => set({ draft }),
@@ -106,6 +113,12 @@ export const useUi = create<UiState>((set, get) => ({
     for (const key of keys) { if (folded) next[key] = true; else delete next[key]; }
     store(PANELS_KEY, Object.keys(next).slice(-200));
     set({ folded: next });
+  },
+  setSidebarWidth(name, width) {
+    const next = { ...get().sidebarWidths };
+    if (width === null) delete next[name]; else next[name] = Math.round(width);
+    store(SIDEBARS_KEY, next);
+    set({ sidebarWidths: next });
   },
   setCurrentRoom(room) {
     if (room === get().currentRoom) return;

@@ -13,6 +13,7 @@ from .errors import HueError
 from .hue import PAIRING_WINDOW, HueBridgeClient
 from .modes import ALIASES, MODES
 from .layouts import using_layout
+from .roles import Body, using_body
 from .service import HueRoomService
 from .setup import run_setup
 from .tls import fingerprint, load_pin
@@ -381,7 +382,8 @@ def handle_prefs(args: argparse.Namespace) -> int:
         service.update_preferences({args.key: parse_value(args.value, args.key)})
     for key, value in service.preferences().items():
         _, allowed = PREFERENCES[key]
-        options = "true/false" if allowed is bool else "/".join(str(item) for item in allowed)
+        options = ("true/false" if allowed is bool else f"{allowed.start}-{allowed.stop - 1}" if isinstance(allowed, range)
+                   else "/".join(str(item) for item in allowed))
         print(f"{key}: {str(value).lower() if isinstance(value, bool) else value}  ({options})")
     return 0
 
@@ -832,12 +834,15 @@ def _elevation_arg(text: str | None, units: str) -> float | str | None:
 def main(argv: Sequence[str] | None = None) -> None:
     args = build_parser().parse_args(argv)
     try:
-        if args.layout and args.command not in ("layouts", "groups", "mcp"):  # app-wide, or (mcp) each tool takes its own
-            service = HueRoomService(args.db)
-            with using_layout(service.sandbox_id(service.resolve_layout(args.layout))):
+        # Seats and roles use the person's own eye heights (serve and mcp set them per request).
+        body = HueRoomService(args.db).body() if args.command not in ("serve", "mcp") else Body()
+        with using_body(body):
+            if args.layout and args.command not in ("layouts", "groups", "mcp"):  # app-wide, or (mcp) each tool takes its own
+                service = HueRoomService(args.db)
+                with using_layout(service.sandbox_id(service.resolve_layout(args.layout))):
+                    code = args.handler(args)
+            else:
                 code = args.handler(args)
-        else:
-            code = args.handler(args)
     except KeyboardInterrupt:
         print("\nmyhuey: interrupted", file=sys.stderr)
         code = 130

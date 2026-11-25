@@ -26,6 +26,8 @@ from .hue_scenes import hue_scene
 from .setups import generate_setups
 from .refresh import arrival_spots, fingerprint, plan_refresh
 from .models import Furniture, HomePlan, LayoutLight, Opening, Room, RoomPhoto, floor_transform, new_id, opening_fits, reanchor_openings, validate_outline
+from .roles import Body
+from .desks import apply_local, clean_design, move_set, release_set, settle, stamp, to_local
 from .preferences import chosen as chosen_preferences, merged as merged_preferences, validate as validate_preferences
 from .scenes import Scene, evaluate
 from .suggest import suggest as suggest_scenes
@@ -652,6 +654,7 @@ class HueRoomService:
                     scene["room"] = renamed
             room.name = renamed
         room = Room.from_dict(room.to_dict())  # validates the ceiling and everything together
+        settle(room)  # mounted lights follow their screens; a set without its base dissolves
         room.prune_photo_tags()
         room_data.clear()
         room_data.update(room.to_dict())
@@ -694,10 +697,13 @@ class HueRoomService:
         elevation: float | str | None = None,
         role: str | None = None,
         planned: bool | None = None,
+        mount: dict[str, str] | None | str = "keep",
     ) -> LayoutLight:
         """Place a light in a room, or move it if it is already there.
 
         `elevation` and `role` are kept when left out; elevation "auto" clears a set height.
+        `mount` ({"screen": <furniture id>} or None) sticks the light on a screen's back or takes
+        it off; left out, it is kept. A mounted light's place comes from its screen.
         """
         light_id = str(light_id).strip()
         if not light_id:
@@ -727,14 +733,131 @@ class HueRoomService:
                 "elevation": existing.get("elevation") if elevation is None else elevation,
                 "role": role or existing.get("role") or "auto",
                 "planned": existing.get("planned", False) if planned is None else planned,
+                "mount": existing.get("mount") if mount == "keep" else mount,
+                # Off its screen, a light is no longer a bias light by mounting: its role goes back to auto.
+                **({"role": role or "auto"} if mount is None and existing.get("mount") else {}),
             }
         )
         if not existing:
             lights.append(light.to_dict())
         else:
             existing.update(light.to_dict())
+        room_data = self._room_data(config, room_name)
+        room = Room.from_dict(room_data)
+        if light.mount and not any(item.id == light.mount["screen"] for item in room.furniture):
+            raise ValueError(f"There is no piece '{light.mount['screen']}' in '{room_name}' to mount the light on")
+        settle(room)
+        room_data.update(room.to_dict())
         self._save(config)
-        return light
+        return next(item for item in room.lights if item.light_id == light_id)
+
+    def body(self) -> Body:
+        """Your own numbers from the preferences: eye heights and how far you sit from the screens."""
+        prefs = self.preferences()
+        return Body(eye_sitting=float(prefs["eye_sitting"]), eye_standing=float(prefs["eye_standing"]),
+                    screen_distance=float(prefs["screen_distance"]))
+
+    # Desk designs: app-wide (outside the layout keys, like groups), so every layout can place them.
+
+    def _desks(self, config: dict[str, Any]) -> list[dict[str, Any]]:
+        desks = config.get("desks")
+        if not isinstance(desks, list):
+            desks = config["desks"] = []
+        return desks
+
+    def _desk(self, config: dict[str, Any], key: str) -> dict[str, Any]:
+        text = str(key or "").strip()
+        for design in self._desks(config):
+            if design.get("id") == text or str(design.get("name", "")).casefold() == text.casefold():
+                return design
+        raise ValueError(f"There is no desk design '{text}'")
+
+    def _check_desk_name(self, config: dict[str, Any], name: str, own_id: str | None = None) -> None:
+        if any(d.get("id") != own_id and str(d.get("name", "")).casefold() == name.casefold() for d in self._desks(config)):
+            raise ValueError(f"A desk design named '{name}' already exists")
+
+    def desks(self) -> list[dict[str, Any]]:
+        return [dict(design) for design in self._desks(self._load())]
+
+    def create_desk(self, name: str, items: list[dict], lights: list[dict] | None = None) -> dict[str, Any]:
+        """Save a new desk design (pieces and catalog lights in desk-local cm)."""
+        config = self._load()
+        name, items, lights = clean_design(name, items, lights or [])
+        self._check_desk_name(config, name)
+        design = {"id": new_id(), "name": name, "items": items, "lights": lights}
+        self._desks(config).append(design)
+        self._save(config)
+        return dict(design)
+
+    def update_desk(self, key: str, *, name: str | None = None, items: list[dict] | None = None,
+                    lights: list[dict] | None = None) -> dict[str, Any]:
+        config = self._load()
+        design = self._desk(config, key)
+        cleaned_name, cleaned_items, cleaned_lights = clean_design(
+            design["name"] if name is None else name, design["items"] if items is None else items,
+            design["lights"] if lights is None else lights)
+        self._check_desk_name(config, cleaned_name, design["id"])
+        design.update(name=cleaned_name, items=cleaned_items, lights=cleaned_lights)
+        self._save(config)
+        return dict(design)
+
+    def delete_desk(self, key: str) -> None:
+        """Remove a design from the library. Desk sets already placed from it stay as they are."""
+        config = self._load()
+        design = self._desk(config, key)
+        config["desks"] = [d for d in self._desks(config) if d is not design]
+        self._save(config)
+
+    def place_desk(self, room_name: str, design_key: str, *, x: float, y: float, rotation: float = 0) -> dict[str, Any]:
+        """Stamp a copy of a design into a room as a locked desk set; returns the set id and the room."""
+        design = self._desk(self._load(), design_key)
+        set_id = new_id()
+        room = self._change_room(room_name, lambda room: stamp(room, set_id, design["name"], design["items"], design["lights"],
+                                                                x=x, y=y, rotation=rotation))
+        return {"set": set_id, "room": room}
+
+    def desk_set_local(self, room_name: str, set_id: str) -> dict[str, Any]:
+        """A placed desk set in desk-local coordinates, for editing it in the desk designer."""
+        return to_local(self.get_room(room_name), set_id)
+
+    def apply_desk_set(self, room_name: str, set_id: str, items: list[dict], lights: list[dict]) -> Room:
+        """Replace a placed set with its edited local version, where it stands."""
+        return self._change_room(room_name, lambda room: apply_local(room, set_id, items, lights))
+
+    def desk_from_set(self, room_name: str, set_id: str, name: str) -> dict[str, Any]:
+        """Save a placed set as a new design. Real lights become their catalog kind; one with none is left out."""
+        from .catalog import CATALOG
+
+        local = to_local(self.get_room(room_name), set_id)
+        skipped = [light["label"] for light in local["lights"] if not light["catalog"]]
+        # A design is for reuse: no light keeps its bridge or planned id, not even as its key or default label.
+        lights = []
+        for index, light in enumerate(item for item in local["lights"] if item["catalog"]):
+            label = light["label"] if light["label"] != f"Light {light['light_id']}" else CATALOG[light["catalog"]].label
+            lights.append({**{k: v for k, v in light.items() if k not in ("light_id", "planned")}, "key": f"light{index + 1}", "label": label})
+        items = [{k: v for k, v in item.items() if k != "id"} for item in local["items"]]
+        return {"design": self.create_desk(name, items, lights), "skipped": skipped}
+
+    def move_desk_set(self, room_name: str, set_id: str, *, x: float, y: float, rotation: float) -> Room:
+        """Move and turn a desk set as one piece: its base lands at (x, y), turned to `rotation`."""
+        return self._change_room(room_name, lambda room: move_set(room, set_id, x, y, rotation))
+
+    def release_desk_set(self, room_name: str, set_id: str) -> Room:
+        """Unlock a desk set: its pieces stay where they are as ordinary pieces."""
+        return self._change_room(room_name, lambda room: release_set(room, set_id))
+
+    def _change_room(self, room_name: str, change: Callable[[Room], Any]) -> Room:
+        config = self._load()
+        room_data = self._room_data(config, room_name)
+        room = Room.from_dict(room_data)
+        change(room)
+        room = Room.from_dict(room.to_dict())  # validates everything together, as update_room does
+        settle(room)
+        room.prune_photo_tags()
+        room_data.clear()
+        room_data.update(room.to_dict())
+        self._save(config)
+        return room
 
     @_one_bridge_write
     def set_room_brightness(self, room_name: str, percent: float, *, pause: float | None = None) -> list[dict[str, Any]]:

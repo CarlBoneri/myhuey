@@ -94,13 +94,27 @@ export const TOPICS: Topic[] = [
       { list: [
         'Drag the background to orbit. Shift-drag or Space-drag pans. The wheel zooms toward the cursor.',
         'Drag a light and it slides across the room at its own height. Hold Alt (Option) and drag to raise or lower it.',
-        'Drag a desk and the screens and lights on it come along. Shift-drag turns it.',
+        'Drag a desk and the screens and lights on it come along. Shift-drag turns it. A desk set moves as one, whichever piece you grab.',
         'Desk eye-level sits you at the desk, looking at the screen.',
       ] },
       { p: 'The glare table under the view checks every light from the desk seat. “Reflects in the screen” means the light bounces off a monitor into your eyes. “In your line of sight” and “At the edge of your view” mean you see the light itself while looking at the screen. A light just behind a screen is a bias light, which is good.' },
       { p: 'Each flagged light gets a level to stay under. Fix glare dims the lit lights that are over it and never brightens anything. Standing is a preview: it raises your eyes and any sit-stand desk, and it is not saved.' },
+      { p: 'Your eyes are your own setting: set your sitting eye height (above the chair seat), standing eye height, and screen distance under Posture or in Settings. Mark a chair “I sit here” and the check sits you in it, at its seat height plus your sitting eye height.' },
       { keys: [['= and -', 'Zoom in and out'], ['0', 'Fit the room'], ['Arrows', 'Orbit (with nothing selected)'], ['Alt-drag a light', 'Change its height']] },
       { try: ['room glare Office', 'room posture Office standing', 'room glare Office --fix'] },
+    ],
+  },
+  {
+    id: 'desks', title: 'Desk sets', summary: 'Design a desk once, place it in any room, and it stays together.',
+    blocks: [
+      { p: 'The desk designer (Studio · Desks) lays out a desk on its own bench: the desk, screens on arms, a laptop, keyboard, speakers, the chair you sit in, and lights. Save it as a design and place copies of it in any room or sandbox.' },
+      { list: [
+        'A placed desk set moves as one piece on the plan and in 3D, whichever piece you drag. Its pieces are changed in the desk designer: Edit in desk designer, then Apply.',
+        'Save as design turns a placed set back into a design. Release unlocks it: the pieces stay where they are.',
+        'A design’s lights are planned lights. Swap each for your real light once the set is placed.',
+        'A light can sit on a screen’s back (Mounted on). It follows the screen, counts as a bias light, and in 3D lights the wall behind with a halo that grows with the gap. Nothing close behind, no halo.',
+      ] },
+      { links: [{ label: 'Open the desk designer', route: { view: 'desks' } }] },
     ],
   },
   {

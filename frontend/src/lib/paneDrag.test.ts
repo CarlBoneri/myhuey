@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { inspectorAfterDrag, shouldScrollOnFold, splitAfterDrag, unfoldForLighting } from './paneDrag';
+import { SIDEBAR_WIDTH, inspectorAfterDrag, shouldScrollOnFold, sidebarAfterDrag, splitAfterDrag, unfoldForLighting } from './paneDrag';
 
 describe('splitAfterDrag', () => {
   it('does not jump when the bar is pressed and not moved', () => {
@@ -43,5 +43,17 @@ describe('unfoldForLighting', () => {
     expect(unfoldForLighting(folded, false)).toBe(folded);
     const open = sizes(false);
     expect(unfoldForLighting(open, true)).toBe(open);
+  });
+});
+
+describe('sidebarAfterDrag', () => {
+  it('widens the sidebar when its bar moves left, and narrows it moving right', () => {
+    expect(sidebarAfterDrag(360, 800, 700)).toBe(460);
+    expect(sidebarAfterDrag(360, 800, 840)).toBe(320);
+  });
+  it('keeps the sidebar between its narrowest and widest', () => {
+    expect(sidebarAfterDrag(360, 800, 0)).toBe(SIDEBAR_WIDTH.max);
+    expect(sidebarAfterDrag(360, 800, 2000)).toBe(SIDEBAR_WIDTH.min);
+    expect(SIDEBAR_WIDTH).toEqual({ min: 280, max: 760, initial: 360 });
   });
 });

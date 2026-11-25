@@ -12,6 +12,10 @@ export type Route =
   | { view: 'design'; room: string; tab: DesignTab }
   /** A Studio address with no room (`#/studio/room`, `#/studio/3d`): lib/studio.ts picks the room. */
   | { view: 'studio-room'; tab: DesignTab }
+  /** The desk designer: the library, and one design open in it. */
+  | { view: 'desks'; design?: string }
+  /** A desk set placed in a room, open in the desk designer. */
+  | { view: 'desk-set'; room: string; set: string }
   | { view: 'setup' }
   | { view: 'scenes' }
   | { view: 'scene'; id: string }
@@ -22,12 +26,14 @@ export type Route =
 
 export function parseRoute(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').map(decodeURIComponent);
-  const [first, second, third, fourth] = parts;
+  const [first, second, third, fourth, fifth] = parts;
   if (first === 'room' && second) {
     // Old links: the room page's photo tab now lives in the Studio.
     return third === 'photo' ? { view: 'design', room: second, tab: 'photo' } : { view: 'room', room: second };
   }
   if (first === 'studio') {
+    if (second === 'desks') return third ? { view: 'desks', design: third } : { view: 'desks' };
+    if (second === 'room' && third && fourth === 'set' && fifth) return { view: 'desk-set', room: third, set: fifth };
     if (second === 'room' && third) return { view: 'design', room: third, tab: fourth === 'photo' || fourth === '3d' ? fourth : 'plan' };
     if (second === 'room') return { view: 'studio-room', tab: 'plan' };
     if (second === '3d' || second === 'photo') return { view: 'studio-room', tab: second };
@@ -56,6 +62,10 @@ export function href(route: Route): string {
       return route.tab === 'plan' ? '#/studio/room' : `#/studio/${route.tab}`;
     case 'studio':
       return route.focus ? `#/studio/plan/${part(route.focus)}` : '#/studio';
+    case 'desks':
+      return route.design ? `#/studio/desks/${part(route.design)}` : '#/studio/desks';
+    case 'desk-set':
+      return `#/studio/room/${part(route.room)}/set/${part(route.set)}`;
     case 'scene':
       return `#/scenes/${part(route.id)}`;
     case 'home':

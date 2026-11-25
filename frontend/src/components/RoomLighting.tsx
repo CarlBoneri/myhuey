@@ -6,6 +6,7 @@ import { useUi } from '../uiStore';
 import { bounds } from '../lib/geometry';
 import { glareLimits, glareModeFor } from '../lib/glareLimits';
 import { roomGlare } from '../lib/roomGlare';
+import { bodyOf } from '../lib/glareMath';
 import { MODE_LABELS, cardTitle, creditText, glareHeldLine, heldText, fullStrength, latestOnly, quarterHours, showKey, thumbFill } from '../lib/suggest';
 import { clearTry, loadTry, mergeTry, saveTry, type TryRecord } from '../lib/tryLook';
 import { Field, IconButton, Panel, Segmented, TextInput } from './ui';
@@ -25,7 +26,7 @@ export function RoomLighting({ room, onClose, photo = false }: {
   /** On the photo, where a shown card is drawn on the photo. */
   photo?: boolean;
 }) {
-  const { refreshScenes, toast, lights, profiles, layout, layouts } = useStore();
+  const { refreshScenes, toast, lights, profiles, layout, layouts, preferences } = useStore();
   const posture = useUi((state) => state.posture);
   const showing = useUi((state) => state.showing);
   const setShowing = useUi((state) => state.setShowing);
@@ -54,10 +55,10 @@ export function RoomLighting({ room, onClose, photo = false }: {
   const check = useMemo(() => {
     const glareMode = glareModeFor(mode);
     if (!glareMode) return { limits: { checked: false, caps: {} }, labels: {} };
-    const { scene, report } = roomGlare(room, posture, glareMode, lights, profiles);
+    const { scene, report } = roomGlare(room, posture, glareMode, lights, profiles, bodyOf(preferences));
     const labels: Record<string, string> = Object.fromEntries(report.lights.map((light) => [light.light_id, light.label]));
     return { limits: glareLimits(report, !!scene.eye), labels };
-  }, [room, posture, mode, lights, profiles]);
+  }, [room, posture, mode, lights, profiles, preferences]);
   const glare = check.limits;
   const glareKey = JSON.stringify(glare);
 

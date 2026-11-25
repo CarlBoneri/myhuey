@@ -67,6 +67,10 @@ export interface Placement {
   role?: PinnableRole;
   resolved_elevation?: number;
   resolved_roles?: Record<string, string>; // the Auto role per focus: desk, read, sofa
+  /** The desk set this light belongs to. */
+  set?: string | null;
+  /** Stuck on this screen's back, facing the wall: its place comes from the screen. */
+  mount?: { screen: string } | null;
 }
 
 export type PinnableRole = 'auto' | 'bias' | 'task' | 'view';
@@ -84,9 +88,16 @@ export interface Furniture {
   /** cm from the floor to the piece's bottom, and its own height. */
   elevation?: number;
   height?: number;
-  /** Not saved yet: the 3D view treats monitors and TVs as screens, monitors leaning back 12°. */
+  /** The 3D view treats monitors and TVs as screens; not saved. */
   display?: boolean;
-  tilt?: number;
+  /** Degrees a screen leans; negative leans back. Unset: monitors lean back 12°. */
+  tilt?: number | null;
+  /** A screen's curve radius in mm, as printed on the box (1000 = 1000R); unset or null is flat. */
+  curve?: number | null;
+  /** The desk set this piece belongs to. */
+  set?: string | null;
+  /** A chair's seat height (cm) when it is where you sit; null otherwise. */
+  seat?: number | null;
 }
 
 export interface Opening {
@@ -178,7 +189,24 @@ export interface Room {
   openings: Opening[];
   /** The Hue room this room follows, once refresh has linked them. */
   hue_room?: string | null;
+  /** Desk sets placed here; members carry the id in their `set`. */
+  desk_sets?: DeskSet[];
 }
+
+/** A desk set placed in a room: its members move as one, around the `base` piece. */
+export interface DeskSet { id: string; name: string; base: string }
+
+/** A piece in a desk design or a set opened for editing, in desk-local cm (base desk at 0, 0, front +y). */
+export type DeskItem = Omit<Furniture, 'id'> & { key: string; id?: string };
+/** A light in a desk design: a catalog light, or (editing a placed set) the room light it is. */
+export interface DeskLight {
+  key: string; catalog: string | null; label: string; x: number; y: number; rotation: number;
+  length: number | null; elevation: number | null; role: string; mount: { screen: string } | null;
+  light_id?: string; planned?: boolean;
+}
+export interface DeskDesign { id: string; name: string; items: DeskItem[]; lights: DeskLight[] }
+/** A placed set in desk-local coordinates, as the designer edits it. */
+export interface DeskSetLocal { set: string; name: string; items: DeskItem[]; lights: DeskLight[] }
 
 /** `also`: on an arrival, the room it comes from is left alone, so the light stays there too. */
 export interface RefreshMove { light_id: string; label: string; other: string | null; also: boolean }
@@ -317,6 +345,11 @@ export interface Preferences {
   default_units: Units;
   wake_time: string;
   bed_time: string;
+  /** Your eyes above the chair seat, cm (46 cm seat + 69 = 115). */
+  eye_sitting: number;
+  eye_standing: number;
+  /** Eyes to screens when no chair is marked as your seat, cm. */
+  screen_distance: number;
 }
 
 export interface SetupStatus {

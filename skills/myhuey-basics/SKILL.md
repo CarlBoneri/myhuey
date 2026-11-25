@@ -60,8 +60,12 @@ MyHuey gives each light a role from where it sits relative to the person's seat 
   in the screen.
 - **ambient**: everything else. It sets the mood of the room.
 
-With monitors, the seat is 60 cm in front of them. With no desk or screen, every light is
-ambient for the desk focus. If a role looks wrong, the cause is almost always a light or a
+With monitors, the seat is 60 cm in front of them. A curved screen is checked as its curve: at
+60 cm a tight one (1000R) bounces side lamps away from the eyes, while a lamp behind the seat
+spreads its reflection across it. A chair marked as the seat puts the eyes over it, at its seat
+height plus the person's own sitting eye height (a preference). A light mounted on a screen's back
+is always a bias light. With no desk or screen, every light is ambient for the desk
+focus. If a role looks wrong, the cause is almost always a light or a
 piece of furniture in the wrong place or facing the wrong way; fix that rather than ignoring it.
 
 ## The eye-comfort rules

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Furniture, Placement, Room } from '../types';
-import { blocked, capText, dimTo, displayOf, glareScene, seatOf, summary, traceGlare, type GlareStatus } from './glareMath';
+import { blocked, capText, dimTo, displayOf, FACETS, facetsOf, glareScene, seatOf, summary, traceGlare, type GlareStatus } from './glareMath';
 import { moveRig, posedRoom, riders } from './rig';
 
 // One upright screen, so the numbers can be checked by hand: the screen plane is y = 101, its
@@ -134,5 +134,165 @@ describe('what rests on a desk', () => {
     const up = posedRoom(r, 'standing');
     expect(up.furniture.map((f) => [f.elevation, f.height])).toEqual([[0, 110], [110, 40], [0, 180]]);
     expect(up.lights.map((l) => l.resolved_elevation)).toEqual([115, 20, 80]);
+  });
+});
+
+// Flat screens must trace exactly as they did before curved screens existed.
+describe('flat screens stay as they were', () => {
+  const desk: Furniture = { id: 'desk', kind: 'desk', label: 'Desk', x: 200, y: 120, width: 160, depth: 70, rotation: 0, shape: 'rect', elevation: 0, height: 75 };
+  const left = monitor({ id: 'left', x: 167, y: 100, tilt: undefined });
+  const right = monitor({ id: 'right', x: 233, y: 100, tilt: undefined });
+  const rooms: Record<string, Room> = {
+    behind: room([light('back', 200, 300, 115)]),
+    ceiling: room([light('ceiling', 200, 300, 240)]),
+    mixed: room([
+      light('ahead', 230, 20, 130), light('side', 330, 60, 130), light('halo', 200, 90, 95),
+      light('hidden', 200, 20, 100), light('pinned', 330, 60, 130, { role: 'bias' }),
+    ]),
+    strip: room([light('strip', 400, 300, 115, { length: 300 })]),
+    turned: room([light('back', 200, 300, 180)], [monitor({ rotation: 180 })]),
+    office: room([
+      light('bias', 200, 85, 80, { length: 120 }),
+      light('lamp_left', 90, 110, 120), light('lamp_right', 310, 110, 120),
+      light('overhead', 200, 200, 240), light('floor_behind', 200, 320, 150),
+    ], [desk, left, right]),
+  };
+  for (const [name, r] of Object.entries(rooms)) {
+    it(`traces the ${name} room as before`, () => {
+      expect(trace(r)).toMatchSnapshot();
+    });
+  }
+});
+
+// The Samsung Odyssey G9, 49" 1000R, upright, in the same spot as the 27" above. Its front-face
+// middle is (200, 101, 91.85) and its center of curvature 100 cm in front: (200, 201). The eye is
+// at (200, 160, 115), inside that radius, which shapes everything below: the wings face you, so
+// side lamps bounce away, and lamps behind the seat spread across the whole curve.
+// Coordinates were chosen with a scratch model of the same geometry.
+describe('curved screens', () => {
+  const g9 = (more: Partial<Furniture> = {}) => monitor({ id: 'g9', kind: 'monitor-49', width: 119.8, height: 33.7, curve: 1000, ...more });
+  const edge = (d: ReturnType<typeof facetsOf>[number], side: 1 | -1) =>
+    [0, 1, 2].map((i) => d.center[i] + side * d.u[i] * (d.width / 2));
+
+  it('splits a curved screen into facets and leaves a flat one whole', () => {
+    expect(facetsOf(g9())).toHaveLength(FACETS);
+    expect(facetsOf(g9({ curve: null }))).toHaveLength(1);
+    expect(facetsOf(g9({ width: 33.6, height: 59.8 }))).toHaveLength(1); // portrait is never curved
+  });
+  it('points every facet at the axis of curvature', () => {
+    for (const f of facetsOf(g9())) {
+      const [cx, cy] = [200 - f.center[0], 201 - f.center[1]];
+      expect(Math.abs(f.normal[0] * cy - f.normal[1] * cx)).toBeLessThan(0.5); // on the line
+      expect(f.normal[0] * cx + f.normal[1] * cy).toBeGreaterThan(0); // facing it
+    }
+    const facets = facetsOf(g9());
+    // Each strip spans 1.198 / 12 rad, so the outer ones turn in by 0.549 rad toward the middle.
+    expect(facets[0].normal[0]).toBeCloseTo(Math.sin(0.549), 2);
+    expect(facets[11].normal[0]).toBeCloseTo(-Math.sin(0.549), 2);
+    expect(facets[0].width).toBeCloseTo(9.98, 2); // the chord of one strip
+  });
+  it('tiles the arc edge to edge, wing tip to wing tip', () => {
+    const facets = facetsOf(g9());
+    for (let i = 0; i + 1 < facets.length; i++) {
+      edge(facets[i], 1).forEach((value, axis) => expect(value).toBeCloseTo(edge(facets[i + 1], -1)[axis], 2));
+    }
+    const [tipX, tipY] = edge(facets[0], -1);
+    expect(tipX).toBeCloseTo(143.6, 1);
+    expect(tipY).toBeCloseTo(118.4, 1);
+  });
+  it('keeps the 8 cm margin for the outer edges only', () => {
+    const facets = facetsOf(g9());
+    const half = facets[0].width / 2;
+    expect([facets[0].uMin, facets[0].uMax]).toEqual([-half - 8, half]);
+    expect([facets[11].uMin, facets[11].uMax]).toEqual([-half, half + 8]);
+    expect([facets[5].uMin, facets[5].uMax]).toEqual([-half, half]);
+  });
+  it('lets a side lamp that a flat screen would show bounce away from the eye', () => {
+    const side = light('side', 330, 170, 105);
+    expect(statuses(room([side], [g9({ curve: null })]))).toEqual({ side: 'screen_reflection' });
+    expect(statuses(room([side], [g9()])).side).not.toBe('screen_reflection');
+  });
+  it('flags a lamp behind the seat once, though it spreads across the curve', () => {
+    const report = trace(room([light('back', 200, 300, 115)], [g9()]));
+    expect(report.lights[0].status).toBe('screen_reflection');
+    expect(report.lights[0].hazards).toHaveLength(1);
+    expect(report.lights[0].hazards[0].display).toBe('g9');
+  });
+  it('counts a bounce on the seam between the middle facets once', () => {
+    const report = trace(room([light('seam', 200, 150, 115)], [g9()]));
+    expect(report.lights[0].status).toBe('screen_reflection');
+    expect(report.lights[0].hazards).toHaveLength(1);
+  });
+  it('lets one wing shade the other', () => {
+    // From an eye off to the right and close in, a lamp beside the left tip would bounce off the
+    // right wing, but the way there runs behind the left half of the panel.
+    const r = room([light('beside', 140, 114, 92)], [g9()]);
+    const scene = { ...glareScene(r, 'seated', 'code', lengthOf), eye: [250, 125, 95] as [number, number, number] };
+    expect(traceGlare(scene).lights[0].hazards.filter((h) => h.kind === 'screen_reflection')).toEqual([]);
+  });
+  it('hides a lamp behind the curved panel from view, and calls one just behind it a bias light', () => {
+    expect(statuses(room([light('hidden', 200, 60, 92), light('halo', 200, 90, 92)], [g9()]))).toEqual({ hidden: 'clear', halo: 'bias_ok' });
+  });
+  it('keeps a bias light just behind and past the wing a bias light', () => {
+    // 21 cm behind the panel middle and 29 cm past the wing tip: inside the flat screen's limits.
+    // Measured along a wing's own leaning normal it is 45 cm deep, past BIAS_BEHIND_CM.
+    const lamp = [light('wing', 285, 80, 80)];
+    expect(statuses(room(lamp, [g9({ curve: null })]))).toEqual({ wing: 'bias_ok' });
+    expect(statuses(room(lamp, [g9()]))).toEqual({ wing: 'bias_ok' });
+  });
+  it('calls a light stuck to the back of a wing a bias light, and one in front of it not', () => {
+    // Facet 0 (the left wing's tip) has its middle near (147.8, 115.7), facing (0.522, 0.853):
+    // in front of the panel-middle plane, so only the strip itself can say what is behind it.
+    const z = 75 + 33.7 / 2;
+    const lamps = [light('back', 147.8 - 0.522 * 3, 115.7 - 0.853 * 3, z), light('front', 147.8 + 0.522 * 3, 115.7 + 0.853 * 3, z)];
+    const got = statuses(room(lamps, [g9()]));
+    expect(got.back).toBe('bias_ok');
+    expect(got.front).not.toBe('bias_ok');
+  });
+  it('never shows a lamp that the flat screen\'s body hides', () => {
+    // A grid behind a 24": where the flat body hides a lamp, the curved screen must too (its body
+    // still stands behind the strips). A grazing line used to slip over a strip's top edge.
+    const lamps = [];
+    for (let x = 150; x <= 250; x += 10) for (let y = 0; y <= 95; y += 5) for (let z = 80; z <= 130; z += 5) lamps.push(light(`${x},${y},${z}`, x, y, z));
+    const small = (curve: number | null) => monitor({ id: 's', kind: 'monitor-24', width: 53.1, height: 29.9, curve, tilt: undefined });
+    const [flat, curved] = [statuses(room(lamps, [small(null)])), statuses(room(lamps, [small(10000)]))];
+    const shown = Object.keys(flat).filter((id) => flat[id] === 'clear' && ['direct_fov', 'peripheral_warn'].includes(curved[id]));
+    expect(shown).toEqual([]);
+  });
+  it('traces a gently curved 24-inch like a flat one', () => {
+    const lamps = [light('back', 200, 300, 115), light('behind_left', 160, 320, 120), light('ceiling', 200, 300, 240), light('side', 330, 60, 130), light('halo', 200, 90, 95)];
+    const small = (curve: number | null) => monitor({ id: 's', kind: 'monitor-24', width: 53.1, height: 29.9, curve });
+    expect(statuses(room(lamps, [small(3800)]))).toEqual(statuses(room(lamps, [small(null)])));
+  });
+});
+
+describe('where you sit and how high your eyes are', () => {
+  const desk: Furniture = { id: 'd', kind: 'desk', label: 'Desk', x: 200, y: 150, width: 140, depth: 70, rotation: 0, shape: 'rect', elevation: 0, height: 75 };
+  const screen = monitor({ x: 200, y: 130, width: 61, depth: 20 });
+  const chair = (more: Partial<Furniture> = {}): Furniture => ({ id: 'c', kind: 'chair', label: 'Chair', x: 200, y: 215, width: 50, depth: 50, rotation: 180, shape: 'rect', elevation: 0, height: 90, seat: 50, ...more });
+
+  it('keeps today\'s seat without a seat chair: 60 cm in front of the screens, eyes 46 + 69', () => {
+    expect(seatOf(room([], [desk, screen]))!.eye).toEqual([200, 190, 115]);
+  });
+  it('puts the eyes over the chair marked as your seat, at its seat height plus your sitting eye height', () => {
+    const seat = seatOf(room([], [desk, screen, chair(), chair({ id: 'plain', x: 350, y: 350, seat: null })]))!;
+    expect(seat.eye).toEqual([200, 215, 119]);
+    expect(seat.target.slice(0, 2)).toEqual([200, 130]);
+  });
+  it('looks the way a seat chair faces when it is alone', () => {
+    const seat = seatOf(room([], [chair({ x: 100, y: 100, rotation: 0, seat: 46 })]))!;
+    expect(seat.eye).toEqual([100, 100, 115]);
+    expect(seat.target).toEqual([100, 200, 115]);
+  });
+  it('uses your own numbers', () => {
+    const body = { eye_sitting: 80, eye_standing: 170, screen_distance: 70 };
+    expect(seatOf(room([], [desk, screen]), 'seated', body)!.eye).toEqual([200, 200, 126]);
+    expect(seatOf(room([], [desk, screen]), 'standing', body)!.eye).toEqual([200, 200, 170]);
+  });
+  it('traces a strip mounted on a screen as one bias point behind it', () => {
+    const strip = light('strip', 0, 0, 0, { length: 200, mount: { screen: 'm' }, role: 'bias', x: 200, y: 99, elevation: 95, resolved_elevation: 95 });
+    const scene = glareScene(room([strip], [desk, screen]), 'seated', 'code', () => 200);
+    expect(scene.lights[0].points).toHaveLength(1);
+    expect(traceGlare(scene).lights[0].status).toBe('bias_ok');
   });
 });

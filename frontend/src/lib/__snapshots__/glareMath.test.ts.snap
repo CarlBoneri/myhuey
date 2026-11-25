@@ -1,0 +1,317 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`flat screens stay as they were > traces the behind room as before 1`] = `
+{
+  "hazards": 1,
+  "lights": [
+    {
+      "angle": 161.6,
+      "cap": {
+        "brightness": 18,
+        "kelvin": 2700,
+      },
+      "hazards": [
+        {
+          "display": "m",
+          "kind": "screen_reflection",
+          "path": [
+            [
+              200,
+              300,
+              115,
+            ],
+            [
+              200,
+              101,
+              115,
+            ],
+            [
+              200,
+              160,
+              115,
+            ],
+          ],
+        },
+      ],
+      "label": "back",
+      "light_id": "back",
+      "status": "screen_reflection",
+    },
+  ],
+}
+`;
+
+exports[`flat screens stay as they were > traces the ceiling room as before 1`] = `
+{
+  "hazards": 0,
+  "lights": [
+    {
+      "angle": 156.7,
+      "cap": null,
+      "hazards": [],
+      "label": "ceiling",
+      "light_id": "ceiling",
+      "status": "clear",
+    },
+  ],
+}
+`;
+
+exports[`flat screens stay as they were > traces the mixed room as before 1`] = `
+{
+  "hazards": 2,
+  "lights": [
+    {
+      "angle": 27.2,
+      "cap": {
+        "brightness": 15,
+        "kelvin": null,
+      },
+      "hazards": [
+        {
+          "display": null,
+          "kind": "direct_fov",
+          "path": [
+            [
+              230,
+              20,
+              130,
+            ],
+            [
+              200,
+              160,
+              115,
+            ],
+          ],
+        },
+      ],
+      "label": "ahead",
+      "light_id": "ahead",
+      "status": "direct_fov",
+    },
+    {
+      "angle": 56.8,
+      "cap": {
+        "brightness": 35,
+        "kelvin": null,
+      },
+      "hazards": [
+        {
+          "display": null,
+          "kind": "peripheral_warn",
+          "path": [
+            [
+              330,
+              60,
+              130,
+            ],
+            [
+              200,
+              160,
+              115,
+            ],
+          ],
+        },
+      ],
+      "label": "side",
+      "light_id": "side",
+      "status": "peripheral_warn",
+    },
+    {
+      "angle": 2.5,
+      "cap": null,
+      "hazards": [],
+      "label": "halo",
+      "light_id": "halo",
+      "status": "bias_ok",
+    },
+    {
+      "angle": 12.3,
+      "cap": null,
+      "hazards": [],
+      "label": "hidden",
+      "light_id": "hidden",
+      "status": "clear",
+    },
+    {
+      "angle": 56.8,
+      "cap": null,
+      "hazards": [],
+      "label": "pinned",
+      "light_id": "pinned",
+      "status": "bias_ok",
+    },
+  ],
+}
+`;
+
+exports[`flat screens stay as they were > traces the office room as before 1`] = `
+{
+  "hazards": 1,
+  "lights": [
+    {
+      "angle": 6.6,
+      "cap": null,
+      "hazards": [],
+      "label": "bias",
+      "light_id": "bias",
+      "status": "bias_ok",
+    },
+    {
+      "angle": 67.7,
+      "cap": null,
+      "hazards": [],
+      "label": "lamp_left",
+      "light_id": "lamp_left",
+      "status": "clear",
+    },
+    {
+      "angle": 67.7,
+      "cap": null,
+      "hazards": [],
+      "label": "lamp_right",
+      "light_id": "lamp_right",
+      "status": "clear",
+    },
+    {
+      "angle": 126.2,
+      "cap": null,
+      "hazards": [],
+      "label": "overhead",
+      "light_id": "overhead",
+      "status": "clear",
+    },
+    {
+      "angle": 173.9,
+      "cap": {
+        "brightness": 18,
+        "kelvin": 2700,
+      },
+      "hazards": [
+        {
+          "display": "left",
+          "kind": "screen_reflection",
+          "path": [
+            [
+              200,
+              320,
+              150,
+            ],
+            [
+              200,
+              99.44,
+              102.34,
+            ],
+            [
+              200,
+              160,
+              115,
+            ],
+          ],
+        },
+        {
+          "display": "right",
+          "kind": "screen_reflection",
+          "path": [
+            [
+              200,
+              320,
+              150,
+            ],
+            [
+              200,
+              99.44,
+              102.34,
+            ],
+            [
+              200,
+              160,
+              115,
+            ],
+          ],
+        },
+      ],
+      "label": "floor_behind",
+      "light_id": "floor_behind",
+      "status": "screen_reflection",
+    },
+  ],
+}
+`;
+
+exports[`flat screens stay as they were > traces the strip room as before 1`] = `
+{
+  "hazards": 1,
+  "lights": [
+    {
+      "angle": 110.6,
+      "cap": {
+        "brightness": 18,
+        "kelvin": 2700,
+      },
+      "hazards": [
+        {
+          "display": "m",
+          "kind": "screen_reflection",
+          "path": [
+            [
+              250,
+              300,
+              115,
+            ],
+            [
+              211.43,
+              101,
+              115,
+            ],
+            [
+              200,
+              160,
+              115,
+            ],
+          ],
+        },
+      ],
+      "label": "strip",
+      "light_id": "strip",
+      "status": "screen_reflection",
+    },
+  ],
+}
+`;
+
+exports[`flat screens stay as they were > traces the turned room as before 1`] = `
+{
+  "hazards": 1,
+  "lights": [
+    {
+      "angle": 32.5,
+      "cap": {
+        "brightness": 35,
+        "kelvin": null,
+      },
+      "hazards": [
+        {
+          "display": null,
+          "kind": "peripheral_warn",
+          "path": [
+            [
+              200,
+              300,
+              180,
+            ],
+            [
+              200,
+              40,
+              115,
+            ],
+          ],
+        },
+      ],
+      "label": "back",
+      "light_id": "back",
+      "status": "peripheral_warn",
+    },
+  ],
+}
+`;

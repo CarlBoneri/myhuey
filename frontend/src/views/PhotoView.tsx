@@ -5,6 +5,7 @@ import { Crosshair, ImagePlus, MapPin, Plus, ShoppingBag, Trash2, Upload } from 
 import { api } from '../api';
 import { href } from '../lib/router';
 import { attempt, useStore } from '../store';
+import { bodyOf } from '../lib/glareMath';
 import { liveColor, placedProfile } from '../lib/lights';
 import { darkness, glowLayout, heightPreset, nudge, parseTag, resolvableTags, tagKey, type HeightPreset, type TagKind } from '../lib/photo';
 import { oneAtATime } from '../lib/suggest';
@@ -28,7 +29,7 @@ const PRESETS: { value: HeightPreset; label: string }[] = [
 interface Item { key: string; kind: TagKind; label: string; icon?: string }
 
 export function PhotoView({ room }: { room: Room }) {
-  const { lights, profiles, replaceRoom, refreshRooms } = useStore();
+  const { lights, profiles, replaceRoom, refreshRooms, preferences } = useStore();
   const [spots, setSpots] = useState<Record<string, PhotoSpot>>(room.photo?.tags ?? {});
   const spotsRef = useRef(spots);
   const [selected, setSelected] = useState<string | null>(null);
@@ -99,7 +100,7 @@ export function PhotoView({ room }: { room: Room }) {
   const setHeight = async (lightId: string, preset: HeightPreset) => {
     const placement = room.lights.find((l) => l.light_id === lightId);
     if (!placement) return;
-    const value = heightPreset(preset, room, placement);
+    const value = heightPreset(preset, room, placement, bodyOf(preferences));
     if (preset === 'desk' && value === null) return useStore.getState().toast('Add a desk on the plan first.');
     const ok = await attempt(() => api.placeLight(room.name, {
       light_id: placement.light_id, x: placement.x, y: placement.y, elevation: value === null ? 'auto' : value,

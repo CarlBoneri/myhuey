@@ -530,7 +530,17 @@ a.chrome-button { text-decoration: none; }
 .page-head .title-input:focus-visible { border-bottom: 2px solid var(--accent); padding-bottom: 0; }
 .page-head h1:has(.title-input) { display: flex; align-items: baseline; min-width: 0; max-width: 100%; }
 
-.split { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; flex: 1; min-height: 0; }
+/* The sidebar sets its own width (--side-w, dragged with .sidebar-grip); the grip sits in the gap beside it. */
+.split { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; flex: 1; min-height: 0; position: relative; }
+.split > .inspector { width: var(--side-w, 360px); }
+.split > .sidebar-grip {
+  position: absolute; top: 0; bottom: 0; right: var(--side-w, 360px); width: 16px; z-index: 2;
+  display: grid; place-items: center; cursor: col-resize; touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.sidebar-grip span { width: 4px; height: 64px; border-radius: 999px; background: var(--border-strong); opacity: 0; transition: 0.12s; }
+.split:hover > .sidebar-grip span { opacity: 1; }
+.sidebar-grip:hover span, .sidebar-grip:active span, .sidebar-grip:focus-visible span { opacity: 1; background: var(--accent); }
+.sidebar-grip:focus-visible { outline: none; }
 .stage {
   position: relative; border-radius: var(--radius-xl); overflow: hidden; min-height: 420px;
   background: var(--stage); box-shadow: var(--shadow); border: 1px solid var(--glass-border);
@@ -854,7 +864,10 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 
 /* Settings */
 
-.settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 16px; align-items: start; max-width: 1100px; }
+/* Cards flow down columns like a masonry wall, so a short card never leaves a hole beside a tall one. */
+.settings-grid { columns: 380px auto; column-gap: 16px; max-width: 1640px; }
+.settings-grid > .panel { break-inside: avoid; margin: 0 0 16px; width: 100%; display: inline-block; }
+.settings-grid .pref-row:first-of-type { border-top: 0; }
 .pairing { text-align: center; }
 .notice { color: var(--link); }
 .countdown { font-size: 42px; font-weight: 650; font-variant-numeric: tabular-nums; margin: 6px 0; }
@@ -885,6 +898,8 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
   .studio3d.audit-folded .pane-body.stage { height: clamp(320px, calc(100dvh - 190px), 1200px); }
   .studio3d .pane-body.audit { max-height: 50vh; }
   .split { grid-template-columns: 1fr; }
+  .split > .inspector { width: auto; }
+  .sidebar-grip { display: none; }
   .stage { min-height: 60vh; }
   .page { padding: 16px; height: auto; }
 }
@@ -1131,7 +1146,7 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .v3-solid.flat polygon { fill-opacity: 0.5; }
 .v3-solid.selected polygon { stroke: var(--accent); stroke-width: 2; }
 .v3-screen polygon { fill: color-mix(in srgb, var(--text-3) 35%, var(--stage)); stroke: var(--text-3); stroke-width: 1.5; }
-.v3-screen.front polygon { fill: color-mix(in srgb, var(--accent) 22%, #05060a); stroke: var(--accent); }
+.v3-screen polygon.front { fill: color-mix(in srgb, var(--accent) 22%, #05060a); stroke: var(--accent); }
 .v3-light { cursor: pointer; }
 .v3-drop { stroke: var(--text-3); stroke-width: 1; stroke-dasharray: 3 3; stroke-opacity: 0.6; }
 .v3-foot { fill: var(--text-3); }
@@ -1360,3 +1375,5 @@ kbd { padding: 2px 7px; border-radius: 5px; border: 1px solid var(--border-stron
 .pane-body.stage .showing-label { left: auto; right: 12px; top: 12px; bottom: auto; transform: none; }
 .level-over { color: var(--warn-text); font-weight: 600; }
 .level-limit { color: var(--text-2); font-size: 12px; }
+.v3-halo { pointer-events: none; }
+.v3-loop { fill: none; stroke-linejoin: round; stroke-linecap: round; }

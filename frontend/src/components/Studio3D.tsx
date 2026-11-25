@@ -5,10 +5,11 @@ import { ArrowUpDown, Box, Maximize2, Minus, Monitor, PanelRightClose, PanelRigh
 import { sendLight, useStore } from '../store';
 import { useUi } from '../uiStore';
 import { quote } from '../lib/commands';
-import { STATUS_LABELS, capText, isDisplay, statusTone } from '../lib/glareMath';
+import { DEFAULT_SEAT_CM, STATUS_LABELS, bodyOf, capText, isDisplay, seatOf, statusTone, type Body } from '../lib/glareMath';
 import { round1 } from '../lib/geometry';
 import { placedProfile } from '../lib/lights';
-import { EYE_SEATED, EYE_STANDING, heightPreset, type HeightPreset } from '../lib/photo';
+import { heightPreset, type HeightPreset } from '../lib/photo';
+import { EyeFields } from './EyeFields';
 import { STANDING_DESK_CM, heightOf, type Posture } from '../lib/rig';
 import { fixGlareState, useDrawnLights, shownLevels, glareBadge } from '../lib/shownLights';
 import { overLimit } from '../lib/glareLimits';
@@ -17,6 +18,7 @@ import { lightsToDim, type RoomGlare } from '../lib/roomGlare';
 import { MODE_LABELS, autoRoleLabel } from '../lib/suggest';
 import { CM_PER_INCH, formatLength } from '../lib/units';
 import { clamp } from '../lib/view3d';
+import { screenSummary } from '../lib/screen';
 import type { Placement, Room } from '../types';
 import { Room3DStage, type Selection3D, type View3D } from './Room3DStage';
 import { isMac, isResizePress } from '../lib/pointer';
@@ -57,15 +59,23 @@ function PaneHead({ label, collapsed, onToggle, command, children }: { label: st
   );
 }
 
+/** "Seated · eyes 3'9"", with the seat and your sitting eye height when a chair is marked as your seat. */
+function seatedLabel(room: Room, body: Body): string {
+  const chair = room.furniture.find((item) => item.seat != null);
+  const eye = seatOf(room, 'seated', body)?.eye[2] ?? DEFAULT_SEAT_CM + body.eye_sitting;
+  const parts = chair ? ` (seat ${formatLength(chair.seat!, room.units)} + ${formatLength(body.eye_sitting, room.units)})` : '';
+  return `Seated · eyes ${formatLength(eye, room.units)}${parts}`;
+}
+
 export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCommit, onRoom, onRigCommit, children }: {
   room: Room; glare: RoomGlare;
   selection: Selection3D; onSelect: (selection: Selection3D) => void;
   onLight: (placement: Placement) => void; onLightCommit: (placement: Placement) => void;
-  onRoom: (room: Room) => void; onRigCommit: (lightIds: string[]) => void;
+  onRoom: (room: Room) => void; onRigCommit: (lightIds: string[], setId?: string) => void;
   /** The designer's own panels (selected light, furniture, room), shown under the 3D cards. */
   children: ReactNode;
 }) {
-  const { lights: liveLights, profiles, toast } = useStore();
+  const { lights: liveLights, profiles, toast, preferences, setPreferences } = useStore();
   const { lights, showing } = useDrawnLights(room.name);
   const { posture, setPosture, glareMode, setGlareMode } = useUi();
   const [sizes, setSizes] = useState(loadSizes);
@@ -212,7 +222,7 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
         <>
           <div className="splitter col" role="separator" aria-orientation="vertical" aria-label="Resize the inspector"
             title="Drag to resize · double-click to reset" onPointerDown={resizeInspector} onDoubleClick={() => setSizes((s) => ({ ...s, inspector: DEFAULT_SIZES.inspector }))}><span /></div>
-          <Sidebar name="designer">
+          <Sidebar name="designer" resizable={false}>
             <header className="inspector-head">
               <span>Spatial inspector</span>
               <button type="button" className="pane-fold" onClick={() => fold('inspector')} aria-label="Hide the inspector" title="Hide the inspector"><PanelRightClose size={14} /></button>
@@ -255,7 +265,7 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
                       onCommit={(value) => onLightCommit({ ...selectedLight, elevation: Math.round(value), resolved_elevation: Math.round(value) })} />
                     <div className="button-row">
                       {PRESETS.map((preset) => {
-                        const value = heightPreset(preset.id, room, selectedLight);
+                        const value = heightPreset(preset.id, room, selectedLight, bodyOf(preferences));
                         if (preset.id !== 'auto' && value === null) return null;
                         const active = preset.id === 'auto' ? selectedLight.elevation == null : selectedLight.elevation != null && Math.abs(height - (value ?? 0)) < 1;
                         return (
@@ -278,9 +288,10 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
 
             <Panel title="Posture">
               <Segmented<Posture> label="Posture" value={posture} onChange={setPosture} options={[
-                { value: 'seated', label: `Seated · eyes ${formatLength(EYE_SEATED, room.units)}` },
-                { value: 'standing', label: `Standing · eyes ${formatLength(EYE_STANDING, room.units)}` },
+                { value: 'seated', label: seatedLabel(room, bodyOf(preferences)) },
+                { value: 'standing', label: `Standing · eyes ${formatLength(bodyOf(preferences).eye_standing, room.units)}` },
               ]} />
+              <EyeFields eyes={bodyOf(preferences)} units={room.units} onChange={(changes) => void setPreferences(changes)} />
               <p className="hint">Standing is a preview: it raises your eyes and lifts sit-stand desks to {formatLength(STANDING_DESK_CM, room.units)}, with the screens and lights on them. Nothing is saved.</p>
             </Panel>
 
@@ -294,7 +305,7 @@ export function Studio3D({ room, glare, selection, onSelect, onLight, onLightCom
                         <button type="button" className={active ? 'active' : ''} aria-pressed={active} onClick={() => onSelect({ type: 'furniture', id: item.id })}>
                           <span>{item.label}</span>
                           <small>{isDisplay(item)
-                            ? `screen · ${formatLength(item.width, room.units)} wide`
+                            ? `screen · ${screenSummary(item)}`
                             : `${formatLength(item.width, room.units)} × ${formatLength(item.depth, room.units)}`}</small>
                         </button>
                       </li>

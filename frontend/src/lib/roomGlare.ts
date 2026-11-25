@@ -1,17 +1,18 @@
 // The glare check for a room as the app has it: the room in a posture, the lights' real lengths.
 import type { BridgeLight, Placement, ProfileTable, Room } from '../types';
-import { dimTo, glareScene, traceGlare, type GlareReport, type GlareScene } from './glareMath';
+import { DEFAULT_BODY, dimTo, glareScene, traceGlare, type Body, type GlareReport, type GlareScene } from './glareMath';
 import { effectiveLength, placedProfile } from './lights';
 import { posedRoom, type Posture } from './rig';
 
 export interface RoomGlare { posed: Room; scene: GlareScene; report: GlareReport }
 
-export function roomGlare(room: Room, posture: Posture, mode: string, lights: Record<string, BridgeLight>, profiles: ProfileTable | null): RoomGlare {
+export function roomGlare(room: Room, posture: Posture, mode: string, lights: Record<string, BridgeLight>, profiles: ProfileTable | null,
+  body: Body = DEFAULT_BODY): RoomGlare {
   const posed = posedRoom(room, posture);
   const scene = glareScene(posed, posture, mode, (placement: Placement) => {
     const profile = placedProfile(placement, lights[placement.light_id], profiles);
     return profile.linear ? effectiveLength(placement, profile) : 0;
-  });
+  }, body);
   return { posed, scene, report: traceGlare(scene) };
 }
 

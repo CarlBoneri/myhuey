@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, render, screen } from '../test/dom';
+import { act, fireEvent, render, screen } from '../test/dom';
 import { useStore } from '../store';
 import { useUi } from '../uiStore';
 import { Studio3D } from './Studio3D';
@@ -47,5 +47,49 @@ describe('Studio3D', () => {
     expect(screen.queryByText('panels')).toBeNull();
     act(() => useUi.getState().setLightingOpen(true));
     expect(screen.getByText('panels')).toBeTruthy();
+  });
+
+  it('sums up a screen in the item list', () => {
+    const withScreens = { ...(room as object), furniture: [
+      { id: 'g9', kind: 'monitor-49', label: 'G9', x: 150, y: 40, width: 119.8, depth: 12, rotation: 0, shape: 'rect', height: 33.7, curve: 1000 },
+      { id: 'dell', kind: 'monitor-27', label: 'Dell', x: 60, y: 40, width: 33.6, depth: 20, rotation: 30, shape: 'rect', height: 59.8 },
+    ] } as never;
+    render(<Studio3D room={withScreens} glare={glare} selection={null} onSelect={() => {}} onLight={() => {}} onLightCommit={() => {}}
+      onRoom={() => {}} onRigCommit={() => {}}><p>panels</p></Studio3D>);
+    expect(screen.getByText('screen · 49" 32:9 · 1000R')).toBeTruthy();
+    expect(screen.getByText('screen · 27" portrait')).toBeTruthy();
+  });
+
+  it('leaves resizing its inspector to its own bar, with no sidebar bar inside it', () => {
+    mount();
+    expect(screen.queryByRole('separator', { name: 'Resize the sidebar' })).toBeNull();
+    expect(screen.getByRole('separator', { name: 'Resize the inspector' })).toBeTruthy();
+  });
+
+  describe('your eyes', () => {
+    const prefs = { eye_sitting: 69, eye_standing: 155, screen_distance: 60 };
+    const mountWith = (furniture: object[] = []) => render(<Studio3D room={{ ...(room as object), units: 'metric', furniture } as never} glare={glare} selection={null}
+      onSelect={() => {}} onLight={() => {}} onLightCommit={() => {}} onRoom={() => {}} onRigCommit={() => {}}><p>panels</p></Studio3D>);
+
+    it('labels each posture with your own eye height', () => {
+      useStore.setState({ preferences: { ...useStore.getState().preferences, ...prefs, eye_sitting: 75, eye_standing: 160 } });
+      mountWith();
+      expect(screen.getByRole('radio', { name: 'Seated · eyes 1.21 m' })).toBeTruthy();
+      expect(screen.getByRole('radio', { name: 'Standing · eyes 1.60 m' })).toBeTruthy();
+    });
+    it('shows the seat and your sitting eye height when a chair is your seat', () => {
+      useStore.setState({ preferences: { ...useStore.getState().preferences, ...prefs } });
+      mountWith([{ id: 'c', kind: 'chair', label: 'Chair', x: 100, y: 100, width: 50, depth: 50, rotation: 0, shape: 'rect', seat: 50 }]);
+      expect(screen.getByRole('radio', { name: 'Seated · eyes 1.19 m (seat 50 cm + 69 cm)' })).toBeTruthy();
+    });
+    it('saves a new sitting eye height', () => {
+      const setPreferences = vi.fn(async () => {});
+      useStore.setState({ preferences: { ...useStore.getState().preferences, ...prefs }, setPreferences });
+      mountWith();
+      const field = screen.getByLabelText('Sitting eye height');
+      fireEvent.change(field, { target: { value: '72cm' } });
+      fireEvent.blur(field);
+      expect(setPreferences).toHaveBeenCalledWith({ eye_sitting: 72 });
+    });
   });
 });

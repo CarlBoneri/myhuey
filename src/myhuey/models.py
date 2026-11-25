@@ -28,6 +28,10 @@ FURNITURE_HEIGHTS: dict[str, tuple[float, float]] = {
     "monitor-24": (75, 36),
     "monitor-27": (75, 40),
     "monitor-34": (75, 37),
+    "monitor-49": (75, 33.7),
+    "laptop": (75, 2),
+    "keyboard": (75, 3),
+    "speaker": (75, 20),
     "tv": (60, 84),
     "pillar-round": (0, DEFAULT_CEILING_CM),
     "pillar-square": (0, DEFAULT_CEILING_CM),
@@ -67,7 +71,11 @@ FURNITURE_SIZES: dict[str, tuple[str, float, float, str]] = {
     "monitor-24": ('Monitor 24"', 54.0, 18.0, "rect"),
     "monitor-27": ('Monitor 27"', 61.0, 20.0, "rect"),
     "monitor-34": ('Ultrawide 34"', 81.0, 22.0, "rect"),
+    "monitor-49": ('Super ultrawide 49"', 119.8, 12.0, "rect"),
     "chair": ("Chair", 50.0, 50.0, "rect"),
+    "laptop": ("Laptop (closed)", 31.0, 22.0, "rect"),
+    "keyboard": ("Keyboard", 44.0, 14.0, "rect"),
+    "speaker": ("Speaker", 12.0, 15.0, "rect"),
     "dining-table": ("Dining table", 180.0, 90.0, "rect"),
     "round-table": ("Round table", 110.0, 110.0, "ellipse"),
     "bookshelf": ("Bookshelf", 90.0, 30.0, "rect"),
@@ -80,6 +88,9 @@ FURNITURE_SIZES: dict[str, tuple[str, float, float, str]] = {
     "pillar-round": ("Round pillar", 30.0, 30.0, "ellipse"),
     "pillar-square": ("Square pillar", 30.0, 30.0, "rect"),
 }
+
+# Screens that come curved: kind -> curve radius in mm. The 49" matches the Samsung Odyssey G9.
+DEFAULT_CURVES: dict[str, float] = {"monitor-49": 1000.0}
 
 # Roles a user can pin on a light. Suggestions also use "behind" and "ambient" internally.
 PINNABLE_ROLES = ("auto", "bias", "task", "view")
@@ -146,6 +157,10 @@ class LayoutLight:
     # A light planned from the catalog that isn't installed yet: it takes part in roles and
     # suggestions, but nothing is ever sent to the bridge for it.
     planned: bool = False
+    # The desk set this light belongs to (see desks.py), if any.
+    set: str | None = None
+    # {"screen": <furniture id>}: stuck on that screen's back, facing the wall behind it.
+    mount: dict[str, str] | None = None
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> LayoutLight:
@@ -177,6 +192,8 @@ class LayoutLight:
             elevation=elevation,
             role=role,
             planned=bool(data.get("planned", False)),
+            set=_optional_text(data.get("set")),
+            mount=_mount(data.get("mount")),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -196,10 +213,37 @@ class LayoutLight:
             "elevation": self.elevation,
             "role": self.role,
             "planned": self.planned,
+            "set": self.set,
+            "mount": dict(self.mount) if self.mount else None,
         }
 
 
 FURNITURE_SHAPES = ("rect", "ellipse")
+CURVE_RANGE_MM = (500.0, 10000.0)
+TILT_LIMIT_DEG = 45.0
+
+
+def _optional_text(value: Any) -> str | None:
+    """An id that may be left out: None and blank stay None."""
+    text = str(value or "").strip()[:40]
+    return text or None
+
+
+def _mount(value: Any) -> dict[str, str] | None:
+    if value in (None, "", {}):
+        return None
+    screen = value.get("screen") if isinstance(value, dict) else None
+    if not isinstance(screen, str) or not screen.strip() or set(value) != {"screen"}:
+        raise ValueError("A mount names the screen it is on: {\"screen\": <furniture id>}")
+    return {"screen": screen.strip()[:40]}
+
+
+SEAT_RANGE_CM = (30.0, 90.0)
+
+
+def _optional(value: Any) -> float | None:
+    """A number that may be left out: None and "" stay None."""
+    return None if value in (None, "") else _num(value)
 
 
 @dataclass
@@ -217,6 +261,14 @@ class Furniture:
     shape: str = "rect"
     elevation: float = 0.0
     height: float = 75.0
+    # A screen's curve radius in mm, as printed on the box (1000 = 1000R); None is flat.
+    curve: float | None = None
+    # How far a screen leans, in degrees; negative leans back. None is the default for the kind.
+    tilt: float | None = None
+    # The desk set this piece belongs to (see desks.py), if any.
+    set: str | None = None
+    # A chair's seat height in cm when this is where you sit; None for any other piece.
+    seat: float | None = None
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Furniture:
@@ -232,6 +284,17 @@ class Furniture:
         height = _num(data.get("height"), default_height) if data.get("height") is not None else default_height
         if not (0 <= elevation <= 1000 and 0 < height <= 1000):
             raise ValueError("Furniture elevation and height must be between 0 and 10 m")
+        curve = _optional(data.get("curve"))
+        if curve is not None and not CURVE_RANGE_MM[0] <= curve <= CURVE_RANGE_MM[1]:
+            raise ValueError("A screen's curve must be between 500R and 10000R")
+        if curve is not None and height > width:
+            raise ValueError("A portrait screen cannot be curved")
+        seat = _optional(data.get("seat"))
+        if seat is not None and not SEAT_RANGE_CM[0] <= seat <= SEAT_RANGE_CM[1]:
+            raise ValueError("A chair's seat height must be between 30 and 90 cm")
+        tilt = _optional(data.get("tilt"))
+        if tilt is not None and not -TILT_LIMIT_DEG <= tilt <= TILT_LIMIT_DEG:
+            raise ValueError("A screen's tilt must be between -45° and 45°")
         return cls(
             id=str(data.get("id") or new_id()),
             kind=kind,
@@ -244,10 +307,23 @@ class Furniture:
             shape=shape,
             elevation=float(elevation),
             height=float(height),
+            curve=curve,
+            tilt=tilt,
+            set=_optional_text(data.get("set")),
+            seat=seat,
         )
 
     def to_dict(self) -> dict[str, Any]:
         return dict(self.__dict__)
+
+
+def _desk_sets(raw: Any) -> list[dict[str, str]]:
+    entries = []
+    for entry in raw or []:
+        if not isinstance(entry, dict) or not entry.get("id") or not entry.get("base"):
+            raise ValueError("A desk set needs an id and the id of its base piece")
+        entries.append({"id": str(entry["id"])[:40], "name": str(entry.get("name") or "Desk")[:80], "base": str(entry["base"])[:40]})
+    return entries[:50]
 
 
 TAG_KINDS = ("light", "furniture", "opening")
@@ -489,6 +565,8 @@ class Room:
     openings: list[Opening] = field(default_factory=list)
     # The id of the Hue room this room mirrors, once a refresh has linked them.
     hue_room: str | None = None
+    # Desk sets placed here: {"id", "name", "base"}; members carry the id in their `set`.
+    desk_sets: list[dict[str, str]] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Room:
@@ -516,6 +594,7 @@ class Room:
             ceiling=ceiling,
             openings=openings,
             hue_room=str(data.get("hue_room") or "").strip() or None,
+            desk_sets=_desk_sets(data.get("desk_sets")),
         )
 
     @property
@@ -572,4 +651,5 @@ class Room:
             "ceiling": self.ceiling,
             "openings": [opening.to_dict() for opening in self.openings],
             "hue_room": self.hue_room,
+            "desk_sets": [dict(entry) for entry in self.desk_sets],
         }

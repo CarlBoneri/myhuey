@@ -11,7 +11,7 @@ from typing import Any
 
 from .geometry import as_points, bounds, distance_to_polygon, point_in_polygon
 from .models import Furniture, Room
-from .placement import UNKNOWN_CM, _CEILING, _FLOOR, _PENDANT, _STRIP, _TABLE, covers, resolved_elevation
+from .placement import UNKNOWN_CM, _CEILING, _FLOOR, _PENDANT, _STRIP, _TABLE, covers, footprint, resolved_elevation
 from .roles import DESKS, MONITOR_PREFIX, _front, find_focus
 
 CELLS = (5, 10, 20, 25, 50, 100)
@@ -109,11 +109,12 @@ def _opening_sentence(room: Room, opening) -> str:
 
 
 def _corners(item: Furniture) -> list[tuple[float, float]]:
+    cx, cy, width, depth = footprint(item)
     angle = math.radians(item.rotation)
     cos, sin = math.cos(angle), math.sin(angle)
-    return [(item.x + lx * cos - ly * sin, item.y + lx * sin + ly * cos)
-            for lx, ly in ((-item.width / 2, -item.depth / 2), (item.width / 2, -item.depth / 2),
-                           (item.width / 2, item.depth / 2), (-item.width / 2, item.depth / 2))]
+    return [(cx + lx * cos - ly * sin, cy + lx * sin + ly * cos)
+            for lx, ly in ((-width / 2, -depth / 2), (width / 2, -depth / 2),
+                           (width / 2, depth / 2), (-width / 2, depth / 2))]
 
 
 def _outside(point: tuple[float, float], outline: list[tuple[float, float]]) -> bool:

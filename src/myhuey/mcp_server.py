@@ -22,6 +22,7 @@ from mcp.types import ToolAnnotations
 
 from .assistant import CHANGES_LIGHTS, TOOLS, WRITES_LAYOUT
 from .errors import HueError
+from .roles import using_body
 from .service import HueRoomService
 from .skills import prompt_text
 
@@ -57,7 +58,7 @@ def _bound(tool: Callable[..., Any], service: HueRoomService, app_url: str, one_
     @functools.wraps(tool)
     def call(*args: Any, **kwargs: Any) -> Any:
         try:
-            with one_at_a_time:
+            with one_at_a_time, using_body(service.body()):
                 result = tool(**fixed, **kwargs)
         except (HueError, ValueError) as exc:
             raise ToolError(str(exc)) from exc

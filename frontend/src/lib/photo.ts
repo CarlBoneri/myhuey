@@ -1,6 +1,8 @@
 /** Photo helpers: tag keys, height presets, and the glow drawn over a room photo. */
-import type { Furniture, Placement, Pt, Room } from '../types';
+import { DEFAULT_BODY, DEFAULT_SEAT_CM, type Body } from './glareMath';
+import type { Placement, Pt, Room } from '../types';
 import { bounds, pointInPolygon } from './geometry';
+import { covers } from './rig';
 
 export type TagKind = 'light' | 'furniture' | 'opening';
 export type HeightPreset = 'floor' | 'desk' | 'eye' | 'ceiling' | 'auto';
@@ -15,26 +17,19 @@ export function parseTag(key: string): { kind: TagKind; id: string } | null {
 }
 
 const DESKS = ['desk', 'desk-l', 'desk-standing'];
-export const EYE_SEATED = 115;
-export const EYE_STANDING = 155;
 
-function covers(item: Furniture, x: number, y: number): boolean {
-  const angle = (-item.rotation * Math.PI) / 180;
-  const dx = x - item.x;
-  const dy = y - item.y;
-  const lx = dx * Math.cos(angle) - dy * Math.sin(angle);
-  const ly = dx * Math.sin(angle) + dy * Math.cos(angle);
-  if (item.shape === 'ellipse') return (lx / (item.width / 2)) ** 2 + (ly / (item.depth / 2)) ** 2 <= 1;
-  return Math.abs(lx) <= item.width / 2 && Math.abs(ly) <= item.depth / 2;
-}
 
 /** The height (cm) a preset means for this light, or null for "auto" (or no desk to use). */
-export function heightPreset(preset: HeightPreset, room: Room, light: Placement): number | null {
+export function heightPreset(preset: HeightPreset, room: Room, light: Placement, body: Body = DEFAULT_BODY): number | null {
   if (preset === 'floor') return 0;
   if (preset === 'ceiling') return room.ceiling;
   if (preset === 'auto') return null;
   const desks = room.furniture.filter((item) => DESKS.includes(item.kind));
-  if (preset === 'eye') return desks.some((item) => item.kind === 'desk-standing') ? EYE_STANDING : EYE_SEATED;
+  if (preset === 'eye') {
+    if (desks.some((item) => item.kind === 'desk-standing')) return body.eye_standing;
+    const chair = room.furniture.find((item) => item.seat != null);
+    return (chair?.seat ?? DEFAULT_SEAT_CM) + body.eye_sitting;
+  }
   if (!desks.length) return null;
   const under = desks.find((item) => covers(item, light.x, light.y));
   const pick = under ?? desks.reduce((best, item) =>

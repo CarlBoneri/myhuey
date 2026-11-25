@@ -3,8 +3,8 @@
 // drag without a request. Plan coordinates: cm, x right, y down, z up; furniture fronts face +y
 // at rotation 0 and turn clockwise, as in roles.py.
 import type { Furniture, Placement, Room } from '../types';
-import { EYE_SEATED, EYE_STANDING } from './photo';
 import { heightOf, type Posture } from './rig';
+import { arcOf, isCurved } from './screen';
 import { add, dot, length, scale, sub, type Vec3 } from './view3d';
 
 export type GlareStatus = 'screen_reflection' | 'direct_fov' | 'peripheral_warn' | 'bias_ok' | 'clear';
@@ -23,11 +23,27 @@ export const PERIPHERAL_MODES = ['code', 'study'];
 export const STRIP_SAMPLES = 5;
 export const BOX_SHRINK_CM = 0.5;
 export const DEFAULT_MONITOR_TILT = -12;
-const SEAT_FROM_SCREEN_CM = 60;
+/** A curved screen is traced as this many flat strips along its arc. */
+export const FACETS = 12;
+const SEAM_SHRINK_CM = 0.01;
 const SEAT_FROM_DESK_EDGE_CM = 30;
 const DESKS = ['desk', 'desk-l', 'desk-standing'];
 
-export interface Display { id: string; center: Vec3; normal: Vec3; u: Vec3; v: Vec3; width: number; height: number }
+/**
+ * One flat face of a screen: the whole screen when flat, one strip of the arc when curved. `id` is
+ * the screen's furniture id, `facet` the strip's index. `uMin`..`uMax` is how far along `u` a
+ * bounce may land and still count; the 8 cm margin is on the screen's outer edges only.
+ */
+export interface Display {
+  id: string; facet: number; curved: boolean;
+  center: Vec3; normal: Vec3; u: Vec3; v: Vec3; width: number; height: number; uMin: number; uMax: number;
+  /**
+   * The whole screen's plane for the bias check: the face itself when flat; for a curved screen,
+   * the plane at its panel middle, as wide as its chord, shared by every strip. Measured along a
+   * wing's leaning normal, a light just behind the wing would read as too deep.
+   */
+  bias: { center: Vec3; normal: Vec3; u: Vec3; half: number };
+}
 export interface Box { id: string; x: number; y: number; rotation: number; width: number; depth: number; z0: number; z1: number }
 export interface GlareScene {
   mode: string;
@@ -50,8 +66,19 @@ const front = (item: Furniture): [number, number] => [-Math.sin(rad(item.rotatio
 const isMonitor = (item: Furniture) => item.kind.startsWith('monitor');
 export const isDisplay = (item: Furniture) => item.display ?? (isMonitor(item) || item.kind === 'tv');
 
-/** Where the eyes are at the desk and the point they look at, or null without a desk or screen. */
-export function seatOf(room: Room, posture: Posture = 'seated'): { eye: Vec3; target: Vec3 } | null {
+/** The person's own numbers (preferences), the same as src/myhuey/roles.py Body. */
+export interface Body { eye_sitting: number; eye_standing: number; screen_distance: number }
+export const DEFAULT_BODY: Body = { eye_sitting: 69, eye_standing: 155, screen_distance: 60 };
+/** A desk chair's seat when none is marked: 46 + 69 = 115 cm, the seated eye height before seats existed. */
+export const DEFAULT_SEAT_CM = 46;
+export const bodyOf = (prefs: Partial<Body> | null | undefined): Body => ({ ...DEFAULT_BODY, ...(prefs ?? {}) }) as Body;
+
+/**
+ * Where the eyes are at the desk and the point they look at, or null without a desk, screen, or
+ * seat chair. A chair marked as your seat (`seat` set) puts the eyes over it, at its seat height
+ * plus your sitting eye height; without one, the eyes are `screen_distance` in front of the screens.
+ */
+export function seatOf(room: Room, posture: Posture = 'seated', body: Body = DEFAULT_BODY): { eye: Vec3; target: Vec3 } | null {
   const desks = room.furniture.filter((item) => DESKS.includes(item.kind));
   const monitors = room.furniture.filter(isMonitor);
   let desk: Furniture | undefined;
@@ -62,7 +89,10 @@ export function seatOf(room: Room, posture: Posture = 'seated'): { eye: Vec3; ta
     if (!desk || onDesk.length > screens.length) [desk, screens] = [candidate, onDesk];
   }
   if (!desk && monitors.length) screens = monitors;
-  const eyeZ = posture === 'standing' || desk?.kind === 'desk-standing' ? EYE_STANDING : EYE_SEATED;
+  const standing = posture === 'standing' || desk?.kind === 'desk-standing';
+  const chairs = room.furniture.filter((item) => item.seat != null);
+  const eyeAt = (seat: number) => (standing ? body.eye_standing : seat + body.eye_sitting);
+  const eyeZ = eyeAt(DEFAULT_SEAT_CM);
   if (screens.length) {
     const cx = screens.reduce((sum, s) => sum + s.x, 0) / screens.length;
     const cy = screens.reduce((sum, s) => sum + s.y, 0) / screens.length;
@@ -71,7 +101,18 @@ export function seatOf(room: Room, posture: Posture = 'seated'): { eye: Vec3; ta
     const len = Math.hypot(fx, fy);
     const facing: [number, number] = len ? [fx / len, fy / len] : [0, -1];
     const height = screens.reduce((sum, s) => sum + (s.elevation ?? 0) + (s.height ?? 40) / 2, 0) / screens.length;
-    return { eye: [cx + facing[0] * SEAT_FROM_SCREEN_CM, cy + facing[1] * SEAT_FROM_SCREEN_CM, eyeZ], target: [cx, cy, height] };
+    if (chairs.length) {
+      const chair = chairs.reduce((best, c) => (Math.hypot(c.x - cx, c.y - cy) < Math.hypot(best.x - cx, best.y - cy) ? c : best));
+      return { eye: [chair.x, chair.y, eyeAt(chair.seat!)], target: [cx, cy, height] };
+    }
+    return { eye: [cx + facing[0] * body.screen_distance, cy + facing[1] * body.screen_distance, eyeZ], target: [cx, cy, height] };
+  }
+  if (chairs.length) {
+    const near = (c: Furniture) => (desk ? Math.hypot(c.x - desk.x, c.y - desk.y) : 0);
+    const chair = chairs.reduce((best, c) => (near(c) < near(best) ? c : best));
+    const f = front(chair);
+    const z = eyeAt(chair.seat!);
+    return { eye: [chair.x, chair.y, z], target: [chair.x + f[0] * 100, chair.y + f[1] * 100, z] };
   }
   if (!desk) return null;
   const f = front(desk);
@@ -86,15 +127,54 @@ export function displayOf(item: Furniture): Display {
   const r = rad(item.rotation);
   const tau = rad(-(item.tilt ?? (isMonitor(item) ? DEFAULT_MONITOR_TILT : 0)));
   const height = item.height ?? 40;
+  const center: Vec3 = [item.x + (f[0] * item.depth) / 2, item.y + (f[1] * item.depth) / 2, (item.elevation ?? 0) + height / 2];
+  const normal: Vec3 = [f[0] * Math.cos(tau), f[1] * Math.cos(tau), Math.sin(tau)];
+  const u: Vec3 = [Math.cos(r), Math.sin(r), 0];
   return {
     id: item.id,
-    center: [item.x + (f[0] * item.depth) / 2, item.y + (f[1] * item.depth) / 2, (item.elevation ?? 0) + height / 2],
-    normal: [f[0] * Math.cos(tau), f[1] * Math.cos(tau), Math.sin(tau)],
-    u: [Math.cos(r), Math.sin(r), 0],
+    center,
+    normal,
+    u,
     v: [-f[0] * Math.sin(tau), -f[1] * Math.sin(tau), Math.cos(tau)],
     width: item.width,
     height,
+    facet: 0,
+    curved: false,
+    uMin: -item.width / 2 - SCREEN_MARGIN_CM,
+    uMax: item.width / 2 + SCREEN_MARGIN_CM,
+    bias: { center, normal, u, half: item.width / 2 },
   };
+}
+
+/**
+ * A screen's faces: the screen itself when flat, FACETS strips along its arc when curved. The arc
+ * bends around an axis `radius` in front of the panel's middle, along the panel's own up (`v`),
+ * so a tilted screen's arc tilts with it. Strip i spans arc angles [-angle/2 + i*step, ... + step].
+ */
+export function facetsOf(item: Furniture): Display[] {
+  const base = displayOf(item);
+  if (!isCurved(item)) return [base];
+  const { radius, angle, chord } = arcOf(item);
+  const bias = { ...base.bias, half: chord / 2 };
+  const axis = add(base.center, scale(base.normal, radius)); // a point on the axis of curvature
+  const step = angle / FACETS;
+  const half = step / 2;
+  const facets: Display[] = [];
+  for (let i = 0; i < FACETS; i++) {
+    const phi = -angle / 2 + (i + 0.5) * step; // the strip's middle, 0 at the panel's middle, + toward base.u
+    // The strip faces the axis; its middle is the middle of its chord, cos(half) of the radius in,
+    // so neighbours meet edge to edge on the arc.
+    const normal = add(scale(base.normal, Math.cos(phi)), scale(base.u, -Math.sin(phi)));
+    const center = sub(axis, scale(normal, radius * Math.cos(half)));
+    const u = add(scale(base.u, Math.cos(phi)), scale(base.normal, Math.sin(phi)));
+    const width = 2 * radius * Math.sin(half);
+    facets.push({
+      id: item.id, facet: i, curved: true, center, normal, u, v: base.v, width, height: base.height, bias,
+      uMin: -width / 2 - (i === 0 ? SCREEN_MARGIN_CM : 0),
+      uMax: width / 2 + (i === FACETS - 1 ? SCREEN_MARGIN_CM : 0),
+    });
+  }
+  return facets;
 }
 
 /** The corners of a screen, for drawing it: bottom-left, bottom-right, top-right, top-left. */
@@ -107,16 +187,16 @@ export function displayCorners(display: Display): Vec3[] {
  * Everything the tracer needs, as numbers. `lengthOf` gives a light's physical length when it
  * is a strip, bar, or tube (0 for a bulb); long lights are sampled along their length.
  */
-export function glareScene(room: Room, posture: Posture, mode: string, lengthOf: (light: Placement) => number): GlareScene {
-  const seat = seatOf(room, posture);
+export function glareScene(room: Room, posture: Posture, mode: string, lengthOf: (light: Placement) => number, body: Body = DEFAULT_BODY): GlareScene {
+  const seat = seatOf(room, posture, body);
   return {
     mode,
     eye: seat?.eye ?? null,
     target: seat?.target ?? null,
-    displays: room.furniture.filter(isDisplay).map(displayOf),
+    displays: room.furniture.filter(isDisplay).flatMap(facetsOf),
     lights: room.lights.map((light) => {
       const z = heightOf(light);
-      const span = lengthOf(light);
+      const span = light.mount ? 0 : lengthOf(light); // a mounted strip is one point behind its screen
       const points: Vec3[] = [];
       if (span > 30) {
         const [ux, uy] = [Math.cos(rad(light.rotation)), Math.sin(rad(light.rotation))];
@@ -129,8 +209,10 @@ export function glareScene(room: Room, posture: Posture, mode: string, lengthOf:
       }
       return { light_id: light.light_id, label: light.label, points, pinned_bias: light.role === 'bias' };
     }),
+    // A curved screen blocks light with its facets (see crossesFacet) and with its body, a box
+    // as wide as its chord behind them, so the hollow in front of it stays empty.
     boxes: room.furniture.filter((item) => item.kind !== 'rug').map((item) => ({
-      id: item.id, x: item.x, y: item.y, rotation: item.rotation, width: item.width, depth: item.depth,
+      id: item.id, x: item.x, y: item.y, rotation: item.rotation, width: isDisplay(item) ? arcOf(item).chord : item.width, depth: item.depth,
       z0: item.elevation ?? 0, z1: (item.elevation ?? 0) + (item.height ?? 75),
     })),
   };
@@ -163,9 +245,27 @@ export function blocked(a: Vec3, b: Vec3, box: Box): boolean {
   return true;
 }
 
-const hidden = (a: Vec3, b: Vec3, boxes: Box[], except?: string) => boxes.some((box) => box.id !== except && blocked(a, b, box));
+/**
+ * Whether the segment from a to b passes through a facet. `shrink` trims the facet's edges: positive
+ * for a screen shading itself (a bounce off one strip is not blocked by its neighbour at the shared
+ * seam), negative for blocking other light (so a ray through a seam cannot slip between two strips).
+ */
+export function crossesFacet(a: Vec3, b: Vec3, facet: Display, shrink = SEAM_SHRINK_CM): boolean {
+  const da = dot(sub(a, facet.center), facet.normal);
+  const db = dot(sub(b, facet.center), facet.normal);
+  if (da * db >= 0) return false;
+  const t = da / (da - db);
+  if (t < 1e-6 || t > 1 - 1e-6) return false;
+  const offset = sub(add(a, scale(sub(b, a), t)), facet.center);
+  return Math.abs(dot(offset, facet.u)) < facet.width / 2 - shrink && Math.abs(dot(offset, facet.v)) < facet.height / 2 - shrink;
+}
 
-function reflection(point: Vec3, eye: Vec3, display: Display, boxes: Box[]): Vec3 | null {
+/** Whether something solid lies between a and b: a box, or a curved screen's facet. `except` skips one screen. */
+const hidden = (a: Vec3, b: Vec3, scene: Pick<GlareScene, 'boxes' | 'displays'>, except?: string) =>
+  scene.boxes.some((box) => box.id !== except && blocked(a, b, box)) ||
+  scene.displays.some((d) => d.curved && d.id !== except && crossesFacet(a, b, d, -SEAM_SHRINK_CM));
+
+function reflection(point: Vec3, eye: Vec3, display: Display, scene: GlareScene): Vec3 | null {
   const side = dot(sub(point, display.center), display.normal);
   if (side <= 0 || dot(sub(eye, display.center), display.normal) <= 0) return null;
   const mirrored = sub(point, scale(display.normal, 2 * side));
@@ -176,15 +276,28 @@ function reflection(point: Vec3, eye: Vec3, display: Display, boxes: Box[]): Vec
   if (!(t > 0 && t < 1)) return null;
   const hit = add(eye, scale(ray, t));
   const offset = sub(hit, display.center);
-  if (Math.abs(dot(offset, display.u)) > display.width / 2 + SCREEN_MARGIN_CM) return null;
+  const along = dot(offset, display.u);
+  if (along < display.uMin || along > display.uMax) return null;
   if (Math.abs(dot(offset, display.v)) > display.height / 2 + SCREEN_MARGIN_CM) return null;
-  if (hidden(point, hit, boxes, display.id) || hidden(hit, eye, boxes, display.id)) return null;
+  if (hidden(point, hit, scene, display.id) || hidden(hit, eye, scene, display.id)) return null;
+  // A curved screen can shade itself: the way in or out may pass behind its other strips.
+  const shaded = (d: Display) => d.id === display.id && d.facet !== display.facet && (crossesFacet(point, hit, d) || crossesFacet(hit, eye, d));
+  if (display.curved && scene.displays.some(shaded)) return null;
   return hit;
 }
 
+/**
+ * Behind the screen as a whole (its bias plane, with room past the sides), or, on a curved screen,
+ * right behind one of its strips: a light stuck to the back of a wing sits in front of the middle plane.
+ */
 const behindScreen = (point: Vec3, display: Display) => {
-  const side = dot(sub(point, display.center), display.normal);
-  return side < 0 && side >= -BIAS_BEHIND_CM && Math.abs(dot(sub(point, display.center), display.u)) <= display.width / 2 + BIAS_SIDE_CM;
+  const behind = (center: Vec3, normal: Vec3, u: Vec3, half: number) => {
+    const side = dot(sub(point, center), normal);
+    return side < 0 && side >= -BIAS_BEHIND_CM && Math.abs(dot(sub(point, center), u)) <= half;
+  };
+  const { bias } = display;
+  return behind(bias.center, bias.normal, bias.u, bias.half + BIAS_SIDE_CM) ||
+    (display.curved && behind(display.center, display.normal, display.u, display.width / 2));
 };
 
 /** Each light's glare status from the eye, with the bounce paths to draw and the level to keep it under. */
@@ -208,7 +321,7 @@ export function traceGlare(scene: GlareScene): GlareReport {
       if (angle !== null && (smallest === null || angle < smallest)) smallest = angle;
       let status: GlareStatus = 'clear';
       for (const display of scene.displays) {
-        const hit = reflection(point, eye, display, scene.boxes);
+        const hit = reflection(point, eye, display, scene);
         if (hit) {
           status = 'screen_reflection';
           note({ kind: status, display: display.id, path: [r2(point), r2(hit), r2(eye)] });
@@ -216,7 +329,7 @@ export function traceGlare(scene: GlareScene): GlareReport {
       }
       if (status === 'clear') {
         if (light.pinned_bias || scene.displays.some((display) => behindScreen(point, display))) status = 'bias_ok';
-        else if (angle !== null && angle <= PERIPHERAL_DEG && !hidden(eye, point, scene.boxes)) {
+        else if (angle !== null && angle <= PERIPHERAL_DEG && !hidden(eye, point, scene)) {
           status = angle < DIRECT_DEG ? 'direct_fov' : 'peripheral_warn';
           note({ kind: status, display: null, path: [r2(point), r2(eye)] });
         }

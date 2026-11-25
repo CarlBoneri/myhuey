@@ -19,7 +19,7 @@ import requests
 from .catalog import CATALOG, catalog_item
 from .errors import BridgeNotConfigured, HueError, LayoutChanged, LayoutNotFound, RoomNotFound, SceneNotFound
 from .layouts import current_layout, using_layout
-from .models import DEFAULT_FURNITURE_HEIGHT, FURNITURE_HEIGHTS, FURNITURE_SIZES, new_id
+from .models import DEFAULT_CURVES, DEFAULT_FURNITURE_HEIGHT, FURNITURE_HEIGHTS, FURNITURE_SIZES, new_id
 from .room_text import draw_room, layout_problems
 from .room_view import room_json
 from .scenes import Scene
@@ -371,7 +371,7 @@ def room_dim(service: HueRoomService, room: str, percent: float, layout: str | N
 # Layout tools. Every one that writes goes through sandbox(), which refuses the active layout, so an
 # assistant can only build in a sandbox. Nothing here sends anything to the bridge.
 
-WRITES_LAYOUT = ("add_room", "update_room", "remove_room", "set_openings", "set_furniture", "place_light", "remove_light")
+WRITES_LAYOUT = ("add_room", "update_room", "remove_room", "set_openings", "set_furniture", "place_light", "remove_light", "place_desk")
 
 _NEEDS_SANDBOX = "Layouts are built in a sandbox, never in the active home. Call create_sandbox first, then pass its id as layout."
 
@@ -557,6 +557,11 @@ def set_furniture(service: HueRoomService, layout: str | None, room: str, furnit
                     data[key] = _plan_cm(item[key], key)
             if item.get("rotation") is not None:
                 data["rotation"] = item["rotation"]
+            for key in ("curve", "tilt", "id", "set", "seat"):
+                if item.get(key) is not None:
+                    data[key] = item[key]
+            if kind in DEFAULT_CURVES and "curve" not in item:
+                data["curve"] = DEFAULT_CURVES[kind]
             built.append(data)
         service.update_room(name, furniture=built)
         return _room_dict(service, name)
@@ -666,12 +671,30 @@ def open_in_app(service: HueRoomService, layout: str | None, room: str, app_url:
 
 
 # Every tool by name, in the order the design lists them, `guide` first. A server registers these.
+def desk_designs(service: HueRoomService) -> list[dict[str, Any]]:
+    """The saved desk designs: each one's name, pieces, and catalog lights, in desk-local cm
+    (the desk at 0, 0 facing +y). Place one in a sandbox room with place_desk."""
+    return service.desks()
+
+
+def place_desk(
+    service: HueRoomService, layout: str | None, room: str, design: str, x: float | int | str, y: float | int | str,
+    rotation: float = 0,
+) -> dict[str, Any]:
+    """Place a copy of a desk design (its name or id) in a sandbox room as a locked desk set: the
+    desk lands at (x, y) turned `rotation`, and everything on it comes along. Its lights are planned."""
+    with sandbox(service, layout):
+        name = _room_name(service, room)
+        service.place_desk(name, design, x=_position(x, "x"), y=_position(y, "y"), rotation=float(rotation or 0))
+        return _room_dict(service, name)
+
+
 TOOLS: dict[str, Callable[..., Any]] = {
     tool.__name__: tool
     for tool in (
         guide, list_rooms, get_room, describe_room, list_lights, list_scenes, list_layouts, catalog, suggest,
         preview_scene, save_scene, apply_scene, room_power, room_dim,
         create_sandbox, add_room, update_room, remove_room, remove_light, set_openings, set_furniture, place_light,
-        check_layout, open_in_app,
+        check_layout, open_in_app, desk_designs, place_desk,
     )
 }

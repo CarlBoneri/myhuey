@@ -24,6 +24,13 @@ import { PlanLightsPanel } from '../components/PlanLightsPanel';
 import { autoRoleLabel, fullStrength, placementNeedsRefresh } from '../lib/suggest';
 import { Studio3D } from '../components/Studio3D';
 import { roomGlare } from '../lib/roomGlare';
+import { bodyOf, isDisplay } from '../lib/glareMath';
+import { DEFAULT_CURVES, arcOf, legalCurve } from '../lib/screen';
+import { ScreenFields } from '../components/ScreenFields';
+import { ChairFields } from '../components/ChairFields';
+import { DeskSetPanel } from '../components/DeskSetPanel';
+import { DeskDesignsPanel } from '../components/DeskDesignsPanel';
+import { baseOf, moveSetBy, setOf, settle } from '../lib/desks';
 import { useUi } from '../uiStore';
 import { useDrawnLights, useShowingFor } from '../lib/shownLights';
 import { ShowingLabel } from '../components/ShowingLabel';
@@ -89,15 +96,17 @@ function WallHits({ outline, onPick }: { outline: Pt[]; onPick: (point: Pt) => v
   );
 }
 
-function PlacedLight({ lights, placement, selected, onSelect, onChange, onCommit, units }: {
+export function PlacedLight({ lights, placement, selected, onSelect, onChange, onCommit, units, mountedOn }: {
   lights: Record<string, BridgeLight>; placement: Placement; selected: boolean; onSelect: () => void; onChange: (p: Placement) => void; onCommit: (p: Placement) => void; units: Units;
+  /** The screen it is stuck on: drawn as a bar across that screen's back, and it does not drag on its own. */
+  mountedOn?: Furniture;
 }) {
   const drag = useDrag();
   const { cmPerPx } = usePlan();
   const { profiles, lights: liveLights } = useStore();
   const bridge = lights[placement.light_id];
   const profile = placedProfile(placement, liveLights[placement.light_id], profiles);
-  const length = effectiveLength(placement, profile);
+  const length = mountedOn ? arcOf(mountedOn).chord : effectiveLength(placement, profile);
   // Drawn as the light shows them: each color at full strength, with a dim light's glow fading instead of darkening.
   const colors = liveColors(bridge)?.map(fullStrength) ?? null;
   const level = bridge?.brightness != null ? (bridge.brightness / 254) * 100 : undefined;
@@ -132,6 +141,7 @@ function PlacedLight({ lights, placement, selected, onSelect, onChange, onCommit
       transform={`translate(${placement.x},${placement.y})`}
       onPointerDown={(event) => {
         onSelect();
+        if (mountedOn && !placement.set) return; // it sits where its screen is
         const start = latest.current;
         drag(event, {
           move: (_p, delta) => onChange({ ...latest.current, x: round1(snap(start.x + delta[0], units)), y: round1(snap(start.y + delta[1], units)) }),
@@ -147,7 +157,7 @@ function PlacedLight({ lights, placement, selected, onSelect, onChange, onCommit
       <text className="light-label" y={(profile.linear ? 14 : profile.length / 2 + 12) * cmPerPx} fontSize={10.5 * cmPerPx} strokeWidth={2.5 * cmPerPx} textAnchor="middle">
         {bridge?.name ?? placement.label}
       </text>
-      {selected && profile.linear && (
+      {selected && profile.linear && !mountedOn && !placement.set && (
         <g className="end-handle" transform={`translate(${(ux * length) / 2},${(uy * length) / 2})`} onPointerDown={endHandle}>
           <circle r={7 * cmPerPx} strokeWidth={1.5 * cmPerPx} />
           <title>{profile.adjustable ? 'Drag to rotate and change the length' : 'Drag to rotate'}</title>
@@ -157,8 +167,12 @@ function PlacedLight({ lights, placement, selected, onSelect, onChange, onCommit
   );
 }
 
-function PlacedFurniture({ item, selected, onSelect, onChange, onCommit, units }: {
+export function PlacedFurniture({ item, selected, onSelect, onChange, onCommit, units, locked = false, turnable = true }: {
   item: Furniture; selected: boolean; onSelect: () => void; onChange: (f: Furniture) => void; onCommit: (f: Furniture) => void; units: Units;
+  /** In a desk set: its size is changed in the desk designer, so there is no resize handle. */
+  locked?: boolean;
+  /** False for a desk set member that is not its base: the set turns about its base, from the base's handle. */
+  turnable?: boolean;
 }) {
   const drag = useDrag();
   const { cmPerPx } = usePlan();
@@ -180,7 +194,7 @@ function PlacedFurniture({ item, selected, onSelect, onChange, onCommit, units }
       <FurnitureShape item={item} selected={selected} cmPerPx={cmPerPx} />
       {selected && (
         <>
-          <g className="end-handle" transform={`translate(0,${-item.depth / 2 - 18 * cmPerPx})`}
+          {turnable && <g className="end-handle" transform={`translate(0,${-item.depth / 2 - 18 * cmPerPx})`}
             onPointerDown={(event) =>
               drag(event, {
                 move: (point, _d, e) => onChange({ ...latest.current, rotation: snapAngle(angleOf([item.x, item.y], point) + 90, e.altKey) }),
@@ -189,8 +203,8 @@ function PlacedFurniture({ item, selected, onSelect, onChange, onCommit, units }
             }>
             <circle r={7 * cmPerPx} strokeWidth={1.5 * cmPerPx} />
             <title>Drag to rotate (hold Alt for free rotation)</title>
-          </g>
-          <rect className="resize-handle" x={item.width / 2 - 5 * cmPerPx} y={item.depth / 2 - 5 * cmPerPx} width={10 * cmPerPx} height={10 * cmPerPx}
+          </g>}
+          {!locked && <rect className="resize-handle" x={item.width / 2 - 5 * cmPerPx} y={item.depth / 2 - 5 * cmPerPx} width={10 * cmPerPx} height={10 * cmPerPx}
             onPointerDown={(event) => {
               const start = latest.current;
               const r = (-start.rotation * Math.PI) / 180;
@@ -203,7 +217,7 @@ function PlacedFurniture({ item, selected, onSelect, onChange, onCommit, units }
               });
             }}>
             <title>Drag to resize</title>
-          </rect>
+          </rect>}
         </>
       )}
     </g>
@@ -211,7 +225,8 @@ function PlacedFurniture({ item, selected, onSelect, onChange, onCommit, units }
 }
 
 export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
-  const { rooms, lights, profiles, replaceRoom, refreshRooms } = useStore();
+  const { rooms, lights, profiles, replaceRoom, refreshRooms, preferences } = useStore();
+  const body = useMemo(() => bodyOf(preferences), [preferences]);
   // The rename this designer just sent to the address; until the address catches up, the room is found under its new name.
   const sentRename = useRef<{ from: string; to: string } | null>(null);
   const source = designerRoom(rooms, name, sentRename.current);
@@ -276,11 +291,43 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
     const current = draftRef.current!;
     setDraft({ ...current, lights: current.lights.map((l) => (l.light_id === placement.light_id ? placement : l)) });
   };
-  const updateLocalFurniture = (item: Furniture) => {
+  const updateLocalFurniture = (edited: Furniture) => {
+    // Width, height, the resize handle, and the Screen panel all land here; a curved screen they make portrait goes flat.
+    const item = legalCurve(edited);
     const current = draftRef.current!;
-    setDraft({ ...current, furniture: current.furniture.map((f) => (f.id === item.id ? item : f)) });
+    // A light mounted on a moved screen follows it right away, before the server answers.
+    setDraft(settle({ ...current, furniture: current.furniture.map((f) => (f.id === item.id ? item : f)) }));
   };
   const commitFurniture = () => saveRoom({ furniture: draftRef.current!.furniture });
+
+  /**
+   * A desk set member (piece or light, by id) dragged to `to`: the whole set moves by the same amount.
+   * `from` is where the member stands in the draft now, so each pointer step adds only its own change.
+   */
+  const moveMember = (setId: string, id: string, to: { x: number; y: number; rotation: number }) => {
+    const current = draftRef.current!;
+    const from = current.furniture.find((item) => item.id === id) ?? current.lights.find((light) => light.light_id === id);
+    if (!from) return;
+    setDraft(moveSetBy(current, setId, to.x - from.x, to.y - from.y, to.rotation - from.rotation));
+  };
+  /** Save a moved set in one call, where its base now stands. */
+  const commitSet = async (setId: string) => {
+    const current = draftRef.current!;
+    const base = baseOf(current, setId);
+    if (!base) return;
+    const saved = await attempt(() => api.moveDeskSet(current.name, setId, { x: base.x, y: base.y, rotation: base.rotation }));
+    if (saved) replaceRoom(current.name, saved);
+  };
+  const changeRoom = (next: Room) => {
+    replaceRoom(draftRef.current!.name, next);
+    setDraft(next);
+  };
+  /** Stick a light on a screen's back (or take it off); the server places it from the screen. */
+  const mountLight = async (placement: Placement, screen: string | null) => {
+    const current = draftRef.current!;
+    const ok = await attempt(() => api.placeLight(current.name, { light_id: placement.light_id, x: placement.x, y: placement.y, mount: screen ? { screen } : null }));
+    if (ok) await refreshRooms();
+  };
   const updateLocalOpening = (opening: Opening) => {
     const current = draftRef.current!;
     setDraft({ ...current, openings: current.openings.map((o) => (o.id === opening.id ? opening : o)) });
@@ -316,7 +363,8 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
     }
   };
 
-  const addFurniture = (preset: (typeof FURNITURE_CATALOG)[number]) => {
+  /** Adds a catalog piece, or a copy of a placed one (`preset` is then the piece itself, and its screen shape and heights come along). */
+  const addFurniture = (preset: (typeof FURNITURE_CATALOG)[number] & Partial<Furniture>) => {
     const current = draftRef.current!;
     const box = bounds(current.outline);
     const item: Furniture = {
@@ -325,6 +373,10 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
       x: round1((box.minX + box.maxX) / 2 + Math.cos(current.furniture.length * 2.4) * 40 * Math.sqrt(current.furniture.length)),
       y: round1((box.minY + box.maxY) / 2 + Math.sin(current.furniture.length * 2.4) * 40 * Math.sqrt(current.furniture.length)),
       width: preset.width, depth: preset.depth, rotation: 0, shape: preset.shape ?? 'rect',
+      curve: preset.curve !== undefined ? preset.curve : DEFAULT_CURVES[preset.kind] ?? null,
+      ...(preset.tilt != null && { tilt: preset.tilt }),
+      ...(preset.height != null && { height: preset.height }),
+      ...(preset.elevation != null && { elevation: preset.elevation }),
     };
     setDraft({ ...current, furniture: [...current.furniture, item] });
     setSelection({ type: 'furniture', id: item.id });
@@ -389,12 +441,13 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
   // The 3D view: the room as it stands in the chosen posture, and the glare from its seat.
   // Recomputed from the draft, so it follows a drag without a request.
   const glare = useMemo(
-    () => (draft && tab === '3d' ? roomGlare(draft, posture, glareMode, lights, profiles) : null),
-    [draft, posture, glareMode, lights, profiles, tab],
+    () => (draft && tab === '3d' ? roomGlare(draft, posture, glareMode, lights, profiles, body) : null),
+    [draft, posture, glareMode, lights, profiles, tab, body],
   );
 
-  /** After a desk moved with what was on it: save the lights it carried, then the furniture. */
-  const commitRig = async (lightIds: string[]) => {
+  /** After a desk moved with what was on it: save the lights it carried, then the furniture. A desk set saves in one call. */
+  const commitRig = async (lightIds: string[], setId?: string) => {
+    if (setId) return commitSet(setId);
     for (const id of lightIds) {
       const placement = draftRef.current?.lights.find((l) => l.light_id === id);
       if (placement) await saveLight(placement);
@@ -432,7 +485,22 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
         {selectedLight.planned ? (
           <SwapPlanned room={draft} placement={selectedLight} unplaced={tray.map((light) => ({ id: light.id, name: light.name }))} />
         ) : lights[selectedLight.light_id] ? <LightControls light={lights[selectedLight.light_id]} /> : <p className="hint">{selectedLight.label} is not on the bridge right now.</p>}
-        <LightPlacementFields placement={selectedLight} units={draft.units} onChange={(next) => { updateLocalLight(next); void saveLight(next); }} />
+        {setOf(draft, selectedLight.light_id) ? (
+          <DeskSetPanel room={draft.name} set={setOf(draft, selectedLight.light_id)!} onRoom={changeRoom} />
+        ) : (
+          <>
+            <Field label="Mounted on">
+              <select className="input" aria-label="Mounted on" value={selectedLight.mount?.screen ?? ''}
+                onChange={(event) => void mountLight(selectedLight, event.target.value || null)}>
+                <option value="">Not on a screen</option>
+                {draft.furniture.filter(isDisplay).map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
+              </select>
+            </Field>
+            {selectedLight.mount
+              ? <p className="hint">On the back of its screen, facing the wall: it follows the screen and counts as a bias light.</p>
+              : <LightPlacementFields placement={selectedLight} units={draft.units} onChange={(next) => { updateLocalLight(next); void saveLight(next); }} />}
+          </>
+        )}
       </Panel>
     )}
     {selectedOpening && (
@@ -461,6 +529,12 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
         </>
       }>
         <Field label="Label"><TextInput value={selectedFurniture.label} onChange={(e) => updateLocalFurniture({ ...selectedFurniture, label: e.target.value })} onBlur={commitFurniture} /></Field>
+        {selectedFurniture.kind === 'chair' && (
+          <ChairFields item={selectedFurniture} units={draft.units} onChange={(next) => { updateLocalFurniture(next); void commitFurniture(); }} />
+        )}
+        {setOf(draft, selectedFurniture.id) ? (
+          <DeskSetPanel room={draft.name} set={setOf(draft, selectedFurniture.id)!} onRoom={changeRoom} />
+        ) : (<>
         <div className="field-row">
           <LengthInput label="Width" value={selectedFurniture.width} units={draft.units} onCommit={(width) => { updateLocalFurniture({ ...selectedFurniture, width }); void commitFurniture(); }} />
           <LengthInput label="Depth" value={selectedFurniture.depth} units={draft.units} onCommit={(depth) => { updateLocalFurniture({ ...selectedFurniture, depth }); void commitFurniture(); }} />
@@ -473,6 +547,10 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
           onChange={(rotation) => updateLocalFurniture({ ...selectedFurniture, rotation })} onCommit={commitFurniture} />
         <Segmented label="Shape" value={selectedFurniture.shape} onChange={(shape) => { updateLocalFurniture({ ...selectedFurniture, shape }); void commitFurniture(); }}
           options={[{ value: 'rect', label: 'Rectangle' }, { value: 'ellipse', label: 'Round' }]} />
+        {isDisplay(selectedFurniture) && (
+          <ScreenFields item={selectedFurniture} onChange={updateLocalFurniture} onCommit={() => void commitFurniture()} />
+        )}
+        </>)}
       </Panel>
     )}
     {!selection && (
@@ -494,6 +572,12 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
         ))}
       </div>
     </Panel>
+
+    <DeskDesignsPanel room={draft} onPlaced={(next, set) => {
+      changeRoom(next);
+      const base = next.desk_sets?.find((entry) => entry.id === set)?.base;
+      if (base) setSelection({ type: 'furniture', id: base });
+    }} />
 
     <PlanLightsPanel room={source ?? draft} />
 
@@ -567,11 +651,17 @@ export function RoomDesigner({ name, tab }: { name: string; tab: DesignTab }) {
               <g className={tool === 'outline' ? 'dimmed' : ''}>
                 {draft.furniture.map((item) => (
                   <PlacedFurniture key={item.id} item={item} units={draft.units} selected={selection?.type === 'furniture' && selection.id === item.id}
-                    onSelect={() => setSelection({ type: 'furniture', id: item.id })} onChange={updateLocalFurniture} onCommit={commitFurniture} />
+                    locked={!!setOf(draft, item.id)} onSelect={() => setSelection({ type: 'furniture', id: item.id })}
+                    turnable={!setOf(draft, item.id) || setOf(draft, item.id)!.base === item.id}
+                    onChange={(next) => (setOf(draft, item.id) ? moveMember(item.set!, item.id, next) : updateLocalFurniture(next))}
+                    onCommit={() => (setOf(draft, item.id) ? commitSet(item.set!) : commitFurniture())} />
                 ))}
                 {draft.lights.map((placement) => (
                   <PlacedLight key={placement.light_id} lights={drawnLights} placement={placement} units={draft.units} selected={selection?.type === 'light' && selection.id === placement.light_id}
-                    onSelect={() => setSelection({ type: 'light', id: placement.light_id })} onChange={updateLocalLight} onCommit={saveLight} />
+                    mountedOn={placement.mount ? draft.furniture.find((item) => item.id === placement.mount!.screen) : undefined}
+                    onSelect={() => setSelection({ type: 'light', id: placement.light_id })}
+                    onChange={(next) => (setOf(draft, placement.light_id) ? moveMember(placement.set!, placement.light_id, next) : updateLocalLight(next))}
+                    onCommit={(next) => (setOf(draft, placement.light_id) ? commitSet(placement.set!) : saveLight(next))} />
                 ))}
               </g>
               {tool === 'outline' && (

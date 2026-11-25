@@ -1,8 +1,8 @@
 // The workspace tabs as the user arranged them: an order, and which are closed. Kept per browser.
 import type { Route } from './router';
 
-export type TabId = '3d' | 'home' | 'workbench' | 'studio' | 'scenes' | 'lights' | 'settings' | 'help';
-export const ALL_TABS: TabId[] = ['3d', 'home', 'workbench', 'studio', 'scenes', 'lights', 'settings', 'help'];
+export type TabId = '3d' | 'home' | 'workbench' | 'studio' | 'desks' | 'scenes' | 'lights' | 'settings' | 'help';
+export const ALL_TABS: TabId[] = ['3d', 'home', 'workbench', 'studio', 'desks', 'scenes', 'lights', 'settings', 'help'];
 export interface TabState { order: TabId[]; closed: TabId[] }
 export const DEFAULT_TABS: TabState = { order: ALL_TABS, closed: [] };
 
@@ -98,6 +98,7 @@ export function tabForRoute(route: Route): TabId {
     case 'room': return 'workbench';
     case 'design': case 'studio-room': return '3d';
     case 'studio': return 'studio';
+    case 'desks': case 'desk-set': return 'desks';
     case 'scenes': case 'scene': return 'scenes';
     case 'lights': return 'lights';
     case 'settings': case 'setup': return 'settings';

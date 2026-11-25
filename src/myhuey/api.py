@@ -17,6 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictInt, StringConstraints
 from .errors import BridgeNotConfigured, GroupNotFound, HueError, LayoutChanged, LayoutNotFound, LinkButtonNotPressed, PairingInProgress, RefreshChanged, RoomNotFound, SceneNotFound
 from .light_groups import MAX_GROUP_LIGHTS, MAX_GROUP_NAME
 from .layouts import MAX_NAME, using_layout
+from .roles import using_body
 from .hue import COLLECTIONS, PAIRING_WINDOW, HueBridgeClient
 from .images import MAX_UPLOAD_BYTES, media_type
 from .catalog import CATALOG
@@ -119,8 +120,8 @@ class LayoutMiddleware:
 
     async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
         path = scope.get("path", "") if scope["type"] == "http" else ""
-        # Layouts and light groups are app-wide: a stale or deleted sandbox never blocks them.
-        if not path.startswith("/api/") or path.startswith(("/api/layouts", "/api/groups")):
+        # Layouts, light groups, and desk designs are app-wide: a stale or deleted sandbox never blocks them.
+        if not path.startswith("/api/") or path.startswith(("/api/layouts", "/api/groups", "/api/desks")):
             await self.app(scope, receive, send)
             return
         named = dict(scope.get("headers") or []).get(b"x-myhuey-layout", b"").decode("latin-1").strip()
@@ -130,7 +131,9 @@ class LayoutMiddleware:
             await JSONResponse(status_code=404, content={"detail": str(exc)})(scope, receive, send)
             return
         with using_layout(layout_id):
-            await self.app(scope, receive, send)
+            body = await run_in_threadpool(self.service.body)
+            with using_body(body):  # seats and roles use the person's own eye heights
+                await self.app(scope, receive, send)
 
 
 class PlanUpdate(Body):
@@ -153,6 +156,10 @@ class FurnitureItem(Body):
     shape: str = "rect"
     elevation: float | None = Field(None, ge=0, le=1000)
     height: float | None = Field(None, gt=0, le=1000)
+    curve: float | None = Field(None, ge=500, le=10000)  # mm, as printed on the box (1000R)
+    tilt: float | None = Field(None, ge=-45, le=45)
+    set: str | None = Field(None, max_length=40)
+    seat: float | None = Field(None, ge=30, le=90)  # cm; set on the chair you sit in
 
 
 class RoomUpdate(Body):
@@ -168,6 +175,38 @@ class RoomUpdate(Body):
     ceiling: float | None = Field(None, ge=150, le=1000)
 
 
+class Mount(Body):
+    screen: str = Field(..., min_length=1, max_length=40)
+
+
+class SetMove(Body):
+    x: float = Field(..., ge=-10000, le=10000)
+    y: float = Field(..., ge=-10000, le=10000)
+    rotation: float = 0
+
+
+class DeskDesignBody(Body):
+    name: str | None = Field(None, max_length=80)
+    items: list[dict[str, Any]] | None = Field(None, max_length=60)
+    lights: list[dict[str, Any]] | None = Field(None, max_length=40)
+
+
+class DeskPlacement(Body):
+    design: str = Field(..., min_length=1, max_length=80)
+    x: float = Field(..., ge=-10000, le=10000)
+    y: float = Field(..., ge=-10000, le=10000)
+    rotation: float = 0
+
+
+class DeskSetBody(Body):
+    items: list[dict[str, Any]] = Field(..., max_length=60)
+    lights: list[dict[str, Any]] = Field(default_factory=list, max_length=40)
+
+
+class DeskName(Body):
+    name: str = Field(..., min_length=1, max_length=80)
+
+
 class LightPlacement(Body):
     light_id: str
     x: float = 0
@@ -177,6 +216,7 @@ class LightPlacement(Body):
     length: float | None = Field(None, ge=5, le=5000)
     elevation: float | Literal["auto"] | None = None  # cm; "auto" goes back to the product's guess
     role: Literal["auto", "bias", "task", "view"] | None = None
+    mount: Mount | None = None  # null takes the light off its screen; left out keeps it
 
 
 class PlannedLightRequest(Body):
@@ -434,8 +474,52 @@ def create_app(storage_path: str | None = None, *, pairing_window: float = PAIRI
             length=body.length,
             elevation=body.elevation,
             role=body.role,
+            mount=(body.mount.model_dump() if body.mount else None) if "mount" in body.model_fields_set else "keep",
         )
         return light.to_dict()
+
+    @app.get("/api/desks")
+    def list_desks() -> list[dict[str, Any]]:
+        return service.desks()
+
+    @app.post("/api/desks")
+    def create_desk(body: DeskDesignBody) -> dict[str, Any]:
+        return service.create_desk(body.name or "", body.items or [], body.lights or [])
+
+    @app.patch("/api/desks/{desk_id}")
+    def update_desk(desk_id: str, body: DeskDesignBody) -> dict[str, Any]:
+        return service.update_desk(desk_id, name=body.name, items=body.items, lights=body.lights)
+
+    @app.delete("/api/desks/{desk_id}")
+    def delete_desk(desk_id: str) -> dict[str, str]:
+        service.delete_desk(desk_id)
+        return {"deleted": desk_id}
+
+    @app.post("/api/rooms/{room_name}/desks")
+    def place_desk(room_name: str, body: DeskPlacement) -> dict[str, Any]:
+        out = service.place_desk(room_name, body.design, x=body.x, y=body.y, rotation=body.rotation)
+        return {"set": out["set"], "room": room_json(out["room"])}
+
+    @app.get("/api/rooms/{room_name}/sets/{set_id}")
+    def desk_set_local(room_name: str, set_id: str) -> dict[str, Any]:
+        return service.desk_set_local(room_name, set_id)
+
+    @app.put("/api/rooms/{room_name}/sets/{set_id}")
+    def apply_desk_set(room_name: str, set_id: str, body: DeskSetBody) -> dict[str, Any]:
+        return room_json(service.apply_desk_set(room_name, set_id, body.items, body.lights))
+
+    @app.post("/api/rooms/{room_name}/sets/{set_id}/design")
+    def desk_from_set(room_name: str, set_id: str, body: DeskName) -> dict[str, Any]:
+        return service.desk_from_set(room_name, set_id, body.name)
+
+    @app.patch("/api/rooms/{room_name}/sets/{set_id}")
+    def move_desk_set(room_name: str, set_id: str, body: SetMove) -> dict[str, Any]:
+        return room_json(service.move_desk_set(room_name, set_id, x=body.x, y=body.y, rotation=body.rotation))
+
+    @app.delete("/api/rooms/{room_name}/sets/{set_id}")
+    def release_desk_set(room_name: str, set_id: str) -> dict[str, Any]:
+        """Unlock a desk set; its pieces stay in the room."""
+        return room_json(service.release_desk_set(room_name, set_id))
 
     @app.post("/api/rooms/{room_name}/power")
     def room_power(room_name: str, body: RoomPower) -> dict[str, Any]:

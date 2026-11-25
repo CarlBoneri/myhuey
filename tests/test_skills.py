@@ -48,7 +48,7 @@ def test_guide_and_prompts_are_the_files_word_for_word():
 
 
 def test_tools_are_complete_and_described():
-    assert list(TOOLS)[0] == "guide" and set(CHANGES_LIGHTS) | set(WRITES_LAYOUT) <= set(TOOLS) and len(TOOLS) == 24
+    assert list(TOOLS)[0] == "guide" and set(CHANGES_LIGHTS) | set(WRITES_LAYOUT) <= set(TOOLS) and len(TOOLS) == 26
     for name, tool in TOOLS.items():
         assert tool.__doc__ and len(tool.__doc__.strip().splitlines()[0]) > 20, name
     for name in CHANGES_LIGHTS:

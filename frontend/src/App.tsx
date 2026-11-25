@@ -1,10 +1,11 @@
 import { useEffect, useRef, type CSSProperties } from 'react';
-import { Box, CircleHelp, Command, House, Lightbulb, Map as MapIcon, Palette, Settings, SlidersHorizontal, Sparkles, Terminal, X } from 'lucide-react';
+import { Box, CircleHelp, Command, House, LampDesk, Lightbulb, Map as MapIcon, Palette, Settings, SlidersHorizontal, Sparkles, Terminal, X } from 'lucide-react';
 import { applyTheme, applyTransparency, followSystemTheme, followSystemTransparency, normalizeTheme, themeGroups, type Theme } from './lib/theme';
 import { useStore } from './store';
 import { href, useRoute, type Route } from './lib/router';
 import { HomeView } from './views/HomeView';
 import { PlanView } from './views/PlanView';
+import { DeskDesigner } from './views/DeskDesigner';
 import { SETUP_SKIPPED_KEY, SetupView } from './views/SetupView';
 import { go } from './lib/router';
 import { RoomDesigner } from './views/RoomDesigner';
@@ -34,6 +35,7 @@ function allTabs(studio: string | null, room: string | null): Tab[] {
     { id: 'home', label: 'Home · Active', icon: House, route: { view: 'home' } },
     ...(room ? [{ id: 'workbench' as TabId, label: `Workbench · ${room}`, icon: SlidersHorizontal, route: { view: 'room', room } as Route }] : []),
     { id: 'studio', label: 'Studio · Floor Plan', icon: MapIcon, route: { view: 'studio' } },
+    { id: 'desks', label: 'Studio · Desks', icon: LampDesk, route: { view: 'desks' } },
     { id: 'scenes', label: 'Scenes', icon: Palette, route: { view: 'scenes' } },
     { id: 'lights', label: 'Lights & Groups', icon: Lightbulb, route: { view: 'lights' } },
     { id: 'settings', label: 'Settings & CLI', icon: Settings, route: { view: 'settings' } },
@@ -135,6 +137,10 @@ export function App() {
         return <SceneEditor id={route.id} />;
       case 'studio':
         return <PlanView focus={route.focus} />;
+      case 'desks':
+        return <DeskDesigner key={route.design ?? 'new'} design={route.design} />;
+      case 'desk-set':
+        return <DeskDesigner key={`${route.room}/${route.set}`} room={route.room} set={route.set} />;
       case 'setup':
         return <SetupView />;
       case 'lights':

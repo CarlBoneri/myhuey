@@ -38,11 +38,16 @@ You never make the sandbox active; the person does that in the app once they lik
 5. **Furniture.** `set_furniture` with the full list; each call replaces what is there. Each item
    is `{"kind", "x", "y", "rotation"}` with optional `width`, `depth`, `elevation`, `height`,
    and `label`. `catalog` lists the kinds with default sizes, for example "desk" (140 by 70),
-   "desk-l", "desk-standing", "monitor-24", "monitor-27", "monitor-34", "tv", "sofa",
-   "armchair", "bed-queen", "bookshelf", "chair". Against a wall, the centre sits half the
+   "desk-l", "desk-standing", "monitor-24", "monitor-27", "monitor-34", "monitor-49", "tv",
+   "sofa", "armchair", "bed-queen", "bookshelf", "chair". Against a wall, the centre sits half the
    depth out from it. Monitors go inside the desk's footprint, with the desk's rotation; their
    height off the floor defaults to 75 (the desk's top), so set `elevation` 110 on a standing
-   desk. Two 27-inch monitors side by side sit about 66 cm apart, centre to centre.
+   desk. Two 27-inch monitors side by side sit about 66 cm apart, centre to centre. A screen
+   takes `curve` (the R-rating in mm, such as 1000 for 1000R; "monitor-49" comes at 1000) and
+   `tilt` (degrees, negative leans back, -45 to 45). Portrait is `height` above `width`, and a
+   portrait screen cannot be curved. A chair with `seat` (its seat height in cm) is where the
+   person sits: the eyes go over it. `desk_designs` lists saved desk designs and `place_desk` puts
+   a copy in the sandbox room as a locked desk set (desk, screens, chair, and planned lights together).
 6. **Lights.** `place_light` with `layout`, `room`, `x`, `y`, and exactly one of `light_id` (a
    paired light from `list_lights`) or `catalog` (a planned light, such as "gradient-strip",
    "play-bar", "floor-lamp", "table-lamp", "desk-lamp", "ceiling"). Optional: `rotation`,
